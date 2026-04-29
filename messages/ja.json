@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "download": "ダウンロード",
+    "donate": "寄付",
+    "sponsors": "サポーター",
+    "dashboard": "ダッシュボード",
+    "signIn": "サインイン"
+  },
+  "home": {
+    "title": "Three Friends",
+    "subtitle": "最新版を自由にダウンロードできます。役に立った場合は開発支援をご検討ください。",
+    "downloadMac": "macOS 版をダウンロード",
+    "downloadWindows": "Windows 版をダウンロード",
+    "downloadLinux": "Linux 版をダウンロード",
+    "supportPrompt": "ダウンロードは無料です。寄付は継続的な開発を支えます。"
+  },
+  "donate": {
+    "title": "開発を支援する",
+    "subtitle": "一回限りの支援金額を選択してください。自動更新はありません。",
+    "tiers": {
+      "monthly": "月額相当の支援",
+      "quarterly": "四半期相当の支援",
+      "yearly": "年額相当の支援"
+    },
+    "checkoutStripe": "Stripe で支払う",
+    "checkoutPayPal": "PayPal で支払う"
+  },
+  "sponsors": {
+    "title": "サポーター",
+    "levels": {
+      "bronze": "ブロンズ",
+      "silver": "シルバー",
+      "gold": "ゴールド",
+      "platinum": "プラチナ"
+    }
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "donations": "寄付履歴",
+    "certificates": "証明書"
+  }
+}

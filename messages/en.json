@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "download": "Download",
+    "donate": "Donate",
+    "sponsors": "Sponsors",
+    "dashboard": "Dashboard",
+    "signIn": "Sign in"
+  },
+  "home": {
+    "title": "Three Friends",
+    "subtitle": "Download the latest version freely. Support development when it helps you.",
+    "downloadMac": "Download for macOS",
+    "downloadWindows": "Download for Windows",
+    "downloadLinux": "Download for Linux",
+    "supportPrompt": "Downloads are free. Donations support ongoing development."
+  },
+  "donate": {
+    "title": "Support development",
+    "subtitle": "Choose a one-time support amount. These donations do not auto-renew.",
+    "tiers": {
+      "monthly": "Monthly Support",
+      "quarterly": "Quarterly Support",
+      "yearly": "Yearly Support"
+    },
+    "checkoutStripe": "Pay with Stripe",
+    "checkoutPayPal": "Pay with PayPal"
+  },
+  "sponsors": {
+    "title": "Supporters",
+    "levels": {
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold",
+      "platinum": "Platinum"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "donations": "Donations",
+    "certificates": "Certificates"
+  }
+}

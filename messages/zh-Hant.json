@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "download": "下載",
+    "donate": "贊助",
+    "sponsors": "支持者",
+    "dashboard": "儀表板",
+    "signIn": "登入"
+  },
+  "home": {
+    "title": "Three Friends",
+    "subtitle": "自由下載最新版本。如果這個軟體幫助了你，也歡迎支持開發。",
+    "downloadMac": "下載 macOS 版",
+    "downloadWindows": "下載 Windows 版",
+    "downloadLinux": "下載 Linux 版",
+    "supportPrompt": "下載免費。捐贈將用於支持持續開發。"
+  },
+  "donate": {
+    "title": "支持開發",
+    "subtitle": "選擇一次性支持金額。這些捐贈不會自動續費。",
+    "tiers": {
+      "monthly": "月度支持",
+      "quarterly": "季度支持",
+      "yearly": "年度支持"
+    },
+    "checkoutStripe": "使用 Stripe 支付",
+    "checkoutPayPal": "使用 PayPal 支付"
+  },
+  "sponsors": {
+    "title": "支持者",
+    "levels": {
+      "bronze": "銅牌",
+      "silver": "銀牌",
+      "gold": "金牌",
+      "platinum": "白金"
+    }
+  },
+  "dashboard": {
+    "title": "儀表板",
+    "donations": "捐贈記錄",
+    "certificates": "證書"
+  }
+}
