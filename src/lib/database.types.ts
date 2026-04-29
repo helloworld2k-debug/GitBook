@@ -75,6 +75,7 @@ export type Database = {
           sponsor_level_id: string | null;
           type: Database["public"]["Enums"]["certificate_type"];
           status: Database["public"]["Enums"]["certificate_status"];
+          issued_at: string | null;
         };
         Insert: {
           id?: string;
@@ -84,6 +85,7 @@ export type Database = {
           sponsor_level_id?: string | null;
           type: Database["public"]["Enums"]["certificate_type"];
           status?: Database["public"]["Enums"]["certificate_status"];
+          issued_at?: string | null;
         };
         Update: {
           id?: string;
@@ -93,6 +95,7 @@ export type Database = {
           sponsor_level_id?: string | null;
           type?: Database["public"]["Enums"]["certificate_type"];
           status?: Database["public"]["Enums"]["certificate_status"];
+          issued_at?: string | null;
         };
         Relationships: [];
       };
