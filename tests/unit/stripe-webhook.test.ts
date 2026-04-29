@@ -68,17 +68,98 @@ describe("Stripe webhook route", () => {
     await expect(response.json()).resolves.toEqual({ error: "Missing required metadata" });
   });
 
-  it("upserts a completed checkout donation and generates certificates", async () => {
+  it("rejects completed checkout sessions that are not paid", async () => {
     mocks.constructEvent.mockReturnValue({
       type: "checkout.session.completed",
       data: {
         object: {
+          amount_total: 5000,
           created: 1777420800,
+          currency: "usd",
           metadata: {
             tier: "yearly",
             user_id: "user_123",
           },
           payment_intent: "pi_123",
+          payment_status: "unpaid",
+        },
+      },
+    });
+
+    const response = await POST(new Request("https://example.com/api/webhooks/stripe", { body: "{}", method: "POST" }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Missing required metadata" });
+    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.generateCertificatesForDonation).not.toHaveBeenCalled();
+  });
+
+  it("rejects completed checkout sessions with a mismatched amount", async () => {
+    mocks.constructEvent.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          amount_total: 4999,
+          created: 1777420800,
+          currency: "usd",
+          metadata: {
+            tier: "yearly",
+            user_id: "user_123",
+          },
+          payment_intent: "pi_123",
+          payment_status: "paid",
+        },
+      },
+    });
+
+    const response = await POST(new Request("https://example.com/api/webhooks/stripe", { body: "{}", method: "POST" }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Missing required metadata" });
+    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.generateCertificatesForDonation).not.toHaveBeenCalled();
+  });
+
+  it("rejects completed checkout sessions with a mismatched currency", async () => {
+    mocks.constructEvent.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          amount_total: 5000,
+          created: 1777420800,
+          currency: "eur",
+          metadata: {
+            tier: "yearly",
+            user_id: "user_123",
+          },
+          payment_intent: "pi_123",
+          payment_status: "paid",
+        },
+      },
+    });
+
+    const response = await POST(new Request("https://example.com/api/webhooks/stripe", { body: "{}", method: "POST" }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Missing required metadata" });
+    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.generateCertificatesForDonation).not.toHaveBeenCalled();
+  });
+
+  it("upserts a completed checkout donation and generates certificates", async () => {
+    mocks.constructEvent.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          amount_total: 5000,
+          created: 1777420800,
+          currency: "usd",
+          metadata: {
+            tier: "yearly",
+            user_id: "user_123",
+          },
+          payment_intent: "pi_123",
+          payment_status: "paid",
         },
       },
     });

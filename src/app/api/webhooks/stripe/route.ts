@@ -32,8 +32,16 @@ export async function POST(request: Request) {
     const donationTier = findDonationTier(tier ?? null);
     const paymentIntent =
       typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+    const currency = typeof session.currency === "string" ? session.currency.toLowerCase() : null;
 
-    if (!userId || !donationTier || !paymentIntent) {
+    if (
+      !userId ||
+      !donationTier ||
+      !paymentIntent ||
+      session.payment_status !== "paid" ||
+      session.amount_total !== donationTier.amount ||
+      currency !== donationTier.currency
+    ) {
       return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
     }
 

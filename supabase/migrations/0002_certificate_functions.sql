@@ -22,6 +22,9 @@ begin
 end;
 $$;
 
+revoke execute on function public.allocate_certificate_number(certificate_type) from anon, authenticated, public;
+grant execute on function public.allocate_certificate_number(certificate_type) to service_role;
+
 create or replace function public.get_paid_total(input_user_id uuid)
 returns integer
 language sql
@@ -33,3 +36,6 @@ as $$
   from public.donations
   where user_id = input_user_id and status = 'paid' and currency = 'usd';
 $$;
+
+revoke execute on function public.get_paid_total(uuid) from anon, authenticated, public;
+grant execute on function public.get_paid_total(uuid) to service_role;
