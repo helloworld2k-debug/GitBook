@@ -1,8 +1,11 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { generateCertificatesForDonation } from "@/lib/certificates/service";
+import { buildDonationRecord } from "@/lib/donations/record";
 import { findDonationTier } from "@/lib/payments/tier";
 import { getStripeWebhookSecret, stripe } from "@/lib/payments/stripe";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -33,6 +36,28 @@ export async function POST(request: Request) {
     if (!userId || !donationTier || !paymentIntent) {
       return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
     }
+
+    const supabase = createSupabaseAdminClient();
+    const record = buildDonationRecord({
+      userId,
+      tierCode: donationTier.code,
+      amount: donationTier.amount,
+      currency: donationTier.currency,
+      provider: "stripe",
+      providerTransactionId: paymentIntent,
+      paidAt: new Date(session.created * 1000),
+    });
+    const { data: donation, error } = await supabase
+      .from("donations")
+      .upsert(record, { onConflict: "provider,provider_transaction_id" })
+      .select("id")
+      .single();
+
+    if (error || !donation) {
+      return NextResponse.json({ error: "Unable to save donation" }, { status: 500 });
+    }
+
+    await generateCertificatesForDonation(donation.id);
   }
 
   return NextResponse.json({ received: true });
