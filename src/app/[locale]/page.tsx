@@ -34,10 +34,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
       <main className="flex-1 bg-slate-50">
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
           <div className="max-w-3xl">
-            <p className="text-sm font-medium uppercase tracking-normal text-emerald-700">
-              {siteConfig.description}
-            </p>
-            <h1 className="mt-4 text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl">
+            <h1 className="text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl">
               {t("title")}
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">{t("subtitle")}</p>
