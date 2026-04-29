@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { findDonationTier } from "@/lib/payments/tier";
 import { getStripeWebhookSecret, stripe } from "@/lib/payments/stripe";
 
 export const runtime = "nodejs";
@@ -25,10 +26,11 @@ export async function POST(request: Request) {
     const session = event.data.object as Stripe.Checkout.Session;
     const userId = session.metadata?.user_id;
     const tier = session.metadata?.tier;
+    const donationTier = findDonationTier(tier ?? null);
     const paymentIntent =
       typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
 
-    if (!userId || !tier || !paymentIntent) {
+    if (!userId || !donationTier || !paymentIntent) {
       return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
     }
   }
