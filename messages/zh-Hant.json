@@ -37,7 +37,38 @@
   },
   "dashboard": {
     "title": "儀表板",
-    "donations": "捐贈記錄",
-    "certificates": "證書"
+    "donations": "已付款捐贈",
+    "certificates": "有效證書",
+    "recentDonations": "捐贈記錄",
+    "recentCertificates": "證書",
+    "amount": "金額",
+    "status": "狀態",
+    "date": "日期",
+    "certificateNumber": "證書編號",
+    "type": "類型",
+    "viewCertificate": "查看證書",
+    "noDonations": "尚無捐贈記錄。",
+    "noCertificates": "尚無有效證書。",
+    "donationStatuses": {
+      "pending": "待處理",
+      "paid": "已付款",
+      "cancelled": "已取消",
+      "failed": "失敗",
+      "refunded": "已退款"
+    }
+  },
+  "certificate": {
+    "brand": "Three Friends",
+    "title": "支持證書",
+    "description": "謹以此證書感謝你對獨立軟體開發的珍貴支持。",
+    "presentedTo": "頒發給",
+    "certificateNumber": "證書編號",
+    "issued": "頒發日期",
+    "pendingIssueDate": "頒發日期待定",
+    "fallbackRecipient": "支持者",
+    "types": {
+      "donation": "捐贈證書",
+      "honor": "榮譽證書"
+    }
   }
 }

@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
-import { CertificateView } from "@/lib/certificates/render";
+import { CertificateView, getCertificateTypeLabel } from "@/lib/certificates/render";
 import { requireUser } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -13,18 +13,14 @@ type CertificatePageProps = {
   }>;
 };
 
-function getRecipientName(user: Awaited<ReturnType<typeof requireUser>>) {
+function getRecipientName(user: Awaited<ReturnType<typeof requireUser>>, fallbackRecipient: string) {
   const displayName = user.user_metadata?.name ?? user.user_metadata?.full_name;
 
   if (typeof displayName === "string" && displayName.trim()) {
     return displayName;
   }
 
-  return user.email ?? "Supporter";
-}
-
-function getCertificateLabel(type: "donation" | "honor") {
-  return type === "honor" ? "Honor Certificate" : "Donation Certificate";
+  return user.email ?? fallbackRecipient;
 }
 
 export default async function CertificatePage({ params }: CertificatePageProps) {
@@ -36,6 +32,7 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 
   setRequestLocale(locale);
   const user = await requireUser(locale, `/${locale}/dashboard/certificates/${id}`);
+  const t = await getTranslations("certificate");
   const supabase = await createSupabaseServerClient();
 
   const { data: certificate, error } = await supabase
@@ -43,6 +40,7 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
     .select("certificate_number,type,issued_at")
     .eq("id", id)
     .eq("user_id", user.id)
+    .eq("status", "active")
     .maybeSingle();
 
   if (error) {
@@ -60,9 +58,22 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
         <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
           <CertificateView
             certificateNumber={certificate.certificate_number}
+            copy={{
+              brand: t("brand"),
+              certificateNumber: t("certificateNumber"),
+              description: t("description"),
+              issued: t("issued"),
+              pendingIssueDate: t("pendingIssueDate"),
+              presentedTo: t("presentedTo"),
+              title: t("title"),
+            }}
             issuedAt={certificate.issued_at}
-            label={getCertificateLabel(certificate.type)}
-            recipientName={getRecipientName(user)}
+            label={getCertificateTypeLabel(certificate.type, {
+              donation: t("types.donation"),
+              honor: t("types.honor"),
+            })}
+            locale={locale}
+            recipientName={getRecipientName(user, t("fallbackRecipient"))}
           />
         </section>
       </main>

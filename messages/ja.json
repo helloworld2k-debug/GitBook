@@ -37,7 +37,38 @@
   },
   "dashboard": {
     "title": "ダッシュボード",
-    "donations": "寄付履歴",
-    "certificates": "証明書"
+    "donations": "支払い済み寄付",
+    "certificates": "有効な証明書",
+    "recentDonations": "寄付履歴",
+    "recentCertificates": "証明書",
+    "amount": "金額",
+    "status": "ステータス",
+    "date": "日付",
+    "certificateNumber": "証明書番号",
+    "type": "種類",
+    "viewCertificate": "証明書を見る",
+    "noDonations": "寄付記録はまだありません。",
+    "noCertificates": "有効な証明書はまだありません。",
+    "donationStatuses": {
+      "pending": "保留中",
+      "paid": "支払い済み",
+      "cancelled": "キャンセル済み",
+      "failed": "失敗",
+      "refunded": "返金済み"
+    }
+  },
+  "certificate": {
+    "brand": "Three Friends",
+    "title": "支援証明書",
+    "description": "独立したソフトウェア開発への大切なご支援に、感謝を込めてこの証明書を贈ります。",
+    "presentedTo": "贈呈先",
+    "certificateNumber": "証明書番号",
+    "issued": "発行日",
+    "pendingIssueDate": "発行日未定",
+    "fallbackRecipient": "サポーター",
+    "types": {
+      "donation": "寄付証明書",
+      "honor": "表彰証明書"
+    }
   }
 }

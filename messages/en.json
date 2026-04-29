@@ -37,7 +37,38 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "donations": "Donations",
-    "certificates": "Certificates"
+    "donations": "Paid donations",
+    "certificates": "Active certificates",
+    "recentDonations": "Donation history",
+    "recentCertificates": "Certificates",
+    "amount": "Amount",
+    "status": "Status",
+    "date": "Date",
+    "certificateNumber": "Certificate number",
+    "type": "Type",
+    "viewCertificate": "View certificate",
+    "noDonations": "No donation records yet.",
+    "noCertificates": "No active certificates yet.",
+    "donationStatuses": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "cancelled": "Cancelled",
+      "failed": "Failed",
+      "refunded": "Refunded"
+    }
+  },
+  "certificate": {
+    "brand": "Three Friends",
+    "title": "Certificate of Support",
+    "description": "This certificate is presented with gratitude for meaningful support of independent software development.",
+    "presentedTo": "Presented to",
+    "certificateNumber": "Certificate No.",
+    "issued": "Issued",
+    "pendingIssueDate": "Pending issue date",
+    "fallbackRecipient": "Supporter",
+    "types": {
+      "donation": "Donation Certificate",
+      "honor": "Honor Certificate"
+    }
   }
 }
