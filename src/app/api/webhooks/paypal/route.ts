@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { verifyPayPalWebhook } from "@/lib/payments/paypal";
+import { capturePayPalOrder, verifyPayPalWebhook } from "@/lib/payments/paypal";
 import { findDonationTier } from "@/lib/payments/tier";
 
 export const runtime = "nodejs";
@@ -34,6 +34,19 @@ function parseCustomId(customId: unknown): { tierCode: string; userId: string } 
   }
 }
 
+function validatePaymentResource(resource: PayPalWebhookEvent["resource"]) {
+  const metadata = parseCustomId(resource?.custom_id);
+  const donationTier = findDonationTier(metadata?.tierCode ?? null);
+
+  if (typeof resource?.id !== "string" || !metadata?.userId || !donationTier) {
+    return null;
+  }
+
+  return {
+    resourceId: resource.id,
+  };
+}
+
 export async function POST(request: Request) {
   const event = (await request.json()) as PayPalWebhookEvent;
   const isValid = await verifyPayPalWebhook(await headers(), event);
@@ -42,11 +55,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid PayPal webhook signature" }, { status: 400 });
   }
 
-  if (event.event_type === "CHECKOUT.ORDER.APPROVED" || event.event_type === "PAYMENT.CAPTURE.COMPLETED") {
-    const metadata = parseCustomId(event.resource?.custom_id);
-    const donationTier = findDonationTier(metadata?.tierCode ?? null);
+  if (event.event_type === "CHECKOUT.ORDER.APPROVED") {
+    const paymentResource = validatePaymentResource(event.resource);
 
-    if (typeof event.resource?.id !== "string" || !metadata?.userId || !donationTier) {
+    if (!paymentResource) {
+      return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
+    }
+
+    await capturePayPalOrder(paymentResource.resourceId);
+  }
+
+  if (event.event_type === "PAYMENT.CAPTURE.COMPLETED") {
+    const paymentResource = validatePaymentResource(event.resource);
+
+    if (!paymentResource) {
       return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
     }
   }

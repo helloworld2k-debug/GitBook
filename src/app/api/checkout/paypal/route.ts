@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     amount: formatPayPalAmount(tier.amount),
     cancelUrl: `${origin}/en/donate?payment=cancelled`,
     currency: tier.currency.toUpperCase(),
-    returnUrl: `${origin}/en/dashboard?payment=paypal-success`,
+    returnUrl: `${origin}/en/dashboard?payment=paypal-return`,
     tierCode: tier.code,
     userId: data.user.id,
   });
