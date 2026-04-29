@@ -4,6 +4,10 @@ export default defineConfig({
   testDir: "./tests/e2e",
   webServer: {
     command: "npm run dev -- --webpack",
+    env: {
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
+    },
     url: "http://127.0.0.1:3000",
     reuseExistingServer: true,
   },

@@ -28,6 +28,8 @@ describe("i18n configuration", () => {
     const middleware = readFileSync("src/middleware.ts", "utf8");
 
     expect(middleware).toContain('matcher: ["/((?!api|_next|_vercel|.*\\\\..*).*)"]');
+    expect(middleware).toContain("createMiddleware(routing)");
+    expect(middleware).toContain("refreshSupabaseSession(request, response)");
   });
 
   it("wires next-intl request configuration into Next.js", () => {
