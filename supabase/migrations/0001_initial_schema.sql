@@ -16,6 +16,56 @@ create table public.profiles (
   updated_at timestamptz not null default now()
 );
 
+create or replace function public.handle_new_user_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  requested_locale text;
+begin
+  requested_locale := new.raw_user_meta_data->>'preferred_locale';
+
+  insert into public.profiles (
+    id,
+    email,
+    display_name,
+    avatar_url,
+    preferred_locale,
+    public_display_name,
+    is_admin
+  )
+  values (
+    new.id,
+    coalesce(new.email, new.raw_user_meta_data->>'email', ''),
+    coalesce(
+      new.raw_user_meta_data->>'display_name',
+      new.raw_user_meta_data->>'full_name',
+      new.raw_user_meta_data->>'name'
+    ),
+    new.raw_user_meta_data->>'avatar_url',
+    case
+      when requested_locale in ('en', 'zh-Hant', 'ja', 'ko') then requested_locale
+      else 'en'
+    end,
+    coalesce(
+      new.raw_user_meta_data->>'public_display_name',
+      new.raw_user_meta_data->>'display_name',
+      new.raw_user_meta_data->>'full_name',
+      new.raw_user_meta_data->>'name'
+    ),
+    false
+  );
+
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created_create_profile
+after insert on auth.users
+for each row execute function public.handle_new_user_profile();
+
 create table public.donation_tiers (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
@@ -77,6 +127,40 @@ create table public.certificates (
     (type = 'honor' and sponsor_level_id is not null)
   )
 );
+
+create unique index certificates_one_donation_per_donation_id
+on public.certificates (donation_id)
+where type = 'donation' and donation_id is not null;
+
+create unique index certificates_one_honor_per_user_sponsor_level
+on public.certificates (user_id, sponsor_level_id)
+where type = 'honor' and sponsor_level_id is not null;
+
+create or replace function public.validate_certificate_ownership()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  donation_user_id uuid;
+begin
+  if new.type = 'donation' and new.donation_id is not null then
+    select donations.user_id into donation_user_id
+    from public.donations
+    where donations.id = new.donation_id;
+
+    if donation_user_id is not null and donation_user_id <> new.user_id then
+      raise exception 'Donation certificate user_id must match donation user_id';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger validate_certificate_ownership_before_write
+before insert or update of user_id, donation_id, type on public.certificates
+for each row execute function public.validate_certificate_ownership();
 
 create table public.admin_audit_logs (
   id uuid primary key default gen_random_uuid(),
