@@ -23,7 +23,8 @@
       "yearly": "年額相当の支援"
     },
     "checkoutStripe": "Stripe で支払う",
-    "checkoutPayPal": "PayPal で支払う"
+    "checkoutPayPal": "PayPal で支払う",
+    "oneTimeNote": "一回限りの寄付です。自動更新はありません。"
   },
   "sponsors": {
     "title": "サポーター",

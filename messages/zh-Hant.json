@@ -23,7 +23,8 @@
       "yearly": "年度支持"
     },
     "checkoutStripe": "使用 Stripe 支付",
-    "checkoutPayPal": "使用 PayPal 支付"
+    "checkoutPayPal": "使用 PayPal 支付",
+    "oneTimeNote": "一次性捐贈。不會自動續費。"
   },
   "sponsors": {
     "title": "支持者",

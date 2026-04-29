@@ -23,7 +23,8 @@
       "yearly": "연간 후원"
     },
     "checkoutStripe": "Stripe로 결제",
-    "checkoutPayPal": "PayPal로 결제"
+    "checkoutPayPal": "PayPal로 결제",
+    "oneTimeNote": "일회성 기부입니다. 자동 갱신되지 않습니다."
   },
   "sponsors": {
     "title": "후원자",

@@ -23,7 +23,8 @@
       "yearly": "Yearly Support"
     },
     "checkoutStripe": "Pay with Stripe",
-    "checkoutPayPal": "Pay with PayPal"
+    "checkoutPayPal": "Pay with PayPal",
+    "oneTimeNote": "One-time donation. No automatic renewal."
   },
   "sponsors": {
     "title": "Supporters",
