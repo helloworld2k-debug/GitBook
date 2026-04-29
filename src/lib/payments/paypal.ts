@@ -107,6 +107,7 @@ export async function capturePayPalOrder(orderId: string) {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
+      "PayPal-Request-Id": `three-friends-capture-${orderId}`,
     },
     method: "POST",
   });
