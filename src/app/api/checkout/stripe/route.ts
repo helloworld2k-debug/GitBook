@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { findDonationTier } from "@/lib/payments/tier";
 import { stripe } from "@/lib/payments/stripe";
@@ -6,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-function getFallbackOrigin() {
+function getSiteOrigin() {
   const origin = process.env.NEXT_PUBLIC_SITE_URL;
 
   if (!origin) {
@@ -19,8 +18,7 @@ function getFallbackOrigin() {
 export async function POST(request: Request) {
   const formData = await request.formData();
   const tier = findDonationTier(formData.get("tier"));
-  const headerStore = await headers();
-  const origin = headerStore.get("origin") ?? getFallbackOrigin();
+  const origin = getSiteOrigin();
 
   if (!tier) {
     return NextResponse.json({ error: "Invalid donation tier" }, { status: 400 });
