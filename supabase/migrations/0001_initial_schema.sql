@@ -1,0 +1,130 @@
+create type donation_provider as enum ('stripe', 'paypal', 'manual');
+create type donation_status as enum ('pending', 'paid', 'cancelled', 'failed', 'refunded');
+create type certificate_type as enum ('donation', 'honor');
+create type certificate_status as enum ('active', 'revoked', 'generation_failed');
+
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text not null,
+  display_name text,
+  avatar_url text,
+  preferred_locale text not null default 'en' check (preferred_locale in ('en', 'zh-Hant', 'ja', 'ko')),
+  public_supporter_enabled boolean not null default false,
+  public_display_name text,
+  is_admin boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table public.donation_tiers (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  label text not null,
+  description text not null,
+  amount integer not null check (amount > 0),
+  currency text not null default 'usd',
+  sort_order integer not null,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table public.sponsor_levels (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  label text not null,
+  minimum_total_amount integer not null check (minimum_total_amount >= 0),
+  currency text not null default 'usd',
+  sort_order integer not null,
+  is_active boolean not null default true
+);
+
+create table public.donations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  tier_id uuid references public.donation_tiers(id),
+  amount integer not null check (amount > 0),
+  currency text not null default 'usd',
+  provider donation_provider not null,
+  provider_transaction_id text not null,
+  status donation_status not null default 'pending',
+  paid_at timestamptz,
+  metadata jsonb not null default '{}',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (provider, provider_transaction_id)
+);
+
+create sequence public.donation_certificate_seq;
+create sequence public.honor_certificate_seq;
+
+create table public.certificates (
+  id uuid primary key default gen_random_uuid(),
+  certificate_number text not null unique,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  donation_id uuid references public.donations(id) on delete cascade,
+  sponsor_level_id uuid references public.sponsor_levels(id),
+  type certificate_type not null,
+  status certificate_status not null default 'active',
+  issued_at timestamptz not null default now(),
+  revoked_at timestamptz,
+  render_version integer not null default 1,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (
+    (type = 'donation' and donation_id is not null)
+    or
+    (type = 'honor' and sponsor_level_id is not null)
+  )
+);
+
+create table public.admin_audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  admin_user_id uuid not null references public.profiles(id),
+  action text not null,
+  target_type text not null,
+  target_id uuid not null,
+  before jsonb,
+  after jsonb,
+  reason text not null,
+  created_at timestamptz not null default now()
+);
+
+insert into public.donation_tiers (code, label, description, amount, currency, sort_order) values
+  ('monthly', 'Monthly Support', 'One-time support equal to a monthly contribution.', 500, 'usd', 1),
+  ('quarterly', 'Quarterly Support', 'One-time support equal to a quarterly contribution.', 1500, 'usd', 2),
+  ('yearly', 'Yearly Support', 'One-time support equal to a yearly contribution.', 5000, 'usd', 3);
+
+insert into public.sponsor_levels (code, label, minimum_total_amount, currency, sort_order) values
+  ('bronze', 'Bronze', 500, 'usd', 1),
+  ('silver', 'Silver', 5000, 'usd', 2),
+  ('gold', 'Gold', 15000, 'usd', 3),
+  ('platinum', 'Platinum', 50000, 'usd', 4);
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and is_admin = true
+  );
+$$;
+
+alter table public.profiles enable row level security;
+alter table public.donation_tiers enable row level security;
+alter table public.sponsor_levels enable row level security;
+alter table public.donations enable row level security;
+alter table public.certificates enable row level security;
+alter table public.admin_audit_logs enable row level security;
+
+create policy "profiles_select_own_or_admin" on public.profiles for select using (id = auth.uid() or public.is_admin());
+create policy "profiles_update_own" on public.profiles for update using (id = auth.uid()) with check (id = auth.uid() and is_admin = false);
+create policy "tiers_public_read" on public.donation_tiers for select using (is_active = true);
+create policy "levels_public_read" on public.sponsor_levels for select using (is_active = true);
+create policy "donations_select_own_or_admin" on public.donations for select using (user_id = auth.uid() or public.is_admin());
+create policy "certificates_select_own_or_admin" on public.certificates for select using (user_id = auth.uid() or public.is_admin());
+create policy "audit_admin_read" on public.admin_audit_logs for select using (public.is_admin());
