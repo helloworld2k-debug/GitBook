@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { requireUser } from "@/lib/auth/guards";
-import { getCertificateTypeLabel } from "@/lib/certificates/render";
+import { formatCertificateIssuedDate, getCertificateTypeLabel } from "@/lib/certificates/render";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type DashboardPageProps = {
@@ -161,7 +161,13 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
                               donation: certificateT("types.donation"),
                               honor: certificateT("types.honor"),
                             })}
-                            {certificate.issued_at ? ` - ${formatDashboardDate(certificate.issued_at, locale)}` : ""}
+                            {certificate.issued_at
+                              ? ` - ${formatCertificateIssuedDate(
+                                  certificate.issued_at,
+                                  locale,
+                                  certificateT("pendingIssueDate"),
+                                )}`
+                              : ""}
                           </p>
                         </div>
                         <Link
