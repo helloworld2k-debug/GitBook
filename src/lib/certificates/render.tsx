@@ -28,6 +28,7 @@ export function formatCertificateIssuedDate(
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "UTC",
   }).format(new Date(issuedAt));
 }
 
