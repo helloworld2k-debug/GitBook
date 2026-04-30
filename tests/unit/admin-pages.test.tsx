@@ -79,6 +79,11 @@ const testMessages = {
         amount: "Amount",
         transactionId: "Transaction ID",
         empty: "No donations found.",
+        providers: {
+          stripe: "Stripe",
+          paypal: "PayPal",
+          manual: "Manual",
+        },
         statuses: {
           pending: "Pending",
           paid: "Paid",
@@ -126,6 +131,11 @@ const testMessages = {
         amount: "金額",
         transactionId: "交易 ID",
         empty: "尚無捐贈。",
+        providers: {
+          stripe: "Stripe",
+          paypal: "PayPal",
+          manual: "人工登錄",
+        },
         statuses: {
           pending: "待處理",
           paid: "已付款",
@@ -155,6 +165,58 @@ const testMessages = {
       },
     },
   },
+  ja: {
+    admin: {
+      overview: {
+        eyebrow: "管理ツール",
+        title: "管理画面",
+        donationsTitle: "寄付",
+        donationsDescription: "決済プロバイダーの記録、ステータス、取引 ID を確認します。",
+        certificatesTitle: "証明書",
+        certificatesDescription: "発行済み証明書の番号、種類、ステータス、発行日を確認します。",
+      },
+      donations: {
+        eyebrow: "管理画面",
+        title: "管理者向け寄付",
+        provider: "プロバイダー",
+        status: "ステータス",
+        amount: "金額",
+        transactionId: "取引 ID",
+        empty: "寄付はまだありません。",
+        providers: {
+          stripe: "Stripe",
+          paypal: "PayPal",
+          manual: "手動",
+        },
+        statuses: {
+          pending: "保留中",
+          paid: "支払い済み",
+          cancelled: "キャンセル済み",
+          failed: "失敗",
+          refunded: "返金済み",
+        },
+      },
+      certificates: {
+        eyebrow: "管理画面",
+        title: "管理者向け証明書",
+        certificateNumber: "証明書番号",
+        type: "種類",
+        status: "ステータス",
+        issued: "発行日",
+        notIssued: "未発行",
+        empty: "証明書はまだありません。",
+        types: {
+          donation: "寄付証明書",
+          honor: "表彰証明書",
+        },
+        statuses: {
+          active: "有効",
+          revoked: "取り消し済み",
+          generation_failed: "生成失敗",
+        },
+      },
+    },
+  },
   ko: {
     admin: {
       overview: {
@@ -173,6 +235,11 @@ const testMessages = {
         amount: "금액",
         transactionId: "거래 ID",
         empty: "후원 기록이 없습니다.",
+        providers: {
+          stripe: "Stripe",
+          paypal: "PayPal",
+          manual: "수동",
+        },
         statuses: {
           pending: "대기 중",
           paid: "결제 완료",
@@ -246,6 +313,14 @@ describe("admin pages", () => {
         currency: "usd",
         provider_transaction_id: "txn_123",
       },
+      {
+        id: "donation-2",
+        provider: "manual",
+        status: "refunded",
+        amount: 1200,
+        currency: "usd",
+        provider_transaction_id: "manual_456",
+      },
     ]);
     const from = vi.fn(() => donationsQuery);
     createSupabaseServerClientMock.mockResolvedValue({ from });
@@ -263,11 +338,44 @@ describe("admin pages", () => {
     expect(donationsQuery.select).toHaveBeenCalledWith("id,provider,status,amount,currency,provider_transaction_id");
     expect(donationsQuery.order).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(screen.getByRole("heading", { name: "管理捐贈" })).toBeInTheDocument();
-    expect(screen.getByText("stripe")).toBeInTheDocument();
+    expect(screen.getByText("Stripe")).toBeInTheDocument();
+    expect(screen.getByText("人工登錄")).toBeInTheDocument();
+    expect(screen.queryByText("stripe")).not.toBeInTheDocument();
+    expect(screen.queryByText("manual")).not.toBeInTheDocument();
     expect(screen.getByText("已付款")).toBeInTheDocument();
+    expect(screen.getByText("已退款")).toBeInTheDocument();
     expect(screen.queryByText("paid")).not.toBeInTheDocument();
     expect(screen.getByText("US$50.00 USD")).toBeInTheDocument();
     expect(screen.getByText("txn_123")).toBeInTheDocument();
+    expect(screen.getByText("manual_456")).toBeInTheDocument();
+  });
+
+  it("renders Japanese admin donation enum labels", async () => {
+    const donationsQuery = createOrderedQuery([
+      {
+        id: "donation-1",
+        provider: "paypal",
+        status: "cancelled",
+        amount: 3500,
+        currency: "usd",
+        provider_transaction_id: "paypal_txn_789",
+      },
+    ]);
+    const from = vi.fn(() => donationsQuery);
+    createSupabaseServerClientMock.mockResolvedValue({ from });
+
+    const element = await AdminDonationsPage({ params: Promise.resolve({ locale: "ja" }) });
+
+    render(element);
+
+    expect(requireAdminMock).toHaveBeenCalledWith("ja");
+    expect(screen.getByRole("heading", { name: "管理者向け寄付" })).toBeInTheDocument();
+    expect(screen.getByText("PayPal")).toBeInTheDocument();
+    expect(screen.getByText("キャンセル済み")).toBeInTheDocument();
+    expect(screen.queryByText("paypal")).not.toBeInTheDocument();
+    expect(screen.queryByText("cancelled")).not.toBeInTheDocument();
+    expect(screen.getByText("$35.00 USD")).toBeInTheDocument();
+    expect(screen.getByText("paypal_txn_789")).toBeInTheDocument();
   });
 
   it("throws Supabase donation query errors", async () => {
@@ -313,6 +421,33 @@ describe("admin pages", () => {
     expect(screen.queryByText("donation")).not.toBeInTheDocument();
     expect(screen.queryByText("active")).not.toBeInTheDocument();
     expect(screen.getByText("2026년 4월 29일")).toBeInTheDocument();
+  });
+
+  it("renders Japanese admin certificate enum labels", async () => {
+    const certificatesQuery = createOrderedQuery([
+      {
+        id: "certificate-1",
+        certificate_number: "HON-2026-000002",
+        type: "honor",
+        status: "revoked",
+        issued_at: "2026-04-30T00:00:00.000Z",
+      },
+    ]);
+    const from = vi.fn(() => certificatesQuery);
+    createSupabaseServerClientMock.mockResolvedValue({ from });
+
+    const element = await AdminCertificatesPage({ params: Promise.resolve({ locale: "ja" }) });
+
+    render(element);
+
+    expect(requireAdminMock).toHaveBeenCalledWith("ja");
+    expect(screen.getByRole("heading", { name: "管理者向け証明書" })).toBeInTheDocument();
+    expect(screen.getByText("HON-2026-000002")).toBeInTheDocument();
+    expect(screen.getByText("表彰証明書")).toBeInTheDocument();
+    expect(screen.getByText("取り消し済み")).toBeInTheDocument();
+    expect(screen.queryByText("honor")).not.toBeInTheDocument();
+    expect(screen.queryByText("revoked")).not.toBeInTheDocument();
+    expect(screen.getByText("2026年4月30日")).toBeInTheDocument();
   });
 
   it("throws Supabase certificate query errors", async () => {

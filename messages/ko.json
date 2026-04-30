@@ -74,6 +74,11 @@
       "amount": "금액",
       "transactionId": "거래 ID",
       "empty": "후원 기록이 없습니다.",
+      "providers": {
+        "stripe": "Stripe",
+        "paypal": "PayPal",
+        "manual": "수동"
+      },
       "statuses": {
         "pending": "대기 중",
         "paid": "결제 완료",

@@ -74,6 +74,11 @@
       "amount": "Amount",
       "transactionId": "Transaction ID",
       "empty": "No donations found.",
+      "providers": {
+        "stripe": "Stripe",
+        "paypal": "PayPal",
+        "manual": "Manual"
+      },
       "statuses": {
         "pending": "Pending",
         "paid": "Paid",

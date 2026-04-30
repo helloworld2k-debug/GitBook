@@ -74,6 +74,11 @@
       "amount": "金額",
       "transactionId": "取引 ID",
       "empty": "寄付はまだありません。",
+      "providers": {
+        "stripe": "Stripe",
+        "paypal": "PayPal",
+        "manual": "手動"
+      },
       "statuses": {
         "pending": "保留中",
         "paid": "支払い済み",

@@ -12,6 +12,7 @@ type AdminDonationsPageProps = {
 };
 
 type DonationStatus = "pending" | "paid" | "cancelled" | "failed" | "refunded";
+type DonationProvider = "stripe" | "paypal" | "manual";
 
 function formatAmount(amount: number, currency: string, locale: string) {
   const currencyCode = currency.toUpperCase();
@@ -68,7 +69,9 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
                   <tbody className="divide-y divide-slate-200">
                     {donations.map((donation) => (
                       <tr key={donation.id}>
-                        <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-950">{donation.provider}</td>
+                        <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-950">
+                          {t(`donations.providers.${donation.provider as DonationProvider}`)}
+                        </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {t(`donations.statuses.${donation.status as DonationStatus}`)}
                         </td>

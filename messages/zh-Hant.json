@@ -74,6 +74,11 @@
       "amount": "金額",
       "transactionId": "交易 ID",
       "empty": "尚無捐贈。",
+      "providers": {
+        "stripe": "Stripe",
+        "paypal": "PayPal",
+        "manual": "人工登錄"
+      },
       "statuses": {
         "pending": "待處理",
         "paid": "已付款",
