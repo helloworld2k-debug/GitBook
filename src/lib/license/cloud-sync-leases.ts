@@ -32,14 +32,16 @@ type CloudSyncLeaseRpcClient = {
 };
 
 export type CloudSyncLeaseActivation = {
-  leaseId: string;
-  expiresAt: string;
-  activeDeviceId: string;
+  ok: boolean;
+  reason: "active" | "invalid_session";
+  leaseId: string | null;
+  expiresAt: string | null;
+  activeDeviceId: string | null;
 };
 
 export type CloudSyncLeaseHeartbeat = {
   ok: boolean;
-  reason: "active" | "active_on_another_device" | "lease_not_found";
+  reason: "active" | "active_on_another_device" | "invalid_session" | "lease_not_found";
   leaseId: string | null;
   expiresAt: string | null;
   activeDeviceId: string | null;
@@ -64,8 +66,17 @@ function getLeaseTimes(nowInput?: Date) {
   };
 }
 
+function isActivationReason(reason: string): reason is CloudSyncLeaseActivation["reason"] {
+  return reason === "active" || reason === "invalid_session";
+}
+
 function isHeartbeatReason(reason: string): reason is CloudSyncLeaseHeartbeat["reason"] {
-  return reason === "active" || reason === "active_on_another_device" || reason === "lease_not_found";
+  return (
+    reason === "active" ||
+    reason === "active_on_another_device" ||
+    reason === "invalid_session" ||
+    reason === "lease_not_found"
+  );
 }
 
 function isStatusReason(reason: string): reason is CloudSyncLeaseStatus["reason"] {
@@ -92,7 +103,7 @@ export async function activateCloudSyncLease(
 
   const row = data?.[0];
 
-  if (!row) {
+  if (!row || !isActivationReason(row.reason)) {
     throw new Error("Unable to activate cloud sync lease");
   }
 
@@ -100,6 +111,8 @@ export async function activateCloudSyncLease(
     activeDeviceId: row.active_device_id,
     expiresAt: row.expires_at,
     leaseId: row.lease_id,
+    ok: row.ok,
+    reason: row.reason,
   };
 }
 

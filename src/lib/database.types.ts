@@ -788,9 +788,11 @@ export type Database = {
           input_user_id: string;
         };
         Returns: {
-          active_device_id: string;
-          expires_at: string;
-          lease_id: string;
+          active_device_id: string | null;
+          expires_at: string | null;
+          lease_id: string | null;
+          ok: boolean;
+          reason: string;
         }[];
       };
       heartbeat_cloud_sync_lease: {

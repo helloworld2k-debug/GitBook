@@ -51,6 +51,8 @@ describe("cloud sync lease service", () => {
           active_device_id: "device-a",
           expires_at: "2026-05-01T00:02:00.000Z",
           lease_id: "lease-a",
+          ok: true,
+          reason: "active",
         },
       ],
       error: null,
@@ -71,6 +73,8 @@ describe("cloud sync lease service", () => {
       activeDeviceId: "device-a",
       expiresAt: "2026-05-01T00:02:00.000Z",
       leaseId: "lease-a",
+      ok: true,
+      reason: "active",
     });
 
     expect(rpc).toHaveBeenCalledWith("activate_cloud_sync_lease", {
@@ -80,6 +84,42 @@ describe("cloud sync lease service", () => {
       input_machine_code_hash: "machine-hash-a",
       input_now: "2026-05-01T00:00:00.000Z",
       input_user_id: "user-1",
+    });
+  });
+
+  it("returns an invalid-session denial when activation loses the desktop session race", async () => {
+    const { activateCloudSyncLease } =
+      await vi.importActual<typeof import("@/lib/license/cloud-sync-leases")>("@/lib/license/cloud-sync-leases");
+    const rpc = vi.fn(async () => ({
+      data: [
+        {
+          active_device_id: null,
+          expires_at: null,
+          lease_id: null,
+          ok: false,
+          reason: "invalid_session",
+        },
+      ],
+      error: null,
+    }));
+
+    await expect(
+      activateCloudSyncLease(
+        { rpc },
+        {
+          userId: "user-1",
+          desktopSessionId: "session-a",
+          deviceId: "device-a",
+          machineCodeHash: "machine-hash-a",
+          now: new Date("2026-05-01T00:00:00.000Z"),
+        },
+      ),
+    ).resolves.toEqual({
+      activeDeviceId: null,
+      expiresAt: null,
+      leaseId: null,
+      ok: false,
+      reason: "invalid_session",
     });
   });
 
@@ -220,6 +260,8 @@ describe("cloud sync lease routes", () => {
       activeDeviceId: "device-a",
       expiresAt: "2026-05-01T00:02:00.000Z",
       leaseId: "lease-a",
+      ok: true,
+      reason: "active",
     });
     routeMocks.createSupabaseAdminClient.mockReset().mockReturnValue(adminClient);
     routeMocks.getLicenseStatus.mockReset().mockResolvedValue({
@@ -330,6 +372,31 @@ describe("cloud sync lease routes", () => {
     expect(routeMocks.activateCloudSyncLease).not.toHaveBeenCalled();
   });
 
+  it("maps an activation session race to not_authenticated", async () => {
+    const { POST } = await import("@/app/api/license/cloud-sync/activate/route");
+
+    routeMocks.activateCloudSyncLease.mockResolvedValueOnce({
+      activeDeviceId: null,
+      expiresAt: null,
+      leaseId: null,
+      ok: false,
+      reason: "invalid_session",
+    });
+
+    const response = await POST(
+      new Request("https://threefriends.example/api/license/cloud-sync/activate", {
+        headers: { authorization: "Bearer desktop-token" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      allowed: false,
+      reason: "not_authenticated",
+    });
+  });
+
   it("extends heartbeat for the active lease and returns the active device", async () => {
     const { POST } = await import("@/app/api/license/cloud-sync/heartbeat/route");
 
@@ -373,6 +440,31 @@ describe("cloud sync lease routes", () => {
       activeDeviceId: "device-b",
       allowed: false,
       reason: "active_on_another_device",
+    });
+  });
+
+  it("maps a heartbeat session race to not_authenticated", async () => {
+    const { POST } = await import("@/app/api/license/cloud-sync/heartbeat/route");
+
+    routeMocks.heartbeatCloudSyncLease.mockResolvedValueOnce({
+      activeDeviceId: null,
+      expiresAt: null,
+      leaseId: null,
+      ok: false,
+      reason: "invalid_session",
+    });
+
+    const response = await POST(
+      new Request("https://threefriends.example/api/license/cloud-sync/heartbeat", {
+        headers: { authorization: "Bearer desktop-token" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      allowed: false,
+      reason: "not_authenticated",
     });
   });
 

@@ -507,15 +507,32 @@ create or replace function public.activate_cloud_sync_lease(
   input_expires_at timestamptz,
   input_now timestamptz
 )
-returns table(lease_id uuid, expires_at timestamptz, active_device_id text)
+returns table(ok boolean, reason text, lease_id uuid, expires_at timestamptz, active_device_id text)
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
   inserted_lease public.cloud_sync_leases%rowtype;
+  session_row public.desktop_sessions%rowtype;
 begin
   perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0));
+
+  select *
+  into session_row
+  from public.desktop_sessions
+  where id = input_desktop_session_id
+    and user_id = input_user_id
+    and device_id = input_device_id
+    and machine_code_hash = input_machine_code_hash
+    and revoked_at is null
+    and expires_at > input_now
+  for update;
+
+  if not found then
+    return query select false, 'invalid_session'::text, null::uuid, null::timestamptz, null::text;
+    return;
+  end if;
 
   update public.cloud_sync_leases
   set revoked_at = input_now,
@@ -538,10 +555,10 @@ begin
     expires_at
   )
   values (
-    input_user_id,
-    input_desktop_session_id,
-    input_device_id,
-    input_machine_code_hash,
+    session_row.user_id,
+    session_row.id,
+    session_row.device_id,
+    session_row.machine_code_hash,
     input_now,
     input_now,
     input_expires_at
@@ -555,7 +572,7 @@ begin
   where id = input_desktop_session_id
     and user_id = input_user_id;
 
-  return query select inserted_lease.id, inserted_lease.expires_at, inserted_lease.device_id;
+  return query select true, 'active'::text, inserted_lease.id, inserted_lease.expires_at, inserted_lease.device_id;
 end;
 $$;
 
@@ -577,8 +594,23 @@ set search_path = public
 as $$
 declare
   active_lease public.cloud_sync_leases%rowtype;
+  session_row public.desktop_sessions%rowtype;
 begin
   perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0));
+
+  select *
+  into session_row
+  from public.desktop_sessions
+  where id = input_desktop_session_id
+    and user_id = input_user_id
+    and revoked_at is null
+    and expires_at > input_now
+  for update;
+
+  if not found then
+    return query select false, 'invalid_session'::text, null::uuid, null::timestamptz, null::text;
+    return;
+  end if;
 
   update public.cloud_sync_leases
   set revoked_at = input_now,

@@ -42,6 +42,10 @@ export async function POST(request: Request) {
       userId: session.user_id,
     });
 
+    if (!lease.ok && lease.reason === "invalid_session") {
+      return NextResponse.json({ allowed: false, reason: "not_authenticated" }, { status: 401 });
+    }
+
     if (!lease.ok) {
       return NextResponse.json(
         {

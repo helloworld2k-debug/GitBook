@@ -44,6 +44,10 @@ export async function POST(request: Request) {
       userId: session.user_id,
     });
 
+    if (!lease.ok) {
+      return NextResponse.json({ allowed: false, reason: "not_authenticated" }, { status: 401 });
+    }
+
     return NextResponse.json({
       allowed: true,
       reason: "active",

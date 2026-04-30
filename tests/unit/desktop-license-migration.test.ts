@@ -4,6 +4,13 @@ import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(join(process.cwd(), "supabase/migrations/0007_desktop_license.sql"), "utf8");
 
+function getFunctionSql(functionName: string) {
+  const start = migration.indexOf(`create or replace function public.${functionName}`);
+  const next = migration.indexOf("\ncreate or replace function public.", start + 1);
+
+  return migration.slice(start, next === -1 ? undefined : next);
+}
+
 describe("desktop license migration", () => {
   it("creates license, trial, desktop session, and cloud sync lease tables", () => {
     expect(migration).toContain("create type license_feature_code as enum ('cloud_sync')");
@@ -76,6 +83,31 @@ describe("desktop license migration", () => {
     expect(migration).toContain(
       "grant execute on function public.release_cloud_sync_lease(uuid, uuid, timestamptz) to service_role",
     );
+  });
+
+  it("revalidates and locks desktop sessions inside trust-critical lease RPCs", () => {
+    const activation = getFunctionSql("activate_cloud_sync_lease");
+    const heartbeat = getFunctionSql("heartbeat_cloud_sync_lease");
+
+    for (const functionSql of [activation, heartbeat]) {
+      expect(functionSql).toContain("session_row public.desktop_sessions%rowtype");
+      expect(functionSql).toContain("from public.desktop_sessions");
+      expect(functionSql).toContain("where id = input_desktop_session_id");
+      expect(functionSql).toContain("and user_id = input_user_id");
+      expect(functionSql).toContain("and revoked_at is null");
+      expect(functionSql).toContain("and expires_at > input_now");
+      expect(functionSql).toContain("for update");
+      expect(functionSql).toContain(
+        "return query select false, 'invalid_session'::text, null::uuid, null::timestamptz, null::text",
+      );
+    }
+
+    expect(activation).toContain("and device_id = input_device_id");
+    expect(activation).toContain("and machine_code_hash = input_machine_code_hash");
+    expect(activation).toContain("session_row.user_id");
+    expect(activation).toContain("session_row.id");
+    expect(activation).toContain("session_row.device_id");
+    expect(activation).toContain("session_row.machine_code_hash");
   });
 
   it("creates a service-role-only atomic trial code redemption function", () => {
