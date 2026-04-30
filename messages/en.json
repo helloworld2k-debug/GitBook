@@ -118,6 +118,7 @@
       "manualEntryDescription": "Create one paid manual record for an existing user by email or user ID.",
       "userIdentifier": "Email or user ID",
       "amountCents": "Amount (cents)",
+      "reference": "Reference",
       "reason": "Reason",
       "submitManualDonation": "Add manual donation",
       "empty": "No donations found.",
@@ -144,6 +145,7 @@
       "action": "Action",
       "revokeReason": "Reason",
       "revoke": "Revoke",
+      "revokeAriaLabel": "Revoke certificate {certificateNumber}",
       "notIssued": "Not issued",
       "empty": "No certificates found.",
       "types": {

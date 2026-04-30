@@ -118,6 +118,7 @@
       "manualEntryDescription": "기존 사용자의 이메일 또는 사용자 ID로 결제 완료 수동 기록을 하나 만듭니다.",
       "userIdentifier": "이메일 또는 사용자 ID",
       "amountCents": "금액(센트)",
+      "reference": "참조 번호",
       "reason": "사유",
       "submitManualDonation": "수동 후원 추가",
       "empty": "후원 기록이 없습니다.",
@@ -144,6 +145,7 @@
       "action": "작업",
       "revokeReason": "사유",
       "revoke": "폐기",
+      "revokeAriaLabel": "인증서 {certificateNumber} 폐기",
       "notIssued": "미발급",
       "empty": "인증서가 없습니다.",
       "types": {

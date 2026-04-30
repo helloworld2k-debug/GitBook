@@ -118,6 +118,7 @@
       "manualEntryDescription": "既存ユーザーのメールまたはユーザー ID で支払い済み手動記録を 1 件作成します。",
       "userIdentifier": "メールまたはユーザー ID",
       "amountCents": "金額（セント）",
+      "reference": "参照番号",
       "reason": "理由",
       "submitManualDonation": "手動寄付を追加",
       "empty": "寄付はまだありません。",
@@ -144,6 +145,7 @@
       "action": "操作",
       "revokeReason": "理由",
       "revoke": "取り消す",
+      "revokeAriaLabel": "証明書 {certificateNumber} を取り消す",
       "notIssued": "未発行",
       "empty": "証明書はまだありません。",
       "types": {

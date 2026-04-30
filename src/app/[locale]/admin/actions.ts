@@ -4,11 +4,10 @@ import { revalidatePath } from "next/cache";
 import { supportedLocales, type Locale } from "@/config/site";
 import { requireAdmin } from "@/lib/auth/guards";
 import { generateCertificatesForDonation } from "@/lib/certificates/service";
-import type { Database } from "@/lib/database.types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-type DonationInsert = Database["public"]["Tables"]["donations"]["Insert"];
-type Json = Database["public"]["Tables"]["admin_audit_logs"]["Insert"]["before"];
+const MAX_REASON_LENGTH = 500;
+const MAX_MANUAL_REFERENCE_LENGTH = 120;
 
 function getSafeLocale(locale: FormDataEntryValue | null) {
   const value = String(locale ?? "en");
@@ -27,38 +26,30 @@ function getRequiredString(formData: FormData, key: string, message: string) {
 }
 
 function getRequiredReason(formData: FormData) {
-  return getRequiredString(formData, "reason", "Reason is required");
+  const reason = getRequiredString(formData, "reason", "Reason is required");
+
+  if (reason.length > MAX_REASON_LENGTH) {
+    throw new Error("Reason must be 500 characters or fewer");
+  }
+
+  return reason;
 }
 
-async function writeAuditLog(input: {
-  adminUserId: string;
-  action: string;
-  targetType: string;
-  targetId: string;
-  before: Json;
-  after: Json;
-  reason: string;
-}) {
-  const supabase = createSupabaseAdminClient();
-  const { error } = await supabase.from("admin_audit_logs").insert({
-    admin_user_id: input.adminUserId,
-    action: input.action,
-    target_type: input.targetType,
-    target_id: input.targetId,
-    before: input.before,
-    after: input.after,
-    reason: input.reason,
-  });
+function getManualReference(formData: FormData) {
+  const reference = getRequiredString(formData, "reference", "Reference is required");
 
-  if (error) {
-    throw new Error("Unable to write admin audit log");
+  if (reference.length > MAX_MANUAL_REFERENCE_LENGTH) {
+    throw new Error("Reference must be 120 characters or fewer");
   }
+
+  return `manual_${reference.replace(/[^a-zA-Z0-9._-]+/g, "-")}`;
 }
 
 export async function addManualDonation(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);
   const reason = getRequiredReason(formData);
+  const providerTransactionId = getManualReference(formData);
   const userIdentifier = getRequiredString(formData, "user_identifier", "User is required");
   const amount = Number(formData.get("amount"));
 
@@ -78,43 +69,20 @@ export async function addManualDonation(formData: FormData) {
     throw new Error("User not found");
   }
 
-  const paidAt = new Date().toISOString();
-  const donationRecord: DonationInsert = {
-    user_id: profile.id,
-    amount,
-    currency: "usd",
-    provider: "manual",
-    provider_transaction_id: `manual_${crypto.randomUUID()}`,
-    status: "paid",
-    paid_at: paidAt,
-    metadata: {
-      source: "admin_manual_entry",
-      reason,
-      admin_user_id: admin.id,
-    },
-  };
+  const { data: donationId, error: donationError } = await supabase.rpc("create_manual_paid_donation_with_audit", {
+    input_admin_user_id: admin.id,
+    input_amount: amount,
+    input_currency: "usd",
+    input_provider_transaction_id: providerTransactionId,
+    input_reason: reason,
+    input_user_id: profile.id,
+  });
 
-  const { data: donation, error: donationError } = await supabase
-    .from("donations")
-    .insert(donationRecord)
-    .select("*")
-    .single();
-
-  if (donationError || !donation) {
+  if (donationError || !donationId) {
     throw new Error("Unable to create manual donation");
   }
 
-  await writeAuditLog({
-    adminUserId: admin.id,
-    action: "add_manual_donation",
-    targetType: "donation",
-    targetId: donation.id,
-    before: null,
-    after: donation,
-    reason,
-  });
-
-  await generateCertificatesForDonation(donation.id);
+  await generateCertificatesForDonation(donationId);
 
   revalidatePath(`/${locale}/admin/donations`);
   revalidatePath(`/${locale}/admin/certificates`);
@@ -128,36 +96,15 @@ export async function revokeCertificate(formData: FormData) {
   const certificateId = getRequiredString(formData, "certificate_id", "Certificate is required");
   const supabase = createSupabaseAdminClient();
 
-  const { data: before, error: beforeError } = await supabase
-    .from("certificates")
-    .select("*")
-    .eq("id", certificateId)
-    .single();
+  const { error: revokeError } = await supabase.rpc("revoke_certificate_with_audit", {
+    input_admin_user_id: admin.id,
+    input_certificate_id: certificateId,
+    input_reason: reason,
+  });
 
-  if (beforeError || !before) {
-    throw new Error("Certificate not found");
-  }
-
-  const { data: after, error: updateError } = await supabase
-    .from("certificates")
-    .update({ status: "revoked", revoked_at: new Date().toISOString() })
-    .eq("id", certificateId)
-    .select("*")
-    .single();
-
-  if (updateError || !after) {
+  if (revokeError) {
     throw new Error("Unable to revoke certificate");
   }
-
-  await writeAuditLog({
-    adminUserId: admin.id,
-    action: "revoke_certificate",
-    targetType: "certificate",
-    targetId: certificateId,
-    before,
-    after,
-    reason,
-  });
 
   revalidatePath(`/${locale}/admin/certificates`);
   revalidatePath(`/${locale}/admin/audit-logs`);

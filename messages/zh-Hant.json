@@ -118,6 +118,7 @@
       "manualEntryDescription": "為既有使用者以電子郵件或使用者 ID 建立一筆已付款人工記錄。",
       "userIdentifier": "電子郵件或使用者 ID",
       "amountCents": "金額（美分）",
+      "reference": "參考編號",
       "reason": "原因",
       "submitManualDonation": "新增人工捐贈",
       "empty": "尚無捐贈。",
@@ -144,6 +145,7 @@
       "action": "操作",
       "revokeReason": "原因",
       "revoke": "撤銷",
+      "revokeAriaLabel": "撤銷證書 {certificateNumber}",
       "notIssued": "尚未頒發",
       "empty": "尚無證書。",
       "types": {

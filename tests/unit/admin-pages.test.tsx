@@ -25,7 +25,7 @@ vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn((namespace: "admin") => {
     const messages = testMessages[intlState.locale as keyof typeof testMessages][namespace];
 
-    return (key: string) => {
+    return (key: string, values?: Record<string, string>) => {
       const value = key.split(".").reduce<unknown>((current, segment) => {
         if (current && typeof current === "object" && segment in current) {
           return (current as Record<string, unknown>)[segment];
@@ -38,7 +38,10 @@ vi.mock("next-intl/server", () => ({
         throw new Error(`Missing test message: ${namespace}.${key}`);
       }
 
-      return value;
+      return Object.entries(values ?? {}).reduce(
+        (message, [name, replacement]) => message.replaceAll(`{${name}}`, replacement),
+        value,
+      );
     };
   }),
   setRequestLocale: vi.fn((locale: string) => {
@@ -85,6 +88,7 @@ const testMessages = {
         manualEntryDescription: "Create one paid manual record for an existing user by email or user ID.",
         userIdentifier: "Email or user ID",
         amountCents: "Amount (cents)",
+        reference: "Reference",
         reason: "Reason",
         submitManualDonation: "Add manual donation",
         empty: "No donations found.",
@@ -111,6 +115,7 @@ const testMessages = {
         action: "Action",
         revokeReason: "Reason",
         revoke: "Revoke",
+        revokeAriaLabel: "Revoke certificate {certificateNumber}",
         notIssued: "Not issued",
         empty: "No certificates found.",
         types: {
@@ -158,6 +163,7 @@ const testMessages = {
         manualEntryDescription: "為既有使用者以電子郵件或使用者 ID 建立一筆已付款人工記錄。",
         userIdentifier: "電子郵件或使用者 ID",
         amountCents: "金額（美分）",
+        reference: "參考編號",
         reason: "原因",
         submitManualDonation: "新增人工捐贈",
         empty: "尚無捐贈。",
@@ -184,6 +190,7 @@ const testMessages = {
         action: "操作",
         revokeReason: "原因",
         revoke: "撤銷",
+        revokeAriaLabel: "撤銷證書 {certificateNumber}",
         notIssued: "尚未頒發",
         empty: "尚無證書。",
         types: {
@@ -231,6 +238,7 @@ const testMessages = {
         manualEntryDescription: "既存ユーザーのメールまたはユーザー ID で支払い済み手動記録を 1 件作成します。",
         userIdentifier: "メールまたはユーザー ID",
         amountCents: "金額（セント）",
+        reference: "参照番号",
         reason: "理由",
         submitManualDonation: "手動寄付を追加",
         empty: "寄付はまだありません。",
@@ -257,6 +265,7 @@ const testMessages = {
         action: "操作",
         revokeReason: "理由",
         revoke: "取り消す",
+        revokeAriaLabel: "証明書 {certificateNumber} を取り消す",
         notIssued: "未発行",
         empty: "証明書はまだありません。",
         types: {
@@ -304,6 +313,7 @@ const testMessages = {
         manualEntryDescription: "기존 사용자의 이메일 또는 사용자 ID로 결제 완료 수동 기록을 하나 만듭니다.",
         userIdentifier: "이메일 또는 사용자 ID",
         amountCents: "금액(센트)",
+        reference: "참조 번호",
         reason: "사유",
         submitManualDonation: "수동 후원 추가",
         empty: "후원 기록이 없습니다.",
@@ -330,6 +340,7 @@ const testMessages = {
         action: "작업",
         revokeReason: "사유",
         revoke: "폐기",
+        revokeAriaLabel: "인증서 {certificateNumber} 폐기",
         notIssued: "미발급",
         empty: "인증서가 없습니다.",
         types: {
@@ -512,7 +523,7 @@ describe("admin pages", () => {
     expect(screen.queryByText("active")).not.toBeInTheDocument();
     expect(screen.getByText("2026년 4월 29일")).toBeInTheDocument();
     expect(screen.getByLabelText("사유")).toBeRequired();
-    expect(screen.getByRole("button", { name: "폐기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "인증서 DON-2026-000001 폐기" })).toBeInTheDocument();
   });
 
   it("renders Japanese admin certificate enum labels", async () => {

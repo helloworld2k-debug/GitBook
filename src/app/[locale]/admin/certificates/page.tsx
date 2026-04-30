@@ -98,11 +98,15 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
                               <input
                                 className="min-h-10 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
                                 id={`revoke-reason-${certificate.id}`}
+                                maxLength={500}
                                 name="reason"
                                 placeholder={t("certificates.revokeReason")}
                                 required
                               />
                               <button
+                                aria-label={t("certificates.revokeAriaLabel", {
+                                  certificateNumber: certificate.certificate_number,
+                                })}
                                 className="min-h-10 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                                 type="submit"
                               >

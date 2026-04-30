@@ -230,6 +230,25 @@ export type Database = {
           sponsor_level_code: string | null;
         }[];
       };
+      create_manual_paid_donation_with_audit: {
+        Args: {
+          input_admin_user_id: string;
+          input_amount: number;
+          input_currency: string;
+          input_provider_transaction_id: string;
+          input_reason: string;
+          input_user_id: string;
+        };
+        Returns: string;
+      };
+      revoke_certificate_with_audit: {
+        Args: {
+          input_admin_user_id: string;
+          input_certificate_id: string;
+          input_reason: string;
+        };
+        Returns: string;
+      };
       get_paid_total: {
         Args: { input_user_id: string };
         Returns: number;

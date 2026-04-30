@@ -60,7 +60,7 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
               <h2 className="text-base font-semibold text-slate-950">{t("donations.manualEntryTitle")}</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">{t("donations.manualEntryDescription")}</p>
             </div>
-            <form action={addManualDonation} className="mt-4 grid gap-3 md:grid-cols-[1fr_11rem_1fr_auto]">
+            <form action={addManualDonation} className="mt-4 grid gap-3 md:grid-cols-[1fr_11rem_1fr_1fr_auto]">
               <input name="locale" type="hidden" value={locale} />
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("donations.userIdentifier")}
@@ -81,9 +81,19 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
                 />
               </label>
               <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("donations.reference")}
+                <input
+                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  maxLength={120}
+                  name="reference"
+                  required
+                />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("donations.reason")}
                 <input
                   className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  maxLength={500}
                   name="reason"
                   required
                 />
