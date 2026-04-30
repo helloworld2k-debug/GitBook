@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createPayPalOrder } from "@/lib/payments/paypal";
 import { findDonationTier } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -13,10 +12,6 @@ function getSiteOrigin() {
   }
 
   return origin;
-}
-
-function formatPayPalAmount(cents: number) {
-  return (cents / 100).toFixed(2);
 }
 
 export async function POST(request: Request) {
@@ -35,20 +30,5 @@ export async function POST(request: Request) {
     return NextResponse.redirect(`${origin}/en/login?next=${encodeURIComponent("/en/donate")}`, 303);
   }
 
-  const order = await createPayPalOrder({
-    amount: formatPayPalAmount(tier.amount),
-    cancelUrl: `${origin}/en/donate?payment=cancelled`,
-    currency: tier.currency.toUpperCase(),
-    returnUrl: `${origin}/en/dashboard?payment=paypal-return`,
-    tierCode: tier.code,
-    userId: data.user.id,
-  });
-
-  const approvalLink = order.links.find((link) => link.rel === "approve")?.href;
-
-  if (!approvalLink) {
-    return NextResponse.json({ error: "Missing PayPal approval link" }, { status: 502 });
-  }
-
-  return NextResponse.redirect(approvalLink, 303);
+  return NextResponse.json({ error: "PayPal checkout is not enabled yet." }, { status: 503 });
 }

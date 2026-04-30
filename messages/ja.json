@@ -44,7 +44,8 @@
     },
     "checkoutStripe": "Stripe で支払う",
     "checkoutPayPal": "PayPal で支払う",
-    "oneTimeNote": "一回限りの寄付です。自動更新はありません。"
+    "oneTimeNote": "一回限りの寄付です。自動更新はありません。",
+    "payPalUnavailable": "PayPal はまだ有効ではありません。PayPal の寄付記録と証明書発行は現在統合中です。"
   },
   "sponsors": {
     "eyebrow": "スポンサーウォール",

@@ -3,20 +3,20 @@ import type { donationTiers } from "@/config/site";
 type Tier = (typeof donationTiers)[number];
 
 type DonationTierCardProps = {
-  checkoutPayPalLabel: string;
   checkoutStripeLabel: string;
   label: string;
   locale: string;
   oneTimeNote: string;
+  payPalUnavailableNote: string;
   tier: Tier;
 };
 
 export function DonationTierCard({
-  checkoutPayPalLabel,
   checkoutStripeLabel,
   label,
   locale,
   oneTimeNote,
+  payPalUnavailableNote,
   tier,
 }: DonationTierCardProps) {
   const amount = new Intl.NumberFormat(locale, {
@@ -39,15 +39,9 @@ export function DonationTierCard({
             {checkoutStripeLabel}
           </button>
         </form>
-        <form action="/api/checkout/paypal" method="post">
-          <input type="hidden" name="tier" value={tier.code} />
-          <button
-            className="flex min-h-11 w-full cursor-pointer items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-            type="submit"
-          >
-            {checkoutPayPalLabel}
-          </button>
-        </form>
+        <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-600">
+          {payPalUnavailableNote}
+        </p>
       </div>
     </article>
   );

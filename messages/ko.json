@@ -44,7 +44,8 @@
     },
     "checkoutStripe": "Stripe로 결제",
     "checkoutPayPal": "PayPal로 결제",
-    "oneTimeNote": "일회성 기부입니다. 자동 갱신되지 않습니다."
+    "oneTimeNote": "일회성 기부입니다. 자동 갱신되지 않습니다.",
+    "payPalUnavailable": "PayPal은 아직 활성화되지 않았습니다. PayPal 후원 기록과 인증서 발급을 통합하는 중입니다."
   },
   "sponsors": {
     "eyebrow": "후원자 벽",

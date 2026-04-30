@@ -30,7 +30,7 @@ describe("PayPal checkout route", () => {
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user_123" } } });
   });
 
-  it("uses the canonical site URL for PayPal redirects instead of the request Origin", async () => {
+  it("keeps PayPal checkout disabled until donation records and certificates are integrated", async () => {
     const formData = new FormData();
     formData.set("tier", "yearly");
 
@@ -44,18 +44,11 @@ describe("PayPal checkout route", () => {
       }),
     );
 
-    expect(mocks.createPayPalOrder).toHaveBeenCalledWith(
-      expect.objectContaining({
-        amount: "50.00",
-        cancelUrl: "https://threefriends.example/en/donate?payment=cancelled",
-        currency: "USD",
-        returnUrl: "https://threefriends.example/en/dashboard?payment=paypal-return",
-        tierCode: "yearly",
-        userId: "user_123",
-      }),
-    );
-    expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("https://paypal.test/approve");
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      error: "PayPal checkout is not enabled yet.",
+    });
+    expect(mocks.createPayPalOrder).not.toHaveBeenCalled();
   });
 
   it("rejects invalid donation tiers", async () => {

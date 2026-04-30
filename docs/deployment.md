@@ -58,6 +58,9 @@ If you are not using the Supabase CLI, open the SQL editor and run:
 
 1. `supabase/migrations/0001_initial_schema.sql`
 2. `supabase/migrations/0002_certificate_functions.sql`
+3. `supabase/migrations/0003_public_sponsors.sql`
+4. `supabase/migrations/0004_public_display_name_limit.sql`
+5. `supabase/migrations/0005_admin_audit_rpcs.sql`
 
 The migrations create profiles, donation tiers, sponsor levels, donations, certificates, admin audit logs, row-level security policies, and certificate number functions.
 

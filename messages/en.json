@@ -44,7 +44,8 @@
     },
     "checkoutStripe": "Pay with Stripe",
     "checkoutPayPal": "Pay with PayPal",
-    "oneTimeNote": "One-time donation. No automatic renewal."
+    "oneTimeNote": "One-time donation. No automatic renewal.",
+    "payPalUnavailable": "PayPal is not enabled yet because PayPal donation records and certificates are still being integrated."
   },
   "sponsors": {
     "eyebrow": "Sponsor wall",

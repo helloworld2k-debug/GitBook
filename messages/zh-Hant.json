@@ -44,7 +44,8 @@
     },
     "checkoutStripe": "使用 Stripe 支付",
     "checkoutPayPal": "使用 PayPal 支付",
-    "oneTimeNote": "一次性捐贈。不會自動續費。"
+    "oneTimeNote": "一次性捐贈。不會自動續費。",
+    "payPalUnavailable": "PayPal 尚未啟用，因為 PayPal 捐贈記錄與證書仍在整合中。"
   },
   "sponsors": {
     "eyebrow": "贊助牆",
