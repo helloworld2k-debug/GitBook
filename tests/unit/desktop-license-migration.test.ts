@@ -54,6 +54,27 @@ describe("desktop license migration", () => {
     );
   });
 
+  it("creates a service-role-only atomic trial code redemption function", () => {
+    expect(migration).toContain("create or replace function public.redeem_trial_code");
+    expect(migration).toContain("input_code_hash text");
+    expect(migration).toContain("input_machine_code_hash text");
+    expect(migration).toContain("returns table(ok boolean, reason text, valid_until timestamptz)");
+    expect(migration).toContain("trial_code_invalid");
+    expect(migration).toContain("trial_code_inactive");
+    expect(migration).toContain("trial_code_limit_reached");
+    expect(migration).toContain("machine_trial_used");
+    expect(migration).toContain("duplicate_trial_code_user");
+    expect(migration).toContain("insert into public.machine_trial_claims");
+    expect(migration).toContain("insert into public.trial_code_redemptions");
+    expect(migration).toContain("redemption_count = redemption_count + 1");
+    expect(migration).toContain(
+      "revoke execute on function public.redeem_trial_code(uuid, text, text, timestamptz) from public",
+    );
+    expect(migration).toContain(
+      "grant execute on function public.redeem_trial_code(uuid, text, text, timestamptz) to service_role",
+    );
+  });
+
   it("keeps sensitive code and token fields hashed", () => {
     expect(migration).toContain("code_hash text not null");
     expect(migration).toContain("token_hash text not null");

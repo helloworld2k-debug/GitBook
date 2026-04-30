@@ -778,6 +778,19 @@ export type Database = {
         };
         Returns: string;
       };
+      redeem_trial_code: {
+        Args: {
+          input_code_hash: string;
+          input_machine_code_hash: string;
+          input_now: string;
+          input_user_id: string;
+        };
+        Returns: {
+          ok: boolean;
+          reason: string;
+          valid_until: string | null;
+        }[];
+      };
       exchange_desktop_auth_code: {
         Args: {
           input_app_version: string | null;

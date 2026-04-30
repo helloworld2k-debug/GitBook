@@ -115,6 +115,20 @@
       "saved": "隱私設定已儲存。",
       "error": "無法儲存隱私設定。請再試一次。"
     },
+    "trial": {
+      "title": "試用碼",
+      "description": "兌換團隊提供的代碼，在一台符合條件的電腦上啟用 3 天雲端同步。",
+      "device": "桌面裝置",
+      "code": "代碼",
+      "submit": "兌換試用",
+      "saved": "試用已兌換。",
+      "invalid": "試用碼或選擇的裝置無效。",
+      "inactive": "此試用碼目前不可用。",
+      "limit": "此試用碼已達兌換上限。",
+      "machineUsed": "這台電腦已使用過雲端同步試用。",
+      "duplicate": "此帳號已兌換過這個試用碼。",
+      "error": "無法兌換試用碼。"
+    },
     "donationStatuses": {
       "pending": "待處理",
       "paid": "已付款",

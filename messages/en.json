@@ -138,6 +138,20 @@
       "saved": "Privacy settings saved.",
       "error": "Could not save privacy settings. Please try again."
     },
+    "trial": {
+      "title": "Trial code",
+      "description": "Redeem a team-provided code to enable 3 days of cloud sync on one eligible computer.",
+      "device": "Desktop device",
+      "code": "Code",
+      "submit": "Redeem trial",
+      "saved": "Trial redeemed.",
+      "invalid": "The trial code or selected device is invalid.",
+      "inactive": "This trial code is not active.",
+      "limit": "This trial code has reached its redemption limit.",
+      "machineUsed": "This computer has already used a cloud sync trial.",
+      "duplicate": "This account has already redeemed this trial code.",
+      "error": "Could not redeem the trial code."
+    },
     "donationStatuses": {
       "pending": "Pending",
       "paid": "Paid",

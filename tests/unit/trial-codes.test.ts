@@ -1,0 +1,118 @@
+import { describe, expect, it, vi } from "vitest";
+import { hashDesktopSecret } from "@/lib/license/hash";
+import { redeemTrialCode } from "@/lib/license/trial-codes";
+
+function createTrialClient(row: { ok: boolean; reason: string; valid_until: string | null } | null, error: unknown = null) {
+  return {
+    rpc: vi.fn(async () => ({ data: row ? [row] : [], error })),
+  };
+}
+
+describe("redeemTrialCode", () => {
+  it("returns a valid redemption and calls the RPC with hashed code and existing machine hash", async () => {
+    const client = createTrialClient({
+      ok: true,
+      reason: "redeemed",
+      valid_until: "2026-05-04T00:00:00.000Z",
+    });
+    const now = new Date("2026-05-01T00:00:00.000Z");
+
+    const result = await redeemTrialCode(client, {
+      userId: "user-1",
+      code: "SPRING-2026",
+      machineCodeHash: "machine-hash",
+      now,
+    });
+
+    expect(result).toEqual({ ok: true, validUntil: "2026-05-04T00:00:00.000Z" });
+    expect(client.rpc).toHaveBeenCalledWith("redeem_trial_code", {
+      input_code_hash: await hashDesktopSecret("SPRING-2026", "trial_code"),
+      input_machine_code_hash: "machine-hash",
+      input_now: "2026-05-01T00:00:00.000Z",
+      input_user_id: "user-1",
+    });
+  });
+
+  it("maps a used machine to a machine trial failure", async () => {
+    const client = createTrialClient({
+      ok: false,
+      reason: "machine_trial_used",
+      valid_until: null,
+    });
+
+    const result = await redeemTrialCode(client, {
+      userId: "user-2",
+      code: "SPRING-2026",
+      machineCodeHash: "machine-hash",
+      now: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    expect(result).toEqual({ ok: false, reason: "machine_trial_used" });
+  });
+
+  it("maps an inactive code to an inactive trial failure", async () => {
+    const client = createTrialClient({
+      ok: false,
+      reason: "trial_code_inactive",
+      valid_until: null,
+    });
+
+    const result = await redeemTrialCode(client, {
+      userId: "user-1",
+      code: "SPRING-2026",
+      machineCodeHash: "machine-hash",
+      now: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    expect(result).toEqual({ ok: false, reason: "trial_code_inactive" });
+  });
+
+  it.each([
+    "trial_code_invalid",
+    "trial_code_limit_reached",
+    "duplicate_trial_code_user",
+  ] as const)("maps %s failures from the RPC", async (reason) => {
+    const client = createTrialClient({
+      ok: false,
+      reason,
+      valid_until: null,
+    });
+
+    await expect(
+      redeemTrialCode(client, {
+        userId: "user-1",
+        code: "SPRING-2026",
+        machineCodeHash: "machine-hash",
+        now: new Date("2026-05-01T00:00:00.000Z"),
+      }),
+    ).resolves.toEqual({ ok: false, reason });
+  });
+
+  it("throws when the RPC fails", async () => {
+    const client = createTrialClient(null, new Error("database unavailable"));
+
+    await expect(
+      redeemTrialCode(client, {
+        userId: "user-1",
+        code: "SPRING-2026",
+        machineCodeHash: "machine-hash",
+      }),
+    ).rejects.toThrow("Unable to redeem trial code");
+  });
+
+  it("throws when the RPC reports success without a valid-until value", async () => {
+    const client = createTrialClient({
+      ok: true,
+      reason: "redeemed",
+      valid_until: null,
+    });
+
+    await expect(
+      redeemTrialCode(client, {
+        userId: "user-1",
+        code: "SPRING-2026",
+        machineCodeHash: "machine-hash",
+      }),
+    ).rejects.toThrow("Trial code redemption response was malformed");
+  });
+});

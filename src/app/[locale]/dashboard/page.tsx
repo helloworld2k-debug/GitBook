@@ -6,7 +6,12 @@ import { Link } from "@/i18n/routing";
 import { requireUser } from "@/lib/auth/guards";
 import { formatCertificateIssuedDate, getCertificateTypeLabel } from "@/lib/certificates/render";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { updateAccountProfile, updateDashboardPassword, updatePublicSupporterPrivacy } from "./actions";
+import {
+  redeemDashboardTrialCode,
+  updateAccountProfile,
+  updateDashboardPassword,
+  updatePublicSupporterPrivacy,
+} from "./actions";
 
 type DashboardPageProps = {
   params: Promise<{
@@ -16,6 +21,7 @@ type DashboardPageProps = {
     privacy?: string;
     profile?: string;
     password?: string;
+    trial?: string;
   }>;
 };
 
@@ -47,6 +53,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
   const privacyStatus = statusParams?.privacy;
   const profileStatus = statusParams?.profile;
   const passwordStatus = statusParams?.password;
+  const trialStatus = statusParams?.trial;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -64,6 +71,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
     { data: donations, error: donationsError },
     { data: certificates, error: certificatesError },
     { data: profile, error: profileError },
+    { data: desktopSessions, error: desktopSessionsError },
   ] = await Promise.all([
     supabase.from("donations").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "paid"),
     supabase
@@ -89,6 +97,12 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
       .select("email,display_name,public_supporter_enabled,public_display_name")
       .eq("id", user.id)
       .single(),
+    supabase
+      .from("desktop_sessions")
+      .select("id,device_id,platform,app_version,last_seen_at")
+      .eq("user_id", user.id)
+      .order("last_seen_at", { ascending: false })
+      .limit(10),
   ]);
 
   if (donationCountError) {
@@ -111,9 +125,26 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
     throw profileError;
   }
 
+  if (desktopSessionsError) {
+    throw desktopSessionsError;
+  }
+
   const updatePrivacy = updatePublicSupporterPrivacy.bind(null, locale);
   const updateProfile = updateAccountProfile.bind(null, locale);
   const updatePassword = updateDashboardPassword.bind(null, locale);
+  const redeemTrial = redeemDashboardTrialCode.bind(null, locale);
+  const trialStatusMessages = {
+    duplicate: t("trial.duplicate"),
+    error: t("trial.error"),
+    inactive: t("trial.inactive"),
+    invalid: t("trial.invalid"),
+    limit: t("trial.limit"),
+    machine_used: t("trial.machineUsed"),
+    saved: t("trial.saved"),
+  } as const;
+  const trialMessage = trialStatus && trialStatus in trialStatusMessages
+    ? trialStatusMessages[trialStatus as keyof typeof trialStatusMessages]
+    : null;
 
   return (
     <>
@@ -170,6 +201,55 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
               )}
             </section>
             <div className="space-y-6">
+              <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+                <div className="border-b border-slate-200 px-5 py-4">
+                  <h2 className="text-lg font-semibold tracking-normal text-slate-950">{t("trial.title")}</h2>
+                  <p className="mt-1 text-sm text-slate-600">{t("trial.description")}</p>
+                </div>
+                <form action={redeemTrial} className="space-y-4 px-5 py-5">
+                  {trialMessage && trialStatus === "saved" ? (
+                    <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
+                      {trialMessage}
+                    </p>
+                  ) : null}
+                  {trialMessage && trialStatus !== "saved" ? (
+                    <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-950" role="alert">
+                      {trialMessage}
+                    </p>
+                  ) : null}
+                  <label className="block text-sm font-medium text-slate-950">
+                    {t("trial.device")}
+                    <select
+                      className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                      name="desktop_session_id"
+                      required
+                    >
+                      {(desktopSessions ?? []).map((session) => (
+                        <option key={session.id} value={session.id}>
+                          {[session.device_id, session.platform, session.app_version, formatDashboardDate(session.last_seen_at, locale)]
+                            .filter(Boolean)
+                            .join(" - ")}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-sm font-medium text-slate-950">
+                    {t("trial.code")}
+                    <input
+                      className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                      name="trial_code"
+                      required
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-not-allowed disabled:bg-slate-400"
+                    disabled={!desktopSessions || desktopSessions.length === 0}
+                  >
+                    {t("trial.submit")}
+                  </button>
+                </form>
+              </section>
               <section className="rounded-md border border-slate-200 bg-white shadow-sm">
                 <div className="border-b border-slate-200 px-5 py-4">
                   <h2 className="text-lg font-semibold tracking-normal text-slate-950">{t("accountTitle")}</h2>
