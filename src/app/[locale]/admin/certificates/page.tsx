@@ -11,6 +11,9 @@ type AdminCertificatesPageProps = {
   }>;
 };
 
+type CertificateType = "donation" | "honor";
+type CertificateStatus = "active" | "revoked" | "generation_failed";
+
 function formatIssuedAt(value: string | null, locale: string, fallback: string) {
   if (!value) {
     return fallback;
@@ -73,8 +76,12 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
                         <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-950">
                           {certificate.certificate_number}
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">{certificate.type}</td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">{certificate.status}</td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                          {t(`certificates.types.${certificate.type as CertificateType}`)}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                          {t(`certificates.statuses.${certificate.status as CertificateStatus}`)}
+                        </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatIssuedAt(certificate.issued_at, locale, t("certificates.notIssued"))}
                         </td>

@@ -73,7 +73,14 @@
       "status": "Status",
       "amount": "Amount",
       "transactionId": "Transaction ID",
-      "empty": "No donations found."
+      "empty": "No donations found.",
+      "statuses": {
+        "pending": "Pending",
+        "paid": "Paid",
+        "cancelled": "Cancelled",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      }
     },
     "certificates": {
       "eyebrow": "Admin",
@@ -83,7 +90,16 @@
       "status": "Status",
       "issued": "Issued",
       "notIssued": "Not issued",
-      "empty": "No certificates found."
+      "empty": "No certificates found.",
+      "types": {
+        "donation": "Donation Certificate",
+        "honor": "Honor Certificate"
+      },
+      "statuses": {
+        "active": "Active",
+        "revoked": "Revoked",
+        "generation_failed": "Generation failed"
+      }
     }
   },
   "certificate": {

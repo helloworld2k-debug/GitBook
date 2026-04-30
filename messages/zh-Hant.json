@@ -73,7 +73,14 @@
       "status": "狀態",
       "amount": "金額",
       "transactionId": "交易 ID",
-      "empty": "尚無捐贈。"
+      "empty": "尚無捐贈。",
+      "statuses": {
+        "pending": "待處理",
+        "paid": "已付款",
+        "cancelled": "已取消",
+        "failed": "失敗",
+        "refunded": "已退款"
+      }
     },
     "certificates": {
       "eyebrow": "管理後台",
@@ -83,7 +90,16 @@
       "status": "狀態",
       "issued": "頒發日期",
       "notIssued": "尚未頒發",
-      "empty": "尚無證書。"
+      "empty": "尚無證書。",
+      "types": {
+        "donation": "捐贈證書",
+        "honor": "榮譽證書"
+      },
+      "statuses": {
+        "active": "有效",
+        "revoked": "已撤銷",
+        "generation_failed": "產生失敗"
+      }
     }
   },
   "certificate": {

@@ -73,7 +73,14 @@
       "status": "ステータス",
       "amount": "金額",
       "transactionId": "取引 ID",
-      "empty": "寄付はまだありません。"
+      "empty": "寄付はまだありません。",
+      "statuses": {
+        "pending": "保留中",
+        "paid": "支払い済み",
+        "cancelled": "キャンセル済み",
+        "failed": "失敗",
+        "refunded": "返金済み"
+      }
     },
     "certificates": {
       "eyebrow": "管理画面",
@@ -83,7 +90,16 @@
       "status": "ステータス",
       "issued": "発行日",
       "notIssued": "未発行",
-      "empty": "証明書はまだありません。"
+      "empty": "証明書はまだありません。",
+      "types": {
+        "donation": "寄付証明書",
+        "honor": "表彰証明書"
+      },
+      "statuses": {
+        "active": "有効",
+        "revoked": "取り消し済み",
+        "generation_failed": "生成失敗"
+      }
     }
   },
   "certificate": {

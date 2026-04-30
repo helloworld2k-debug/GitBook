@@ -79,6 +79,13 @@ const testMessages = {
         amount: "Amount",
         transactionId: "Transaction ID",
         empty: "No donations found.",
+        statuses: {
+          pending: "Pending",
+          paid: "Paid",
+          cancelled: "Cancelled",
+          failed: "Failed",
+          refunded: "Refunded",
+        },
       },
       certificates: {
         eyebrow: "Admin",
@@ -89,6 +96,15 @@ const testMessages = {
         issued: "Issued",
         notIssued: "Not issued",
         empty: "No certificates found.",
+        types: {
+          donation: "Donation Certificate",
+          honor: "Honor Certificate",
+        },
+        statuses: {
+          active: "Active",
+          revoked: "Revoked",
+          generation_failed: "Generation failed",
+        },
       },
     },
   },
@@ -110,6 +126,13 @@ const testMessages = {
         amount: "金額",
         transactionId: "交易 ID",
         empty: "尚無捐贈。",
+        statuses: {
+          pending: "待處理",
+          paid: "已付款",
+          cancelled: "已取消",
+          failed: "失敗",
+          refunded: "已退款",
+        },
       },
       certificates: {
         eyebrow: "管理後台",
@@ -120,6 +143,15 @@ const testMessages = {
         issued: "頒發日期",
         notIssued: "尚未頒發",
         empty: "尚無證書。",
+        types: {
+          donation: "捐贈證書",
+          honor: "榮譽證書",
+        },
+        statuses: {
+          active: "有效",
+          revoked: "已撤銷",
+          generation_failed: "產生失敗",
+        },
       },
     },
   },
@@ -141,6 +173,13 @@ const testMessages = {
         amount: "금액",
         transactionId: "거래 ID",
         empty: "후원 기록이 없습니다.",
+        statuses: {
+          pending: "대기 중",
+          paid: "결제 완료",
+          cancelled: "취소됨",
+          failed: "실패",
+          refunded: "환불됨",
+        },
       },
       certificates: {
         eyebrow: "관리",
@@ -151,6 +190,15 @@ const testMessages = {
         issued: "발급일",
         notIssued: "미발급",
         empty: "인증서가 없습니다.",
+        types: {
+          donation: "후원 인증서",
+          honor: "공로 인증서",
+        },
+        statuses: {
+          active: "활성",
+          revoked: "폐기됨",
+          generation_failed: "생성 실패",
+        },
       },
     },
   },
@@ -216,7 +264,8 @@ describe("admin pages", () => {
     expect(donationsQuery.order).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(screen.getByRole("heading", { name: "管理捐贈" })).toBeInTheDocument();
     expect(screen.getByText("stripe")).toBeInTheDocument();
-    expect(screen.getByText("paid")).toBeInTheDocument();
+    expect(screen.getByText("已付款")).toBeInTheDocument();
+    expect(screen.queryByText("paid")).not.toBeInTheDocument();
     expect(screen.getByText("US$50.00 USD")).toBeInTheDocument();
     expect(screen.getByText("txn_123")).toBeInTheDocument();
   });
@@ -259,8 +308,10 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "관리자 인증서" })).toBeInTheDocument();
     expect(screen.getByText("인증서 번호")).toBeInTheDocument();
     expect(screen.getByText("DON-2026-000001")).toBeInTheDocument();
-    expect(screen.getByText("donation")).toBeInTheDocument();
-    expect(screen.getByText("active")).toBeInTheDocument();
+    expect(screen.getByText("후원 인증서")).toBeInTheDocument();
+    expect(screen.getByText("활성")).toBeInTheDocument();
+    expect(screen.queryByText("donation")).not.toBeInTheDocument();
+    expect(screen.queryByText("active")).not.toBeInTheDocument();
     expect(screen.getByText("2026년 4월 29일")).toBeInTheDocument();
   });
 
