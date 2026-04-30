@@ -18,7 +18,11 @@ type ChainState = {
   updatePayload: unknown;
 };
 
-function createMaybeSingleClient(tableRows: Record<string, unknown>, tableErrors: Record<string, unknown> = {}) {
+function createMaybeSingleClient(
+  tableRows: Record<string, unknown>,
+  tableErrors: Record<string, unknown> = {},
+  tableUpdateErrors: Record<string, unknown> = {},
+) {
   const states = new Map<string, ChainState>();
 
   const from = vi.fn((table: string) => {
@@ -37,6 +41,9 @@ function createMaybeSingleClient(tableRows: Record<string, unknown>, tableErrors
       }),
       update: vi.fn((payload: unknown) => {
         state.updatePayload = payload;
+        if (tableUpdateErrors[table]) {
+          throw tableUpdateErrors[table];
+        }
         return builder;
       }),
     };
@@ -100,6 +107,60 @@ describe("getLicenseStatus", () => {
     ]);
   });
 
+  it("allows active machine trial when a paid entitlement is expired", async () => {
+    const client = createMaybeSingleClient({
+      license_entitlements: {
+        status: "active",
+        valid_until: "2026-04-30T00:00:00.000Z",
+      },
+      machine_trial_claims: {
+        trial_valid_until: "2026-05-04T00:00:00.000Z",
+      },
+    });
+
+    const status = await getLicenseStatus(client, {
+      userId: "user-1",
+      machineCodeHash: "machine-hash-1",
+      now: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    expect(status).toEqual({
+      allowed: true,
+      feature: "cloud_sync",
+      reason: "trial_active",
+      remainingDays: 3,
+      source: "trial",
+      validUntil: "2026-05-04T00:00:00.000Z",
+    });
+  });
+
+  it("does not allow active machine trial to bypass a revoked paid entitlement", async () => {
+    const client = createMaybeSingleClient({
+      license_entitlements: {
+        status: "revoked",
+        valid_until: "2026-05-31T00:00:00.000Z",
+      },
+      machine_trial_claims: {
+        trial_valid_until: "2026-05-04T00:00:00.000Z",
+      },
+    });
+
+    const status = await getLicenseStatus(client, {
+      userId: "user-1",
+      machineCodeHash: "machine-hash-1",
+      now: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    expect(status).toEqual({
+      allowed: false,
+      feature: "cloud_sync",
+      reason: "revoked",
+      remainingDays: 0,
+      validUntil: "2026-05-31T00:00:00.000Z",
+    });
+    expect(client.from).not.toHaveBeenCalledWith("machine_trial_claims");
+  });
+
   it("requires a trial code when there is no paid entitlement or trial", async () => {
     const client = createMaybeSingleClient({});
 
@@ -157,6 +218,20 @@ describe("desktop session helpers", () => {
         }),
       ),
     ).toBe("another-token");
+  });
+
+  it("returns null for malformed bearer authorization headers", () => {
+    const requestWithAuthorization = (authorization: string) =>
+      new Request("https://threefriends.example/api/license/status", {
+        headers: { authorization },
+      });
+
+    expect(readBearerToken(requestWithAuthorization("desktop-token"))).toBeNull();
+    expect(readBearerToken(requestWithAuthorization("Bearer"))).toBeNull();
+    expect(readBearerToken(requestWithAuthorization("Bearer "))).toBeNull();
+    expect(readBearerToken(requestWithAuthorization("Bearer  desktop-token"))).toBeNull();
+    expect(readBearerToken(requestWithAuthorization("Bearer desktop token"))).toBeNull();
+    expect(readBearerToken(requestWithAuthorization("Bearer desktop-token extra"))).toBeNull();
   });
 
   it("returns null for missing, expired, and revoked sessions", async () => {
@@ -229,6 +304,38 @@ describe("desktop session helpers", () => {
       await hashDesktopSecret("desktop-token", "desktop_token"),
     ]);
     expect(client.states.get("desktop_sessions")?.filters).toContainEqual(["id", "session-1"]);
+    expect(client.states.get("desktop_sessions")?.updatePayload).toEqual({
+      last_seen_at: "2026-05-01T00:00:00.000Z",
+    });
+  });
+
+  it("returns a valid desktop session when the last_seen_at update fails", async () => {
+    const now = new Date("2026-05-01T00:00:00.000Z");
+    const client = createMaybeSingleClient(
+      {
+        desktop_sessions: {
+          id: "session-1",
+          user_id: "user-1",
+          device_id: "device-a",
+          machine_code_hash: "machine-hash-1",
+          platform: "macos",
+          app_version: "1.0.0",
+          expires_at: "2026-05-02T00:00:00.000Z",
+          revoked_at: null,
+        },
+      },
+      {},
+      { desktop_sessions: new Error("update failed") },
+    );
+
+    await expect(validateDesktopSession(client, "desktop-token", now)).resolves.toEqual({
+      id: "session-1",
+      user_id: "user-1",
+      device_id: "device-a",
+      machine_code_hash: "machine-hash-1",
+      platform: "macos",
+      app_version: "1.0.0",
+    });
     expect(client.states.get("desktop_sessions")?.updatePayload).toEqual({
       last_seen_at: "2026-05-01T00:00:00.000Z",
     });

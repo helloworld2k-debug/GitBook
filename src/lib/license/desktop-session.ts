@@ -27,9 +27,9 @@ export function readBearerToken(request: Request) {
     return null;
   }
 
-  const match = authorization.match(/^bearer\s+(.+)$/i);
+  const match = authorization.match(/^bearer ([^\s]+)$/i);
 
-  return match?.[1]?.trim() || null;
+  return match?.[1] ?? null;
 }
 
 export async function validateDesktopSession(
@@ -58,7 +58,11 @@ export async function validateDesktopSession(
     return null;
   }
 
-  await client.from("desktop_sessions").update({ last_seen_at: now.toISOString() }).eq("id", row.id);
+  try {
+    await client.from("desktop_sessions").update({ last_seen_at: now.toISOString() }).eq("id", row.id);
+  } catch {
+    // last_seen_at is telemetry; a valid session should not fail auth because touch failed.
+  }
 
   return {
     id: row.id,

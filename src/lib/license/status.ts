@@ -59,6 +59,16 @@ export async function getLicenseStatus(client: LicenseStatusClient, input: Licen
     };
   }
 
+  if (paidStatus.reason === "revoked") {
+    return {
+      allowed: false,
+      feature: CLOUD_SYNC_FEATURE,
+      reason: "revoked",
+      validUntil: paidStatus.validUntil,
+      remainingDays: 0,
+    };
+  }
+
   const { data, error } = await client
     .from("machine_trial_claims")
     .select("trial_valid_until")
@@ -106,7 +116,7 @@ export async function getLicenseStatus(client: LicenseStatusClient, input: Licen
   return {
     allowed: false,
     feature: CLOUD_SYNC_FEATURE,
-    reason: paidStatus.reason === "revoked" ? "revoked" : "expired",
+    reason: "expired",
     validUntil: paidStatus.validUntil,
     remainingDays: paidStatus.remainingDays,
   };
