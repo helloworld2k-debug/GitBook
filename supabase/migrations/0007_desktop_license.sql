@@ -13,6 +13,18 @@ create table public.license_entitlements (
   unique (user_id, feature_code)
 );
 
+create table public.license_entitlement_grants (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  feature_code license_feature_code not null default 'cloud_sync',
+  source_donation_id uuid not null references public.donations(id) on delete cascade,
+  granted_days integer not null check (granted_days > 0),
+  valid_from timestamptz not null,
+  valid_until timestamptz not null,
+  created_at timestamptz not null default now(),
+  unique (source_donation_id, feature_code)
+);
+
 create table public.trial_codes (
   id uuid primary key default gen_random_uuid(),
   code_hash text not null unique,
@@ -116,6 +128,8 @@ on public.cloud_sync_leases (user_id)
 where revoked_at is null;
 
 create index license_entitlements_user_feature_idx on public.license_entitlements (user_id, feature_code);
+create index license_entitlement_grants_user_feature_idx on public.license_entitlement_grants (user_id, feature_code);
+create index license_entitlement_grants_donation_idx on public.license_entitlement_grants (source_donation_id);
 create index machine_trial_claims_user_idx on public.machine_trial_claims (user_id);
 create index trial_code_redemptions_user_idx on public.trial_code_redemptions (user_id);
 create index desktop_sessions_user_idx on public.desktop_sessions (user_id);
@@ -123,6 +137,7 @@ create index desktop_devices_machine_idx on public.desktop_devices (machine_code
 create index cloud_sync_leases_session_idx on public.cloud_sync_leases (desktop_session_id);
 
 alter table public.license_entitlements enable row level security;
+alter table public.license_entitlement_grants enable row level security;
 alter table public.trial_codes enable row level security;
 alter table public.trial_code_redemptions enable row level security;
 alter table public.machine_trial_claims enable row level security;
@@ -133,6 +148,10 @@ alter table public.cloud_sync_leases enable row level security;
 
 create policy "license_entitlements_select_own_or_admin"
   on public.license_entitlements for select
+  using (user_id = auth.uid() or public.is_admin());
+
+create policy "license_entitlement_grants_select_own_or_admin"
+  on public.license_entitlement_grants for select
   using (user_id = auth.uid() or public.is_admin());
 
 create policy "trial_codes_admin_all"
@@ -163,3 +182,122 @@ create policy "desktop_sessions_select_own_or_admin"
 create policy "cloud_sync_leases_select_own_or_admin"
   on public.cloud_sync_leases for select
   using (user_id = auth.uid() or public.is_admin());
+
+create or replace function public.grant_cloud_sync_entitlement_for_donation(
+  input_user_id uuid,
+  input_donation_id uuid,
+  input_days integer,
+  input_paid_at timestamptz
+)
+returns timestamptz
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  existing_valid_until timestamptz;
+  current_valid_until timestamptz;
+  donation_exists boolean;
+  grant_valid_from timestamptz;
+  grant_valid_until timestamptz;
+begin
+  if input_days <= 0 then
+    raise exception 'Entitlement days must be positive';
+  end if;
+
+  select exists (
+    select 1
+    from public.donations
+    where id = input_donation_id
+      and user_id = input_user_id
+      and status = 'paid'
+  )
+  into donation_exists;
+
+  if not donation_exists then
+    raise exception 'Paid donation not found for entitlement grant';
+  end if;
+
+  select valid_until
+  into existing_valid_until
+  from public.license_entitlement_grants
+  where source_donation_id = input_donation_id
+    and feature_code = 'cloud_sync';
+
+  if existing_valid_until is not null then
+    return existing_valid_until;
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0));
+
+  select valid_until
+  into existing_valid_until
+  from public.license_entitlement_grants
+  where source_donation_id = input_donation_id
+    and feature_code = 'cloud_sync';
+
+  if existing_valid_until is not null then
+    return existing_valid_until;
+  end if;
+
+  select valid_until
+  into current_valid_until
+  from public.license_entitlements
+  where user_id = input_user_id
+    and feature_code = 'cloud_sync'
+    and status = 'active';
+
+  if current_valid_until is not null and current_valid_until > input_paid_at then
+    grant_valid_from := current_valid_until;
+  else
+    grant_valid_from := input_paid_at;
+  end if;
+
+  grant_valid_until := grant_valid_from + make_interval(days => input_days);
+
+  insert into public.license_entitlement_grants (
+    user_id,
+    feature_code,
+    source_donation_id,
+    granted_days,
+    valid_from,
+    valid_until
+  )
+  values (
+    input_user_id,
+    'cloud_sync',
+    input_donation_id,
+    input_days,
+    grant_valid_from,
+    grant_valid_until
+  );
+
+  insert into public.license_entitlements (
+    user_id,
+    feature_code,
+    valid_until,
+    status,
+    source_donation_id
+  )
+  values (
+    input_user_id,
+    'cloud_sync',
+    grant_valid_until,
+    'active',
+    input_donation_id
+  )
+  on conflict (user_id, feature_code)
+  do update set
+    valid_until = excluded.valid_until,
+    status = 'active',
+    source_donation_id = excluded.source_donation_id,
+    updated_at = now();
+
+  return grant_valid_until;
+end;
+$$;
+
+revoke execute on function public.grant_cloud_sync_entitlement_for_donation(uuid, uuid, integer, timestamptz) from public;
+revoke execute on function public.grant_cloud_sync_entitlement_for_donation(uuid, uuid, integer, timestamptz) from anon;
+revoke execute on function public.grant_cloud_sync_entitlement_for_donation(uuid, uuid, integer, timestamptz) from authenticated;
+grant execute on function public.grant_cloud_sync_entitlement_for_donation(uuid, uuid, integer, timestamptz) to service_role;

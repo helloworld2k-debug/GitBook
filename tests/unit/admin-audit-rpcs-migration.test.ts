@@ -15,6 +15,7 @@ describe("admin audit RPC migration", () => {
   it("keeps manual donation creation idempotent through the provider transaction constraint", () => {
     expect(migration).toContain("input_provider_transaction_id");
     expect(migration).toContain("when unique_violation");
+    expect(migration).toContain("return inserted_donation.id");
     expect(migration).toContain("Manual donation reference already exists");
   });
 

@@ -2,6 +2,15 @@ import { CLOUD_SYNC_FEATURE, getEntitlementDaysForTier } from "@/lib/license/con
 
 type EntitlementClient = {
   from: (table: string) => any;
+  rpc: (
+    functionName: "grant_cloud_sync_entitlement_for_donation",
+    args: {
+      input_days: number;
+      input_donation_id: string;
+      input_paid_at: string;
+      input_user_id: string;
+    },
+  ) => PromiseLike<{ data: string | null; error: unknown }>;
 };
 
 type ExtendInput = {
@@ -10,8 +19,6 @@ type ExtendInput = {
   tierCode: string;
   paidAt: Date;
 };
-
-type DonationMetadata = Record<string, unknown>;
 
 export type LicenseReason = "active" | "expired" | "no_entitlement" | "revoked";
 
@@ -23,56 +30,8 @@ export type EntitlementStatus = {
   remainingDays: number;
 };
 
-function addDays(date: Date, days: number) {
-  const next = new Date(date);
-  next.setUTCDate(next.getUTCDate() + days);
-  return next;
-}
-
 function remainingDaysUntil(validUntil: string, now: Date) {
   return Math.max(0, Math.ceil((new Date(validUntil).getTime() - now.getTime()) / 86_400_000));
-}
-
-function getMetadataObject(metadata: unknown): DonationMetadata {
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
-    return {};
-  }
-
-  return metadata as DonationMetadata;
-}
-
-function getGrantedValidUntil(metadata: DonationMetadata) {
-  if (
-    metadata.cloud_sync_entitlement_granted_at &&
-    typeof metadata.cloud_sync_entitlement_valid_until === "string" &&
-    metadata.cloud_sync_entitlement_valid_until
-  ) {
-    return metadata.cloud_sync_entitlement_valid_until;
-  }
-
-  return null;
-}
-
-async function markDonationEntitlementGranted(
-  client: EntitlementClient,
-  donationId: string,
-  metadata: DonationMetadata,
-  validUntil: string,
-) {
-  const { error } = await client
-    .from("donations")
-    .update({
-      metadata: {
-        ...metadata,
-        cloud_sync_entitlement_granted_at: new Date().toISOString(),
-        cloud_sync_entitlement_valid_until: validUntil,
-      },
-    })
-    .eq("id", donationId);
-
-  if (error) {
-    throw new Error("Unable to mark donation entitlement grant");
-  }
 }
 
 export async function extendCloudSyncEntitlementForDonation(client: EntitlementClient, input: ExtendInput) {
@@ -82,65 +41,22 @@ export async function extendCloudSyncEntitlementForDonation(client: EntitlementC
     throw new Error("Unsupported entitlement tier");
   }
 
-  const { data: donation, error: donationError } = await client
-    .from("donations")
-    .select("metadata")
-    .eq("id", input.donationId)
-    .single();
-
-  if (donationError || !donation) {
-    throw new Error("Unable to read donation entitlement metadata");
-  }
-
-  const donationMetadata = getMetadataObject(donation.metadata);
-  const grantedValidUntil = getGrantedValidUntil(donationMetadata);
-
-  if (grantedValidUntil) {
-    return grantedValidUntil;
-  }
-
-  const { data: current, error: currentError } = await client
-    .from("license_entitlements")
-    .select("id,valid_until,status,source_donation_id")
-    .eq("user_id", input.userId)
-    .eq("feature_code", CLOUD_SYNC_FEATURE)
-    .maybeSingle();
-
-  if (currentError) {
-    throw new Error("Unable to read entitlement");
-  }
-
-  if (current?.source_donation_id === input.donationId) {
-    await markDonationEntitlementGranted(client, input.donationId, donationMetadata, current.valid_until);
-    return current.valid_until;
-  }
-
-  const currentValidUntil = current?.status === "active" && current.valid_until ? new Date(current.valid_until) : null;
-  const start = currentValidUntil && currentValidUntil > input.paidAt ? currentValidUntil : input.paidAt;
-  const validUntil = addDays(start, days).toISOString();
-
-  const { error } = await client
-    .from("license_entitlements")
-    .upsert(
-      {
-        user_id: input.userId,
-        feature_code: CLOUD_SYNC_FEATURE,
-        valid_until: validUntil,
-        status: "active",
-        source_donation_id: input.donationId,
-      },
-      { onConflict: "user_id,feature_code" },
-    )
-    .select("id")
-    .single();
+  const { data, error } = await client.rpc("grant_cloud_sync_entitlement_for_donation", {
+    input_days: days,
+    input_donation_id: input.donationId,
+    input_paid_at: input.paidAt.toISOString(),
+    input_user_id: input.userId,
+  });
 
   if (error) {
     throw new Error("Unable to extend entitlement");
   }
 
-  await markDonationEntitlementGranted(client, input.donationId, donationMetadata, validUntil);
+  if (typeof data !== "string") {
+    throw new Error("Unable to extend entitlement");
+  }
 
-  return validUntil;
+  return data;
 }
 
 export async function getCloudSyncEntitlementStatus(

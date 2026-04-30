@@ -144,6 +144,54 @@ export type Database = {
           },
         ];
       };
+      license_entitlement_grants: {
+        Row: {
+          id: string;
+          user_id: string;
+          feature_code: Database["public"]["Enums"]["license_feature_code"];
+          source_donation_id: string;
+          granted_days: number;
+          valid_from: string;
+          valid_until: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          feature_code?: Database["public"]["Enums"]["license_feature_code"];
+          source_donation_id: string;
+          granted_days: number;
+          valid_from: string;
+          valid_until: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          feature_code?: Database["public"]["Enums"]["license_feature_code"];
+          source_donation_id?: string;
+          granted_days?: number;
+          valid_from?: string;
+          valid_until?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "license_entitlement_grants_source_donation_id_fkey";
+            columns: ["source_donation_id"];
+            isOneToOne: false;
+            referencedRelation: "donations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "license_entitlement_grants_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       trial_codes: {
         Row: {
           id: string;
@@ -717,6 +765,15 @@ export type Database = {
           input_currency: string;
           input_provider_transaction_id: string;
           input_reason: string;
+          input_user_id: string;
+        };
+        Returns: string;
+      };
+      grant_cloud_sync_entitlement_for_donation: {
+        Args: {
+          input_days: number;
+          input_donation_id: string;
+          input_paid_at: string;
           input_user_id: string;
         };
         Returns: string;

@@ -70,7 +70,21 @@ begin
   return inserted_donation.id;
 exception
   when unique_violation then
-    raise exception 'Manual donation reference already exists';
+    select *
+    into inserted_donation
+    from public.donations
+    where user_id = input_user_id
+      and amount = input_amount
+      and currency = lower(input_currency)
+      and provider = 'manual'
+      and provider_transaction_id = input_provider_transaction_id
+      and status = 'paid';
+
+    if inserted_donation.id is null then
+      raise exception 'Manual donation reference already exists';
+    end if;
+
+    return inserted_donation.id;
 end;
 $$;
 
