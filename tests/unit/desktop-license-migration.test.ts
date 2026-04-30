@@ -37,6 +37,23 @@ describe("desktop license migration", () => {
     );
   });
 
+  it("creates a service-role-only atomic desktop auth exchange function", () => {
+    expect(migration).toContain("create or replace function public.exchange_desktop_auth_code");
+    expect(migration).toContain("returns table(user_id uuid, desktop_session_id uuid)");
+    expect(migration).toContain("update public.desktop_auth_codes");
+    expect(migration).toContain("where code_hash = input_code_hash");
+    expect(migration).toContain("and used_at is null");
+    expect(migration).toContain("and expires_at > input_now");
+    expect(migration).toContain("insert into public.desktop_devices");
+    expect(migration).toContain("insert into public.desktop_sessions");
+    expect(migration).toContain(
+      "revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) from public",
+    );
+    expect(migration).toContain(
+      "grant execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) to service_role",
+    );
+  });
+
   it("keeps sensitive code and token fields hashed", () => {
     expect(migration).toContain("code_hash text not null");
     expect(migration).toContain("token_hash text not null");

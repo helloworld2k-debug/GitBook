@@ -1,22 +1,26 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { supportedLocales, type Locale } from "@/config/site";
 import { createDesktopAuthCode } from "@/lib/license/desktop-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-function safeReturnUrl(value: string | null) {
-  if (!value || !value.startsWith("gitbookai://auth/callback")) {
-    return null;
-  }
+const authorizeSchema = z.object({
+  deviceSessionId: z.string().trim().min(1).max(200),
+  returnUrl: z
+    .string()
+    .min(1)
+    .max(500)
+    .refine((value) => {
+      try {
+        const url = new URL(value);
 
-  return value;
-}
-
-function safeDeviceSessionId(value: string | null) {
-  const trimmed = value?.trim();
-
-  return trimmed ? trimmed : null;
-}
+        return url.protocol === "gitbookai:" && url.host === "auth" && url.pathname === "/callback";
+      } catch {
+        return false;
+      }
+    }),
+});
 
 export async function GET(request: Request, { params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -26,12 +30,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
   }
 
   const url = new URL(request.url);
-  const deviceSessionId = safeDeviceSessionId(url.searchParams.get("device_session_id"));
-  const returnUrl = safeReturnUrl(url.searchParams.get("return_url"));
+  const parsed = authorizeSchema.safeParse({
+    deviceSessionId: url.searchParams.get("device_session_id"),
+    returnUrl: url.searchParams.get("return_url"),
+  });
 
-  if (!deviceSessionId || !returnUrl) {
+  if (!parsed.success) {
     return NextResponse.json({ error: "Missing desktop authorization parameters" }, { status: 400 });
   }
+
+  const { deviceSessionId, returnUrl } = parsed.data;
 
   const supabase = await createSupabaseServerClient();
   const {

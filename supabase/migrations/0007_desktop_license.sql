@@ -302,3 +302,88 @@ revoke execute on function public.grant_cloud_sync_entitlement_for_donation(uuid
 revoke execute on function public.grant_cloud_sync_entitlement_for_donation(uuid, uuid, integer, timestamptz) from anon;
 revoke execute on function public.grant_cloud_sync_entitlement_for_donation(uuid, uuid, integer, timestamptz) from authenticated;
 grant execute on function public.grant_cloud_sync_entitlement_for_donation(uuid, uuid, integer, timestamptz) to service_role;
+
+create or replace function public.exchange_desktop_auth_code(
+  input_code_hash text,
+  input_token_hash text,
+  input_device_id text,
+  input_machine_code_hash text,
+  input_platform text,
+  input_app_version text,
+  input_device_name text,
+  input_session_expires_at timestamptz,
+  input_now timestamptz
+)
+returns table(user_id uuid, desktop_session_id uuid)
+language sql
+security definer
+set search_path = public
+as $$
+  with claimed as (
+    update public.desktop_auth_codes
+    set used_at = input_now
+    where code_hash = input_code_hash
+      and used_at is null
+      and expires_at > input_now
+    returning desktop_auth_codes.user_id
+  ),
+  upserted_device as (
+    insert into public.desktop_devices (
+      user_id,
+      device_id,
+      machine_code_hash,
+      platform,
+      app_version,
+      device_name,
+      last_seen_at
+    )
+    select
+      claimed.user_id,
+      input_device_id,
+      input_machine_code_hash,
+      input_platform,
+      input_app_version,
+      input_device_name,
+      input_now
+    from claimed
+    on conflict (user_id, device_id)
+    do update set
+      machine_code_hash = excluded.machine_code_hash,
+      platform = excluded.platform,
+      app_version = excluded.app_version,
+      device_name = excluded.device_name,
+      last_seen_at = excluded.last_seen_at
+    returning desktop_devices.user_id
+  ),
+  inserted_session as (
+    insert into public.desktop_sessions (
+      user_id,
+      token_hash,
+      device_id,
+      machine_code_hash,
+      platform,
+      app_version,
+      last_seen_at,
+      expires_at
+    )
+    select
+      claimed.user_id,
+      input_token_hash,
+      input_device_id,
+      input_machine_code_hash,
+      input_platform,
+      input_app_version,
+      input_now,
+      input_session_expires_at
+    from claimed
+    returning desktop_sessions.user_id, desktop_sessions.id
+  )
+  select inserted_session.user_id, inserted_session.id
+  from inserted_session
+  join upserted_device on upserted_device.user_id = inserted_session.user_id;
+$$;
+
+revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) from public;
+revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) from anon;
+revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) from authenticated;
+grant execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) to service_role;

@@ -13,6 +13,12 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/license/desktop-auth", () => ({
   createDesktopAuthCode: mocks.createDesktopAuthCode,
   exchangeDesktopAuthCode: mocks.exchangeDesktopAuthCode,
+  InvalidDesktopAuthCodeError: class InvalidDesktopAuthCodeError extends Error {
+    constructor() {
+      super("Invalid or expired desktop auth code");
+      this.name = "InvalidDesktopAuthCodeError";
+    }
+  },
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -47,8 +53,10 @@ describe("desktop auth exchange route", () => {
     expect(mocks.exchangeDesktopAuthCode).not.toHaveBeenCalled();
   });
 
-  it("maps failed service exchanges to 401", async () => {
-    mocks.exchangeDesktopAuthCode.mockRejectedValueOnce(new Error("Invalid or expired desktop auth code"));
+  it("maps invalid auth code exchanges to 401", async () => {
+    const { InvalidDesktopAuthCodeError } = await import("@/lib/license/desktop-auth");
+
+    mocks.exchangeDesktopAuthCode.mockRejectedValueOnce(new InvalidDesktopAuthCodeError());
 
     const response = await POST(
       new Request("https://threefriends.example/api/desktop/auth/exchange", {
@@ -66,6 +74,25 @@ describe("desktop auth exchange route", () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ error: "Invalid or expired desktop auth code" });
+  });
+
+  it("maps internal exchange failures to 500", async () => {
+    mocks.exchangeDesktopAuthCode.mockRejectedValueOnce(new Error("database unavailable"));
+
+    const response = await POST(
+      new Request("https://threefriends.example/api/desktop/auth/exchange", {
+        body: JSON.stringify({
+          code: "a".repeat(20),
+          deviceId: "device-a",
+          machineCode: "machine-a",
+          platform: "macos",
+        }),
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ error: "Unable to exchange desktop auth code" });
   });
 
   it("returns desktop token details for valid exchanges", async () => {
@@ -122,6 +149,21 @@ describe("desktop authorize route", () => {
     const response = await GET(
       new Request(
         "https://threefriends.example/en/desktop/authorize?device_session_id=session-1&return_url=https%3A%2F%2Fevil.example%2Fcallback",
+      ),
+      {
+        params: Promise.resolve({ locale: "en" }),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Missing desktop authorization parameters" });
+    expect(mocks.createSupabaseServerClient).not.toHaveBeenCalled();
+  });
+
+  it("rejects callback prefix bypass attempts", async () => {
+    const response = await GET(
+      new Request(
+        "https://threefriends.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback.evil",
       ),
       {
         params: Promise.resolve({ locale: "en" }),

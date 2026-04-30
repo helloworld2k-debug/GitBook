@@ -778,6 +778,23 @@ export type Database = {
         };
         Returns: string;
       };
+      exchange_desktop_auth_code: {
+        Args: {
+          input_app_version: string | null;
+          input_code_hash: string;
+          input_device_id: string;
+          input_device_name: string | null;
+          input_machine_code_hash: string;
+          input_now: string;
+          input_platform: string;
+          input_session_expires_at: string;
+          input_token_hash: string;
+        };
+        Returns: {
+          desktop_session_id: string;
+          user_id: string;
+        }[];
+      };
       revoke_certificate_with_audit: {
         Args: {
           input_admin_user_id: string;

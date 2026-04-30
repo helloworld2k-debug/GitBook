@@ -1,8 +1,21 @@
 import { DESKTOP_AUTH_CODE_TTL_SECONDS, DESKTOP_SESSION_TTL_DAYS } from "@/lib/license/constants";
 import { hashDesktopSecret } from "@/lib/license/hash";
 import { generateDesktopSecret } from "@/lib/license/tokens";
+import type { Database } from "@/lib/database.types";
 
-type Client = { from: (table: string) => any };
+type CreateClient = {
+  from: (table: string) => any;
+};
+
+type ExchangeClient = {
+  rpc: (
+    functionName: "exchange_desktop_auth_code",
+    args: Database["public"]["Functions"]["exchange_desktop_auth_code"]["Args"],
+  ) => PromiseLike<{
+    data: Database["public"]["Functions"]["exchange_desktop_auth_code"]["Returns"] | null;
+    error: unknown;
+  }>;
+};
 
 type CreateDesktopAuthCodeInput = {
   userId: string;
@@ -29,7 +42,14 @@ function addDays(date: Date, days: number) {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
-export async function createDesktopAuthCode(client: Client, input: CreateDesktopAuthCodeInput) {
+export class InvalidDesktopAuthCodeError extends Error {
+  constructor() {
+    super("Invalid or expired desktop auth code");
+    this.name = "InvalidDesktopAuthCodeError";
+  }
+}
+
+export async function createDesktopAuthCode(client: CreateClient, input: CreateDesktopAuthCodeInput) {
   const now = input.now ?? new Date();
   const code = generateDesktopSecret();
   const codeHash = await hashDesktopSecret(code, "auth_code");
@@ -54,7 +74,7 @@ export async function createDesktopAuthCode(client: Client, input: CreateDesktop
   return { code, expiresAt };
 }
 
-export async function exchangeDesktopAuthCode(client: Client, input: ExchangeDesktopAuthCodeInput) {
+export async function exchangeDesktopAuthCode(client: ExchangeClient, input: ExchangeDesktopAuthCodeInput) {
   const now = input.now ?? new Date();
   const nowIso = now.toISOString();
   const codeHash = await hashDesktopSecret(input.code, "auth_code");
@@ -63,59 +83,32 @@ export async function exchangeDesktopAuthCode(client: Client, input: ExchangeDes
   const tokenHash = await hashDesktopSecret(sessionToken, "desktop_token");
   const expiresAt = addDays(now, DESKTOP_SESSION_TTL_DAYS).toISOString();
 
-  const { data: authCode, error: codeError } = await client
-    .from("desktop_auth_codes")
-    .update({ used_at: nowIso })
-    .eq("code_hash", codeHash)
-    .is("used_at", null)
-    .gt("expires_at", nowIso)
-    .select("id,user_id")
-    .single();
+  const { data, error } = await client.rpc("exchange_desktop_auth_code", {
+    input_app_version: input.appVersion ?? null,
+    input_code_hash: codeHash,
+    input_device_id: input.deviceId,
+    input_device_name: input.deviceName ?? null,
+    input_machine_code_hash: machineCodeHash,
+    input_now: nowIso,
+    input_platform: input.platform,
+    input_session_expires_at: expiresAt,
+    input_token_hash: tokenHash,
+  });
 
-  if (codeError || !authCode) {
-    throw new Error("Invalid or expired desktop auth code");
+  if (error) {
+    throw new Error("Unable to exchange desktop auth code");
   }
 
-  const { error: deviceError } = await client.from("desktop_devices").upsert(
-    {
-      user_id: authCode.user_id,
-      device_id: input.deviceId,
-      machine_code_hash: machineCodeHash,
-      platform: input.platform,
-      app_version: input.appVersion ?? null,
-      device_name: input.deviceName ?? null,
-      last_seen_at: nowIso,
-    },
-    { onConflict: "user_id,device_id" },
-  );
+  const row = data?.[0];
 
-  if (deviceError) {
-    throw new Error("Unable to record desktop device");
-  }
-
-  const { data: session, error: sessionError } = await client
-    .from("desktop_sessions")
-    .insert({
-      user_id: authCode.user_id,
-      token_hash: tokenHash,
-      device_id: input.deviceId,
-      machine_code_hash: machineCodeHash,
-      platform: input.platform,
-      app_version: input.appVersion ?? null,
-      last_seen_at: nowIso,
-      expires_at: expiresAt,
-    })
-    .select("id")
-    .single();
-
-  if (sessionError || !session) {
-    throw new Error("Unable to create desktop session");
+  if (!row) {
+    throw new InvalidDesktopAuthCodeError();
   }
 
   return {
     sessionToken,
     expiresAt,
-    userId: authCode.user_id,
-    desktopSessionId: session.id,
+    userId: row.user_id,
+    desktopSessionId: row.desktop_session_id,
   };
 }

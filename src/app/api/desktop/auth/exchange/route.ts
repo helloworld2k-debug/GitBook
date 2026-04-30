@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { exchangeDesktopAuthCode } from "@/lib/license/desktop-auth";
+import { exchangeDesktopAuthCode, InvalidDesktopAuthCodeError } from "@/lib/license/desktop-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -31,7 +31,11 @@ export async function POST(request: Request) {
       userId: result.userId,
       desktopSessionId: result.desktopSessionId,
     });
-  } catch {
-    return NextResponse.json({ error: "Invalid or expired desktop auth code" }, { status: 401 });
+  } catch (error) {
+    if (error instanceof InvalidDesktopAuthCodeError) {
+      return NextResponse.json({ error: "Invalid or expired desktop auth code" }, { status: 401 });
+    }
+
+    return NextResponse.json({ error: "Unable to exchange desktop auth code" }, { status: 500 });
   }
 }
