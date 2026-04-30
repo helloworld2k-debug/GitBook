@@ -108,6 +108,9 @@ create table public.cloud_sync_leases (
   updated_at timestamptz not null default now()
 );
 
+-- One active cloud sync lease is allowed per user. Activation code revokes
+-- existing non-revoked leases before inserting a replacement; expires_at is
+-- checked and handled by the lease service instead of this partial predicate.
 create unique index cloud_sync_leases_one_active_per_user
 on public.cloud_sync_leases (user_id)
 where revoked_at is null;
@@ -115,7 +118,6 @@ where revoked_at is null;
 create index license_entitlements_user_feature_idx on public.license_entitlements (user_id, feature_code);
 create index machine_trial_claims_user_idx on public.machine_trial_claims (user_id);
 create index trial_code_redemptions_user_idx on public.trial_code_redemptions (user_id);
-create index desktop_sessions_token_hash_idx on public.desktop_sessions (token_hash);
 create index desktop_sessions_user_idx on public.desktop_sessions (user_id);
 create index desktop_devices_machine_idx on public.desktop_devices (machine_code_hash);
 create index cloud_sync_leases_session_idx on public.cloud_sync_leases (desktop_session_id);
