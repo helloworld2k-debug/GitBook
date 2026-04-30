@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CLOUD_SYNC_FEATURE,
+  CLOUD_SYNC_LEASE_TTL_SECONDS,
   DESKTOP_AUTH_CODE_TTL_SECONDS,
   DESKTOP_SESSION_TTL_DAYS,
   getEntitlementDaysForTier,
@@ -14,12 +15,15 @@ describe("license constants", () => {
     expect(getEntitlementDaysForTier("quarterly")).toBe(90);
     expect(getEntitlementDaysForTier("yearly")).toBe(365);
     expect(getEntitlementDaysForTier("unknown")).toBeNull();
+    expect(getEntitlementDaysForTier(null)).toBeNull();
+    expect(getEntitlementDaysForTier(undefined)).toBeNull();
   });
 
   it("uses cloud sync as the first feature code", () => {
     expect(CLOUD_SYNC_FEATURE).toBe("cloud_sync");
     expect(DESKTOP_AUTH_CODE_TTL_SECONDS).toBe(300);
     expect(DESKTOP_SESSION_TTL_DAYS).toBe(30);
+    expect(CLOUD_SYNC_LEASE_TTL_SECONDS).toBe(120);
   });
 });
 
