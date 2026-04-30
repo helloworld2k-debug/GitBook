@@ -3,6 +3,8 @@ type PublicSupporterProfileInput = {
   publicDisplayName: string;
 };
 
+export const PUBLIC_DISPLAY_NAME_MAX_LENGTH = 80;
+
 type ProfilePrivacyClient = {
   auth: {
     getUser: () => Promise<{ data: { user: { id: string } | null } }>;
@@ -28,7 +30,7 @@ export async function updatePublicSupporterProfile(
     throw new Error("Sign in is required to update supporter privacy.");
   }
 
-  const publicDisplayName = input.publicDisplayName.trim() || null;
+  const publicDisplayName = input.publicDisplayName.trim().slice(0, PUBLIC_DISPLAY_NAME_MAX_LENGTH) || null;
   const { error } = await client
     .from("profiles")
     .update({

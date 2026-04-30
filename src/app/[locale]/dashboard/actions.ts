@@ -12,9 +12,14 @@ function getDashboardPath(locale: string, status: "saved" | "error") {
   return `/${safeLocale}/dashboard?privacy=${status}`;
 }
 
+function getSafeLocale(locale: string) {
+  return supportedLocales.includes(locale as Locale) ? locale : "en";
+}
+
 export async function updatePublicSupporterPrivacy(locale: string, formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const privacyClient = supabase as unknown as Parameters<typeof updatePublicSupporterProfile>[0];
+  const safeLocale = getSafeLocale(locale);
 
   try {
     await updatePublicSupporterProfile(privacyClient, {
@@ -22,10 +27,10 @@ export async function updatePublicSupporterPrivacy(locale: string, formData: For
       publicDisplayName: String(formData.get("public_display_name") ?? ""),
     });
   } catch {
-    redirect(getDashboardPath(locale, "error"));
+    redirect(getDashboardPath(safeLocale, "error"));
   }
 
-  revalidatePath(`/${locale}/dashboard`);
-  revalidatePath(`/${locale}/sponsors`);
-  redirect(getDashboardPath(locale, "saved"));
+  revalidatePath(`/${safeLocale}/dashboard`);
+  revalidatePath(`/${safeLocale}/sponsors`);
+  redirect(getDashboardPath(safeLocale, "saved"));
 }

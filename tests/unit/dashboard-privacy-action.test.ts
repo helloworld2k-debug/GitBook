@@ -57,4 +57,15 @@ describe("updatePublicSupporterPrivacy", () => {
 
     await expect(updatePublicSupporterPrivacy("en", formData)).rejects.toThrow("REDIRECT:/en/dashboard?privacy=error");
   });
+
+  it("uses a safe locale for revalidation and redirects", async () => {
+    const formData = new FormData();
+    formData.set("public_supporter_enabled", "on");
+
+    await expect(updatePublicSupporterPrivacy("../bad", formData)).rejects.toThrow("REDIRECT:/en/dashboard?privacy=saved");
+
+    expect(revalidatePathMock).toHaveBeenCalledWith("/en/dashboard");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/en/sponsors");
+    expect(revalidatePathMock).not.toHaveBeenCalledWith("/../bad/dashboard");
+  });
 });

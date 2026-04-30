@@ -71,6 +71,8 @@ Without the Supabase CLI, run the SQL files manually in this order:
 
 1. `supabase/migrations/0001_initial_schema.sql`
 2. `supabase/migrations/0002_certificate_functions.sql`
+3. `supabase/migrations/0003_public_sponsors.sql`
+4. `supabase/migrations/0004_public_display_name_limit.sql`
 
 After an admin user exists in Supabase Auth, bootstrap admin access in Supabase:
 

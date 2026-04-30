@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { updatePublicSupporterProfile } from "@/lib/profile/privacy";
+import { PUBLIC_DISPLAY_NAME_MAX_LENGTH, updatePublicSupporterProfile } from "@/lib/profile/privacy";
 
 function createSupabase(userId: string | null) {
   const eq = vi.fn().mockResolvedValue({ error: null });
@@ -58,6 +58,22 @@ describe("updatePublicSupporterProfile", () => {
     expect(supabase.update).toHaveBeenCalledWith({
       public_supporter_enabled: false,
       public_display_name: null,
+      updated_at: expect.any(String),
+    });
+  });
+
+  it("limits public display names before updating the public profile", async () => {
+    const supabase = createSupabase("user_123");
+    const longName = "A".repeat(PUBLIC_DISPLAY_NAME_MAX_LENGTH + 20);
+
+    await updatePublicSupporterProfile(supabase, {
+      publicSupporterEnabled: true,
+      publicDisplayName: longName,
+    });
+
+    expect(supabase.update).toHaveBeenCalledWith({
+      public_supporter_enabled: true,
+      public_display_name: "A".repeat(PUBLIC_DISPLAY_NAME_MAX_LENGTH),
       updated_at: expect.any(String),
     });
   });
