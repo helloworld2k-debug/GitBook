@@ -99,6 +99,7 @@ export async function redeemDashboardTrialCode(locale: string, formData: FormDat
   const user = await requireUser(safeLocale, `/${safeLocale}/dashboard`);
   const code = String(formData.get("trial_code") ?? "").trim();
   const desktopSessionId = String(formData.get("desktop_session_id") ?? "").trim();
+  const nowIso = new Date().toISOString();
 
   if (!code || !desktopSessionId) {
     redirect(getDashboardPath(safeLocale, { trial: "invalid" }));
@@ -110,6 +111,8 @@ export async function redeemDashboardTrialCode(locale: string, formData: FormDat
     .select("id,machine_code_hash")
     .eq("id", desktopSessionId)
     .eq("user_id", user.id)
+    .is("revoked_at", null)
+    .gt("expires_at", nowIso)
     .maybeSingle();
 
   if (sessionError || !session) {

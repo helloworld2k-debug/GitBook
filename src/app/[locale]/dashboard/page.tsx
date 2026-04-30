@@ -64,6 +64,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
   const t = await getTranslations("dashboard");
   const certificateT = await getTranslations("certificate");
   const supabase = await createSupabaseServerClient();
+  const nowIso = new Date().toISOString();
 
   const [
     { count: donationCount, error: donationCountError },
@@ -101,6 +102,8 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
       .from("desktop_sessions")
       .select("id,device_id,platform,app_version,last_seen_at")
       .eq("user_id", user.id)
+      .is("revoked_at", null)
+      .gt("expires_at", nowIso)
       .order("last_seen_at", { ascending: false })
       .limit(10),
   ]);
