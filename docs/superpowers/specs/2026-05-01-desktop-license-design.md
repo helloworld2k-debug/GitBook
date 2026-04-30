@@ -11,9 +11,10 @@ The desktop app will not read Supabase tables directly and will not collect pass
 - Basic software usage is free.
 - Basic resource downloads are free.
 - Cloud sync is the only advanced feature in the first version.
-- Cloud sync requires the user to be registered, logged in, online, and inside either a valid donation entitlement period or a valid new-user trial.
-- New registered users receive a 3-day cloud sync trial.
-- Trial eligibility is bound to the computer machine code. One machine code can receive the 3-day trial only once, even if a different account logs in later on the same computer.
+- Cloud sync requires the user to be registered, logged in, online, and inside either a valid donation entitlement period or a valid redeemed trial period.
+- New registered users do not automatically receive a trial. They must redeem a trial code on the website to receive 3 days of cloud sync access.
+- Trial codes are created and maintained in the admin system, with editable active periods for future maintenance.
+- Trial eligibility is also bound to the computer machine code. One machine code can receive the 3-day trial only once, even if a different account or different trial code is used later on the same computer.
 - A user can log in on multiple computers, but only one device can actively use cloud sync at a time.
 - If device B starts using cloud sync while device A is active on the same account, device A immediately loses cloud sync access on its next license check or heartbeat.
 - Cloud sync cannot be used offline. A network error means the advanced feature is unavailable until the server can verify the entitlement.
@@ -38,6 +39,7 @@ The website owns:
 - Supabase Auth user identity.
 - Donation records.
 - Entitlement calculation.
+- Trial code management and redemption.
 - Machine-code trial eligibility.
 - Desktop auth code exchange.
 - Desktop session validation.
@@ -93,14 +95,54 @@ Recommended fields:
 - `id`
 - `machine_code_hash`
 - `user_id`
+- `trial_code_id`
 - `feature_code`, first version fixed to `cloud_sync`
 - `trial_started_at`
 - `trial_valid_until`
 - `created_at`
 
-The database must enforce a unique constraint on `(machine_code_hash, feature_code)`. This prevents the same computer from receiving another 3-day trial by switching accounts.
+The database must enforce a unique constraint on `(machine_code_hash, feature_code)`. This prevents the same computer from receiving another 3-day trial by switching accounts or using another code.
 
 The raw machine code should not be stored. The server should store a salted hash. The desktop app sends the machine code over HTTPS during auth exchange and license checks.
+
+### New Table: `trial_codes`
+
+Stores admin-managed codes that allow eligible users to activate a 3-day cloud sync trial.
+
+Recommended fields:
+
+- `id`
+- `code_hash`
+- `label`
+- `feature_code`, first version fixed to `cloud_sync`
+- `trial_days`, default `3`
+- `starts_at`
+- `ends_at`
+- `max_redemptions`
+- `redemption_count`
+- `is_active`
+- `created_by`
+- `created_at`
+- `updated_at`
+
+Raw trial codes should not be stored. The admin creates or regenerates a code, the server stores only its hash, and the UI shows the raw code only at creation time.
+
+### New Table: `trial_code_redemptions`
+
+Stores redemption events for auditability and abuse review.
+
+Recommended fields:
+
+- `id`
+- `trial_code_id`
+- `user_id`
+- `machine_code_hash`
+- `feature_code`
+- `redeemed_at`
+- `trial_valid_until`
+- `created_at`
+
+The database should prevent duplicate redemption of the same code by the same user for the same feature. `machine_trial_claims` remains the stricter machine-level guard.
 
 ### New Table: `desktop_auth_codes`
 
@@ -194,17 +236,36 @@ For each paid donation:
 
 Refunds or manual revocations should either mark the related entitlement as revoked or trigger a recalculation from the remaining valid paid donation records. Recalculation is safer for accuracy when there are multiple donations.
 
-## Trial Calculation
+## Trial Code Redemption
 
-When a registered user logs in from the desktop app and requests cloud sync for the first time, the server checks `machine_trial_claims`.
+Trial activation happens on the website, not automatically in the desktop app.
 
-If no row exists for the machine code and `cloud_sync`, the server creates a trial:
+Recommended user flow:
+
+1. User registers or signs in on the website.
+2. User opens a dashboard trial redemption form.
+3. User enters the trial code provided by the team.
+4. The website validates the code, active period, redemption limits, user identity, and machine code eligibility.
+5. If valid, the website creates a 3-day `machine_trial_claims` row and a `trial_code_redemptions` row.
+6. The desktop app can then use cloud sync while the trial is active, subject to online license checks and single-device lease rules.
+
+Validation rules:
+
+- The code must exist by hash.
+- `is_active` must be true.
+- `starts_at <= now() <= ends_at`.
+- `redemption_count < max_redemptions` when `max_redemptions` is set.
+- The same user cannot redeem the same code twice for the same feature.
+- The same machine code cannot receive another `cloud_sync` trial through any code.
+
+On successful redemption, the server creates a trial:
 
 - `trial_started_at = now()`
-- `trial_valid_until = now() + 3 days`
+- `trial_valid_until = now() + trial_codes.trial_days`
 - `user_id = current user`
+- `trial_code_id = redeemed code`
 
-If a row already exists for the machine code and `cloud_sync`, no new trial is created, even if the current user is different from the original trial user.
+If a row already exists for the machine code and `cloud_sync`, no new trial is created, even if the current user is different from the original trial user or the user enters a different valid code.
 
 The license status API treats a valid trial like a temporary entitlement for `cloud_sync`. Paid donation entitlement takes priority if both exist.
 
@@ -240,7 +301,7 @@ Authentication:
 
 The desktop app sends the desktop session token in an authorization header.
 
-The desktop app also sends the current machine code or a stable machine-code proof so the server can enforce one-time trial rules. The server hashes the machine code before comparing or storing it.
+The desktop app also sends the current machine code or a stable machine-code proof so the server can match an existing redeemed machine trial. The server hashes the machine code before comparing or storing it.
 
 Successful active response:
 
@@ -290,6 +351,10 @@ Supported `reason` values for the first version:
 - `revoked`
 - `trial_active`
 - `trial_expired`
+- `trial_code_required`
+- `trial_code_invalid`
+- `trial_code_inactive`
+- `trial_code_limit_reached`
 - `machine_trial_used`
 - `active_on_another_device`
 - `network_required`
@@ -346,6 +411,7 @@ Behavior:
 - Expired entitlement: prompt the user to renew support to restore cloud sync.
 - Active entitlement: enable the cloud sync switch.
 - Active trial: enable the cloud sync switch and show the trial expiry date.
+- No trial redeemed: prompt the user to redeem a trial code on the website or support development.
 - Machine trial already used and no paid entitlement: prompt the user to support development to enable cloud sync.
 - Active on another device: turn off cloud sync locally and explain that another computer is now using cloud sync.
 - Network error: keep cloud sync unavailable and explain that online verification is required.
@@ -361,6 +427,9 @@ Capabilities:
 
 - Search by user email.
 - View cloud sync entitlement status.
+- Create, edit, activate, deactivate, and expire trial codes.
+- Configure trial code active periods, maximum redemptions, and trial duration.
+- View trial code redemption counts and redemption history.
 - View trial claim status by machine code hash.
 - View `valid_until`, remaining days, and source donation.
 - View desktop device/session records.
@@ -377,6 +446,8 @@ Capabilities:
 - Invalid desktop tokens return `not_authenticated`.
 - Revoked desktop sessions return `not_authenticated`.
 - Revoked entitlements return `revoked`.
+- Missing website redemption returns `trial_code_required` when no paid entitlement exists.
+- Invalid, inactive, expired, or exhausted trial codes are rejected during redemption.
 - Expired trials return `trial_expired`.
 - Machine codes that already claimed a trial under any account return `machine_trial_used` when no paid entitlement exists.
 - Devices that no longer own the cloud sync lease return `active_on_another_device`.
@@ -393,6 +464,9 @@ Capabilities:
 - Desktop session tokens can be revoked by the server.
 - Machine codes are stored as salted hashes, not raw identifiers.
 - Trial uniqueness is enforced by `machine_code_hash` and feature.
+- Trial codes are stored as hashes, not raw codes.
+- Trial code raw values are shown only at creation/regeneration time.
+- Admin trial code changes should be written to the audit log.
 - Device records do not limit logins, but cloud sync leases enforce one active advanced-feature device per account.
 - Lease heartbeats prevent long-term lockout when a device crashes.
 
@@ -405,8 +479,10 @@ Capabilities:
 - Entitlement starting from now when the user is expired.
 - Refunded/cancelled/failed donations do not count.
 - License status returns active, expired, no entitlement, revoked, and unauthenticated states.
-- Trial creation succeeds once per machine code.
-- Trial creation is blocked for a machine code that has already claimed `cloud_sync`, even under a different user.
+- Trial code redemption succeeds only when the code is active, in date range, and under max redemption count.
+- Trial code redemption creates a 3-day `machine_trial_claims` row.
+- Trial code redemption is blocked for a machine code that has already claimed `cloud_sync`, even under a different user or different valid code.
+- Trial code redemption is blocked when the same user tries to redeem the same code twice.
 - Paid entitlement takes priority over trial state.
 - Cloud sync activation replaces the previous active device lease.
 - Heartbeat from a replaced device returns `active_on_another_device`.
@@ -415,6 +491,8 @@ Capabilities:
 ### API Tests
 
 - `POST /api/desktop/auth/exchange` returns a desktop token for a valid code.
+- Website trial redemption returns success for an eligible user, valid code, and unused machine code.
+- Website trial redemption returns denied for invalid, inactive, expired, exhausted, duplicate-user, or duplicate-machine cases.
 - `GET /api/license/status?feature=cloud_sync` returns allowed for active entitlement.
 - The same endpoint returns allowed for active trial.
 - The same endpoint returns denied for expired entitlement.
@@ -426,8 +504,8 @@ Capabilities:
 
 - Browser desktop-login URL can complete login and return a desktop callback code.
 - A desktop session with active entitlement can enable cloud sync.
-- A new user can use a 3-day cloud sync trial on a machine code that has never claimed a trial.
-- A second account on the same machine code cannot claim another 3-day trial.
+- A new user can redeem a valid trial code on the website and use a 3-day cloud sync trial on a machine code that has never claimed a trial.
+- A second account on the same machine code cannot redeem another 3-day trial, even with a different valid code.
 - When device B activates cloud sync, device A loses cloud sync on heartbeat.
 - A desktop session with expired entitlement cannot enable cloud sync.
 - Basic public download and reading paths remain unaffected.
@@ -436,15 +514,17 @@ Capabilities:
 
 The first implementation should include:
 
-1. Database migration for license entitlement, machine trial claim, desktop auth code, desktop session, desktop device, and cloud sync lease tables.
+1. Database migration for license entitlement, trial code, trial redemption, machine trial claim, desktop auth code, desktop session, desktop device, and cloud sync lease tables.
 2. Entitlement calculation service.
-3. Machine-code trial claim service.
-4. Stripe/manual donation success integration that extends `cloud_sync`.
-5. Desktop login callback and auth-code exchange API.
-6. License status API.
-7. Cloud sync activate, heartbeat, and release APIs.
-8. Admin license page.
-9. Unit/API/E2E coverage for the core license and lease flow.
+3. Admin trial code management.
+4. Website trial code redemption flow.
+5. Machine-code trial claim service.
+6. Stripe/manual donation success integration that extends `cloud_sync`.
+7. Desktop login callback and auth-code exchange API.
+8. License status API.
+9. Cloud sync activate, heartbeat, and release APIs.
+10. Admin license page.
+11. Unit/API/E2E coverage for the core license, trial redemption, and lease flow.
 
 Out of scope for the first implementation:
 
