@@ -4,7 +4,21 @@ import { generateDesktopSecret } from "@/lib/license/tokens";
 import type { Database } from "@/lib/database.types";
 
 type CreateClient = {
-  from: (table: string) => any;
+  from: unknown;
+};
+
+type CreateDesktopAuthCodeFrom = (table: "desktop_auth_codes") => {
+  insert: (payload: {
+    code_hash: string;
+    user_id: string;
+    device_session_id: string;
+    return_url: string;
+    expires_at: string;
+  }) => {
+    select: (columns: "id") => {
+      single: () => PromiseLike<{ data: { id: string } | null; error: unknown }>;
+    };
+  };
 };
 
 type ExchangeClient = {
@@ -54,9 +68,9 @@ export async function createDesktopAuthCode(client: CreateClient, input: CreateD
   const code = generateDesktopSecret();
   const codeHash = await hashDesktopSecret(code, "auth_code");
   const expiresAt = addSeconds(now, DESKTOP_AUTH_CODE_TTL_SECONDS).toISOString();
+  const from = client.from as CreateDesktopAuthCodeFrom;
 
-  const { data, error } = await client
-    .from("desktop_auth_codes")
+  const { data, error } = await from("desktop_auth_codes")
     .insert({
       code_hash: codeHash,
       user_id: input.userId,

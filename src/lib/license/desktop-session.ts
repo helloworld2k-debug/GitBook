@@ -1,7 +1,18 @@
 import { hashDesktopSecret } from "@/lib/license/hash";
 
 type DesktopSessionClient = {
-  from: (table: string) => any;
+  from: unknown;
+};
+
+type DesktopSessionFrom = (table: "desktop_sessions") => {
+  select: (columns: string) => {
+    eq: (column: "token_hash", value: string) => {
+      maybeSingle: () => PromiseLike<{ data: DesktopSessionRow | null; error: unknown }>;
+    };
+  };
+  update: (payload: { last_seen_at: string }) => {
+    eq: (column: "id", value: string) => PromiseLike<unknown> | unknown;
+  };
 };
 
 type DesktopSessionRow = {
@@ -42,8 +53,8 @@ export async function validateDesktopSession(
   }
 
   const tokenHash = await hashDesktopSecret(token, "desktop_token");
-  const { data, error } = await client
-    .from("desktop_sessions")
+  const from = client.from as DesktopSessionFrom;
+  const { data, error } = await from("desktop_sessions")
     .select("id,user_id,device_id,machine_code_hash,platform,app_version,expires_at,revoked_at")
     .eq("token_hash", tokenHash)
     .maybeSingle();
@@ -59,7 +70,7 @@ export async function validateDesktopSession(
   }
 
   try {
-    await client.from("desktop_sessions").update({ last_seen_at: now.toISOString() }).eq("id", row.id);
+    await from("desktop_sessions").update({ last_seen_at: now.toISOString() }).eq("id", row.id);
   } catch {
     // last_seen_at is telemetry; a valid session should not fail auth because touch failed.
   }

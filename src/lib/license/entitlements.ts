@@ -1,7 +1,7 @@
 import { CLOUD_SYNC_FEATURE, getEntitlementDaysForTier } from "@/lib/license/constants";
 
 type EntitlementClient = {
-  from: (table: string) => any;
+  from: unknown;
   rpc: (
     functionName: "grant_cloud_sync_entitlement_for_donation",
     args: {
@@ -11,6 +11,25 @@ type EntitlementClient = {
       input_user_id: string;
     },
   ) => PromiseLike<{ data: string | null; error: unknown }>;
+};
+
+type EntitlementFrom = (table: "license_entitlements") => {
+  select: (columns: "valid_until,status") => {
+    eq: (
+      column: "user_id" | "feature_code",
+      value: string,
+    ) => {
+      eq: (
+        column: "user_id" | "feature_code",
+        value: string,
+      ) => {
+        maybeSingle: () => PromiseLike<{
+          data: { valid_until: string; status: "active" | "expired" | "revoked" } | null;
+          error: unknown;
+        }>;
+      };
+    };
+  };
 };
 
 type ExtendInput = {
@@ -64,8 +83,8 @@ export async function getCloudSyncEntitlementStatus(
   userId: string,
   now = new Date(),
 ): Promise<EntitlementStatus> {
-  const { data, error } = await client
-    .from("license_entitlements")
+  const from = client.from as EntitlementFrom;
+  const { data, error } = await from("license_entitlements")
     .select("valid_until,status")
     .eq("user_id", userId)
     .eq("feature_code", CLOUD_SYNC_FEATURE)

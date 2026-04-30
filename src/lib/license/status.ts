@@ -2,7 +2,23 @@ import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
 import { getCloudSyncEntitlementStatus } from "@/lib/license/entitlements";
 
 type LicenseStatusClient = {
-  from: (table: string) => any;
+  from: unknown;
+};
+
+type LicenseStatusFrom = (table: "machine_trial_claims") => {
+  select: (columns: "trial_valid_until") => {
+    eq: (
+      column: "machine_code_hash" | "feature_code",
+      value: string,
+    ) => {
+      eq: (
+        column: "machine_code_hash" | "feature_code",
+        value: string,
+      ) => {
+        maybeSingle: () => PromiseLike<{ data: { trial_valid_until: string } | null; error: unknown }>;
+      };
+    };
+  };
 };
 
 type LicenseStatusInput = {
@@ -69,8 +85,8 @@ export async function getLicenseStatus(client: LicenseStatusClient, input: Licen
     };
   }
 
-  const { data, error } = await client
-    .from("machine_trial_claims")
+  const from = client.from as LicenseStatusFrom;
+  const { data, error } = await from("machine_trial_claims")
     .select("trial_valid_until")
     .eq("machine_code_hash", input.machineCodeHash)
     .eq("feature_code", CLOUD_SYNC_FEATURE)
