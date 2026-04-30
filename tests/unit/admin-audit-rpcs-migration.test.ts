@@ -16,6 +16,8 @@ describe("admin audit RPC migration", () => {
     expect(migration).toContain("input_provider_transaction_id");
     expect(migration).toContain("when unique_violation");
     expect(migration).toContain("return inserted_donation.id");
+    expect(migration).toContain("metadata->>'reason' = btrim(input_reason)");
+    expect(migration).toContain("metadata->>'admin_user_id' = input_admin_user_id::text");
     expect(migration).toContain("Manual donation reference already exists");
   });
 

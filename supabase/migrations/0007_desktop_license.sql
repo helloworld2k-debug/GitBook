@@ -197,26 +197,27 @@ as $$
 declare
   existing_valid_until timestamptz;
   current_valid_until timestamptz;
-  donation_exists boolean;
+  donation_paid_at timestamptz;
   grant_valid_from timestamptz;
+  grant_paid_at timestamptz;
   grant_valid_until timestamptz;
 begin
   if input_days <= 0 then
     raise exception 'Entitlement days must be positive';
   end if;
 
-  select exists (
-    select 1
-    from public.donations
-    where id = input_donation_id
-      and user_id = input_user_id
-      and status = 'paid'
-  )
-  into donation_exists;
+  select paid_at
+  into donation_paid_at
+  from public.donations
+  where id = input_donation_id
+    and user_id = input_user_id
+    and status = 'paid';
 
-  if not donation_exists then
+  if not found then
     raise exception 'Paid donation not found for entitlement grant';
   end if;
+
+  grant_paid_at := coalesce(donation_paid_at, input_paid_at);
 
   select valid_until
   into existing_valid_until
@@ -247,10 +248,10 @@ begin
     and feature_code = 'cloud_sync'
     and status = 'active';
 
-  if current_valid_until is not null and current_valid_until > input_paid_at then
+  if current_valid_until is not null and current_valid_until > grant_paid_at then
     grant_valid_from := current_valid_until;
   else
-    grant_valid_from := input_paid_at;
+    grant_valid_from := grant_paid_at;
   end if;
 
   grant_valid_until := grant_valid_from + make_interval(days => input_days);

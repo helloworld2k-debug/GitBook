@@ -78,7 +78,9 @@ exception
       and currency = lower(input_currency)
       and provider = 'manual'
       and provider_transaction_id = input_provider_transaction_id
-      and status = 'paid';
+      and status = 'paid'
+      and metadata->>'reason' = btrim(input_reason)
+      and metadata->>'admin_user_id' = input_admin_user_id::text;
 
     if inserted_donation.id is null then
       raise exception 'Manual donation reference already exists';
