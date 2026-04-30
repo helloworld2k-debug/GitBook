@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { generateCertificatesForDonation } from "@/lib/certificates/service";
 import { buildDonationRecord } from "@/lib/donations/record";
+import { extendCloudSyncEntitlementForDonation } from "@/lib/license/entitlements";
 import { findDonationTier } from "@/lib/payments/tier";
 import { getStripeWebhookSecret, stripe } from "@/lib/payments/stripe";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -66,6 +67,12 @@ export async function POST(request: Request) {
     }
 
     await generateCertificatesForDonation(donation.id);
+    await extendCloudSyncEntitlementForDonation(supabase, {
+      userId,
+      donationId: donation.id,
+      tierCode: donationTier.code,
+      paidAt: new Date(session.created * 1000),
+    });
   }
 
   return NextResponse.json({ received: true });

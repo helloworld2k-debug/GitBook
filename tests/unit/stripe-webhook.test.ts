@@ -4,6 +4,7 @@ import { POST } from "@/app/api/webhooks/stripe/route";
 const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
   constructEvent: vi.fn(),
+  extendCloudSyncEntitlementForDonation: vi.fn(),
   generateCertificatesForDonation: vi.fn(),
   headers: vi.fn(),
   single: vi.fn(),
@@ -31,10 +32,15 @@ vi.mock("@/lib/certificates/service", () => ({
   generateCertificatesForDonation: mocks.generateCertificatesForDonation,
 }));
 
+vi.mock("@/lib/license/entitlements", () => ({
+  extendCloudSyncEntitlementForDonation: mocks.extendCloudSyncEntitlementForDonation,
+}));
+
 describe("Stripe webhook route", () => {
   beforeEach(() => {
     mocks.createSupabaseAdminClient.mockReset();
     mocks.constructEvent.mockReset();
+    mocks.extendCloudSyncEntitlementForDonation.mockReset().mockResolvedValue("2027-04-29T00:00:00.000Z");
     mocks.generateCertificatesForDonation.mockReset();
     mocks.headers.mockResolvedValue(new Headers({ "stripe-signature": "sig_test" }));
     mocks.single.mockReset();
@@ -92,6 +98,7 @@ describe("Stripe webhook route", () => {
     await expect(response.json()).resolves.toEqual({ error: "Missing required metadata" });
     expect(mocks.upsert).not.toHaveBeenCalled();
     expect(mocks.generateCertificatesForDonation).not.toHaveBeenCalled();
+    expect(mocks.extendCloudSyncEntitlementForDonation).not.toHaveBeenCalled();
   });
 
   it("rejects completed checkout sessions with a mismatched amount", async () => {
@@ -118,6 +125,7 @@ describe("Stripe webhook route", () => {
     await expect(response.json()).resolves.toEqual({ error: "Missing required metadata" });
     expect(mocks.upsert).not.toHaveBeenCalled();
     expect(mocks.generateCertificatesForDonation).not.toHaveBeenCalled();
+    expect(mocks.extendCloudSyncEntitlementForDonation).not.toHaveBeenCalled();
   });
 
   it("rejects completed checkout sessions with a mismatched currency", async () => {
@@ -144,9 +152,10 @@ describe("Stripe webhook route", () => {
     await expect(response.json()).resolves.toEqual({ error: "Missing required metadata" });
     expect(mocks.upsert).not.toHaveBeenCalled();
     expect(mocks.generateCertificatesForDonation).not.toHaveBeenCalled();
+    expect(mocks.extendCloudSyncEntitlementForDonation).not.toHaveBeenCalled();
   });
 
-  it("upserts a completed checkout donation and generates certificates", async () => {
+  it("upserts a completed checkout donation, generates certificates, and extends entitlement", async () => {
     mocks.constructEvent.mockReturnValue({
       type: "checkout.session.completed",
       data: {
@@ -181,5 +190,14 @@ describe("Stripe webhook route", () => {
       { onConflict: "provider,provider_transaction_id" },
     );
     expect(mocks.generateCertificatesForDonation).toHaveBeenCalledWith("donation_123");
+    expect(mocks.extendCloudSyncEntitlementForDonation).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        userId: "user_123",
+        donationId: "donation_123",
+        tierCode: "yearly",
+        paidAt: new Date("2026-04-29T00:00:00.000Z"),
+      },
+    );
   });
 });

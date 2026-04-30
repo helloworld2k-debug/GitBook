@@ -3,6 +3,7 @@ import { addManualDonation, createSoftwareRelease, revokeCertificate, setSoftwar
 
 const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
+  extendCloudSyncEntitlementForDonation: vi.fn(),
   generateCertificatesForDonation: vi.fn(),
   requireAdmin: vi.fn(),
   revalidatePath: vi.fn(),
@@ -18,6 +19,10 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 vi.mock("@/lib/certificates/service", () => ({
   generateCertificatesForDonation: mocks.generateCertificatesForDonation,
+}));
+
+vi.mock("@/lib/license/entitlements", () => ({
+  extendCloudSyncEntitlementForDonation: mocks.extendCloudSyncEntitlementForDonation,
 }));
 
 vi.mock("next/cache", () => ({
@@ -41,10 +46,11 @@ describe("admin actions", () => {
       donationCertificateCreated: true,
       honorCertificateCreated: false,
     });
+    mocks.extendCloudSyncEntitlementForDonation.mockReset().mockResolvedValue("2027-05-01T00:00:00.000Z");
     mocks.revalidatePath.mockClear();
   });
 
-  it("requires an admin before creating a manual donation through the audited RPC", async () => {
+  it("requires an admin before creating a manual donation through the audited RPC and extends entitlement", async () => {
     const profileLookup = createProfileLookup({ id: "user-1", email: "user@example.com" });
     const rpc = vi.fn(async () => ({ data: "donation-1", error: null }));
     const from = vi.fn((table: string) => {
@@ -78,6 +84,15 @@ describe("admin actions", () => {
       input_user_id: "user-1",
     });
     expect(mocks.generateCertificatesForDonation).toHaveBeenCalledWith("donation-1");
+    expect(mocks.extendCloudSyncEntitlementForDonation).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        userId: "user-1",
+        donationId: "donation-1",
+        tierCode: "yearly",
+        paidAt: expect.any(Date),
+      },
+    );
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/donations");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/certificates");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/audit-logs");

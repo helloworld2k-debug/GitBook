@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { supportedLocales, type Locale } from "@/config/site";
 import { requireAdmin } from "@/lib/auth/guards";
 import { generateCertificatesForDonation } from "@/lib/certificates/service";
+import { extendCloudSyncEntitlementForDonation } from "@/lib/license/entitlements";
 import { SOFTWARE_RELEASES_BUCKET, type ReleasePlatform } from "@/lib/releases/software-releases";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -119,6 +120,12 @@ export async function addManualDonation(formData: FormData) {
   }
 
   await generateCertificatesForDonation(donationId);
+  await extendCloudSyncEntitlementForDonation(supabase, {
+    userId: profile.id,
+    donationId,
+    tierCode: "yearly",
+    paidAt: new Date(),
+  });
 
   revalidatePath(`/${locale}/admin/donations`);
   revalidatePath(`/${locale}/admin/certificates`);
