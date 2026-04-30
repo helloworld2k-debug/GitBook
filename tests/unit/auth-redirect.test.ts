@@ -18,6 +18,11 @@ describe("auth redirect safety", () => {
     expect(sanitizeNextPath(["/ko/dashboard", "https://evil.example/take"], "/en/dashboard")).toBe("/ko/dashboard");
   });
 
+  it("builds locale dashboard defaults", () => {
+    expect(sanitizeNextPath(null, "/ja/dashboard")).toBe("/ja/dashboard");
+    expect(sanitizeNextPath(undefined, "/ko/dashboard")).toBe("/ko/dashboard");
+  });
+
   it("falls back when the first repeated next value is unsafe", () => {
     expect(sanitizeNextPath(["https://evil.example/take", "/ko/dashboard"], "/en/dashboard")).toBe("/en/dashboard");
   });
@@ -62,6 +67,14 @@ describe("auth callback route", () => {
     );
 
     expect(response.headers.get("location")).toBe("https://threefriends.example/en/dashboard");
+  });
+
+  it("falls back to a localized dashboard when next has a supported locale but is otherwise unsafe", async () => {
+    const response = await GET(
+      new Request("https://threefriends.example/auth/callback?code=abc123&next=%2Fja%2F..%5Cdashboard"),
+    );
+
+    expect(response.headers.get("location")).toBe("https://threefriends.example/ja/dashboard");
   });
 
   it("redirects to login with an error when the code is missing", async () => {

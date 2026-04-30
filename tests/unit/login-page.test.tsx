@@ -71,7 +71,21 @@ describe("LoginPage", () => {
     render(page);
 
     expect(screen.getByTestId("login-form")).toHaveTextContent(
-      "https://threefriends.example/auth/callback?next=%2Fen%2Fdashboard",
+      "https://threefriends.example/auth/callback?next=%2Fja%2Fdashboard",
+    );
+  });
+
+  it("uses the current locale dashboard when next is absent", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://threefriends.example";
+    const page = await LoginPage({
+      params: Promise.resolve({ locale: "ko" }),
+      searchParams: Promise.resolve({}),
+    });
+
+    render(page);
+
+    expect(screen.getByTestId("login-form")).toHaveTextContent(
+      "https://threefriends.example/auth/callback?next=%2Fko%2Fdashboard",
     );
   });
 

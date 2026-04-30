@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { SiteHeader } from "@/components/site-header";
-import { defaultLocale, supportedLocales, type Locale } from "@/config/site";
-import { sanitizeNextPath } from "@/lib/auth/guards";
+import { supportedLocales, type Locale } from "@/config/site";
+import { getLocaleDashboardPath, sanitizeNextPath } from "@/lib/auth/guards";
 import { LoginForm, type LoginFormMessages } from "./login-form";
 
 type LoginPageProps = {
@@ -32,7 +32,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
 
   const query = await searchParams;
   const t = await getTranslations("login");
-  const nextPath = sanitizeNextPath(query.next, `/${defaultLocale}/dashboard`);
+  const nextPath = sanitizeNextPath(query.next, getLocaleDashboardPath(locale));
   const providerNames = {
     apple: t("apple"),
     github: t("github"),
