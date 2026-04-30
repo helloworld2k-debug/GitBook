@@ -75,6 +75,23 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
             locale={locale}
             recipientName={getRecipientName(user, t("fallbackRecipient"))}
           />
+          <section
+            aria-labelledby="certificate-download-title"
+            className="mt-4 rounded-md border border-slate-200 bg-white px-4 py-4 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4"
+          >
+            <div>
+              <h2 id="certificate-download-title" className="text-sm font-semibold tracking-normal text-slate-950">
+                {t("download.title")}
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{t("download.note")}</p>
+            </div>
+            <a
+              href={`/${locale}/dashboard/certificates/${id}/download/svg`}
+              className="mt-3 inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-950 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 sm:mt-0"
+            >
+              {t("download.svg")}
+            </a>
+          </section>
         </section>
       </main>
     </>

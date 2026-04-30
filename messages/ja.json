@@ -155,6 +155,11 @@
     "issued": "発行日",
     "pendingIssueDate": "発行日未定",
     "fallbackRecipient": "サポーター",
+    "download": {
+      "title": "証明書をダウンロード",
+      "svg": "SVG をダウンロード",
+      "note": "SVG は軽量な証明書ファイルで、ブラウザーで開いたり印刷したりできます。"
+    },
     "types": {
       "donation": "寄付証明書",
       "honor": "表彰証明書"

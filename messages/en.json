@@ -155,6 +155,11 @@
     "issued": "Issued",
     "pendingIssueDate": "Pending issue date",
     "fallbackRecipient": "Supporter",
+    "download": {
+      "title": "Download certificate",
+      "svg": "Download SVG",
+      "note": "SVG is available as a lightweight certificate file you can open or print from your browser."
+    },
     "types": {
       "donation": "Donation Certificate",
       "honor": "Honor Certificate"

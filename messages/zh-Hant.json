@@ -155,6 +155,11 @@
     "issued": "頒發日期",
     "pendingIssueDate": "頒發日期待定",
     "fallbackRecipient": "支持者",
+    "download": {
+      "title": "下載證書",
+      "svg": "下載 SVG",
+      "note": "SVG 是輕量證書檔案，可在瀏覽器中開啟或列印。"
+    },
     "types": {
       "donation": "捐贈證書",
       "honor": "榮譽證書"
