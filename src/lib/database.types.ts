@@ -133,6 +133,10 @@ export type Database = {
           type: Database["public"]["Enums"]["certificate_type"];
           status: Database["public"]["Enums"]["certificate_status"];
           issued_at: string | null;
+          revoked_at: string | null;
+          render_version: number;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -143,6 +147,10 @@ export type Database = {
           type: Database["public"]["Enums"]["certificate_type"];
           status?: Database["public"]["Enums"]["certificate_status"];
           issued_at?: string | null;
+          revoked_at?: string | null;
+          render_version?: number;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
@@ -153,8 +161,56 @@ export type Database = {
           type?: Database["public"]["Enums"]["certificate_type"];
           status?: Database["public"]["Enums"]["certificate_status"];
           issued_at?: string | null;
+          revoked_at?: string | null;
+          render_version?: number;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
+      };
+      admin_audit_logs: {
+        Row: {
+          id: string;
+          admin_user_id: string;
+          action: string;
+          target_type: string;
+          target_id: string;
+          before: Json;
+          after: Json;
+          reason: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_user_id: string;
+          action: string;
+          target_type: string;
+          target_id: string;
+          before?: Json;
+          after?: Json;
+          reason: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          admin_user_id?: string;
+          action?: string;
+          target_type?: string;
+          target_id?: string;
+          before?: Json;
+          after?: Json;
+          reason?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_logs_admin_user_id_fkey";
+            columns: ["admin_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: Record<never, never>;

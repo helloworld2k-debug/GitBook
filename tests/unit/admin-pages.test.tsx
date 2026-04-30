@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import AdminPage from "@/app/[locale]/admin/page";
+import AdminAuditLogsPage from "@/app/[locale]/admin/audit-logs/page";
 import AdminCertificatesPage from "@/app/[locale]/admin/certificates/page";
 import AdminDonationsPage from "@/app/[locale]/admin/donations/page";
 
@@ -70,6 +71,8 @@ const testMessages = {
         donationsDescription: "Review payment provider records, statuses, and transaction IDs.",
         certificatesTitle: "Certificates",
         certificatesDescription: "Review issued certificate numbers, types, statuses, and issue dates.",
+        auditLogsTitle: "Audit logs",
+        auditLogsDescription: "Review admin corrections, revocations, and reasons.",
       },
       donations: {
         eyebrow: "Admin",
@@ -78,6 +81,12 @@ const testMessages = {
         status: "Status",
         amount: "Amount",
         transactionId: "Transaction ID",
+        manualEntryTitle: "Manual paid donation",
+        manualEntryDescription: "Create one paid manual record for an existing user by email or user ID.",
+        userIdentifier: "Email or user ID",
+        amountCents: "Amount (cents)",
+        reason: "Reason",
+        submitManualDonation: "Add manual donation",
         empty: "No donations found.",
         providers: {
           stripe: "Stripe",
@@ -99,6 +108,9 @@ const testMessages = {
         type: "Type",
         status: "Status",
         issued: "Issued",
+        action: "Action",
+        revokeReason: "Reason",
+        revoke: "Revoke",
         notIssued: "Not issued",
         empty: "No certificates found.",
         types: {
@@ -111,6 +123,16 @@ const testMessages = {
           generation_failed: "Generation failed",
         },
       },
+      auditLogs: {
+        eyebrow: "Admin",
+        title: "Audit logs",
+        action: "Action",
+        target: "Target",
+        reason: "Reason",
+        createdAt: "Created",
+        admin: "Admin",
+        empty: "No audit logs found.",
+      },
     },
   },
   "zh-Hant": {
@@ -122,6 +144,8 @@ const testMessages = {
         donationsDescription: "檢視付款服務商記錄、狀態與交易 ID。",
         certificatesTitle: "證書",
         certificatesDescription: "檢視已頒發的證書編號、類型、狀態與頒發日期。",
+        auditLogsTitle: "稽核紀錄",
+        auditLogsDescription: "檢視管理員修正、撤銷與原因。",
       },
       donations: {
         eyebrow: "管理後台",
@@ -130,6 +154,12 @@ const testMessages = {
         status: "狀態",
         amount: "金額",
         transactionId: "交易 ID",
+        manualEntryTitle: "人工已付款捐贈",
+        manualEntryDescription: "為既有使用者以電子郵件或使用者 ID 建立一筆已付款人工記錄。",
+        userIdentifier: "電子郵件或使用者 ID",
+        amountCents: "金額（美分）",
+        reason: "原因",
+        submitManualDonation: "新增人工捐贈",
         empty: "尚無捐贈。",
         providers: {
           stripe: "Stripe",
@@ -151,6 +181,9 @@ const testMessages = {
         type: "類型",
         status: "狀態",
         issued: "頒發日期",
+        action: "操作",
+        revokeReason: "原因",
+        revoke: "撤銷",
         notIssued: "尚未頒發",
         empty: "尚無證書。",
         types: {
@@ -163,6 +196,16 @@ const testMessages = {
           generation_failed: "產生失敗",
         },
       },
+      auditLogs: {
+        eyebrow: "管理後台",
+        title: "稽核紀錄",
+        action: "操作",
+        target: "目標",
+        reason: "原因",
+        createdAt: "建立時間",
+        admin: "管理員",
+        empty: "尚無稽核紀錄。",
+      },
     },
   },
   ja: {
@@ -174,6 +217,8 @@ const testMessages = {
         donationsDescription: "決済プロバイダーの記録、ステータス、取引 ID を確認します。",
         certificatesTitle: "証明書",
         certificatesDescription: "発行済み証明書の番号、種類、ステータス、発行日を確認します。",
+        auditLogsTitle: "監査ログ",
+        auditLogsDescription: "管理者の修正、取り消し、理由を確認します。",
       },
       donations: {
         eyebrow: "管理画面",
@@ -182,6 +227,12 @@ const testMessages = {
         status: "ステータス",
         amount: "金額",
         transactionId: "取引 ID",
+        manualEntryTitle: "手動支払い済み寄付",
+        manualEntryDescription: "既存ユーザーのメールまたはユーザー ID で支払い済み手動記録を 1 件作成します。",
+        userIdentifier: "メールまたはユーザー ID",
+        amountCents: "金額（セント）",
+        reason: "理由",
+        submitManualDonation: "手動寄付を追加",
         empty: "寄付はまだありません。",
         providers: {
           stripe: "Stripe",
@@ -203,6 +254,9 @@ const testMessages = {
         type: "種類",
         status: "ステータス",
         issued: "発行日",
+        action: "操作",
+        revokeReason: "理由",
+        revoke: "取り消す",
         notIssued: "未発行",
         empty: "証明書はまだありません。",
         types: {
@@ -215,6 +269,16 @@ const testMessages = {
           generation_failed: "生成失敗",
         },
       },
+      auditLogs: {
+        eyebrow: "管理画面",
+        title: "監査ログ",
+        action: "操作",
+        target: "対象",
+        reason: "理由",
+        createdAt: "作成日時",
+        admin: "管理者",
+        empty: "監査ログはまだありません。",
+      },
     },
   },
   ko: {
@@ -226,6 +290,8 @@ const testMessages = {
         donationsDescription: "결제 제공업체 기록, 상태, 거래 ID를 확인합니다.",
         certificatesTitle: "인증서",
         certificatesDescription: "발급된 인증서 번호, 유형, 상태, 발급일을 확인합니다.",
+        auditLogsTitle: "감사 로그",
+        auditLogsDescription: "관리자 수정, 폐기, 사유를 확인합니다.",
       },
       donations: {
         eyebrow: "관리",
@@ -234,6 +300,12 @@ const testMessages = {
         status: "상태",
         amount: "금액",
         transactionId: "거래 ID",
+        manualEntryTitle: "수동 결제 완료 후원",
+        manualEntryDescription: "기존 사용자의 이메일 또는 사용자 ID로 결제 완료 수동 기록을 하나 만듭니다.",
+        userIdentifier: "이메일 또는 사용자 ID",
+        amountCents: "금액(센트)",
+        reason: "사유",
+        submitManualDonation: "수동 후원 추가",
         empty: "후원 기록이 없습니다.",
         providers: {
           stripe: "Stripe",
@@ -255,6 +327,9 @@ const testMessages = {
         type: "유형",
         status: "상태",
         issued: "발급일",
+        action: "작업",
+        revokeReason: "사유",
+        revoke: "폐기",
         notIssued: "미발급",
         empty: "인증서가 없습니다.",
         types: {
@@ -267,6 +342,16 @@ const testMessages = {
           generation_failed: "생성 실패",
         },
       },
+      auditLogs: {
+        eyebrow: "관리",
+        title: "감사 로그",
+        action: "작업",
+        target: "대상",
+        reason: "사유",
+        createdAt: "생성일",
+        admin: "관리자",
+        empty: "감사 로그가 없습니다.",
+      },
     },
   },
 };
@@ -278,7 +363,7 @@ describe("admin pages", () => {
     createSupabaseServerClientMock.mockReset();
   });
 
-  it("renders the guarded admin overview without links to routes that do not exist yet", async () => {
+  it("renders the guarded admin overview with admin tool links", async () => {
     const element = await AdminPage({ params: Promise.resolve({ locale: "en" }) });
 
     render(element);
@@ -287,7 +372,7 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "Admin" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /donations/i })).toHaveAttribute("href", "/admin/donations");
     expect(screen.getByRole("link", { name: /certificates/i })).toHaveAttribute("href", "/admin/certificates");
-    expect(screen.queryByRole("link", { name: /audit logs/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /audit logs/i })).toHaveAttribute("href", "/admin/audit-logs");
     expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
   });
 
@@ -300,6 +385,7 @@ describe("admin pages", () => {
     expect(screen.getByText("管理工具")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "管理後台" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /捐贈/ })).toHaveAttribute("href", "/admin/donations");
+    expect(screen.getByRole("link", { name: /稽核紀錄/ })).toHaveAttribute("href", "/admin/audit-logs");
     expect(screen.getByText("檢視付款服務商記錄、狀態與交易 ID。")).toBeInTheDocument();
   });
 
@@ -338,6 +424,10 @@ describe("admin pages", () => {
     expect(donationsQuery.select).toHaveBeenCalledWith("id,provider,status,amount,currency,provider_transaction_id");
     expect(donationsQuery.order).toHaveBeenCalledWith("created_at", { ascending: false });
     expect(screen.getByRole("heading", { name: "管理捐贈" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "人工已付款捐贈" })).toBeInTheDocument();
+    expect(screen.getByLabelText("電子郵件或使用者 ID")).toBeRequired();
+    expect(screen.getByLabelText("原因")).toBeRequired();
+    expect(screen.getByRole("button", { name: "新增人工捐贈" })).toBeInTheDocument();
     expect(screen.getByText("Stripe")).toBeInTheDocument();
     expect(screen.getByText("人工登錄")).toBeInTheDocument();
     expect(screen.queryByText("stripe")).not.toBeInTheDocument();
@@ -421,6 +511,8 @@ describe("admin pages", () => {
     expect(screen.queryByText("donation")).not.toBeInTheDocument();
     expect(screen.queryByText("active")).not.toBeInTheDocument();
     expect(screen.getByText("2026년 4월 29일")).toBeInTheDocument();
+    expect(screen.getByLabelText("사유")).toBeRequired();
+    expect(screen.getByRole("button", { name: "폐기" })).toBeInTheDocument();
   });
 
   it("renders Japanese admin certificate enum labels", async () => {
@@ -458,5 +550,44 @@ describe("admin pages", () => {
     await expect(AdminCertificatesPage({ params: Promise.resolve({ locale: "en" }) })).rejects.toThrow(
       "certificates failed",
     );
+  });
+
+  it("queries and renders newest audit logs for admins", async () => {
+    const auditLogsQuery = createOrderedQuery([
+      {
+        id: "log-1",
+        admin_user_id: "admin-1",
+        action: "revoke_certificate",
+        target_type: "certificate",
+        target_id: "certificate-1",
+        reason: "Refund confirmed",
+        created_at: "2026-04-30T10:00:00.000Z",
+        profiles: { email: "admin@example.com" },
+      },
+    ]);
+    const from = vi.fn(() => auditLogsQuery);
+    createSupabaseServerClientMock.mockResolvedValue({ from });
+
+    const element = await AdminAuditLogsPage({ params: Promise.resolve({ locale: "en" }) });
+
+    render(element);
+
+    expect(requireAdminMock).toHaveBeenCalledWith("en");
+    expect(createSupabaseServerClientMock).toHaveBeenCalledTimes(1);
+    expect(requireAdminMock.mock.invocationCallOrder[0]).toBeLessThan(
+      createSupabaseServerClientMock.mock.invocationCallOrder[0],
+    );
+    expect(from).toHaveBeenCalledWith("admin_audit_logs");
+    expect(auditLogsQuery.select).toHaveBeenCalledWith(
+      "id,admin_user_id,action,target_type,target_id,reason,created_at,profiles(email)",
+    );
+    expect(auditLogsQuery.order).toHaveBeenCalledWith("created_at", { ascending: false });
+    expect(screen.getByRole("heading", { name: "Audit logs" })).toBeInTheDocument();
+    expect(screen.getByText("revoke_certificate")).toBeInTheDocument();
+    expect(screen.getByText("certificate/certificate-1")).toBeInTheDocument();
+    expect(screen.getByText("Refund confirmed")).toBeInTheDocument();
+    expect(screen.getByText("admin-1")).toBeInTheDocument();
+    expect(screen.getByText("admin@example.com")).toBeInTheDocument();
+    expect(screen.getByText(/Apr 30, 2026/)).toBeInTheDocument();
   });
 });

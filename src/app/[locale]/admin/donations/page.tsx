@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { addManualDonation } from "../actions";
 
 type AdminDonationsPageProps = {
   params: Promise<{
@@ -54,6 +55,47 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
             <p className="text-sm font-medium text-slate-600">{t("donations.eyebrow")}</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">{t("donations.title")}</h1>
           </div>
+          <section className="mt-6 rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950">{t("donations.manualEntryTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{t("donations.manualEntryDescription")}</p>
+            </div>
+            <form action={addManualDonation} className="mt-4 grid gap-3 md:grid-cols-[1fr_11rem_1fr_auto]">
+              <input name="locale" type="hidden" value={locale} />
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("donations.userIdentifier")}
+                <input
+                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  name="user_identifier"
+                  required
+                />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("donations.amountCents")}
+                <input
+                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  min="1"
+                  name="amount"
+                  required
+                  type="number"
+                />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("donations.reason")}
+                <input
+                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  name="reason"
+                  required
+                />
+              </label>
+              <button
+                className="min-h-11 self-end rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                type="submit"
+              >
+                {t("donations.submitManualDonation")}
+              </button>
+            </form>
+          </section>
           <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
             {donations && donations.length > 0 ? (
               <div className="overflow-x-auto">

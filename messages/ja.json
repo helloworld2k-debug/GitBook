@@ -103,7 +103,9 @@
       "donationsTitle": "寄付",
       "donationsDescription": "決済プロバイダーの記録、ステータス、取引 ID を確認します。",
       "certificatesTitle": "証明書",
-      "certificatesDescription": "発行済み証明書の番号、種類、ステータス、発行日を確認します。"
+      "certificatesDescription": "発行済み証明書の番号、種類、ステータス、発行日を確認します。",
+      "auditLogsTitle": "監査ログ",
+      "auditLogsDescription": "管理者の修正、取り消し、理由を確認します。"
     },
     "donations": {
       "eyebrow": "管理画面",
@@ -112,6 +114,12 @@
       "status": "ステータス",
       "amount": "金額",
       "transactionId": "取引 ID",
+      "manualEntryTitle": "手動支払い済み寄付",
+      "manualEntryDescription": "既存ユーザーのメールまたはユーザー ID で支払い済み手動記録を 1 件作成します。",
+      "userIdentifier": "メールまたはユーザー ID",
+      "amountCents": "金額（セント）",
+      "reason": "理由",
+      "submitManualDonation": "手動寄付を追加",
       "empty": "寄付はまだありません。",
       "providers": {
         "stripe": "Stripe",
@@ -133,6 +141,9 @@
       "type": "種類",
       "status": "ステータス",
       "issued": "発行日",
+      "action": "操作",
+      "revokeReason": "理由",
+      "revoke": "取り消す",
       "notIssued": "未発行",
       "empty": "証明書はまだありません。",
       "types": {
@@ -144,6 +155,16 @@
         "revoked": "取り消し済み",
         "generation_failed": "生成失敗"
       }
+    },
+    "auditLogs": {
+      "eyebrow": "管理画面",
+      "title": "監査ログ",
+      "action": "操作",
+      "target": "対象",
+      "reason": "理由",
+      "createdAt": "作成日時",
+      "admin": "管理者",
+      "empty": "監査ログはまだありません。"
     }
   },
   "certificate": {

@@ -103,7 +103,9 @@
       "donationsTitle": "후원",
       "donationsDescription": "결제 제공업체 기록, 상태, 거래 ID를 확인합니다.",
       "certificatesTitle": "인증서",
-      "certificatesDescription": "발급된 인증서 번호, 유형, 상태, 발급일을 확인합니다."
+      "certificatesDescription": "발급된 인증서 번호, 유형, 상태, 발급일을 확인합니다.",
+      "auditLogsTitle": "감사 로그",
+      "auditLogsDescription": "관리자 수정, 폐기, 사유를 확인합니다."
     },
     "donations": {
       "eyebrow": "관리",
@@ -112,6 +114,12 @@
       "status": "상태",
       "amount": "금액",
       "transactionId": "거래 ID",
+      "manualEntryTitle": "수동 결제 완료 후원",
+      "manualEntryDescription": "기존 사용자의 이메일 또는 사용자 ID로 결제 완료 수동 기록을 하나 만듭니다.",
+      "userIdentifier": "이메일 또는 사용자 ID",
+      "amountCents": "금액(센트)",
+      "reason": "사유",
+      "submitManualDonation": "수동 후원 추가",
       "empty": "후원 기록이 없습니다.",
       "providers": {
         "stripe": "Stripe",
@@ -133,6 +141,9 @@
       "type": "유형",
       "status": "상태",
       "issued": "발급일",
+      "action": "작업",
+      "revokeReason": "사유",
+      "revoke": "폐기",
       "notIssued": "미발급",
       "empty": "인증서가 없습니다.",
       "types": {
@@ -144,6 +155,16 @@
         "revoked": "폐기됨",
         "generation_failed": "생성 실패"
       }
+    },
+    "auditLogs": {
+      "eyebrow": "관리",
+      "title": "감사 로그",
+      "action": "작업",
+      "target": "대상",
+      "reason": "사유",
+      "createdAt": "생성일",
+      "admin": "관리자",
+      "empty": "감사 로그가 없습니다."
     }
   },
   "certificate": {

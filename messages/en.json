@@ -103,7 +103,9 @@
       "donationsTitle": "Donations",
       "donationsDescription": "Review payment provider records, statuses, and transaction IDs.",
       "certificatesTitle": "Certificates",
-      "certificatesDescription": "Review issued certificate numbers, types, statuses, and issue dates."
+      "certificatesDescription": "Review issued certificate numbers, types, statuses, and issue dates.",
+      "auditLogsTitle": "Audit logs",
+      "auditLogsDescription": "Review admin corrections, revocations, and reasons."
     },
     "donations": {
       "eyebrow": "Admin",
@@ -112,6 +114,12 @@
       "status": "Status",
       "amount": "Amount",
       "transactionId": "Transaction ID",
+      "manualEntryTitle": "Manual paid donation",
+      "manualEntryDescription": "Create one paid manual record for an existing user by email or user ID.",
+      "userIdentifier": "Email or user ID",
+      "amountCents": "Amount (cents)",
+      "reason": "Reason",
+      "submitManualDonation": "Add manual donation",
       "empty": "No donations found.",
       "providers": {
         "stripe": "Stripe",
@@ -133,6 +141,9 @@
       "type": "Type",
       "status": "Status",
       "issued": "Issued",
+      "action": "Action",
+      "revokeReason": "Reason",
+      "revoke": "Revoke",
       "notIssued": "Not issued",
       "empty": "No certificates found.",
       "types": {
@@ -144,6 +155,16 @@
         "revoked": "Revoked",
         "generation_failed": "Generation failed"
       }
+    },
+    "auditLogs": {
+      "eyebrow": "Admin",
+      "title": "Audit logs",
+      "action": "Action",
+      "target": "Target",
+      "reason": "Reason",
+      "createdAt": "Created",
+      "admin": "Admin",
+      "empty": "No audit logs found."
     }
   },
   "certificate": {

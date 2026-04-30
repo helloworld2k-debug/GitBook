@@ -33,6 +33,11 @@ export default async function AdminPage({ params }: AdminPageProps) {
       title: t("overview.certificatesTitle"),
       description: t("overview.certificatesDescription"),
     },
+    {
+      href: "/admin/audit-logs",
+      title: t("overview.auditLogsTitle"),
+      description: t("overview.auditLogsDescription"),
+    },
   ];
 
   return (
@@ -44,7 +49,7 @@ export default async function AdminPage({ params }: AdminPageProps) {
             <p className="text-sm font-medium text-slate-600">{t("overview.eyebrow")}</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">{t("overview.title")}</h1>
           </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {adminLinks.map((link) => (
               <Link
                 key={link.href}

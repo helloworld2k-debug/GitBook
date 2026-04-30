@@ -103,7 +103,9 @@
       "donationsTitle": "捐贈",
       "donationsDescription": "檢視付款服務商記錄、狀態與交易 ID。",
       "certificatesTitle": "證書",
-      "certificatesDescription": "檢視已頒發的證書編號、類型、狀態與頒發日期。"
+      "certificatesDescription": "檢視已頒發的證書編號、類型、狀態與頒發日期。",
+      "auditLogsTitle": "稽核紀錄",
+      "auditLogsDescription": "檢視管理員修正、撤銷與原因。"
     },
     "donations": {
       "eyebrow": "管理後台",
@@ -112,6 +114,12 @@
       "status": "狀態",
       "amount": "金額",
       "transactionId": "交易 ID",
+      "manualEntryTitle": "人工已付款捐贈",
+      "manualEntryDescription": "為既有使用者以電子郵件或使用者 ID 建立一筆已付款人工記錄。",
+      "userIdentifier": "電子郵件或使用者 ID",
+      "amountCents": "金額（美分）",
+      "reason": "原因",
+      "submitManualDonation": "新增人工捐贈",
       "empty": "尚無捐贈。",
       "providers": {
         "stripe": "Stripe",
@@ -133,6 +141,9 @@
       "type": "類型",
       "status": "狀態",
       "issued": "頒發日期",
+      "action": "操作",
+      "revokeReason": "原因",
+      "revoke": "撤銷",
       "notIssued": "尚未頒發",
       "empty": "尚無證書。",
       "types": {
@@ -144,6 +155,16 @@
         "revoked": "已撤銷",
         "generation_failed": "產生失敗"
       }
+    },
+    "auditLogs": {
+      "eyebrow": "管理後台",
+      "title": "稽核紀錄",
+      "action": "操作",
+      "target": "目標",
+      "reason": "原因",
+      "createdAt": "建立時間",
+      "admin": "管理員",
+      "empty": "尚無稽核紀錄。"
     }
   },
   "certificate": {
