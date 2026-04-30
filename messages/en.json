@@ -7,10 +7,10 @@
     "signIn": "Sign in"
   },
   "login": {
-    "eyebrow": "Account access",
-    "title": "Sign in or create your account",
-    "subtitle": "Use a secure magic link or an OAuth provider to continue to donations, certificates, and your dashboard.",
-    "privacyNote": "Your account is only used to keep donation records and certificates tied to you.",
+    "eyebrow": "Secure access",
+    "title": "Sign in to your AI workspace",
+    "subtitle": "Use a secure magic link or an OAuth provider to continue to downloads, donations, certificates, and your dashboard.",
+    "privacyNote": "Your account keeps donation records, certificates, and supporter privacy tied to you.",
     "magicLink": "Email magic link",
     "email": "Email address",
     "emailPlaceholder": "you@example.com",
@@ -27,16 +27,28 @@
     "apple": "Apple"
   },
   "home": {
-    "title": "Three Friends",
-    "subtitle": "Download the latest version freely. Support development when it helps you.",
+    "eyebrow": "AI coding book tool",
+    "title": "GitBook AI",
+    "subtitle": "Download the AI-powered coding book companion for structured programming knowledge, release notes, and developer learning workflows.",
     "downloadMac": "Download for macOS",
     "downloadWindows": "Download for Windows",
     "downloadLinux": "Download for Linux",
-    "supportPrompt": "Downloads are free. Donations support ongoing development."
+    "supportPrompt": "Downloads stay free. Donations keep the AI knowledge engine improving.",
+    "featureOneTitle": "AI-ready reading flow",
+    "featureOneText": "Navigate code concepts, notes, and book-like knowledge with a focused software interface.",
+    "featureTwoTitle": "Built for developers",
+    "featureTwoText": "Fast downloads, predictable releases, and a dashboard for certificates and supporter history.",
+    "featureThreeTitle": "Global access",
+    "featureThreeText": "English-first with Traditional Chinese, Japanese, and Korean routes for international users.",
+    "mockTitle": "Knowledge engine",
+    "mockStatus": "Online",
+    "mockLineOne": "Indexing coding chapters",
+    "mockLineTwo": "Mapping examples to concepts",
+    "mockLineThree": "Ready for download"
   },
   "donate": {
-    "title": "Support development",
-    "subtitle": "Choose a one-time support amount. These donations do not auto-renew.",
+    "title": "Support GitBook AI development",
+    "subtitle": "Choose a one-time support amount to fund releases, AI knowledge updates, and certificate infrastructure.",
     "tiers": {
       "monthly": "Monthly Support",
       "quarterly": "Quarterly Support",
@@ -48,8 +60,8 @@
     "payPalUnavailable": "PayPal is not enabled yet because PayPal donation records and certificates are still being integrated."
   },
   "sponsors": {
-    "eyebrow": "Sponsor wall",
-    "title": "Supporters",
+    "eyebrow": "Signal wall",
+    "title": "Supporters powering GitBook AI",
     "subtitle": "A public thank-you for supporters who chose to be listed after a paid donation.",
     "wallTitle": "Public supporters",
     "fallbackDisplayName": "Supporter",

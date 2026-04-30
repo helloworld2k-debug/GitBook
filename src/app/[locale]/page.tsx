@@ -11,7 +11,9 @@ type LocalizedPageProps = {
 };
 
 const downloadLinkClass =
-  "flex min-h-11 items-center justify-center rounded-md px-5 py-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950";
+  "flex min-h-12 items-center justify-center rounded-md px-5 py-3 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300";
+
+const featureKeys = ["One", "Two", "Three"] as const;
 
 export function generateStaticParams() {
   return supportedLocales.map((locale) => ({ locale }));
@@ -31,43 +33,80 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
   return (
     <>
       <SiteHeader />
-      <main className="flex-1 bg-slate-50">
-        <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl">
+      <main className="tech-shell flex-1">
+        <section className="mx-auto grid min-h-[calc(100dvh-77px)] max-w-6xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,1fr)_440px] lg:py-20">
+          <div>
+            <p className="inline-flex min-h-8 items-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-3 text-sm font-semibold uppercase text-cyan-200">
+              {t("eyebrow")}
+            </p>
+            <h1 className="mt-5 max-w-3xl text-5xl font-semibold tracking-normal text-white sm:text-6xl lg:text-7xl">
               {t("title")}
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">{t("subtitle")}</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <a
-                className={`${downloadLinkClass} bg-slate-950 text-white hover:bg-slate-800`}
-                href={siteConfig.downloadLinks.macos}
-              >
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">{t("subtitle")}</p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <a className={`${downloadLinkClass} neon-button text-white`} href={siteConfig.downloadLinks.macos}>
                 {t("downloadMac")}
               </a>
               <a
-                className={`${downloadLinkClass} border border-slate-300 bg-white text-slate-950 hover:bg-slate-100`}
+                className={`${downloadLinkClass} border border-cyan-300/20 bg-white/[0.08] text-cyan-100 hover:border-cyan-300/50 hover:bg-white/[0.12]`}
                 href={siteConfig.downloadLinks.windows}
               >
                 {t("downloadWindows")}
               </a>
               <a
-                className={`${downloadLinkClass} border border-slate-300 bg-white text-slate-950 hover:bg-slate-100`}
+                className={`${downloadLinkClass} border border-cyan-300/20 bg-white/[0.08] text-cyan-100 hover:border-cyan-300/50 hover:bg-white/[0.12]`}
                 href={siteConfig.downloadLinks.linux}
               >
                 {t("downloadLinux")}
               </a>
             </div>
-            <div className="mt-8 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-950">
+            <div className="mt-9 max-w-2xl rounded-md border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-100">
               {t("supportPrompt")}{" "}
               <Link
-                className="font-medium underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-950"
+                className="font-semibold text-cyan-100 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
                 href="/donate"
               >
                 {nav("donate")}
               </Link>
             </div>
           </div>
+
+          <div className="glass-panel rounded-lg p-5">
+            <div className="flex items-center justify-between border-b border-cyan-300/10 pb-4">
+              <div>
+                <p className="font-mono text-sm text-cyan-200">{t("mockTitle")}</p>
+                <p className="mt-1 text-xs uppercase text-slate-500">gitbook.ai/runtime</p>
+              </div>
+              <span className="rounded-md border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+                {t("mockStatus")}
+              </span>
+            </div>
+            <div className="mt-5 space-y-3 font-mono text-sm">
+              {[t("mockLineOne"), t("mockLineTwo"), t("mockLineThree")].map((line, index) => (
+                <div className="flex items-center gap-3 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 py-3" key={line}>
+                  <span className="text-cyan-300">0{index + 1}</span>
+                  <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_16px_rgba(34,211,238,0.7)]" />
+                  <span className="text-slate-200">{line}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              {["NLP", "Code", "Docs"].map((label) => (
+                <div className="rounded-md border border-violet-300/20 bg-violet-300/10 px-3 py-4 text-center text-xs font-semibold text-violet-100" key={label}>
+                  {label}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto grid max-w-6xl gap-4 px-4 pb-16 sm:px-6 md:grid-cols-3">
+          {featureKeys.map((key) => (
+            <article className="glass-panel rounded-lg p-5" key={key}>
+              <h2 className="text-lg font-semibold text-white">{t(`feature${key}Title`)}</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{t(`feature${key}Text`)}</p>
+            </article>
+          ))}
         </section>
       </main>
     </>

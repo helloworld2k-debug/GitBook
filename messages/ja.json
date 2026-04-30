@@ -7,10 +7,10 @@
     "signIn": "サインイン"
   },
   "login": {
-    "eyebrow": "アカウント",
-    "title": "サインインまたはアカウント作成",
-    "subtitle": "安全なメールリンクまたは OAuth プロバイダーを使って、寄付、証明書、ダッシュボードに進めます。",
-    "privacyNote": "アカウントは寄付記録と証明書をあなたに紐づけるためだけに使用します。",
+    "eyebrow": "安全なアクセス",
+    "title": "AI ワークスペースにサインイン",
+    "subtitle": "安全なメールリンクまたは OAuth プロバイダーを使って、ダウンロード、寄付、証明書、ダッシュボードに進めます。",
+    "privacyNote": "アカウントは寄付記録、証明書、サポーター公開設定をあなたに紐づけます。",
     "magicLink": "メールリンクでサインイン",
     "email": "メールアドレス",
     "emailPlaceholder": "you@example.com",
@@ -27,16 +27,28 @@
     "apple": "Apple"
   },
   "home": {
-    "title": "Three Friends",
-    "subtitle": "最新版を自由にダウンロードできます。役に立った場合は開発支援をご検討ください。",
+    "eyebrow": "AI コーディングブックツール",
+    "title": "GitBook AI",
+    "subtitle": "構造化されたプログラミング知識、リリースノート、開発者学習フローのための AI 搭載コーディングブック companion をダウンロードできます。",
     "downloadMac": "macOS 版をダウンロード",
     "downloadWindows": "Windows 版をダウンロード",
     "downloadLinux": "Linux 版をダウンロード",
-    "supportPrompt": "ダウンロードは無料です。寄付は継続的な開発を支えます。"
+    "supportPrompt": "ダウンロードは無料のままです。寄付は AI ナレッジエンジンの改善を支えます。",
+    "featureOneTitle": "AI 対応の読書フロー",
+    "featureOneText": "コード概念、ノート、書籍のような知識を集中できるソフトウェア画面でたどれます。",
+    "featureTwoTitle": "開発者のために設計",
+    "featureTwoText": "高速ダウンロード、予測しやすいリリース、証明書と支援履歴のダッシュボードを備えます。",
+    "featureThreeTitle": "グローバル対応",
+    "featureThreeText": "英語を中心に、繁体字中国語、日本語、韓国語ルートを国際ユーザー向けに提供します。",
+    "mockTitle": "ナレッジエンジン",
+    "mockStatus": "オンライン",
+    "mockLineOne": "コーディング章をインデックス中",
+    "mockLineTwo": "例と概念をマッピング",
+    "mockLineThree": "ダウンロード準備完了"
   },
   "donate": {
-    "title": "開発を支援する",
-    "subtitle": "一回限りの支援金額を選択してください。自動更新はありません。",
+    "title": "GitBook AI の開発を支援",
+    "subtitle": "リリース、AI ナレッジ更新、証明書基盤を支える一回限りの支援金額を選択してください。",
     "tiers": {
       "monthly": "月額相当の支援",
       "quarterly": "四半期相当の支援",
@@ -48,8 +60,8 @@
     "payPalUnavailable": "PayPal はまだ有効ではありません。PayPal の寄付記録と証明書発行は現在統合中です。"
   },
   "sponsors": {
-    "eyebrow": "スポンサーウォール",
-    "title": "サポーター",
+    "eyebrow": "シグナルウォール",
+    "title": "GitBook AI を支えるサポーター",
     "subtitle": "支払い済みの寄付後に公開掲載を選んだサポーターへの感謝を掲載します。",
     "wallTitle": "公開サポーター",
     "fallbackDisplayName": "サポーター",

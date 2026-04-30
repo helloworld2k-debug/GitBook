@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { donationTiers, sponsorLevels, supportedLocales } from "@/config/site";
+import { donationTiers, siteConfig, sponsorLevels, supportedLocales } from "@/config/site";
 
 describe("site config", () => {
   it("uses English as the default supported locale", () => {
     expect(supportedLocales[0]).toBe("en");
     expect(supportedLocales).toEqual(["en", "zh-Hant", "ja", "ko"]);
+  });
+
+  it("brands the public download site as GitBook AI", () => {
+    expect(siteConfig.name).toBe("GitBook AI");
+    expect(siteConfig.description).toContain("AI coding book");
   });
 
   it("defines one-time USD donation tiers", () => {

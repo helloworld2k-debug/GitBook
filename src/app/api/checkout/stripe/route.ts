@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         price_data: {
           currency: tier.currency,
           unit_amount: tier.amount,
-          product_data: { name: `Three Friends ${tier.code} support` },
+          product_data: { name: `GitBook AI ${tier.code} support` },
         },
         quantity: 1,
       },

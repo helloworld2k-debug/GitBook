@@ -68,16 +68,16 @@ export function LoginForm({ callbackUrl, messages }: LoginFormProps) {
   const isSubmitting = status === "submitting";
 
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <div className="glass-panel rounded-lg p-5 sm:p-6">
       <form className="space-y-4" onSubmit={handleEmailSubmit}>
         <div>
-          <h2 className="text-base font-semibold text-slate-950">{messages.magicLink}</h2>
-          <label className="mt-4 block text-sm font-medium text-slate-800" htmlFor="login-email">
+          <h2 className="text-base font-semibold text-white">{messages.magicLink}</h2>
+          <label className="mt-4 block text-sm font-medium text-slate-200" htmlFor="login-email">
             {messages.email}
           </label>
           <input
             autoComplete="email"
-            className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-base text-slate-950 shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+            className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
             id="login-email"
             name="email"
             placeholder={messages.emailPlaceholder}
@@ -86,7 +86,7 @@ export function LoginForm({ callbackUrl, messages }: LoginFormProps) {
           />
         </div>
         <button
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+          className="neon-button inline-flex min-h-11 w-full items-center justify-center rounded-md px-4 text-sm font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isSubmitting}
           type="submit"
         >
@@ -95,33 +95,33 @@ export function LoginForm({ callbackUrl, messages }: LoginFormProps) {
         {status === "success" ? (
           <p
             aria-live="polite"
-            className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+            className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100"
             role="status"
           >
             {messages.success}
           </p>
         ) : null}
         {status === "error" ? (
-          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+          <p className="rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">
             {messages.submitError}
           </p>
         ) : null}
         {status === "oauth-error" ? (
-          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+          <p className="rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">
             {messages.oauthError}
           </p>
         ) : null}
       </form>
 
       <div className="my-5 flex items-center gap-3" aria-hidden="true">
-        <div className="h-px flex-1 bg-slate-200" />
-        <div className="h-px flex-1 bg-slate-200" />
+        <div className="h-px flex-1 bg-cyan-300/15" />
+        <div className="h-px flex-1 bg-cyan-300/15" />
       </div>
 
       <fieldset aria-label={messages.providersLabel} className="m-0 grid min-w-0 gap-2 border-0 p-0">
         {providerOrder.map((provider) => (
           <button
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 transition-colors hover:border-slate-950 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-cyan-300/20 bg-white/[0.04] px-4 text-sm font-semibold text-slate-100 transition-colors hover:border-cyan-300/50 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
             key={provider}
             onClick={() => void handleProviderSignIn(provider)}

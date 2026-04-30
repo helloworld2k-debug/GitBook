@@ -5,8 +5,8 @@ export type Locale = (typeof supportedLocales)[number];
 export const defaultLocale: Locale = "en";
 
 export const siteConfig = {
-  name: "Three Friends",
-  description: "Public software downloads supported by voluntary donations.",
+  name: "GitBook AI",
+  description: "AI coding book software downloads supported by voluntary donations.",
   githubReleasesUrl: "https://github.com/threefriends/app/releases/latest",
   downloadLinks: {
     macos: "https://github.com/threefriends/app/releases/latest",

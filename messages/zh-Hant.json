@@ -7,10 +7,10 @@
     "signIn": "登入"
   },
   "login": {
-    "eyebrow": "帳戶存取",
-    "title": "登入或建立帳戶",
-    "subtitle": "使用安全的電子郵件登入連結，或透過 OAuth 服務商繼續捐贈、證書與儀表板流程。",
-    "privacyNote": "你的帳戶只用於保存捐贈記錄，並將證書與你連結。",
+    "eyebrow": "安全存取",
+    "title": "登入你的 AI 工作區",
+    "subtitle": "使用安全的電子郵件登入連結，或透過 OAuth 服務商繼續下載、捐贈、證書與儀表板流程。",
+    "privacyNote": "你的帳戶用於保存捐贈記錄、證書與支持者隱私設定。",
     "magicLink": "電子郵件登入連結",
     "email": "電子郵件地址",
     "emailPlaceholder": "you@example.com",
@@ -27,16 +27,28 @@
     "apple": "Apple"
   },
   "home": {
-    "title": "Three Friends",
-    "subtitle": "自由下載最新版本。如果這個軟體幫助了你，也歡迎支持開發。",
+    "eyebrow": "AI 編程書籍工具",
+    "title": "GitBook AI",
+    "subtitle": "下載 AI 驅動的編程書籍伴侶，用於結構化程式知識、版本資訊與開發者學習流程。",
     "downloadMac": "下載 macOS 版",
     "downloadWindows": "下載 Windows 版",
     "downloadLinux": "下載 Linux 版",
-    "supportPrompt": "下載免費。捐贈將用於支持持續開發。"
+    "supportPrompt": "下載保持免費。捐贈將持續支持 AI 知識引擎改進。",
+    "featureOneTitle": "AI 就緒閱讀流程",
+    "featureOneText": "以專注的軟體介面瀏覽程式概念、筆記與書籍式知識。",
+    "featureTwoTitle": "為開發者打造",
+    "featureTwoText": "快速下載、可預期的版本發布，以及證書和支持記錄儀表板。",
+    "featureThreeTitle": "全球可用",
+    "featureThreeText": "英文優先，並提供繁體中文、日文與韓文路由給國際使用者。",
+    "mockTitle": "知識引擎",
+    "mockStatus": "在線",
+    "mockLineOne": "索引編程章節",
+    "mockLineTwo": "映射範例與概念",
+    "mockLineThree": "可供下載"
   },
   "donate": {
-    "title": "支持開發",
-    "subtitle": "選擇一次性支持金額。這些捐贈不會自動續費。",
+    "title": "支持 GitBook AI 開發",
+    "subtitle": "選擇一次性支持金額，用於版本發布、AI 知識更新與證書基礎設施。",
     "tiers": {
       "monthly": "月度支持",
       "quarterly": "季度支持",
@@ -48,8 +60,8 @@
     "payPalUnavailable": "PayPal 尚未啟用，因為 PayPal 捐贈記錄與證書仍在整合中。"
   },
   "sponsors": {
-    "eyebrow": "贊助牆",
-    "title": "支持者",
+    "eyebrow": "信號牆",
+    "title": "支持 GitBook AI 的支持者",
     "subtitle": "感謝已完成捐贈並選擇公開列名的支持者。",
     "wallTitle": "公開支持者",
     "fallbackDisplayName": "支持者",
