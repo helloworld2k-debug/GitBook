@@ -4,16 +4,18 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type AdminLike = { is_admin: boolean } | null;
 
-export function sanitizeNextPath(nextPath: string | null | undefined, fallbackPath = "/en/dashboard") {
-  if (!nextPath || !nextPath.startsWith("/") || nextPath.startsWith("//")) {
+export function sanitizeNextPath(nextPath: string | string[] | null | undefined, fallbackPath = "/en/dashboard") {
+  const path = Array.isArray(nextPath) ? nextPath[0] : nextPath;
+
+  if (!path || !path.startsWith("/") || path.startsWith("//")) {
     return fallbackPath;
   }
 
-  if (nextPath.startsWith("/api/") || nextPath.startsWith("/_next/") || nextPath.includes("\\") || nextPath.includes("\n")) {
+  if (path.startsWith("/api/") || path.startsWith("/_next/") || path.includes("\\") || path.includes("\n")) {
     return fallbackPath;
   }
 
-  return nextPath;
+  return path;
 }
 
 export function getLoginRedirectPath(locale: Locale | string, nextPath: string) {

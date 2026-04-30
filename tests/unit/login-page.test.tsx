@@ -75,6 +75,20 @@ describe("LoginPage", () => {
     );
   });
 
+  it("uses the first safe value when next is repeated", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://threefriends.example";
+    const page = await LoginPage({
+      params: Promise.resolve({ locale: "ko" }),
+      searchParams: Promise.resolve({ next: ["/ko/dashboard", "https://evil.example/take"] }),
+    });
+
+    render(page);
+
+    expect(screen.getByTestId("login-form")).toHaveTextContent(
+      "https://threefriends.example/auth/callback?next=%2Fko%2Fdashboard",
+    );
+  });
+
   it("shows a callback error status", async () => {
     const page = await LoginPage({
       params: Promise.resolve({ locale: "ko" }),

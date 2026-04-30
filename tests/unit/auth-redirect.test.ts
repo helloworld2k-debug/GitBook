@@ -14,6 +14,14 @@ describe("auth redirect safety", () => {
     expect(sanitizeNextPath("/ja/donate?tier=yearly", "/en/dashboard")).toBe("/ja/donate?tier=yearly");
   });
 
+  it("uses the first safe path when next is repeated", () => {
+    expect(sanitizeNextPath(["/ko/dashboard", "https://evil.example/take"], "/en/dashboard")).toBe("/ko/dashboard");
+  });
+
+  it("falls back when the first repeated next value is unsafe", () => {
+    expect(sanitizeNextPath(["https://evil.example/take", "/ko/dashboard"], "/en/dashboard")).toBe("/en/dashboard");
+  });
+
   it("rejects external and protocol-relative next paths", () => {
     expect(sanitizeNextPath("https://evil.example/phish", "/en/dashboard")).toBe("/en/dashboard");
     expect(sanitizeNextPath("//evil.example/phish", "/en/dashboard")).toBe("/en/dashboard");

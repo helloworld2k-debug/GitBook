@@ -93,7 +93,11 @@ export function LoginForm({ callbackUrl, messages }: LoginFormProps) {
           {isSubmitting && activeProvider === null ? messages.sending : messages.sendLink}
         </button>
         {status === "success" ? (
-          <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          <p
+            aria-live="polite"
+            className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+            role="status"
+          >
             {messages.success}
           </p>
         ) : null}
@@ -114,7 +118,7 @@ export function LoginForm({ callbackUrl, messages }: LoginFormProps) {
         <div className="h-px flex-1 bg-slate-200" />
       </div>
 
-      <div aria-label={messages.providersLabel} className="grid gap-2">
+      <fieldset aria-label={messages.providersLabel} className="m-0 grid min-w-0 gap-2 border-0 p-0">
         {providerOrder.map((provider) => (
           <button
             className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 transition-colors hover:border-slate-950 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
@@ -126,7 +130,7 @@ export function LoginForm({ callbackUrl, messages }: LoginFormProps) {
             {isSubmitting && activeProvider === provider ? messages.sending : messages.providerButtons[provider]}
           </button>
         ))}
-      </div>
+      </fieldset>
     </div>
   );
 }

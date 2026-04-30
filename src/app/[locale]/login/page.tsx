@@ -11,7 +11,7 @@ type LoginPageProps = {
   }>;
   searchParams: Promise<{
     error?: string;
-    next?: string;
+    next?: string | string[];
   }>;
 };
 

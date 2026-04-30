@@ -60,7 +60,7 @@ describe("LoginForm", () => {
         },
       });
     });
-    expect(await screen.findByText("Check your email for a secure sign-in link.")).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent("Check your email for a secure sign-in link.");
   });
 
   it("shows an error when magic link submission fails", async () => {
@@ -75,6 +75,8 @@ describe("LoginForm", () => {
 
   it("starts OAuth sign-in with the selected provider and callback URL", async () => {
     renderLoginForm();
+
+    expect(screen.getByRole("group", { name: "Other sign-in options" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Continue with GitHub" }));
 

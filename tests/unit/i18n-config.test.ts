@@ -24,10 +24,10 @@ describe("i18n configuration", () => {
     expect(messageKeys(koMessages).sort()).toEqual(expectedKeys);
   });
 
-  it("normalizes all non-asset and non-API routes through next-intl middleware", () => {
+  it("normalizes localized app routes through next-intl middleware without intercepting auth callbacks", () => {
     const middleware = readFileSync("src/middleware.ts", "utf8");
 
-    expect(middleware).toContain('matcher: ["/((?!api|_next|_vercel|.*\\\\..*).*)"]');
+    expect(middleware).toContain('matcher: ["/((?!api|auth/callback|_next|_vercel|.*\\\\..*).*)"]');
     expect(middleware).toContain("createMiddleware(routing)");
     expect(middleware).toContain("refreshSupabaseSession(request, response)");
   });
