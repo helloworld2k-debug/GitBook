@@ -4,7 +4,8 @@
     "donate": "Donate",
     "sponsors": "Sponsors",
     "dashboard": "Dashboard",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "language": "Language"
   },
   "login": {
     "eyebrow": "Secure access",
@@ -43,6 +44,9 @@
     "subtitle": "Download the AI-powered coding book companion for structured programming knowledge, release notes, and developer learning workflows.",
     "downloadMac": "Download for macOS",
     "downloadWindows": "Download for Windows",
+    "latestVersion": "Latest version {version} · {date}",
+    "latestVersionPending": "Latest version is being prepared",
+    "olderVersions": "Older versions",
     "supportPrompt": "Downloads stay free. Donations keep the AI knowledge engine improving.",
     "featureOneTitle": "AI-ready reading flow",
     "featureOneText": "Navigate code concepts, notes, and book-like knowledge with a focused software interface.",
@@ -55,6 +59,14 @@
     "mockLineOne": "Indexing coding chapters",
     "mockLineTwo": "Mapping examples to concepts",
     "mockLineThree": "Ready for download"
+  },
+  "versions": {
+    "eyebrow": "Release archive",
+    "title": "Older versions",
+    "subtitle": "Download previous GitBook AI builds for macOS and Windows.",
+    "downloadMac": "macOS",
+    "downloadWindows": "Windows",
+    "empty": "No public releases have been published yet."
   },
   "donate": {
     "title": "Support GitBook AI development",
@@ -86,9 +98,24 @@
     }
   },
   "dashboard": {
-    "title": "Dashboard",
+    "title": "Personal center",
     "donations": "Paid donations",
     "certificates": "Active certificates",
+    "accountTitle": "Account profile",
+    "email": "Email",
+    "displayName": "Display name",
+    "displayNamePlaceholder": "Your name",
+    "publicDisplayName": "Public display name",
+    "saveProfile": "Save profile",
+    "profileSaved": "Profile saved.",
+    "profileError": "Could not save profile.",
+    "passwordTitle": "Change password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "savePassword": "Update password",
+    "passwordSaved": "Password updated.",
+    "passwordMismatch": "Passwords do not match.",
+    "passwordError": "Could not update password.",
     "recentDonations": "Donation history",
     "recentCertificates": "Certificates",
     "amount": "Amount",
@@ -127,8 +154,26 @@
       "donationsDescription": "Review payment provider records, statuses, and transaction IDs.",
       "certificatesTitle": "Certificates",
       "certificatesDescription": "Review issued certificate numbers, types, statuses, and issue dates.",
+      "releasesTitle": "Releases",
+      "releasesDescription": "Upload macOS and Windows installers, publish versions, and manage release notes.",
       "auditLogsTitle": "Audit logs",
       "auditLogsDescription": "Review admin corrections, revocations, and reasons."
+    },
+    "releases": {
+      "eyebrow": "Admin",
+      "title": "Software releases",
+      "createTitle": "Create release",
+      "version": "Version",
+      "releasedAt": "Release date",
+      "notes": "Release notes",
+      "macFile": "macOS installer",
+      "windowsFile": "Windows installer",
+      "published": "Published",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "create": "Create release",
+      "assets": "Assets",
+      "empty": "No releases found."
     },
     "donations": {
       "eyebrow": "Admin",

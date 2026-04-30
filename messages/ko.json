@@ -4,7 +4,8 @@
     "donate": "후원",
     "sponsors": "후원자",
     "dashboard": "대시보드",
-    "signIn": "로그인"
+    "signIn": "로그인",
+    "language": "언어"
   },
   "login": {
     "eyebrow": "보안 접근",
@@ -54,7 +55,10 @@
     "mockStatus": "온라인",
     "mockLineOne": "코딩 챕터 색인 중",
     "mockLineTwo": "예제와 개념 매핑 중",
-    "mockLineThree": "다운로드 준비 완료"
+    "mockLineThree": "다운로드 준비 완료",
+    "latestVersion": "최신 버전 {version} · {date}",
+    "latestVersionPending": "최신 버전 준비 중",
+    "olderVersions": "이전 버전"
   },
   "donate": {
     "title": "GitBook AI 개발 후원",
@@ -86,7 +90,7 @@
     }
   },
   "dashboard": {
-    "title": "대시보드",
+    "title": "개인 센터",
     "donations": "결제 완료 후원",
     "certificates": "활성 인증서",
     "recentDonations": "후원 내역",
@@ -117,7 +121,22 @@
       "cancelled": "취소됨",
       "failed": "실패",
       "refunded": "환불됨"
-    }
+    },
+    "accountTitle": "계정 프로필",
+    "email": "이메일",
+    "displayName": "표시 이름",
+    "displayNamePlaceholder": "이름",
+    "publicDisplayName": "공개 표시 이름",
+    "saveProfile": "프로필 저장",
+    "profileSaved": "프로필이 저장되었습니다.",
+    "profileError": "프로필을 저장할 수 없습니다.",
+    "passwordTitle": "비밀번호 변경",
+    "newPassword": "새 비밀번호",
+    "confirmPassword": "비밀번호 확인",
+    "savePassword": "비밀번호 업데이트",
+    "passwordSaved": "비밀번호가 업데이트되었습니다.",
+    "passwordMismatch": "비밀번호가 일치하지 않습니다.",
+    "passwordError": "비밀번호를 업데이트할 수 없습니다."
   },
   "admin": {
     "overview": {
@@ -128,7 +147,9 @@
       "certificatesTitle": "인증서",
       "certificatesDescription": "발급된 인증서 번호, 유형, 상태, 발급일을 확인합니다.",
       "auditLogsTitle": "감사 로그",
-      "auditLogsDescription": "관리자 수정, 폐기, 사유를 확인합니다."
+      "auditLogsDescription": "관리자 수정, 폐기, 사유를 확인합니다.",
+      "releasesTitle": "릴리스",
+      "releasesDescription": "macOS 및 Windows 설치 파일을 업로드하고 버전과 릴리스 노트를 관리합니다."
     },
     "donations": {
       "eyebrow": "관리",
@@ -190,6 +211,22 @@
       "createdAt": "생성일",
       "admin": "관리자",
       "empty": "감사 로그가 없습니다."
+    },
+    "releases": {
+      "eyebrow": "관리자",
+      "title": "소프트웨어 릴리스",
+      "createTitle": "릴리스 만들기",
+      "version": "버전",
+      "releasedAt": "릴리스 날짜",
+      "notes": "릴리스 노트",
+      "macFile": "macOS 설치 파일",
+      "windowsFile": "Windows 설치 파일",
+      "published": "게시됨",
+      "publish": "게시",
+      "unpublish": "게시 해제",
+      "create": "릴리스 만들기",
+      "assets": "파일",
+      "empty": "릴리스가 없습니다."
     }
   },
   "certificate": {
@@ -210,5 +247,13 @@
       "donation": "후원 인증서",
       "honor": "공로 인증서"
     }
+  },
+  "versions": {
+    "eyebrow": "릴리스 기록",
+    "title": "이전 버전",
+    "subtitle": "GitBook AI의 이전 macOS 및 Windows 빌드를 다운로드하세요.",
+    "downloadMac": "macOS",
+    "downloadWindows": "Windows",
+    "empty": "아직 공개된 릴리스가 없습니다."
   }
 }

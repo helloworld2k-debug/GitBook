@@ -6,7 +6,7 @@ import { Link } from "@/i18n/routing";
 import { requireUser } from "@/lib/auth/guards";
 import { formatCertificateIssuedDate, getCertificateTypeLabel } from "@/lib/certificates/render";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { updatePublicSupporterPrivacy } from "./actions";
+import { updateAccountProfile, updateDashboardPassword, updatePublicSupporterPrivacy } from "./actions";
 
 type DashboardPageProps = {
   params: Promise<{
@@ -14,6 +14,8 @@ type DashboardPageProps = {
   }>;
   searchParams?: Promise<{
     privacy?: string;
+    profile?: string;
+    password?: string;
   }>;
 };
 
@@ -41,7 +43,10 @@ function formatDashboardDate(value: string | null, locale: string) {
 
 export default async function DashboardPage({ params, searchParams }: DashboardPageProps) {
   const { locale } = await params;
-  const privacyStatus = (await searchParams)?.privacy;
+  const statusParams = await searchParams;
+  const privacyStatus = statusParams?.privacy;
+  const profileStatus = statusParams?.profile;
+  const passwordStatus = statusParams?.password;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -81,7 +86,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
       .limit(5),
     supabase
       .from("profiles")
-      .select("public_supporter_enabled,public_display_name")
+      .select("email,display_name,public_supporter_enabled,public_display_name")
       .eq("id", user.id)
       .single(),
   ]);
@@ -107,6 +112,8 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
   }
 
   const updatePrivacy = updatePublicSupporterPrivacy.bind(null, locale);
+  const updateProfile = updateAccountProfile.bind(null, locale);
+  const updatePassword = updateDashboardPassword.bind(null, locale);
 
   return (
     <>
@@ -163,6 +170,81 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
               )}
             </section>
             <div className="space-y-6">
+              <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+                <div className="border-b border-slate-200 px-5 py-4">
+                  <h2 className="text-lg font-semibold tracking-normal text-slate-950">{t("accountTitle")}</h2>
+                </div>
+                <form action={updateProfile} className="space-y-4 px-5 py-5">
+                  {profileStatus === "saved" ? (
+                    <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">{t("profileSaved")}</p>
+                  ) : null}
+                  {profileStatus === "error" ? (
+                    <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-950" role="alert">{t("profileError")}</p>
+                  ) : null}
+                  <div>
+                    <p className="text-sm font-medium text-slate-950">{t("email")}</p>
+                    <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                      {profile?.email ?? user.email}
+                    </p>
+                  </div>
+                  <label className="block text-sm font-medium text-slate-950">
+                    {t("displayName")}
+                    <input
+                      className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                      defaultValue={profile?.display_name ?? ""}
+                      maxLength={80}
+                      name="display_name"
+                      placeholder={t("displayNamePlaceholder")}
+                    />
+                  </label>
+                  <label className="block text-sm font-medium text-slate-950">
+                    {t("publicDisplayName")}
+                    <input
+                      className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                      defaultValue={profile?.public_display_name ?? ""}
+                      maxLength={80}
+                      name="public_display_name"
+                      placeholder={t("privacy.displayNamePlaceholder")}
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                  >
+                    {t("saveProfile")}
+                  </button>
+                </form>
+              </section>
+              <section className="rounded-md border border-slate-200 bg-white shadow-sm">
+                <div className="border-b border-slate-200 px-5 py-4">
+                  <h2 className="text-lg font-semibold tracking-normal text-slate-950">{t("passwordTitle")}</h2>
+                </div>
+                <form action={updatePassword} className="space-y-4 px-5 py-5">
+                  {passwordStatus === "saved" ? (
+                    <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">{t("passwordSaved")}</p>
+                  ) : null}
+                  {passwordStatus === "mismatch" ? (
+                    <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-950" role="alert">{t("passwordMismatch")}</p>
+                  ) : null}
+                  {passwordStatus === "error" ? (
+                    <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-950" role="alert">{t("passwordError")}</p>
+                  ) : null}
+                  <label className="block text-sm font-medium text-slate-950">
+                    {t("newPassword")}
+                    <input className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" minLength={8} name="password" required type="password" />
+                  </label>
+                  <label className="block text-sm font-medium text-slate-950">
+                    {t("confirmPassword")}
+                    <input className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" minLength={8} name="confirm_password" required type="password" />
+                  </label>
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                  >
+                    {t("savePassword")}
+                  </button>
+                </form>
+              </section>
               <section className="rounded-md border border-slate-200 bg-white shadow-sm">
                 <div className="border-b border-slate-200 px-5 py-4">
                   <h2 className="text-lg font-semibold tracking-normal text-slate-950">{t("recentCertificates")}</h2>

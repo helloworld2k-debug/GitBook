@@ -4,7 +4,8 @@
     "donate": "寄付",
     "sponsors": "サポーター",
     "dashboard": "ダッシュボード",
-    "signIn": "サインイン"
+    "signIn": "サインイン",
+    "language": "言語"
   },
   "login": {
     "eyebrow": "安全なアクセス",
@@ -54,7 +55,10 @@
     "mockStatus": "オンライン",
     "mockLineOne": "コーディング章をインデックス中",
     "mockLineTwo": "例と概念をマッピング",
-    "mockLineThree": "ダウンロード準備完了"
+    "mockLineThree": "ダウンロード準備完了",
+    "latestVersion": "最新バージョン {version} · {date}",
+    "latestVersionPending": "最新バージョンを準備中",
+    "olderVersions": "旧バージョン"
   },
   "donate": {
     "title": "GitBook AI の開発を支援",
@@ -86,7 +90,7 @@
     }
   },
   "dashboard": {
-    "title": "ダッシュボード",
+    "title": "個人センター",
     "donations": "支払い済み寄付",
     "certificates": "有効な証明書",
     "recentDonations": "寄付履歴",
@@ -117,7 +121,22 @@
       "cancelled": "キャンセル済み",
       "failed": "失敗",
       "refunded": "返金済み"
-    }
+    },
+    "accountTitle": "アカウント情報",
+    "email": "メール",
+    "displayName": "表示名",
+    "displayNamePlaceholder": "名前",
+    "publicDisplayName": "公開表示名",
+    "saveProfile": "プロフィールを保存",
+    "profileSaved": "プロフィールを保存しました。",
+    "profileError": "プロフィールを保存できませんでした。",
+    "passwordTitle": "パスワード変更",
+    "newPassword": "新しいパスワード",
+    "confirmPassword": "パスワード確認",
+    "savePassword": "パスワードを更新",
+    "passwordSaved": "パスワードを更新しました。",
+    "passwordMismatch": "パスワードが一致しません。",
+    "passwordError": "パスワードを更新できませんでした。"
   },
   "admin": {
     "overview": {
@@ -128,7 +147,9 @@
       "certificatesTitle": "証明書",
       "certificatesDescription": "発行済み証明書の番号、種類、ステータス、発行日を確認します。",
       "auditLogsTitle": "監査ログ",
-      "auditLogsDescription": "管理者の修正、取り消し、理由を確認します。"
+      "auditLogsDescription": "管理者の修正、取り消し、理由を確認します。",
+      "releasesTitle": "リリース",
+      "releasesDescription": "macOS と Windows のインストーラーをアップロードし、バージョンとリリースノートを管理します。"
     },
     "donations": {
       "eyebrow": "管理画面",
@@ -190,6 +211,22 @@
       "createdAt": "作成日時",
       "admin": "管理者",
       "empty": "監査ログはまだありません。"
+    },
+    "releases": {
+      "eyebrow": "管理者",
+      "title": "ソフトウェアリリース",
+      "createTitle": "リリース作成",
+      "version": "バージョン",
+      "releasedAt": "リリース日",
+      "notes": "リリースノート",
+      "macFile": "macOS インストーラー",
+      "windowsFile": "Windows インストーラー",
+      "published": "公開済み",
+      "publish": "公開",
+      "unpublish": "非公開",
+      "create": "作成",
+      "assets": "ファイル",
+      "empty": "リリースはありません。"
     }
   },
   "certificate": {
@@ -210,5 +247,13 @@
       "donation": "寄付証明書",
       "honor": "表彰証明書"
     }
+  },
+  "versions": {
+    "eyebrow": "リリース履歴",
+    "title": "旧バージョン",
+    "subtitle": "GitBook AI の過去の macOS / Windows ビルドをダウンロードできます。",
+    "downloadMac": "macOS",
+    "downloadWindows": "Windows",
+    "empty": "公開済みリリースはまだありません。"
   }
 }

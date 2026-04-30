@@ -3,6 +3,9 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/site-header";
 import { siteConfig, supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
+import { optionalTimeout } from "@/lib/async/optional-timeout";
+import { getLatestPublishedRelease, getReleaseAsset, type ReleaseClient, type ReleasePlatform, type SoftwareRelease } from "@/lib/releases/software-releases";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type LocalizedPageProps = {
   params: Promise<{
@@ -14,6 +17,18 @@ const downloadLinkClass =
   "flex min-h-12 items-center justify-center rounded-md px-5 py-3 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300";
 
 const featureKeys = ["One", "Two", "Three"] as const;
+
+function formatReleaseDate(value: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
+function getFallbackDownload(platform: ReleasePlatform) {
+  return platform === "macos" ? siteConfig.downloadLinks.macos : siteConfig.downloadLinks.windows;
+}
 
 export function generateStaticParams() {
   return supportedLocales.map((locale) => ({ locale }));
@@ -29,6 +44,37 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
   setRequestLocale(locale);
   const t = await getTranslations("home");
   const nav = await getTranslations("nav");
+  let latestRelease: SoftwareRelease | null = null;
+
+  try {
+    const supabase = (await createSupabaseServerClient()) as unknown as ReleaseClient;
+    latestRelease = await optionalTimeout(getLatestPublishedRelease(supabase));
+  } catch {
+    latestRelease = null;
+  }
+
+  const macAsset = getReleaseAsset(latestRelease, "macos");
+  const windowsAsset = getReleaseAsset(latestRelease, "windows");
+  const latestVersionLabel = latestRelease
+    ? t("latestVersion", {
+        version: latestRelease.version,
+        date: formatReleaseDate(latestRelease.releasedAt, locale),
+      })
+    : t("latestVersionPending");
+  const downloads = [
+    {
+      label: t("downloadMac"),
+      href: macAsset?.downloadUrl ?? getFallbackDownload("macos"),
+      unavailable: latestRelease ? !macAsset : false,
+      className: `${downloadLinkClass} neon-button text-white`,
+    },
+    {
+      label: t("downloadWindows"),
+      href: windowsAsset?.downloadUrl ?? getFallbackDownload("windows"),
+      unavailable: latestRelease ? !windowsAsset : false,
+      className: `${downloadLinkClass} border border-cyan-300/20 bg-white/[0.08] text-cyan-100 hover:border-cyan-300/50 hover:bg-white/[0.12]`,
+    },
+  ];
 
   return (
     <>
@@ -61,15 +107,30 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">{t("subtitle")}</p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <a className={`${downloadLinkClass} neon-button text-white`} href={siteConfig.downloadLinks.macos}>
-                {t("downloadMac")}
-              </a>
-              <a
-                className={`${downloadLinkClass} border border-cyan-300/20 bg-white/[0.08] text-cyan-100 hover:border-cyan-300/50 hover:bg-white/[0.12]`}
-                href={siteConfig.downloadLinks.windows}
+              {downloads.map((download) =>
+                download.unavailable ? (
+                  <span
+                    aria-disabled="true"
+                    className={`${download.className} cursor-not-allowed opacity-50`}
+                    key={download.label}
+                  >
+                    {download.label}
+                  </span>
+                ) : (
+                  <a className={download.className} href={download.href} key={download.label}>
+                    {download.label}
+                  </a>
+                ),
+              )}
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-400">
+              <span>{latestVersionLabel}</span>
+              <Link
+                className="font-semibold text-cyan-100 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                href="/versions"
               >
-                {t("downloadWindows")}
-              </a>
+                {t("olderVersions")}
+              </Link>
             </div>
             <div className="mt-9 max-w-2xl rounded-md border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-100">
               {t("supportPrompt")}{" "}

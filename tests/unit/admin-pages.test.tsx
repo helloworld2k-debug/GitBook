@@ -74,6 +74,8 @@ const testMessages = {
         donationsDescription: "Review payment provider records, statuses, and transaction IDs.",
         certificatesTitle: "Certificates",
         certificatesDescription: "Review issued certificate numbers, types, statuses, and issue dates.",
+        releasesTitle: "Releases",
+        releasesDescription: "Upload installers and manage releases.",
         auditLogsTitle: "Audit logs",
         auditLogsDescription: "Review admin corrections, revocations, and reasons.",
       },
@@ -149,6 +151,8 @@ const testMessages = {
         donationsDescription: "檢視付款服務商記錄、狀態與交易 ID。",
         certificatesTitle: "證書",
         certificatesDescription: "檢視已頒發的證書編號、類型、狀態與頒發日期。",
+        releasesTitle: "版本發布",
+        releasesDescription: "上傳安裝包並管理版本。",
         auditLogsTitle: "稽核紀錄",
         auditLogsDescription: "檢視管理員修正、撤銷與原因。",
       },
@@ -224,6 +228,8 @@ const testMessages = {
         donationsDescription: "決済プロバイダーの記録、ステータス、取引 ID を確認します。",
         certificatesTitle: "証明書",
         certificatesDescription: "発行済み証明書の番号、種類、ステータス、発行日を確認します。",
+        releasesTitle: "リリース",
+        releasesDescription: "インストーラーとリリースを管理します。",
         auditLogsTitle: "監査ログ",
         auditLogsDescription: "管理者の修正、取り消し、理由を確認します。",
       },
@@ -299,6 +305,8 @@ const testMessages = {
         donationsDescription: "결제 제공업체 기록, 상태, 거래 ID를 확인합니다.",
         certificatesTitle: "인증서",
         certificatesDescription: "발급된 인증서 번호, 유형, 상태, 발급일을 확인합니다.",
+        releasesTitle: "릴리스",
+        releasesDescription: "설치 파일과 릴리스를 관리합니다.",
         auditLogsTitle: "감사 로그",
         auditLogsDescription: "관리자 수정, 폐기, 사유를 확인합니다.",
       },
@@ -383,6 +391,7 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "Admin" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /donations/i })).toHaveAttribute("href", "/admin/donations");
     expect(screen.getByRole("link", { name: /certificates/i })).toHaveAttribute("href", "/admin/certificates");
+    expect(screen.getByRole("link", { name: /releases/i })).toHaveAttribute("href", "/admin/releases");
     expect(screen.getByRole("link", { name: /audit logs/i })).toHaveAttribute("href", "/admin/audit-logs");
     expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
   });
@@ -396,6 +405,7 @@ describe("admin pages", () => {
     expect(screen.getByText("管理工具")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "管理後台" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /捐贈/ })).toHaveAttribute("href", "/admin/donations");
+    expect(screen.getByRole("link", { name: /版本發布/ })).toHaveAttribute("href", "/admin/releases");
     expect(screen.getByRole("link", { name: /稽核紀錄/ })).toHaveAttribute("href", "/admin/audit-logs");
     expect(screen.getByText("檢視付款服務商記錄、狀態與交易 ID。")).toBeInTheDocument();
   });

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addManualDonation, revokeCertificate } from "@/app/[locale]/admin/actions";
+import { addManualDonation, createSoftwareRelease, revokeCertificate, setSoftwareReleasePublished } from "@/app/[locale]/admin/actions";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
@@ -137,5 +137,77 @@ describe("admin actions", () => {
     await expect(revokeCertificate(formData)).rejects.toThrow("Reason is required");
 
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
+  });
+
+  it("creates a software release, uploads platform assets, and revalidates public download pages", async () => {
+    const releaseInsertSingle = vi.fn(async () => ({ data: { id: "release-1" }, error: null }));
+    const releaseSelect = vi.fn(() => ({ single: releaseInsertSingle }));
+    const releaseInsert = vi.fn(() => ({ select: releaseSelect }));
+    const assetInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "software_releases") {
+        return { insert: releaseInsert };
+      }
+
+      if (table === "software_release_assets") {
+        return { insert: assetInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    const upload = vi.fn(async () => ({ error: null }));
+    const storageFrom = vi.fn(() => ({ upload }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, storage: { from: storageFrom } });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("version", "v1.2.0");
+    formData.set("released_at", "2026-04-30");
+    formData.set("notes", "Fast AI indexing");
+    formData.set("is_published", "on");
+    formData.set("macos_file", new File(["mac"], "GitBook AI.dmg"));
+    formData.set("windows_file", new File(["win"], "GitBook AI.exe"));
+
+    await createSoftwareRelease(formData);
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(releaseInsert).toHaveBeenCalledWith({
+      created_by: "admin-1",
+      is_published: true,
+      notes: "Fast AI indexing",
+      released_at: "2026-04-30",
+      version: "v1.2.0",
+    });
+    expect(storageFrom).toHaveBeenCalledWith("software-releases");
+    expect(upload).toHaveBeenCalledTimes(2);
+    expect(assetInsert).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ file_name: "GitBook AI.dmg", platform: "macos", release_id: "release-1" }),
+        expect.objectContaining({ file_name: "GitBook AI.exe", platform: "windows", release_id: "release-1" }),
+      ]),
+    );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/versions");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
+  });
+
+  it("publishes and unpublishes a software release", async () => {
+    const eq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ update }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "ja");
+    formData.set("release_id", "release-1");
+    formData.set("is_published", "false");
+
+    await setSoftwareReleasePublished(formData);
+
+    expect(update).toHaveBeenCalledWith({ is_published: false });
+    expect(eq).toHaveBeenCalledWith("id", "release-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/versions");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/releases");
   });
 });

@@ -4,7 +4,8 @@
     "donate": "贊助",
     "sponsors": "支持者",
     "dashboard": "儀表板",
-    "signIn": "登入"
+    "signIn": "登入",
+    "language": "語言"
   },
   "login": {
     "eyebrow": "安全存取",
@@ -54,7 +55,10 @@
     "mockStatus": "在線",
     "mockLineOne": "索引編程章節",
     "mockLineTwo": "映射範例與概念",
-    "mockLineThree": "可供下載"
+    "mockLineThree": "可供下載",
+    "latestVersion": "最新版本 {version} · {date}",
+    "latestVersionPending": "最新版本準備中",
+    "olderVersions": "舊版本"
   },
   "donate": {
     "title": "支持 GitBook AI 開發",
@@ -86,7 +90,7 @@
     }
   },
   "dashboard": {
-    "title": "儀表板",
+    "title": "個人中心",
     "donations": "已付款捐贈",
     "certificates": "有效證書",
     "recentDonations": "捐贈記錄",
@@ -117,7 +121,22 @@
       "cancelled": "已取消",
       "failed": "失敗",
       "refunded": "已退款"
-    }
+    },
+    "accountTitle": "帳號資料",
+    "email": "Email",
+    "displayName": "顯示名稱",
+    "displayNamePlaceholder": "你的名稱",
+    "publicDisplayName": "公開顯示名稱",
+    "saveProfile": "儲存資料",
+    "profileSaved": "資料已儲存。",
+    "profileError": "無法儲存資料。",
+    "passwordTitle": "修改密碼",
+    "newPassword": "新密碼",
+    "confirmPassword": "確認密碼",
+    "savePassword": "更新密碼",
+    "passwordSaved": "密碼已更新。",
+    "passwordMismatch": "兩次密碼不一致。",
+    "passwordError": "無法更新密碼。"
   },
   "admin": {
     "overview": {
@@ -128,7 +147,9 @@
       "certificatesTitle": "證書",
       "certificatesDescription": "檢視已頒發的證書編號、類型、狀態與頒發日期。",
       "auditLogsTitle": "稽核紀錄",
-      "auditLogsDescription": "檢視管理員修正、撤銷與原因。"
+      "auditLogsDescription": "檢視管理員修正、撤銷與原因。",
+      "releasesTitle": "版本發布",
+      "releasesDescription": "上傳 macOS 與 Windows 安裝包，發布版本並管理更新說明。"
     },
     "donations": {
       "eyebrow": "管理後台",
@@ -190,6 +211,22 @@
       "createdAt": "建立時間",
       "admin": "管理員",
       "empty": "尚無稽核紀錄。"
+    },
+    "releases": {
+      "eyebrow": "管理員",
+      "title": "軟體版本",
+      "createTitle": "建立版本",
+      "version": "版本號",
+      "releasedAt": "發布日期",
+      "notes": "發布說明",
+      "macFile": "macOS 安裝包",
+      "windowsFile": "Windows 安裝包",
+      "published": "已發布",
+      "publish": "發布",
+      "unpublish": "下架",
+      "create": "建立版本",
+      "assets": "檔案",
+      "empty": "尚無版本。"
     }
   },
   "certificate": {
@@ -210,5 +247,13 @@
       "donation": "捐贈證書",
       "honor": "榮譽證書"
     }
+  },
+  "versions": {
+    "eyebrow": "版本封存",
+    "title": "舊版本",
+    "subtitle": "下載 GitBook AI 的 macOS 與 Windows 歷史版本。",
+    "downloadMac": "macOS",
+    "downloadWindows": "Windows",
+    "empty": "尚未發布公開版本。"
   }
 }

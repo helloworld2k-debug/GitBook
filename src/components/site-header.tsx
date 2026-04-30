@@ -1,12 +1,32 @@
-import { getTranslations } from "next-intl/server";
-import { siteConfig } from "@/config/site";
+import { getLocale, getTranslations } from "next-intl/server";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { siteConfig, supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
+import { optionalTimeout } from "@/lib/async/optional-timeout";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const navLinkClass =
   "flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-slate-300 transition-colors hover:text-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300";
 
 export async function SiteHeader() {
   const t = await getTranslations("nav");
+  const localeValue = await getLocale();
+  const currentLocale = supportedLocales.includes(localeValue as Locale) ? (localeValue as Locale) : "en";
+  let userLabel: string | null = null;
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const authResult = await optionalTimeout(supabase.auth.getUser(), 900);
+    const user = authResult?.data.user;
+
+    if (user) {
+      const profileResult = await optionalTimeout(Promise.resolve(supabase.from("profiles").select("display_name,email").eq("id", user.id).single()), 900);
+      const profile = profileResult?.data;
+      userLabel = profile?.display_name || profile?.email || user.email || null;
+    }
+  } catch {
+    userLabel = null;
+  }
 
   return (
     <header className="border-b border-cyan-300/10 bg-slate-950/90 backdrop-blur-xl">
@@ -33,9 +53,16 @@ export async function SiteHeader() {
           <Link href="/dashboard" className={navLinkClass}>
             {t("dashboard")}
           </Link>
-          <Link href="/login" className={navLinkClass}>
-            {t("signIn")}
-          </Link>
+          {userLabel ? (
+            <Link href="/dashboard" className={navLinkClass}>
+              {userLabel}
+            </Link>
+          ) : (
+            <Link href="/login" className={navLinkClass}>
+              {t("signIn")}
+            </Link>
+          )}
+          <LanguageSwitcher currentLocale={currentLocale} label={t("language")} />
         </div>
       </nav>
     </header>

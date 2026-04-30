@@ -7,6 +7,7 @@ export type Database = {
       certificate_type: "donation" | "honor";
       donation_provider: "stripe" | "paypal" | "manual";
       donation_status: "pending" | "paid" | "cancelled" | "failed" | "refunded";
+      software_release_platform: "macos" | "windows";
     };
     Tables: {
       profiles: {
@@ -122,6 +123,85 @@ export type Database = {
           is_active?: boolean;
         };
         Relationships: [];
+      };
+      software_releases: {
+        Row: {
+          id: string;
+          version: string;
+          released_at: string;
+          notes: string | null;
+          is_published: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          version: string;
+          released_at: string;
+          notes?: string | null;
+          is_published?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          version?: string;
+          released_at?: string;
+          notes?: string | null;
+          is_published?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "software_releases_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      software_release_assets: {
+        Row: {
+          id: string;
+          release_id: string;
+          platform: Database["public"]["Enums"]["software_release_platform"];
+          file_name: string;
+          storage_path: string;
+          file_size: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          release_id: string;
+          platform: Database["public"]["Enums"]["software_release_platform"];
+          file_name: string;
+          storage_path: string;
+          file_size?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          release_id?: string;
+          platform?: Database["public"]["Enums"]["software_release_platform"];
+          file_name?: string;
+          storage_path?: string;
+          file_size?: number | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "software_release_assets_release_id_fkey";
+            columns: ["release_id"];
+            isOneToOne: false;
+            referencedRelation: "software_releases";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       certificates: {
         Row: {
