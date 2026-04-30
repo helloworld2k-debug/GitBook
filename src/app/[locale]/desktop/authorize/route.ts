@@ -15,7 +15,13 @@ const authorizeSchema = z.object({
       try {
         const url = new URL(value);
 
-        return url.protocol === "gitbookai:" && url.host === "auth" && url.pathname === "/callback";
+        return (
+          url.protocol === "gitbookai:" &&
+          url.host === "auth" &&
+          url.pathname === "/callback" &&
+          url.search === "" &&
+          url.hash === ""
+        );
       } catch {
         return false;
       }

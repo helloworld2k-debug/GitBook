@@ -175,6 +175,21 @@ describe("desktop authorize route", () => {
     expect(mocks.createSupabaseServerClient).not.toHaveBeenCalled();
   });
 
+  it("rejects callback URLs with caller query parameters", async () => {
+    const response = await GET(
+      new Request(
+        "https://threefriends.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback%3Fstate%3Dabc",
+      ),
+      {
+        params: Promise.resolve({ locale: "en" }),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Missing desktop authorization parameters" });
+    expect(mocks.createSupabaseServerClient).not.toHaveBeenCalled();
+  });
+
   it("redirects anonymous users to locale login with the authorize URL as next", async () => {
     mocks.getUser.mockResolvedValueOnce({ data: { user: null } });
 
@@ -197,7 +212,7 @@ describe("desktop authorize route", () => {
   it("creates an auth code for signed-in users and redirects to the callback", async () => {
     const response = await GET(
       new Request(
-        "https://threefriends.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback%3Fstate%3Dabc",
+        "https://threefriends.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback",
       ),
       {
         params: Promise.resolve({ locale: "en" }),
@@ -210,8 +225,8 @@ describe("desktop authorize route", () => {
     expect(mocks.createDesktopAuthCode).toHaveBeenCalledWith(adminClient, {
       userId: "user-1",
       deviceSessionId: "session-1",
-      returnUrl: "gitbookai://auth/callback?state=abc",
+      returnUrl: "gitbookai://auth/callback",
     });
-    expect(response.headers.get("location")).toBe("gitbookai://auth/callback?state=abc&code=raw-code");
+    expect(response.headers.get("location")).toBe("gitbookai://auth/callback?code=raw-code");
   });
 });
