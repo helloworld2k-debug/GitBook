@@ -1,15 +1,15 @@
 # Three Friends Website
 
-Three Friends is a Next.js website for public software downloads supported by voluntary donations. Visitors can download releases for free, sign in, donate through Stripe or PayPal, and view donation certificates. Admin users can review donations and certificates.
+Three Friends is a Next.js website for public software downloads supported by voluntary donations. Visitors can download releases for free, view localized donation tiers, and use the protected donation/dashboard surfaces once authentication is fully wired. Admin users can review persisted donations and certificates.
 
-The project is still an implementation baseline. Treat payment credentials, Auth providers, production domains, and operational runbooks as deployment tasks, not finished production guarantees.
+The project is still an implementation baseline. Treat interactive login, PayPal donation persistence, payment credentials, Auth providers, production domains, and operational runbooks as deployment tasks, not finished production guarantees.
 
 ## Architecture
 
 - **App framework:** Next.js App Router with React 19 and TypeScript.
 - **Internationalization:** `next-intl` with English, Traditional Chinese, Japanese, and Korean locale routes.
 - **Data and Auth:** Supabase Auth and Postgres with row-level security.
-- **Payments:** Stripe Checkout and PayPal Checkout API routes.
+- **Payments:** Stripe Checkout with webhook persistence; PayPal Checkout/webhook scaffolding is present, but PayPal donation persistence and certificate issuance still need to be completed before production use.
 - **Certificates:** Server-side certificate generation backed by Supabase functions and tables.
 - **Hosting target:** Vercel for the app and API routes.
 
@@ -72,7 +72,7 @@ Without the Supabase CLI, run the SQL files manually in this order:
 1. `supabase/migrations/0001_initial_schema.sql`
 2. `supabase/migrations/0002_certificate_functions.sql`
 
-After the first admin user signs in, bootstrap admin access in Supabase:
+After an admin user exists in Supabase Auth, bootstrap admin access in Supabase:
 
 ```sql
 update public.profiles
@@ -96,6 +96,12 @@ npm run e2e
 
 See [docs/deployment.md](docs/deployment.md) for the practical Vercel deployment flow, including Supabase setup, payment provider webhooks, admin bootstrap, DNS, security notes, and the production checklist.
 
+Current deployment caveats:
+
+- The login page is a placeholder until the interactive Supabase sign-in UI and auth callback route are completed.
+- Stripe paid checkout sessions are persisted and generate certificates through the Stripe webhook.
+- PayPal routes can create/capture/verify orders, but PayPal payments are not yet persisted to the `donations` table and do not yet generate certificates.
+
 ## Security Notes
 
 - Do not commit `.env.local` or real secrets.
@@ -103,4 +109,5 @@ See [docs/deployment.md](docs/deployment.md) for the practical Vercel deployment
 - Only `NEXT_PUBLIC_*` values should be used in browser code.
 - Keep Supabase RLS enabled and review policies before adding new tables or admin actions.
 - Use sandbox/test payment credentials outside production.
+- Verify each payment provider writes a paid donation and certificate before enabling that provider for real users.
 - Rotate provider and database secrets after exposure or access changes.

@@ -1,16 +1,18 @@
 # Deployment
 
-This guide covers a low-cost deployment path for the Three Friends software donation site. It assumes Vercel for the Next.js app, Supabase for Auth and Postgres, Stripe for card checkout, and PayPal for PayPal checkout.
+This guide covers a low-cost deployment path for the Three Friends software donation site. It assumes Vercel for the Next.js app, Supabase for Auth and Postgres, Stripe for card checkout, and PayPal for PayPal checkout scaffolding.
+
+The current codebase is a deployable baseline, not a finished production launch. Stripe payment persistence and certificate generation are wired through the Stripe webhook. The login page is still a placeholder, and PayPal payments are not yet persisted to the `donations` table or used to generate certificates.
 
 ## Services
 
 - **Vercel:** hosts the Next.js application and API routes.
 - **Supabase:** provides Postgres, row-level security, Auth, and server-side admin access.
 - **Stripe:** creates hosted checkout sessions and sends payment webhooks.
-- **PayPal:** creates hosted checkout orders, verifies webhooks, and captures approved orders.
+- **PayPal:** creates hosted checkout orders, verifies webhooks, and captures approved orders. Donation persistence and certificate issuance still need to be completed before PayPal is enabled for real users.
 - **GitHub Releases or object storage:** hosts public software downloads. The current app points download links at release URLs in `src/config/site.ts`.
 
-This stack keeps fixed costs low: Vercel and Supabase can start on their free or low-cost tiers, while Stripe and PayPal charge transaction fees. For domestic and overseas users, use a custom domain, keep the app globally hosted on Vercel, and enable both Stripe and PayPal so users can choose the payment method that works best in their region.
+This stack keeps fixed costs low: Vercel and Supabase can start on their free or low-cost tiers, while Stripe and PayPal charge transaction fees. For domestic and overseas users, use a custom domain, keep the app globally hosted on Vercel, and offer provider choices only after each provider has passed end-to-end persistence and certificate checks.
 
 ## Environment Variables
 
@@ -36,10 +38,10 @@ Copy `.env.example` to `.env.local` for local development and set the same names
 3. Configure Supabase Auth and allowed redirect URLs.
 4. Create Stripe and PayPal sandbox apps and webhooks.
 5. Create the Vercel project and add all environment variables.
-6. Deploy to Vercel preview and run a sandbox checkout through each provider.
+6. Deploy to Vercel preview and run sandbox checkout verification for each provider that is enabled.
 7. Bootstrap the first admin user in Supabase.
 8. Attach the production domain and update provider callback/webhook allowlists.
-9. Switch Stripe and PayPal from sandbox/test credentials to live credentials.
+9. Switch Stripe, and PayPal only after its persistence work is complete, from sandbox/test credentials to live credentials.
 10. Run the production checklist before announcing the site.
 
 ## Supabase
@@ -61,7 +63,8 @@ The migrations create profiles, donation tiers, sponsor levels, donations, certi
 
 Configure Auth:
 
-- Enable the sign-in methods the handoff team wants to support. The current login page is prepared for email magic link, Google, GitHub, and Apple, but provider credentials still need to be configured in Supabase.
+- Enable the sign-in methods the handoff team wants to support.
+- Complete the interactive login UI and auth callback route before relying on donation or admin flows through the browser. The current login page is explanatory placeholder content.
 - Add local and deployed URLs to Supabase Auth redirect allowlists:
   - `http://localhost:3000/**`
   - `https://your-vercel-preview-domain.vercel.app/**`
@@ -70,7 +73,7 @@ Configure Auth:
 
 ## Admin Bootstrap
 
-Admin pages are protected by `profiles.is_admin`. After the first admin signs in once, update that user's profile in Supabase.
+Admin pages are protected by `profiles.is_admin`. After an admin user exists in Supabase Auth and has a profile row, update that user's profile in Supabase.
 
 ```sql
 update public.profiles
@@ -116,6 +119,8 @@ Use PayPal sandbox until the full flow has been verified.
    - `PAYMENT.CAPTURE.COMPLETED`
 6. Copy the webhook ID to `PAYPAL_WEBHOOK_ID`.
 7. Run a sandbox checkout and confirm PayPal approval redirects back to the dashboard.
+
+Before enabling PayPal for real users, complete PayPal donation persistence so a captured PayPal payment inserts a paid `donations` row and generates certificates just like Stripe. Until then, treat PayPal as checkout/webhook scaffolding only.
 
 For live mode, replace credentials with live app credentials and set `PAYPAL_BASE_URL=https://api-m.paypal.com`.
 
@@ -166,13 +171,14 @@ For domestic and overseas access, verify the domain resolves reliably from expec
 
 - [ ] Supabase migrations applied in order.
 - [ ] Supabase Auth providers configured and redirect URLs allow local, preview, and production domains.
-- [ ] First admin user signed in and `profiles.is_admin` set to `true`.
+- [ ] Interactive login UI and auth callback route implemented and verified.
+- [ ] First admin user exists in Supabase Auth and `profiles.is_admin` set to `true`.
 - [ ] Vercel production environment variables are complete and use live credentials.
 - [ ] `NEXT_PUBLIC_SITE_URL` matches the production custom domain.
 - [ ] Stripe live webhook points to `/api/webhooks/stripe` and has the live signing secret configured.
-- [ ] PayPal live webhook points to `/api/webhooks/paypal` and has the live webhook ID configured.
 - [ ] Stripe test donation creates a paid donation and certificate in a non-production environment.
-- [ ] PayPal sandbox donation flow has been tested in a non-production environment.
+- [ ] PayPal persistence is implemented before PayPal is shown to real users.
+- [ ] PayPal sandbox donation creates a paid donation and certificate in a non-production environment before live PayPal credentials are enabled.
 - [ ] Public download links point to the intended release assets.
 - [ ] DNS, HTTPS, apex, and `www` behavior are verified.
 - [ ] `npm run lint`, `npm test`, and `npm run build` pass on the deployment branch.
