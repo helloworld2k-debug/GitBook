@@ -34,6 +34,23 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
     <>
       <SiteHeader />
       <main className="tech-shell flex-1">
+        <div aria-label="Animated code intelligence background" className="code-field" role="img">
+          <div className="code-stream code-stream-one">
+            {["const ai = index(book);", "await mapConcepts(code);", "reader.sync(notes);", "model.ready();"].map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </div>
+          <div className="code-stream code-stream-two">
+            {["export knowledgeGraph", "tokenize(chapters)", "build release notes", "download.bundle.ok"].map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </div>
+          <div className="code-stream code-stream-three">
+            {["{ status: 'online' }", "vector.search('/docs')", "hydrate examples", "ship desktop app"].map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </div>
+        </div>
         <section className="mx-auto grid min-h-[calc(100dvh-77px)] max-w-6xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[minmax(0,1fr)_440px] lg:py-20">
           <div>
             <p className="inline-flex min-h-8 items-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-3 text-sm font-semibold uppercase text-cyan-200">
@@ -52,12 +69,6 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
                 href={siteConfig.downloadLinks.windows}
               >
                 {t("downloadWindows")}
-              </a>
-              <a
-                className={`${downloadLinkClass} border border-cyan-300/20 bg-white/[0.08] text-cyan-100 hover:border-cyan-300/50 hover:bg-white/[0.12]`}
-                href={siteConfig.downloadLinks.linux}
-              >
-                {t("downloadLinux")}
               </a>
             </div>
             <div className="mt-9 max-w-2xl rounded-md border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-100">

@@ -39,20 +39,31 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
     google: t("google"),
   };
   const messages: LoginFormMessages = {
+    confirmPassword: t("confirmPassword"),
+    confirmPasswordPlaceholder: t("confirmPasswordPlaceholder"),
+    createAccount: t("createAccount"),
     email: t("email"),
     emailPlaceholder: t("emailPlaceholder"),
-    magicLink: t("magicLink"),
     oauthError: t("oauthError"),
+    password: t("password"),
+    passwordMismatch: t("passwordMismatch"),
+    passwordPlaceholder: t("passwordPlaceholder"),
     providerButtons: {
       apple: t("continueWithProvider", { provider: providerNames.apple }),
       github: t("continueWithProvider", { provider: providerNames.github }),
       google: t("continueWithProvider", { provider: providerNames.google }),
     },
     providersLabel: t("providersLabel"),
-    sendLink: t("sendLink"),
+    registerTab: t("registerTab"),
+    registrationSuccess: t("registrationSuccess"),
+    signInSubmit: t("signInSubmit"),
+    signInTab: t("signInTab"),
+    signingIn: t("signingIn"),
+    signingUp: t("signingUp"),
+    signInError: t("signInError"),
+    signUpError: t("signUpError"),
     sending: t("sending"),
-    submitError: t("submitError"),
-    success: t("success"),
+    title: t("formTitle"),
   };
 
   return (
@@ -76,7 +87,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
                 {t("callbackError")}
               </p>
             ) : null}
-            <LoginForm callbackUrl={getCallbackUrl(nextPath)} messages={messages} />
+            <LoginForm callbackUrl={getCallbackUrl(nextPath)} messages={messages} nextPath={nextPath} />
           </div>
         </section>
       </main>

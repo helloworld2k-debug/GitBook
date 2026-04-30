@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginForm, type LoginFormMessages } from "@/app/[locale]/login/login-form";
 
 const createSupabaseBrowserClientMock = vi.hoisted(() => vi.fn());
-const signInWithOtpMock = vi.hoisted(() => vi.fn());
+const signInWithPasswordMock = vi.hoisted(() => vi.fn());
+const signUpMock = vi.hoisted(() => vi.fn());
 const signInWithOAuthMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/supabase/client", () => ({
@@ -11,72 +12,132 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 const messages: LoginFormMessages = {
+  confirmPassword: "Confirm password",
+  confirmPasswordPlaceholder: "Repeat your password",
+  createAccount: "Create account",
   email: "Email address",
   emailPlaceholder: "you@example.com",
+  oauthError: "Could not start sign in.",
+  password: "Password",
+  passwordMismatch: "Passwords do not match.",
+  passwordPlaceholder: "Enter your password",
   providerButtons: {
     apple: "Continue with Apple",
     github: "Continue with GitHub",
     google: "Continue with Google",
   },
-  magicLink: "Email magic link",
-  oauthError: "Could not start sign in.",
-  providersLabel: "Other sign-in options",
-  sendLink: "Send sign-in link",
-  sending: "Sending...",
-  submitError: "Could not send the link.",
-  success: "Check your email for a secure sign-in link.",
+  providersLabel: "Quick sign-in options",
+  registerTab: "Register",
+  registrationSuccess: "Check your email to verify your account before signing in.",
+  signInSubmit: "Sign in with email",
+  signInTab: "Sign in",
+  signingIn: "Signing in...",
+  signingUp: "Creating account...",
+  signInError: "Could not sign in. Check your email and password.",
+  signUpError: "Could not create the account. Check your email and password.",
+  title: "Email and password",
 };
 
 function renderLoginForm() {
-  render(<LoginForm callbackUrl="https://threefriends.example/auth/callback?next=%2Fen%2Fdonate" messages={messages} />);
+  render(
+    <LoginForm
+      callbackUrl="https://threefriends.example/auth/callback?next=%2Fen%2Fdonate"
+      messages={messages}
+      nextPath="/en/donate"
+    />,
+  );
 }
 
 describe("LoginForm", () => {
+  const locationAssign = vi.fn();
+
   beforeEach(() => {
     createSupabaseBrowserClientMock.mockReset();
-    signInWithOtpMock.mockReset();
+    signInWithPasswordMock.mockReset();
+    signUpMock.mockReset();
     signInWithOAuthMock.mockReset();
-    signInWithOtpMock.mockResolvedValue({ error: null });
+    locationAssign.mockReset();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { assign: locationAssign },
+    });
+    signInWithPasswordMock.mockResolvedValue({ error: null });
+    signUpMock.mockResolvedValue({ error: null });
     signInWithOAuthMock.mockResolvedValue({ error: null });
     createSupabaseBrowserClientMock.mockReturnValue({
       auth: {
         signInWithOAuth: signInWithOAuthMock,
-        signInWithOtp: signInWithOtpMock,
+        signInWithPassword: signInWithPasswordMock,
+        signUp: signUpMock,
       },
     });
   });
 
-  it("submits a magic link with the callback URL", async () => {
+  it("signs in with email and password", async () => {
     renderLoginForm();
 
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "friend@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send sign-in link" }));
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "correct-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in with email" }));
 
     await waitFor(() => {
-      expect(signInWithOtpMock).toHaveBeenCalledWith({
+      expect(signInWithPasswordMock).toHaveBeenCalledWith({
         email: "friend@example.com",
+        password: "correct-password",
+      });
+    });
+    expect(locationAssign).toHaveBeenCalledWith("/en/donate");
+  });
+
+  it("shows an error when password sign-in fails", async () => {
+    signInWithPasswordMock.mockResolvedValueOnce({ error: new Error("invalid credentials") });
+    renderLoginForm();
+
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "friend@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in with email" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not sign in. Check your email and password.");
+  });
+
+  it("registers with email and password and requests email verification", async () => {
+    renderLoginForm();
+
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "new@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "new-password" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "new-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    await waitFor(() => {
+      expect(signUpMock).toHaveBeenCalledWith({
+        email: "new@example.com",
+        password: "new-password",
         options: {
           emailRedirectTo: "https://threefriends.example/auth/callback?next=%2Fen%2Fdonate",
         },
       });
     });
-    expect(await screen.findByRole("status")).toHaveTextContent("Check your email for a secure sign-in link.");
+    expect(await screen.findByRole("status")).toHaveTextContent("Check your email to verify your account before signing in.");
   });
 
-  it("shows an error when magic link submission fails", async () => {
-    signInWithOtpMock.mockResolvedValueOnce({ error: new Error("rate limited") });
+  it("does not register when passwords do not match", async () => {
     renderLoginForm();
 
-    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "friend@example.com" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send sign-in link" }));
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "new@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "new-password" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "different-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not send the link.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Passwords do not match.");
+    expect(signUpMock).not.toHaveBeenCalled();
   });
 
   it("starts OAuth sign-in with the selected provider and callback URL", async () => {
     renderLoginForm();
 
-    expect(screen.getByRole("group", { name: "Other sign-in options" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Quick sign-in options" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Continue with GitHub" }));
 
