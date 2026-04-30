@@ -57,6 +57,35 @@
       "refunded": "Refunded"
     }
   },
+  "admin": {
+    "overview": {
+      "eyebrow": "Admin tools",
+      "title": "Admin",
+      "donationsTitle": "Donations",
+      "donationsDescription": "Review payment provider records, statuses, and transaction IDs.",
+      "certificatesTitle": "Certificates",
+      "certificatesDescription": "Review issued certificate numbers, types, statuses, and issue dates."
+    },
+    "donations": {
+      "eyebrow": "Admin",
+      "title": "Admin donations",
+      "provider": "Provider",
+      "status": "Status",
+      "amount": "Amount",
+      "transactionId": "Transaction ID",
+      "empty": "No donations found."
+    },
+    "certificates": {
+      "eyebrow": "Admin",
+      "title": "Admin certificates",
+      "certificateNumber": "Certificate number",
+      "type": "Type",
+      "status": "Status",
+      "issued": "Issued",
+      "notIssued": "Not issued",
+      "empty": "No certificates found."
+    }
+  },
   "certificate": {
     "brand": "Three Friends",
     "title": "Certificate of Support",

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -11,9 +11,9 @@ type AdminCertificatesPageProps = {
   }>;
 };
 
-function formatIssuedAt(value: string | null, locale: string) {
+function formatIssuedAt(value: string | null, locale: string, fallback: string) {
   if (!value) {
-    return "Not issued";
+    return fallback;
   }
 
   return new Intl.DateTimeFormat(locale, {
@@ -32,6 +32,7 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
 
   setRequestLocale(locale);
   await requireAdmin(locale);
+  const t = await getTranslations("admin");
 
   const supabase = await createSupabaseServerClient();
   const { data: certificates, error } = await supabase
@@ -49,8 +50,10 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
       <main className="flex-1 bg-slate-50">
         <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
           <div>
-            <p className="text-sm font-medium text-slate-600">Admin</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Admin certificates</h1>
+            <p className="text-sm font-medium text-slate-600">{t("certificates.eyebrow")}</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">
+              {t("certificates.title")}
+            </h1>
           </div>
           <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
             {certificates && certificates.length > 0 ? (
@@ -58,10 +61,10 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
                 <table className="min-w-full text-left text-sm">
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
-                      <th className="px-5 py-3">Certificate number</th>
-                      <th className="px-5 py-3">Type</th>
-                      <th className="px-5 py-3">Status</th>
-                      <th className="px-5 py-3">Issued</th>
+                      <th className="px-5 py-3">{t("certificates.certificateNumber")}</th>
+                      <th className="px-5 py-3">{t("certificates.type")}</th>
+                      <th className="px-5 py-3">{t("certificates.status")}</th>
+                      <th className="px-5 py-3">{t("certificates.issued")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -73,7 +76,7 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">{certificate.type}</td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">{certificate.status}</td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
-                          {formatIssuedAt(certificate.issued_at, locale)}
+                          {formatIssuedAt(certificate.issued_at, locale, t("certificates.notIssued"))}
                         </td>
                       </tr>
                     ))}
@@ -81,7 +84,7 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
                 </table>
               </div>
             ) : (
-              <p className="px-5 py-6 text-sm text-slate-600">No certificates found.</p>
+              <p className="px-5 py-6 text-sm text-slate-600">{t("certificates.empty")}</p>
             )}
           </section>
         </section>

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
@@ -11,19 +11,6 @@ type AdminPageProps = {
   }>;
 };
 
-const adminLinks = [
-  {
-    href: "/admin/donations",
-    title: "Donations",
-    description: "Review payment provider records, statuses, and transaction IDs.",
-  },
-  {
-    href: "/admin/certificates",
-    title: "Certificates",
-    description: "Review issued certificate numbers, types, statuses, and issue dates.",
-  },
-];
-
 export default async function AdminPage({ params }: AdminPageProps) {
   const { locale } = await params;
 
@@ -33,6 +20,20 @@ export default async function AdminPage({ params }: AdminPageProps) {
 
   setRequestLocale(locale);
   await requireAdmin(locale);
+  const t = await getTranslations("admin");
+
+  const adminLinks = [
+    {
+      href: "/admin/donations",
+      title: t("overview.donationsTitle"),
+      description: t("overview.donationsDescription"),
+    },
+    {
+      href: "/admin/certificates",
+      title: t("overview.certificatesTitle"),
+      description: t("overview.certificatesDescription"),
+    },
+  ];
 
   return (
     <>
@@ -40,8 +41,8 @@ export default async function AdminPage({ params }: AdminPageProps) {
       <main className="flex-1 bg-slate-50">
         <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
           <div>
-            <p className="text-sm font-medium text-slate-600">Admin tools</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Admin</h1>
+            <p className="text-sm font-medium text-slate-600">{t("overview.eyebrow")}</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">{t("overview.title")}</h1>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {adminLinks.map((link) => (

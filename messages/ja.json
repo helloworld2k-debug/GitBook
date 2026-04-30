@@ -57,6 +57,35 @@
       "refunded": "返金済み"
     }
   },
+  "admin": {
+    "overview": {
+      "eyebrow": "管理ツール",
+      "title": "管理画面",
+      "donationsTitle": "寄付",
+      "donationsDescription": "決済プロバイダーの記録、ステータス、取引 ID を確認します。",
+      "certificatesTitle": "証明書",
+      "certificatesDescription": "発行済み証明書の番号、種類、ステータス、発行日を確認します。"
+    },
+    "donations": {
+      "eyebrow": "管理画面",
+      "title": "管理者向け寄付",
+      "provider": "プロバイダー",
+      "status": "ステータス",
+      "amount": "金額",
+      "transactionId": "取引 ID",
+      "empty": "寄付はまだありません。"
+    },
+    "certificates": {
+      "eyebrow": "管理画面",
+      "title": "管理者向け証明書",
+      "certificateNumber": "証明書番号",
+      "type": "種類",
+      "status": "ステータス",
+      "issued": "発行日",
+      "notIssued": "未発行",
+      "empty": "証明書はまだありません。"
+    }
+  },
   "certificate": {
     "brand": "Three Friends",
     "title": "支援証明書",

@@ -57,6 +57,35 @@
       "refunded": "已退款"
     }
   },
+  "admin": {
+    "overview": {
+      "eyebrow": "管理工具",
+      "title": "管理後台",
+      "donationsTitle": "捐贈",
+      "donationsDescription": "檢視付款服務商記錄、狀態與交易 ID。",
+      "certificatesTitle": "證書",
+      "certificatesDescription": "檢視已頒發的證書編號、類型、狀態與頒發日期。"
+    },
+    "donations": {
+      "eyebrow": "管理後台",
+      "title": "管理捐贈",
+      "provider": "服務商",
+      "status": "狀態",
+      "amount": "金額",
+      "transactionId": "交易 ID",
+      "empty": "尚無捐贈。"
+    },
+    "certificates": {
+      "eyebrow": "管理後台",
+      "title": "管理證書",
+      "certificateNumber": "證書編號",
+      "type": "類型",
+      "status": "狀態",
+      "issued": "頒發日期",
+      "notIssued": "尚未頒發",
+      "empty": "尚無證書。"
+    }
+  },
   "certificate": {
     "brand": "Three Friends",
     "title": "支持證書",

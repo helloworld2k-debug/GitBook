@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -12,10 +12,13 @@ type AdminDonationsPageProps = {
 };
 
 function formatAmount(amount: number, currency: string, locale: string) {
-  return new Intl.NumberFormat(locale, {
+  const currencyCode = currency.toUpperCase();
+  const formattedAmount = new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: currency.toUpperCase(),
+    currency: currencyCode,
   }).format(amount / 100);
+
+  return `${formattedAmount} ${currencyCode}`;
 }
 
 export default async function AdminDonationsPage({ params }: AdminDonationsPageProps) {
@@ -27,6 +30,7 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
 
   setRequestLocale(locale);
   await requireAdmin(locale);
+  const t = await getTranslations("admin");
 
   const supabase = await createSupabaseServerClient();
   const { data: donations, error } = await supabase
@@ -44,8 +48,8 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
       <main className="flex-1 bg-slate-50">
         <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
           <div>
-            <p className="text-sm font-medium text-slate-600">Admin</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">Admin donations</h1>
+            <p className="text-sm font-medium text-slate-600">{t("donations.eyebrow")}</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">{t("donations.title")}</h1>
           </div>
           <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
             {donations && donations.length > 0 ? (
@@ -53,10 +57,10 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
                 <table className="min-w-full text-left text-sm">
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
-                      <th className="px-5 py-3">Provider</th>
-                      <th className="px-5 py-3">Status</th>
-                      <th className="px-5 py-3">Amount</th>
-                      <th className="px-5 py-3">Transaction ID</th>
+                      <th className="px-5 py-3">{t("donations.provider")}</th>
+                      <th className="px-5 py-3">{t("donations.status")}</th>
+                      <th className="px-5 py-3">{t("donations.amount")}</th>
+                      <th className="px-5 py-3">{t("donations.transactionId")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -76,7 +80,7 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
                 </table>
               </div>
             ) : (
-              <p className="px-5 py-6 text-sm text-slate-600">No donations found.</p>
+              <p className="px-5 py-6 text-sm text-slate-600">{t("donations.empty")}</p>
             )}
           </section>
         </section>
