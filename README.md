@@ -1,8 +1,8 @@
 # Three Friends Website
 
-Three Friends is a Next.js website for public software downloads supported by voluntary donations. Visitors can download releases for free, view localized donation tiers, and use the protected donation/dashboard surfaces once authentication is fully wired. Admin users can review persisted donations and certificates.
+Three Friends is a Next.js website for public software downloads supported by voluntary donations. Visitors can download releases for free, view localized donation tiers, and use protected donation/dashboard surfaces through Supabase Auth. Admin users can review persisted donations and certificates.
 
-The project is still an implementation baseline. Treat interactive login, PayPal donation persistence, payment credentials, Auth providers, production domains, and operational runbooks as deployment tasks, not finished production guarantees.
+The project is still an implementation baseline. Treat PayPal donation persistence, payment credentials, Auth provider configuration, production domains, and operational runbooks as deployment tasks, not finished production guarantees.
 
 ## Architecture
 
@@ -98,7 +98,7 @@ See [docs/deployment.md](docs/deployment.md) for the practical Vercel deployment
 
 Current deployment caveats:
 
-- The login page is a placeholder until the interactive Supabase sign-in UI and auth callback route are completed.
+- Supabase Auth providers and allowed callback URLs must be configured for the interactive login flow before production use.
 - Stripe paid checkout sessions are persisted and generate certificates through the Stripe webhook.
 - PayPal routes can create/capture/verify orders, but PayPal payments are not yet persisted to the `donations` table and do not yet generate certificates.
 

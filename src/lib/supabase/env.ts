@@ -14,8 +14,11 @@ function readRequiredEnv(name: string, description: string) {
 }
 
 export function getSupabaseBrowserConfig(): SupabaseBrowserConfig {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
   return {
-    url: readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL", "your Supabase project URL"),
-    anonKey: readRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "your Supabase anon public key"),
+    url: url || readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL", "your Supabase project URL"),
+    anonKey: anonKey || readRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "your Supabase anon public key"),
   };
 }

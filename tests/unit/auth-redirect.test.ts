@@ -1,0 +1,78 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GET } from "@/app/auth/callback/route";
+import { sanitizeNextPath } from "@/lib/auth/guards";
+
+const createSupabaseServerClientMock = vi.hoisted(() => vi.fn());
+const exchangeCodeForSessionMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/supabase/server", () => ({
+  createSupabaseServerClient: createSupabaseServerClientMock,
+}));
+
+describe("auth redirect safety", () => {
+  it("preserves safe relative next paths", () => {
+    expect(sanitizeNextPath("/ja/donate?tier=yearly", "/en/dashboard")).toBe("/ja/donate?tier=yearly");
+  });
+
+  it("rejects external and protocol-relative next paths", () => {
+    expect(sanitizeNextPath("https://evil.example/phish", "/en/dashboard")).toBe("/en/dashboard");
+    expect(sanitizeNextPath("//evil.example/phish", "/en/dashboard")).toBe("/en/dashboard");
+  });
+
+  it("rejects unsafe relative paths", () => {
+    expect(sanitizeNextPath("dashboard", "/en/dashboard")).toBe("/en/dashboard");
+    expect(sanitizeNextPath("/api/checkout/stripe", "/en/dashboard")).toBe("/en/dashboard");
+    expect(sanitizeNextPath("/_next/static/chunk.js", "/en/dashboard")).toBe("/en/dashboard");
+  });
+});
+
+describe("auth callback route", () => {
+  beforeEach(() => {
+    createSupabaseServerClientMock.mockReset();
+    exchangeCodeForSessionMock.mockReset();
+    createSupabaseServerClientMock.mockResolvedValue({
+      auth: {
+        exchangeCodeForSession: exchangeCodeForSessionMock,
+      },
+    });
+    exchangeCodeForSessionMock.mockResolvedValue({ data: { session: { access_token: "token" } }, error: null });
+  });
+
+  it("exchanges the code and redirects to a safe next path", async () => {
+    const response = await GET(
+      new Request("https://threefriends.example/auth/callback?code=abc123&next=%2Fja%2Fdonate%3Ftier%3Dyearly"),
+    );
+
+    expect(exchangeCodeForSessionMock).toHaveBeenCalledWith("abc123");
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("https://threefriends.example/ja/donate?tier=yearly");
+  });
+
+  it("falls back to the English dashboard for external next paths", async () => {
+    const response = await GET(
+      new Request("https://threefriends.example/auth/callback?code=abc123&next=https%3A%2F%2Fevil.example%2Ftake"),
+    );
+
+    expect(response.headers.get("location")).toBe("https://threefriends.example/en/dashboard");
+  });
+
+  it("redirects to login with an error when the code is missing", async () => {
+    const response = await GET(new Request("https://threefriends.example/auth/callback?next=%2Fen%2Fdonate"));
+
+    expect(exchangeCodeForSessionMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("https://threefriends.example/en/login?error=missing-code&next=%2Fen%2Fdonate");
+  });
+
+  it("redirects to login with an error when Supabase rejects the code", async () => {
+    exchangeCodeForSessionMock.mockResolvedValueOnce({ data: { session: null }, error: new Error("expired") });
+
+    const response = await GET(
+      new Request("https://threefriends.example/auth/callback?code=bad-code&next=%2Fko%2Fdashboard"),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "https://threefriends.example/ko/login?error=callback&next=%2Fko%2Fdashboard",
+    );
+  });
+});

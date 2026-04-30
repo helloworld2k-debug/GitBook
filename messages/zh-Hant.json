@@ -6,6 +6,26 @@
     "dashboard": "儀表板",
     "signIn": "登入"
   },
+  "login": {
+    "eyebrow": "帳戶存取",
+    "title": "登入或建立帳戶",
+    "subtitle": "使用安全的電子郵件登入連結，或透過 OAuth 服務商繼續捐贈、證書與儀表板流程。",
+    "privacyNote": "你的帳戶只用於保存捐贈記錄，並將證書與你連結。",
+    "magicLink": "電子郵件登入連結",
+    "email": "電子郵件地址",
+    "emailPlaceholder": "you@example.com",
+    "sendLink": "傳送登入連結",
+    "sending": "傳送中...",
+    "success": "請查看電子郵件中的安全登入連結。",
+    "submitError": "無法傳送登入連結。請檢查地址後再試一次。",
+    "oauthError": "無法開始登入。請改用其他服務商或電子郵件。",
+    "callbackError": "無法驗證登入連結。請再試一次。",
+    "providersLabel": "其他登入方式",
+    "continueWithProvider": "使用 {provider} 繼續",
+    "google": "Google",
+    "github": "GitHub",
+    "apple": "Apple"
+  },
   "home": {
     "title": "Three Friends",
     "subtitle": "自由下載最新版本。如果這個軟體幫助了你，也歡迎支持開發。",

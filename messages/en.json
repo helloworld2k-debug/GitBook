@@ -6,6 +6,26 @@
     "dashboard": "Dashboard",
     "signIn": "Sign in"
   },
+  "login": {
+    "eyebrow": "Account access",
+    "title": "Sign in or create your account",
+    "subtitle": "Use a secure magic link or an OAuth provider to continue to donations, certificates, and your dashboard.",
+    "privacyNote": "Your account is only used to keep donation records and certificates tied to you.",
+    "magicLink": "Email magic link",
+    "email": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "sendLink": "Send sign-in link",
+    "sending": "Sending...",
+    "success": "Check your email for a secure sign-in link.",
+    "submitError": "Could not send the link. Check the address and try again.",
+    "oauthError": "Could not start sign in. Try another provider or use email.",
+    "callbackError": "The sign-in link could not be verified. Please try again.",
+    "providersLabel": "Other sign-in options",
+    "continueWithProvider": "Continue with {provider}",
+    "google": "Google",
+    "github": "GitHub",
+    "apple": "Apple"
+  },
   "home": {
     "title": "Three Friends",
     "subtitle": "Download the latest version freely. Support development when it helps you.",

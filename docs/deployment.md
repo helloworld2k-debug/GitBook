@@ -2,7 +2,7 @@
 
 This guide covers a low-cost deployment path for the Three Friends software donation site. It assumes Vercel for the Next.js app, Supabase for Auth and Postgres, Stripe for card checkout, and PayPal for PayPal checkout scaffolding.
 
-The current codebase is a deployable baseline, not a finished production launch. Stripe payment persistence and certificate generation are wired through the Stripe webhook. The login page is still a placeholder, and PayPal payments are not yet persisted to the `donations` table or used to generate certificates.
+The current codebase is a deployable baseline, not a finished production launch. Stripe payment persistence and certificate generation are wired through the Stripe webhook. Supabase login UI and callback handling are implemented, but Auth providers and redirect allowlists still need deployment configuration. PayPal payments are not yet persisted to the `donations` table or used to generate certificates.
 
 ## Services
 
@@ -63,8 +63,8 @@ The migrations create profiles, donation tiers, sponsor levels, donations, certi
 
 Configure Auth:
 
-- Enable the sign-in methods the handoff team wants to support.
-- Complete the interactive login UI and auth callback route before relying on donation or admin flows through the browser. The current login page is explanatory placeholder content.
+- Enable the sign-in methods the handoff team wants to support: email magic links, Google, GitHub, and Apple.
+- Verify the interactive login UI and `/auth/callback` route against the deployed Supabase project before relying on donation or admin flows through the browser.
 - Add local and deployed URLs to Supabase Auth redirect allowlists:
   - `http://localhost:3000/**`
   - `https://your-vercel-preview-domain.vercel.app/**`
@@ -171,7 +171,7 @@ For domestic and overseas access, verify the domain resolves reliably from expec
 
 - [ ] Supabase migrations applied in order.
 - [ ] Supabase Auth providers configured and redirect URLs allow local, preview, and production domains.
-- [ ] Interactive login UI and auth callback route implemented and verified.
+- [ ] Interactive login UI and auth callback route verified against production Auth providers.
 - [ ] First admin user exists in Supabase Auth and `profiles.is_admin` set to `true`.
 - [ ] Vercel production environment variables are complete and use live credentials.
 - [ ] `NEXT_PUBLIC_SITE_URL` matches the production custom domain.
