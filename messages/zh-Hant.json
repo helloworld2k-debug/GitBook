@@ -47,7 +47,14 @@
     "oneTimeNote": "一次性捐贈。不會自動續費。"
   },
   "sponsors": {
+    "eyebrow": "贊助牆",
     "title": "支持者",
+    "subtitle": "感謝已完成捐贈並選擇公開列名的支持者。",
+    "wallTitle": "公開支持者",
+    "fallbackDisplayName": "支持者",
+    "paidSummary": "{count} 筆已付款捐贈 · {total}",
+    "empty": "尚無公開支持者。",
+    "unavailable": "贊助牆暫時無法使用。",
     "levels": {
       "bronze": "銅牌",
       "silver": "銀牌",
@@ -69,6 +76,18 @@
     "viewCertificate": "查看證書",
     "noDonations": "尚無捐贈記錄。",
     "noCertificates": "尚無有效證書。",
+    "privacy": {
+      "title": "公開支持者隱私",
+      "description": "選擇是否在贊助牆上顯示你的支持。",
+      "publicLabel": "將我列在贊助牆",
+      "publicHelp": "只會顯示你的公開名稱與已付款捐贈摘要。",
+      "displayName": "公開顯示名稱",
+      "displayNamePlaceholder": "支持者",
+      "displayNameHelp": "留空時會顯示本地化的「支持者」。你的電子郵件永遠不會顯示。",
+      "save": "儲存隱私設定",
+      "saved": "隱私設定已儲存。",
+      "error": "無法儲存隱私設定。請再試一次。"
+    },
     "donationStatuses": {
       "pending": "待處理",
       "paid": "已付款",

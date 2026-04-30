@@ -47,7 +47,14 @@
     "oneTimeNote": "One-time donation. No automatic renewal."
   },
   "sponsors": {
+    "eyebrow": "Sponsor wall",
     "title": "Supporters",
+    "subtitle": "A public thank-you for supporters who chose to be listed after a paid donation.",
+    "wallTitle": "Public supporters",
+    "fallbackDisplayName": "Supporter",
+    "paidSummary": "{count, plural, one {# paid donation} other {# paid donations}} · {total}",
+    "empty": "No public supporters yet.",
+    "unavailable": "The sponsor wall is temporarily unavailable.",
     "levels": {
       "bronze": "Bronze",
       "silver": "Silver",
@@ -69,6 +76,18 @@
     "viewCertificate": "View certificate",
     "noDonations": "No donation records yet.",
     "noCertificates": "No active certificates yet.",
+    "privacy": {
+      "title": "Public supporter privacy",
+      "description": "Choose whether your support appears on the sponsor wall.",
+      "publicLabel": "List me on the sponsor wall",
+      "publicHelp": "Only your public display name and paid donation summary will appear.",
+      "displayName": "Public display name",
+      "displayNamePlaceholder": "Supporter",
+      "displayNameHelp": "Leave blank to show the localized Supporter fallback. Your email is never shown.",
+      "save": "Save privacy",
+      "saved": "Privacy settings saved.",
+      "error": "Could not save privacy settings. Please try again."
+    },
     "donationStatuses": {
       "pending": "Pending",
       "paid": "Paid",

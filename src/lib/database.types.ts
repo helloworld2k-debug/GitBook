@@ -10,9 +10,42 @@ export type Database = {
     };
     Tables: {
       profiles: {
-        Row: { id: string; email: string; is_admin: boolean };
-        Insert: { id: string; email: string; is_admin?: boolean };
-        Update: { id?: string; email?: string; is_admin?: boolean };
+        Row: {
+          id: string;
+          email: string;
+          display_name: string | null;
+          avatar_url: string | null;
+          preferred_locale: "en" | "zh-Hant" | "ja" | "ko";
+          public_supporter_enabled: boolean;
+          public_display_name: string | null;
+          is_admin: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          display_name?: string | null;
+          avatar_url?: string | null;
+          preferred_locale?: "en" | "zh-Hant" | "ja" | "ko";
+          public_supporter_enabled?: boolean;
+          public_display_name?: string | null;
+          is_admin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          display_name?: string | null;
+          avatar_url?: string | null;
+          preferred_locale?: "en" | "zh-Hant" | "ja" | "ko";
+          public_supporter_enabled?: boolean;
+          public_display_name?: string | null;
+          is_admin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
         Relationships: [];
       };
       donations: {
@@ -61,9 +94,33 @@ export type Database = {
         Relationships: [];
       };
       sponsor_levels: {
-        Row: { id: string; code: string };
-        Insert: { id?: string; code: string };
-        Update: { id?: string; code?: string };
+        Row: {
+          id: string;
+          code: string;
+          label: string;
+          minimum_total_amount: number;
+          currency: string;
+          sort_order: number;
+          is_active: boolean;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          label: string;
+          minimum_total_amount: number;
+          currency?: string;
+          sort_order: number;
+          is_active?: boolean;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          label?: string;
+          minimum_total_amount?: number;
+          currency?: string;
+          sort_order?: number;
+          is_active?: boolean;
+        };
         Relationships: [];
       };
       certificates: {
@@ -105,6 +162,17 @@ export type Database = {
       allocate_certificate_number: {
         Args: { input_type: Database["public"]["Enums"]["certificate_type"] };
         Returns: string;
+      };
+      get_public_sponsors: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          public_sponsor_id: string;
+          display_name: string | null;
+          paid_donation_count: number;
+          paid_total_amount: number;
+          currency: string;
+          sponsor_level_code: string | null;
+        }[];
       };
       get_paid_total: {
         Args: { input_user_id: string };

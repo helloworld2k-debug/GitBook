@@ -47,7 +47,14 @@
     "oneTimeNote": "一回限りの寄付です。自動更新はありません。"
   },
   "sponsors": {
+    "eyebrow": "スポンサーウォール",
     "title": "サポーター",
+    "subtitle": "支払い済みの寄付後に公開掲載を選んだサポーターへの感謝を掲載します。",
+    "wallTitle": "公開サポーター",
+    "fallbackDisplayName": "サポーター",
+    "paidSummary": "{count} 件の支払い済み寄付 · {total}",
+    "empty": "公開サポーターはまだいません。",
+    "unavailable": "スポンサーウォールは一時的に利用できません。",
     "levels": {
       "bronze": "ブロンズ",
       "silver": "シルバー",
@@ -69,6 +76,18 @@
     "viewCertificate": "証明書を見る",
     "noDonations": "寄付記録はまだありません。",
     "noCertificates": "有効な証明書はまだありません。",
+    "privacy": {
+      "title": "公開サポーターのプライバシー",
+      "description": "スポンサーウォールに支援を表示するか選択できます。",
+      "publicLabel": "スポンサーウォールに掲載する",
+      "publicHelp": "公開表示名と支払い済み寄付の概要だけが表示されます。",
+      "displayName": "公開表示名",
+      "displayNamePlaceholder": "サポーター",
+      "displayNameHelp": "空欄の場合はローカライズされたサポーター表示になります。メールアドレスは表示されません。",
+      "save": "プライバシーを保存",
+      "saved": "プライバシー設定を保存しました。",
+      "error": "プライバシー設定を保存できませんでした。もう一度お試しください。"
+    },
     "donationStatuses": {
       "pending": "保留中",
       "paid": "支払い済み",
