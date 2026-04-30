@@ -10,7 +10,7 @@ The project is still an implementation baseline. Treat PayPal donation persisten
 - **Internationalization:** `next-intl` with English, Traditional Chinese, Japanese, and Korean locale routes.
 - **Data and Auth:** Supabase Auth and Postgres with row-level security.
 - **Payments:** Stripe Checkout with webhook persistence; PayPal Checkout/webhook scaffolding is present, but PayPal donation persistence and certificate issuance still need to be completed before production use.
-- **Certificates:** Server-side certificate generation backed by Supabase functions and tables.
+- **Certificates:** Server-side certificate generation backed by Supabase functions and tables, with protected SVG downloads. Native PNG/PDF export is a later enhancement.
 - **Hosting target:** Vercel for the app and API routes.
 
 Key directories:

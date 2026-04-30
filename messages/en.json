@@ -158,7 +158,7 @@
     "download": {
       "title": "Download certificate",
       "svg": "Download SVG",
-      "note": "SVG is available as a lightweight certificate file you can open or print from your browser."
+      "note": "Current exports are SVG only. Open the file in your browser to print or save as PDF; native PNG/PDF export is planned for a later release."
     },
     "types": {
       "donation": "Donation Certificate",

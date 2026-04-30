@@ -158,7 +158,7 @@
     "download": {
       "title": "下載證書",
       "svg": "下載 SVG",
-      "note": "SVG 是輕量證書檔案，可在瀏覽器中開啟或列印。"
+      "note": "目前僅支援 SVG 匯出。你可在瀏覽器中開啟後列印或另存為 PDF；原生 PNG/PDF 匯出將在後續版本加入。"
     },
     "types": {
       "donation": "捐贈證書",

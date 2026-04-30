@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/[locale]/dashboard/certificates/[id]/download/[format]/route";
+import { getCertificateExportFilename, renderCertificateSvg } from "@/lib/certificates/export";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
@@ -168,12 +169,43 @@ describe("certificate export route", () => {
   });
 
   it("does not advertise unsupported binary formats", async () => {
-    mocks.createSupabaseServerClient.mockResolvedValue(createAuthClient({ id: "user-1" }));
-
     await expect(
       GET(new Request("https://threefriends.example/ja/dashboard/certificates/cert-1/download/png"), {
         params: params("png"),
       }),
     ).rejects.toThrow("notFound");
+
+    expect(mocks.createSupabaseServerClient).not.toHaveBeenCalled();
+  });
+
+  it("escapes SVG text content from certificate fields and recipient names", () => {
+    const body = renderCertificateSvg({
+      certificateNumber: "TFD-2026-D-<001>",
+      copy: {
+        brand: "Three & Friends",
+        certificateNumber: "Certificate No.",
+        description: "Thank <you> & \"friends\"",
+        issued: "Issued",
+        pendingIssueDate: "Pending",
+        presentedTo: "Presented to",
+        title: "Support <Certificate>",
+      },
+      issuedAt: null,
+      label: "Donation & Honor",
+      locale: "en",
+      recipientName: "<script>alert('x')</script>",
+    });
+
+    expect(body).toContain("Three &amp; Friends");
+    expect(body).toContain("Support &lt;Certificate&gt;");
+    expect(body).toContain("Thank &lt;you&gt; &amp; &quot;friends&quot;");
+    expect(body).toContain("&lt;script&gt;alert(&apos;x&apos;)&lt;/script&gt;");
+    expect(body).not.toContain("<script>");
+  });
+
+  it("sanitizes certificate numbers before using them in attachment filenames", () => {
+    expect(getCertificateExportFilename('TFD/2026 "<D>" 001', "svg")).toBe(
+      "three-friends-certificate-TFD-2026-D-001.svg",
+    );
   });
 });

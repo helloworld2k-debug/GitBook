@@ -32,11 +32,12 @@ export async function GET(_request: Request, { params }: CertificateDownloadRout
   }
 
   setRequestLocale(locale);
-  const user = await requireUser(locale, `/${locale}/dashboard/certificates/${id}/download/${format}`);
 
   if (format !== "svg") {
     notFound();
   }
+
+  const user = await requireUser(locale, `/${locale}/dashboard/certificates/${id}/download/${format}`);
 
   const t = await getTranslations("certificate");
   const supabase = await createSupabaseServerClient();

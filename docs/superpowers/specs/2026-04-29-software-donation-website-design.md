@@ -44,7 +44,7 @@ English is the default language. All user-facing product text, donation copy, pa
 
 - Sign in and registration page: magic link, Google, GitHub, and Apple.
 - Dashboard: profile summary, donation history, certificate list, cumulative supporter level, and public display settings.
-- Certificate detail page: certificate number, recipient display name, donation tier or honor level, issue date, project name, and downloadable PNG/PDF export.
+- Certificate detail page: certificate number, recipient display name, donation tier or honor level, issue date, project name, and downloadable certificate export. Current implementation supports SVG; native PNG/PDF export is deferred until a later rendering pipeline is added.
 
 ### Admin Pages
 
@@ -95,7 +95,7 @@ English is the default language. All user-facing product text, donation copy, pa
 - Internationalization: `next-intl`.
 - Styling: Tailwind CSS or a small component system built on Tailwind.
 - Emails: Supabase Auth email for the first version; Resend can be added later for branded transactional email.
-- Certificates: server-rendered certificate pages with PNG/PDF export.
+- Certificates: server-rendered certificate pages with SVG export in the current implementation; native PNG/PDF export is a future enhancement.
 - Admin authorization: role or admin flag stored in Supabase and checked server-side.
 
 ## Data Model
@@ -354,5 +354,5 @@ Use these defaults for the first implementation unless the product owner changes
 - Donation tiers: Monthly Support at USD 5, Quarterly Support at USD 15, and Yearly Support at USD 50.
 - Sponsor levels: Bronze from USD 5, Silver from USD 50, Gold from USD 150, and Platinum from USD 500.
 - Software release files: GitHub Releases, linked from the public download page.
-- Certificate rendering: server-rendered certificate pages with backend-controlled PNG/PDF export.
+- Certificate rendering: server-rendered certificate pages with backend-controlled SVG export. Native PNG/PDF export remains a future enhancement rather than a shipped version-one capability.
 - Public sponsor wall: included in version one, but users are private by default and must opt in before appearing publicly.
