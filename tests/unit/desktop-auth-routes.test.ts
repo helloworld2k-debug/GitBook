@@ -94,13 +94,14 @@ describe("desktop auth exchange route", () => {
 });
 
 describe("desktop authorize route", () => {
+  const adminClient = { from: vi.fn() };
+  const serverClient = { auth: { getUser: mocks.getUser } };
+
   beforeEach(() => {
     mocks.getUser.mockReset().mockResolvedValue({ data: { user: { id: "user-1" } } });
-    mocks.createSupabaseServerClient.mockReset().mockResolvedValue({
-      auth: {
-        getUser: mocks.getUser,
-      },
-    });
+    adminClient.from.mockReset();
+    mocks.createSupabaseAdminClient.mockReset().mockReturnValue(adminClient);
+    mocks.createSupabaseServerClient.mockReset().mockResolvedValue(serverClient);
     mocks.createDesktopAuthCode.mockReset().mockResolvedValue({
       code: "raw-code",
       expiresAt: "2026-05-01T00:05:00.000Z",
@@ -162,7 +163,9 @@ describe("desktop authorize route", () => {
     );
 
     expect(response.status).toBe(307);
-    expect(mocks.createDesktopAuthCode).toHaveBeenCalledWith(expect.anything(), {
+    expect(mocks.createSupabaseServerClient).toHaveBeenCalledTimes(1);
+    expect(mocks.createSupabaseAdminClient).toHaveBeenCalledTimes(1);
+    expect(mocks.createDesktopAuthCode).toHaveBeenCalledWith(adminClient, {
       userId: "user-1",
       deviceSessionId: "session-1",
       returnUrl: "gitbookai://auth/callback?state=abc",

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supportedLocales, type Locale } from "@/config/site";
 import { createDesktopAuthCode } from "@/lib/license/desktop-auth";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function safeReturnUrl(value: string | null) {
@@ -43,7 +44,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
     return NextResponse.redirect(new URL(`/${locale}/login?next=${encodeURIComponent(next)}`, request.url));
   }
 
-  const { code } = await createDesktopAuthCode(supabase, {
+  const { code } = await createDesktopAuthCode(createSupabaseAdminClient(), {
     userId: user.id,
     deviceSessionId,
     returnUrl,
