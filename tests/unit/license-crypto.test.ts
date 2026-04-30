@@ -40,6 +40,35 @@ describe("license hashing", () => {
     expect(hashA).not.toContain("ABC");
     expect(hashA).toMatch(/^[a-f0-9]{64}$/);
   });
+
+  it("hashes the same value differently for different purposes", async () => {
+    const authCodeHash = await hashDesktopSecret("shared-secret", "auth_code");
+    const tokenHash = await hashDesktopSecret("shared-secret", "desktop_token");
+
+    expect(authCodeHash).not.toBe(tokenHash);
+  });
+
+  it("throws clearly when production hash salt is missing", async () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    const originalHashSalt = process.env.LICENSE_HASH_SALT;
+
+    process.env.NODE_ENV = "production";
+    delete process.env.LICENSE_HASH_SALT;
+
+    try {
+      await expect(hashDesktopSecret("shared-secret", "desktop_token")).rejects.toThrow(
+        "LICENSE_HASH_SALT must be set in production",
+      );
+    } finally {
+      process.env.NODE_ENV = originalNodeEnv;
+
+      if (originalHashSalt === undefined) {
+        delete process.env.LICENSE_HASH_SALT;
+      } else {
+        process.env.LICENSE_HASH_SALT = originalHashSalt;
+      }
+    }
+  });
 });
 
 describe("desktop token generation", () => {
