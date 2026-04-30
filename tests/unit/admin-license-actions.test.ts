@@ -123,8 +123,7 @@ describe("admin license actions", () => {
     await setTrialCodeActive(formData);
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("ja");
-    expect(update).toHaveBeenCalledWith(expect.objectContaining({ is_active: false }));
-    expect(update.mock.calls[0]?.[0].updated_at).toEqual(expect.any(String));
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ is_active: false, updated_at: expect.any(String) }));
     expect(eq).toHaveBeenCalledWith("id", "trial-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/licenses");
   });
