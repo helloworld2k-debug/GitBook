@@ -10,6 +10,14 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
+function getMetadataObject(metadata: unknown) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return {};
+  }
+
+  return metadata as Record<string, unknown>;
+}
+
 export async function POST(request: Request) {
   const body = await request.text();
   const signature = (await headers()).get("stripe-signature");
@@ -47,6 +55,17 @@ export async function POST(request: Request) {
     }
 
     const supabase = createSupabaseAdminClient();
+    const { data: existingDonation, error: existingDonationError } = await supabase
+      .from("donations")
+      .select("metadata")
+      .eq("provider", "stripe")
+      .eq("provider_transaction_id", paymentIntent)
+      .single();
+
+    if (existingDonationError && existingDonationError.code !== "PGRST116") {
+      return NextResponse.json({ error: "Unable to read donation" }, { status: 500 });
+    }
+
     const record = buildDonationRecord({
       userId,
       tierCode: donationTier.code,
@@ -56,6 +75,10 @@ export async function POST(request: Request) {
       providerTransactionId: paymentIntent,
       paidAt: new Date(session.created * 1000),
     });
+    record.metadata = {
+      ...getMetadataObject(existingDonation?.metadata),
+      tier: donationTier.code,
+    };
     const { data: donation, error } = await supabase
       .from("donations")
       .upsert(record, { onConflict: "provider,provider_transaction_id" })

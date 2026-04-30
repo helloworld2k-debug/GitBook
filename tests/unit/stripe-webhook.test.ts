@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   extendCloudSyncEntitlementForDonation: vi.fn(),
   generateCertificatesForDonation: vi.fn(),
   headers: vi.fn(),
+  existingDonationSingle: vi.fn(),
   single: vi.fn(),
   upsert: vi.fn(),
 }));
@@ -43,12 +44,17 @@ describe("Stripe webhook route", () => {
     mocks.extendCloudSyncEntitlementForDonation.mockReset().mockResolvedValue("2027-04-29T00:00:00.000Z");
     mocks.generateCertificatesForDonation.mockReset();
     mocks.headers.mockResolvedValue(new Headers({ "stripe-signature": "sig_test" }));
+    mocks.existingDonationSingle.mockReset();
+    mocks.existingDonationSingle.mockResolvedValue({ data: null, error: null });
     mocks.single.mockReset();
     mocks.single.mockResolvedValue({ data: { id: "donation_123" }, error: null });
     mocks.upsert.mockReset();
     mocks.upsert.mockReturnValue({ select: vi.fn(() => ({ single: mocks.single })) });
+    const existingDonationEq = vi.fn(() => ({ single: mocks.existingDonationSingle }));
+    const existingDonationSelect = vi.fn(() => ({ eq: vi.fn(() => ({ eq: existingDonationEq })) }));
     mocks.createSupabaseAdminClient.mockReturnValue({
       from: vi.fn(() => ({
+        select: existingDonationSelect,
         upsert: mocks.upsert,
       })),
     });
@@ -198,6 +204,56 @@ describe("Stripe webhook route", () => {
         tierCode: "yearly",
         paidAt: new Date("2026-04-29T00:00:00.000Z"),
       },
+    );
+  });
+
+  it("preserves entitlement metadata when a completed checkout replay upserts an existing donation", async () => {
+    mocks.existingDonationSingle.mockResolvedValue({
+      data: {
+        metadata: {
+          tier: "yearly",
+          cloud_sync_entitlement_granted_at: "2026-04-29T00:00:01.000Z",
+          cloud_sync_entitlement_valid_until: "2027-04-29T00:00:00.000Z",
+        },
+      },
+      error: null,
+    });
+    mocks.constructEvent.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          amount_total: 5000,
+          created: 1777420800,
+          currency: "usd",
+          metadata: {
+            tier: "yearly",
+            user_id: "user_123",
+          },
+          payment_intent: "pi_123",
+          payment_status: "paid",
+        },
+      },
+    });
+
+    const response = await POST(new Request("https://example.com/api/webhooks/stripe", { body: "{}", method: "POST" }));
+
+    expect(response.status).toBe(200);
+    expect(mocks.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          tier: "yearly",
+          cloud_sync_entitlement_granted_at: "2026-04-29T00:00:01.000Z",
+          cloud_sync_entitlement_valid_until: "2027-04-29T00:00:00.000Z",
+        },
+      }),
+      { onConflict: "provider,provider_transaction_id" },
+    );
+    expect(mocks.extendCloudSyncEntitlementForDonation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        donationId: "donation_123",
+        tierCode: "yearly",
+      }),
     );
   });
 });
