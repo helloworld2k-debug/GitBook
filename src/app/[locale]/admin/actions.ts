@@ -14,6 +14,7 @@ const MAX_REASON_LENGTH = 500;
 const MAX_MANUAL_REFERENCE_LENGTH = 120;
 const MAX_RELEASE_NOTES_LENGTH = 4000;
 const MAX_TRIAL_LABEL_LENGTH = 120;
+const MAX_TRIAL_DAYS = 365;
 
 function getSafeLocale(locale: FormDataEntryValue | null) {
   const value = String(locale ?? "en");
@@ -36,6 +37,16 @@ function getPositiveInteger(formData: FormData, key: string, message: string) {
 
   if (!Number.isInteger(value) || value <= 0) {
     throw new Error(message);
+  }
+
+  return value;
+}
+
+function getTrialDays(formData: FormData) {
+  const value = getPositiveInteger(formData, "trial_days", "Trial days must be between 1 and 365");
+
+  if (value > MAX_TRIAL_DAYS) {
+    throw new Error("Trial days must be between 1 and 365");
   }
 
   return value;
@@ -286,7 +297,7 @@ export async function createTrialCode(formData: FormData) {
     throw new Error("Label must be 120 characters or fewer");
   }
 
-  const trialDays = getPositiveInteger(formData, "trial_days", "Trial days must be a positive integer");
+  const trialDays = getTrialDays(formData);
   const maxRedemptions = getOptionalPositiveInteger(
     formData,
     "max_redemptions",
@@ -346,7 +357,7 @@ export async function updateTrialCode(formData: FormData) {
     throw new Error("Label must be 120 characters or fewer");
   }
 
-  const trialDays = getPositiveInteger(formData, "trial_days", "Trial days must be a positive integer");
+  const trialDays = getTrialDays(formData);
   const maxRedemptions = getOptionalPositiveInteger(
     formData,
     "max_redemptions",
@@ -382,10 +393,10 @@ export async function revokeDesktopSession(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   await requireAdmin(locale);
   const desktopSessionId = getRequiredString(formData, "desktop_session_id", "Desktop session is required");
-  const { error } = await createSupabaseAdminClient()
-    .from("desktop_sessions")
-    .update({ revoked_at: new Date().toISOString() })
-    .eq("id", desktopSessionId);
+  const { error } = await createSupabaseAdminClient().rpc("revoke_desktop_session_with_leases", {
+    input_desktop_session_id: desktopSessionId,
+    input_now: new Date().toISOString(),
+  });
 
   if (error) {
     throw new Error("Unable to revoke desktop session");

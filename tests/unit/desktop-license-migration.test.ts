@@ -85,6 +85,27 @@ describe("desktop license migration", () => {
     );
   });
 
+  it("creates an atomic admin desktop session revocation RPC that revokes active leases", () => {
+    const revocation = getFunctionSql("revoke_desktop_session_with_leases");
+
+    expect(revocation).toContain("input_desktop_session_id uuid");
+    expect(revocation).toContain("input_now timestamptz");
+    expect(revocation).toContain("update public.desktop_sessions");
+    expect(revocation).toContain("revoked_at = input_now");
+    expect(revocation).toContain("cloud_sync_active_until = null");
+    expect(revocation).toContain("where id = input_desktop_session_id");
+    expect(revocation).toContain("for update");
+    expect(revocation).toContain("update public.cloud_sync_leases");
+    expect(revocation).toContain("desktop_session_id = input_desktop_session_id");
+    expect(revocation).toContain("and revoked_at is null");
+    expect(revocation).toContain(
+      "revoke execute on function public.revoke_desktop_session_with_leases(uuid, timestamptz) from public",
+    );
+    expect(revocation).toContain(
+      "grant execute on function public.revoke_desktop_session_with_leases(uuid, timestamptz) to service_role",
+    );
+  });
+
   it("revalidates and locks desktop sessions inside trust-critical lease RPCs", () => {
     const activation = getFunctionSql("activate_cloud_sync_lease");
     const heartbeat = getFunctionSql("heartbeat_cloud_sync_lease");

@@ -9,6 +9,8 @@ import {
 import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
 import { hashDesktopSecret } from "@/lib/license/hash";
 
+type MutationResult = Promise<{ error: null }>;
+
 const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
   requireAdmin: vi.fn(),
@@ -35,7 +37,7 @@ describe("admin license actions", () => {
   });
 
   it("creates trial codes with a hashed code and never persists the raw code", async () => {
-    const insert = vi.fn(async () => ({ error: null }));
+    const insert = vi.fn<(payload: unknown) => MutationResult>(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "trial_codes") {
         return { insert };
@@ -87,9 +89,23 @@ describe("admin license actions", () => {
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
+  it("rejects trial code durations over 365 days before writing", async () => {
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("code", "SPRING-2026");
+    formData.set("label", "Spring 2026 launch trial");
+    formData.set("trial_days", "366");
+    formData.set("starts_at", "2026-05-01T00:00:00.000Z");
+    formData.set("ends_at", "2026-06-01T00:00:00.000Z");
+
+    await expect(createTrialCode(formData)).rejects.toThrow("Trial days must be between 1 and 365");
+
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
+  });
+
   it("toggles trial code active state", async () => {
-    const eq = vi.fn(async () => ({ error: null }));
-    const update = vi.fn(() => ({ eq }));
+    const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
+    const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
     const from = vi.fn((table: string) => {
       if (table === "trial_codes") {
         return { update };
@@ -114,8 +130,8 @@ describe("admin license actions", () => {
   });
 
   it("updates trial code labels, limits, and active periods", async () => {
-    const eq = vi.fn(async () => ({ error: null }));
-    const update = vi.fn(() => ({ eq }));
+    const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
+    const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
     const from = vi.fn((table: string) => {
       if (table === "trial_codes") {
         return { update };
@@ -149,16 +165,8 @@ describe("admin license actions", () => {
   });
 
   it("revokes desktop sessions", async () => {
-    const eq = vi.fn(async () => ({ error: null }));
-    const update = vi.fn(() => ({ eq }));
-    const from = vi.fn((table: string) => {
-      if (table === "desktop_sessions") {
-        return { update };
-      }
-
-      throw new Error(`Unexpected table: ${table}`);
-    });
-    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+    const rpc = vi.fn<(functionName: string, args: unknown) => MutationResult>(async () => ({ error: null }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ rpc });
 
     const formData = new FormData();
     formData.set("locale", "ko");
@@ -167,14 +175,16 @@ describe("admin license actions", () => {
     await revokeDesktopSession(formData);
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("ko");
-    expect(update).toHaveBeenCalledWith({ revoked_at: expect.any(String) });
-    expect(eq).toHaveBeenCalledWith("id", "session-1");
+    expect(rpc).toHaveBeenCalledWith("revoke_desktop_session_with_leases", {
+      input_desktop_session_id: "session-1",
+      input_now: expect.any(String),
+    });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ko/admin/licenses");
   });
 
   it("revokes cloud sync leases and updates the timestamp", async () => {
-    const eq = vi.fn(async () => ({ error: null }));
-    const update = vi.fn(() => ({ eq }));
+    const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
+    const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
     const from = vi.fn((table: string) => {
       if (table === "cloud_sync_leases") {
         return { update };

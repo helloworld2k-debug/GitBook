@@ -755,3 +755,57 @@ revoke execute on function public.release_cloud_sync_lease(uuid, uuid, timestamp
 revoke execute on function public.release_cloud_sync_lease(uuid, uuid, timestamptz) from anon;
 revoke execute on function public.release_cloud_sync_lease(uuid, uuid, timestamptz) from authenticated;
 grant execute on function public.release_cloud_sync_lease(uuid, uuid, timestamptz) to service_role;
+
+create or replace function public.revoke_desktop_session_with_leases(
+  input_desktop_session_id uuid,
+  input_now timestamptz
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  session_row public.desktop_sessions%rowtype;
+begin
+  select *
+  into session_row
+  from public.desktop_sessions
+  where id = input_desktop_session_id;
+
+  if not found then
+    return false;
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(session_row.user_id::text, 0));
+
+  select *
+  into session_row
+  from public.desktop_sessions
+  where id = input_desktop_session_id
+  for update;
+
+  if not found then
+    return false;
+  end if;
+
+  update public.desktop_sessions
+  set revoked_at = input_now,
+      cloud_sync_active_until = null,
+      last_seen_at = input_now
+  where id = input_desktop_session_id;
+
+  update public.cloud_sync_leases
+  set revoked_at = input_now,
+      updated_at = input_now
+  where desktop_session_id = input_desktop_session_id
+    and revoked_at is null;
+
+  return true;
+end;
+$$;
+
+revoke execute on function public.revoke_desktop_session_with_leases(uuid, timestamptz) from public;
+revoke execute on function public.revoke_desktop_session_with_leases(uuid, timestamptz) from anon;
+revoke execute on function public.revoke_desktop_session_with_leases(uuid, timestamptz) from authenticated;
+grant execute on function public.revoke_desktop_session_with_leases(uuid, timestamptz) to service_role;

@@ -818,6 +818,13 @@ export type Database = {
         };
         Returns: boolean;
       };
+      revoke_desktop_session_with_leases: {
+        Args: {
+          input_desktop_session_id: string;
+          input_now: string;
+        };
+        Returns: boolean;
+      };
       read_cloud_sync_lease_status: {
         Args: {
           input_desktop_session_id: string;
