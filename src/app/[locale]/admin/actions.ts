@@ -4,13 +4,16 @@ import { revalidatePath } from "next/cache";
 import { supportedLocales, type Locale } from "@/config/site";
 import { requireAdmin } from "@/lib/auth/guards";
 import { generateCertificatesForDonation } from "@/lib/certificates/service";
+import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
 import { extendCloudSyncEntitlementForDonation } from "@/lib/license/entitlements";
+import { hashDesktopSecret } from "@/lib/license/hash";
 import { SOFTWARE_RELEASES_BUCKET, type ReleasePlatform } from "@/lib/releases/software-releases";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const MAX_REASON_LENGTH = 500;
 const MAX_MANUAL_REFERENCE_LENGTH = 120;
 const MAX_RELEASE_NOTES_LENGTH = 4000;
+const MAX_TRIAL_LABEL_LENGTH = 120;
 
 function getSafeLocale(locale: FormDataEntryValue | null) {
   const value = String(locale ?? "en");
@@ -26,6 +29,43 @@ function getRequiredString(formData: FormData, key: string, message: string) {
   }
 
   return value;
+}
+
+function getPositiveInteger(formData: FormData, key: string, message: string) {
+  const value = Number(formData.get(key));
+
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(message);
+  }
+
+  return value;
+}
+
+function getOptionalPositiveInteger(formData: FormData, key: string, message: string) {
+  const rawValue = String(formData.get(key) ?? "").trim();
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const value = Number(rawValue);
+
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(message);
+  }
+
+  return value;
+}
+
+function getDateIso(formData: FormData, key: string, message: string) {
+  const rawValue = getRequiredString(formData, key, message);
+  const date = new Date(rawValue);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(message);
+  }
+
+  return date.toISOString();
 }
 
 function getRequiredReason(formData: FormData) {
@@ -234,4 +274,139 @@ export async function setSoftwareReleasePublished(formData: FormData) {
   revalidatePath(`/${locale}`);
   revalidatePath(`/${locale}/versions`);
   revalidatePath(`/${locale}/admin/releases`);
+}
+
+export async function createTrialCode(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const code = getRequiredString(formData, "code", "Trial code is required");
+  const label = getRequiredString(formData, "label", "Label is required");
+
+  if (label.length > MAX_TRIAL_LABEL_LENGTH) {
+    throw new Error("Label must be 120 characters or fewer");
+  }
+
+  const trialDays = getPositiveInteger(formData, "trial_days", "Trial days must be a positive integer");
+  const maxRedemptions = getOptionalPositiveInteger(
+    formData,
+    "max_redemptions",
+    "Max redemptions must be a positive integer",
+  );
+  const startsAt = getDateIso(formData, "starts_at", "Start date is required");
+  const endsAt = getDateIso(formData, "ends_at", "End date is required");
+
+  if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
+    throw new Error("End date must be after start date");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("trial_codes").insert({
+    code_hash: await hashDesktopSecret(code, "trial_code"),
+    created_by: admin.id,
+    ends_at: endsAt,
+    feature_code: CLOUD_SYNC_FEATURE,
+    is_active: true,
+    label,
+    max_redemptions: maxRedemptions,
+    starts_at: startsAt,
+    trial_days: trialDays,
+  });
+
+  if (error) {
+    throw new Error("Unable to create trial code");
+  }
+
+  revalidatePath(`/${locale}/admin/licenses`);
+}
+
+export async function setTrialCodeActive(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const trialCodeId = getRequiredString(formData, "trial_code_id", "Trial code is required");
+  const isActive = String(formData.get("is_active") ?? "false") === "true";
+  const { error } = await createSupabaseAdminClient()
+    .from("trial_codes")
+    .update({ is_active: isActive, updated_at: new Date().toISOString() })
+    .eq("id", trialCodeId);
+
+  if (error) {
+    throw new Error("Unable to update trial code");
+  }
+
+  revalidatePath(`/${locale}/admin/licenses`);
+}
+
+export async function updateTrialCode(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const trialCodeId = getRequiredString(formData, "trial_code_id", "Trial code is required");
+  const label = getRequiredString(formData, "label", "Label is required");
+
+  if (label.length > MAX_TRIAL_LABEL_LENGTH) {
+    throw new Error("Label must be 120 characters or fewer");
+  }
+
+  const trialDays = getPositiveInteger(formData, "trial_days", "Trial days must be a positive integer");
+  const maxRedemptions = getOptionalPositiveInteger(
+    formData,
+    "max_redemptions",
+    "Max redemptions must be a positive integer",
+  );
+  const startsAt = getDateIso(formData, "starts_at", "Start date is required");
+  const endsAt = getDateIso(formData, "ends_at", "End date is required");
+
+  if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
+    throw new Error("End date must be after start date");
+  }
+
+  const { error } = await createSupabaseAdminClient()
+    .from("trial_codes")
+    .update({
+      ends_at: endsAt,
+      label,
+      max_redemptions: maxRedemptions,
+      starts_at: startsAt,
+      trial_days: trialDays,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", trialCodeId);
+
+  if (error) {
+    throw new Error("Unable to update trial code");
+  }
+
+  revalidatePath(`/${locale}/admin/licenses`);
+}
+
+export async function revokeDesktopSession(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const desktopSessionId = getRequiredString(formData, "desktop_session_id", "Desktop session is required");
+  const { error } = await createSupabaseAdminClient()
+    .from("desktop_sessions")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("id", desktopSessionId);
+
+  if (error) {
+    throw new Error("Unable to revoke desktop session");
+  }
+
+  revalidatePath(`/${locale}/admin/licenses`);
+}
+
+export async function revokeCloudSyncLease(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const cloudSyncLeaseId = getRequiredString(formData, "cloud_sync_lease_id", "Cloud sync lease is required");
+  const now = new Date().toISOString();
+  const { error } = await createSupabaseAdminClient()
+    .from("cloud_sync_leases")
+    .update({ revoked_at: now, updated_at: now })
+    .eq("id", cloudSyncLeaseId);
+
+  if (error) {
+    throw new Error("Unable to revoke cloud sync lease");
+  }
+
+  revalidatePath(`/${locale}/admin/licenses`);
 }
