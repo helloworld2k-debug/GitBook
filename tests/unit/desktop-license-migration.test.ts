@@ -54,6 +54,30 @@ describe("desktop license migration", () => {
     );
   });
 
+  it("creates service-role-only cloud sync lease RPCs with per-user locking", () => {
+    expect(migration).toContain("create or replace function public.activate_cloud_sync_lease");
+    expect(migration).toContain("create or replace function public.heartbeat_cloud_sync_lease");
+    expect(migration).toContain("create or replace function public.read_cloud_sync_lease_status");
+    expect(migration).toContain("create or replace function public.release_cloud_sync_lease");
+    expect(migration).toContain("returns table(ok boolean, reason text, lease_id uuid, expires_at timestamptz, active_device_id text)");
+    expect(migration).toContain("perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0))");
+    expect(migration).toContain("and revoked_at is null");
+    expect(migration).toContain("'active_on_another_device'::text");
+    expect(migration).toContain("cloud_sync_active_until = input_expires_at");
+    expect(migration).toContain(
+      "revoke execute on function public.activate_cloud_sync_lease(uuid, uuid, text, text, timestamptz, timestamptz) from public",
+    );
+    expect(migration).toContain(
+      "grant execute on function public.heartbeat_cloud_sync_lease(uuid, uuid, timestamptz, timestamptz) to service_role",
+    );
+    expect(migration).toContain(
+      "grant execute on function public.read_cloud_sync_lease_status(uuid, uuid, timestamptz) to service_role",
+    );
+    expect(migration).toContain(
+      "grant execute on function public.release_cloud_sync_lease(uuid, uuid, timestamptz) to service_role",
+    );
+  });
+
   it("creates a service-role-only atomic trial code redemption function", () => {
     expect(migration).toContain("create or replace function public.redeem_trial_code");
     expect(migration).toContain("input_code_hash text");

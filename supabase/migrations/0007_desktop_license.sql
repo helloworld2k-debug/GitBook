@@ -498,3 +498,228 @@ revoke execute on function public.exchange_desktop_auth_code(text, text, text, t
 revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) from anon;
 revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) from authenticated;
 grant execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) to service_role;
+
+create or replace function public.activate_cloud_sync_lease(
+  input_user_id uuid,
+  input_desktop_session_id uuid,
+  input_device_id text,
+  input_machine_code_hash text,
+  input_expires_at timestamptz,
+  input_now timestamptz
+)
+returns table(lease_id uuid, expires_at timestamptz, active_device_id text)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  inserted_lease public.cloud_sync_leases%rowtype;
+begin
+  perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0));
+
+  update public.cloud_sync_leases
+  set revoked_at = input_now,
+      updated_at = input_now
+  where user_id = input_user_id
+    and revoked_at is null;
+
+  update public.desktop_sessions
+  set cloud_sync_active_until = null
+  where user_id = input_user_id
+    and cloud_sync_active_until is not null;
+
+  insert into public.cloud_sync_leases (
+    user_id,
+    desktop_session_id,
+    device_id,
+    machine_code_hash,
+    lease_started_at,
+    last_heartbeat_at,
+    expires_at
+  )
+  values (
+    input_user_id,
+    input_desktop_session_id,
+    input_device_id,
+    input_machine_code_hash,
+    input_now,
+    input_now,
+    input_expires_at
+  )
+  returning *
+  into inserted_lease;
+
+  update public.desktop_sessions
+  set cloud_sync_active_until = input_expires_at,
+      last_seen_at = input_now
+  where id = input_desktop_session_id
+    and user_id = input_user_id;
+
+  return query select inserted_lease.id, inserted_lease.expires_at, inserted_lease.device_id;
+end;
+$$;
+
+revoke execute on function public.activate_cloud_sync_lease(uuid, uuid, text, text, timestamptz, timestamptz) from public;
+revoke execute on function public.activate_cloud_sync_lease(uuid, uuid, text, text, timestamptz, timestamptz) from anon;
+revoke execute on function public.activate_cloud_sync_lease(uuid, uuid, text, text, timestamptz, timestamptz) from authenticated;
+grant execute on function public.activate_cloud_sync_lease(uuid, uuid, text, text, timestamptz, timestamptz) to service_role;
+
+create or replace function public.heartbeat_cloud_sync_lease(
+  input_user_id uuid,
+  input_desktop_session_id uuid,
+  input_expires_at timestamptz,
+  input_now timestamptz
+)
+returns table(ok boolean, reason text, lease_id uuid, expires_at timestamptz, active_device_id text)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  active_lease public.cloud_sync_leases%rowtype;
+begin
+  perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0));
+
+  update public.cloud_sync_leases
+  set revoked_at = input_now,
+      updated_at = input_now
+  where user_id = input_user_id
+    and revoked_at is null
+    and expires_at <= input_now;
+
+  update public.desktop_sessions
+  set cloud_sync_active_until = null
+  where user_id = input_user_id
+    and cloud_sync_active_until is not null
+    and cloud_sync_active_until <= input_now;
+
+  select *
+  into active_lease
+  from public.cloud_sync_leases
+  where user_id = input_user_id
+    and revoked_at is null
+  order by created_at desc
+  limit 1;
+
+  if not found then
+    return query select false, 'lease_not_found'::text, null::uuid, null::timestamptz, null::text;
+    return;
+  end if;
+
+  if active_lease.desktop_session_id <> input_desktop_session_id then
+    return query select false, 'active_on_another_device'::text, null::uuid, null::timestamptz, active_lease.device_id;
+    return;
+  end if;
+
+  update public.cloud_sync_leases
+  set last_heartbeat_at = input_now,
+      expires_at = input_expires_at,
+      updated_at = input_now
+  where id = active_lease.id
+  returning *
+  into active_lease;
+
+  update public.desktop_sessions
+  set cloud_sync_active_until = input_expires_at,
+      last_seen_at = input_now
+  where id = input_desktop_session_id
+    and user_id = input_user_id;
+
+  return query select true, 'active'::text, active_lease.id, active_lease.expires_at, active_lease.device_id;
+end;
+$$;
+
+revoke execute on function public.heartbeat_cloud_sync_lease(uuid, uuid, timestamptz, timestamptz) from public;
+revoke execute on function public.heartbeat_cloud_sync_lease(uuid, uuid, timestamptz, timestamptz) from anon;
+revoke execute on function public.heartbeat_cloud_sync_lease(uuid, uuid, timestamptz, timestamptz) from authenticated;
+grant execute on function public.heartbeat_cloud_sync_lease(uuid, uuid, timestamptz, timestamptz) to service_role;
+
+create or replace function public.read_cloud_sync_lease_status(
+  input_user_id uuid,
+  input_desktop_session_id uuid,
+  input_now timestamptz
+)
+returns table(ok boolean, reason text, active_device_id text)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  active_lease public.cloud_sync_leases%rowtype;
+begin
+  perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0));
+
+  update public.cloud_sync_leases
+  set revoked_at = input_now,
+      updated_at = input_now
+  where user_id = input_user_id
+    and revoked_at is null
+    and expires_at <= input_now;
+
+  update public.desktop_sessions
+  set cloud_sync_active_until = null
+  where user_id = input_user_id
+    and cloud_sync_active_until is not null
+    and cloud_sync_active_until <= input_now;
+
+  select *
+  into active_lease
+  from public.cloud_sync_leases
+  where user_id = input_user_id
+    and revoked_at is null
+  order by created_at desc
+  limit 1;
+
+  if not found then
+    return query select true, 'active'::text, null::text;
+    return;
+  end if;
+
+  if active_lease.desktop_session_id <> input_desktop_session_id then
+    return query select false, 'active_on_another_device'::text, active_lease.device_id;
+    return;
+  end if;
+
+  return query select true, 'active'::text, active_lease.device_id;
+end;
+$$;
+
+revoke execute on function public.read_cloud_sync_lease_status(uuid, uuid, timestamptz) from public;
+revoke execute on function public.read_cloud_sync_lease_status(uuid, uuid, timestamptz) from anon;
+revoke execute on function public.read_cloud_sync_lease_status(uuid, uuid, timestamptz) from authenticated;
+grant execute on function public.read_cloud_sync_lease_status(uuid, uuid, timestamptz) to service_role;
+
+create or replace function public.release_cloud_sync_lease(
+  input_user_id uuid,
+  input_desktop_session_id uuid,
+  input_now timestamptz
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0));
+
+  update public.cloud_sync_leases
+  set revoked_at = input_now,
+      updated_at = input_now
+  where user_id = input_user_id
+    and desktop_session_id = input_desktop_session_id
+    and revoked_at is null;
+
+  update public.desktop_sessions
+  set cloud_sync_active_until = null,
+      last_seen_at = input_now
+  where id = input_desktop_session_id
+    and user_id = input_user_id;
+
+  return true;
+end;
+$$;
+
+revoke execute on function public.release_cloud_sync_lease(uuid, uuid, timestamptz) from public;
+revoke execute on function public.release_cloud_sync_lease(uuid, uuid, timestamptz) from anon;
+revoke execute on function public.release_cloud_sync_lease(uuid, uuid, timestamptz) from authenticated;
+grant execute on function public.release_cloud_sync_lease(uuid, uuid, timestamptz) to service_role;

@@ -24,6 +24,22 @@ function createMaybeSingleClient(
   tableUpdateErrors: Record<string, unknown> = {},
 ) {
   const states = new Map<string, ChainState>();
+  const rpc = vi.fn(async (functionName: string) => {
+    if (functionName === "read_cloud_sync_lease_status") {
+      return {
+        data: [
+          {
+            active_device_id: null,
+            ok: true,
+            reason: "active",
+          },
+        ],
+        error: null,
+      };
+    }
+
+    return { data: null, error: new Error(`Unexpected RPC: ${functionName}`) };
+  });
 
   const from = vi.fn((table: string) => {
     const state = states.get(table) ?? { filters: [], selectColumns: null, updatePayload: null };
@@ -51,7 +67,7 @@ function createMaybeSingleClient(
     return builder;
   });
 
-  return { from, states };
+  return { from, rpc, states };
 }
 
 describe("getLicenseStatus", () => {

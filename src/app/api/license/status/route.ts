@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
+import { readCloudSyncLeaseStatus } from "@/lib/license/cloud-sync-leases";
 import { readBearerToken, validateDesktopSession } from "@/lib/license/desktop-session";
 import { getLicenseStatus } from "@/lib/license/status";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -53,6 +54,25 @@ export async function GET(request: Request) {
       userId: session.user_id,
       machineCodeHash: session.machine_code_hash,
     });
+
+    if (status.allowed) {
+      const leaseStatus = await readCloudSyncLeaseStatus(client, {
+        desktopSessionId: session.id,
+        userId: session.user_id,
+      });
+
+      if (!leaseStatus.ok) {
+        return NextResponse.json({
+          authenticated: true,
+          feature,
+          allowed: false,
+          reason: leaseStatus.reason,
+          validUntil: status.validUntil,
+          remainingDays: 0,
+          activeDeviceId: leaseStatus.activeDeviceId,
+        });
+      }
+    }
 
     return NextResponse.json({
       authenticated: true,

@@ -778,6 +778,56 @@ export type Database = {
         };
         Returns: string;
       };
+      activate_cloud_sync_lease: {
+        Args: {
+          input_desktop_session_id: string;
+          input_device_id: string;
+          input_expires_at: string;
+          input_machine_code_hash: string;
+          input_now: string;
+          input_user_id: string;
+        };
+        Returns: {
+          active_device_id: string;
+          expires_at: string;
+          lease_id: string;
+        }[];
+      };
+      heartbeat_cloud_sync_lease: {
+        Args: {
+          input_desktop_session_id: string;
+          input_expires_at: string;
+          input_now: string;
+          input_user_id: string;
+        };
+        Returns: {
+          active_device_id: string | null;
+          expires_at: string | null;
+          lease_id: string | null;
+          ok: boolean;
+          reason: string;
+        }[];
+      };
+      release_cloud_sync_lease: {
+        Args: {
+          input_desktop_session_id: string;
+          input_now: string;
+          input_user_id: string;
+        };
+        Returns: boolean;
+      };
+      read_cloud_sync_lease_status: {
+        Args: {
+          input_desktop_session_id: string;
+          input_now: string;
+          input_user_id: string;
+        };
+        Returns: {
+          active_device_id: string | null;
+          ok: boolean;
+          reason: string;
+        }[];
+      };
       redeem_trial_code: {
         Args: {
           input_code_hash: string;
