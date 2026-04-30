@@ -5,10 +5,18 @@ import { refreshSupabaseSession } from "./lib/supabase/middleware";
 
 const intlMiddleware = createMiddleware(routing);
 
+function hasSupabaseAuthCookie(request: NextRequest) {
+  return request.cookies.getAll().some(({ name }) => name.startsWith("sb-") && name.endsWith("-auth-token"));
+}
+
 export default async function middleware(request: NextRequest) {
   const response = intlMiddleware(request);
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    !hasSupabaseAuthCookie(request)
+  ) {
     return response;
   }
 

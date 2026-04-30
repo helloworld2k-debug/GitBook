@@ -4,6 +4,7 @@ import { getCertificateExportFilename, renderCertificateSvg } from "@/lib/certif
 
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
+  cookies: vi.fn(),
   getUser: vi.fn(),
   maybeSingle: vi.fn(),
   notFound: vi.fn(() => {
@@ -17,6 +18,10 @@ const mocks = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({
   notFound: mocks.notFound,
   redirect: mocks.redirect,
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: mocks.cookies,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -90,6 +95,10 @@ function params(format = "svg") {
 describe("certificate export route", () => {
   beforeEach(() => {
     mocks.createSupabaseServerClient.mockReset();
+    mocks.cookies.mockReset();
+    mocks.cookies.mockResolvedValue({
+      getAll: vi.fn(() => [{ name: "sb-test-auth-token", value: "token" }]),
+    });
     mocks.getUser.mockReset();
     mocks.maybeSingle.mockReset();
     mocks.notFound.mockClear();

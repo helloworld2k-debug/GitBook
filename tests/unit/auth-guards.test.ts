@@ -7,9 +7,14 @@ const redirectMock = vi.hoisted(() =>
   }),
 );
 const createSupabaseServerClientMock = vi.hoisted(() => vi.fn());
+const cookiesMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
+}));
+
+vi.mock("next/headers", () => ({
+  cookies: cookiesMock,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -39,6 +44,10 @@ function createProfileClient(profile: { is_admin: boolean } | null) {
 describe("auth guards", () => {
   beforeEach(() => {
     redirectMock.mockClear();
+    cookiesMock.mockReset();
+    cookiesMock.mockResolvedValue({
+      getAll: vi.fn(() => [{ name: "sb-test-auth-token", value: "token" }]),
+    });
     createSupabaseServerClientMock.mockReset();
   });
 
@@ -61,6 +70,15 @@ describe("auth guards", () => {
       "redirect:/ja/login?next=%2Fja%2Fdonate%3Ftier%3Dyearly",
     );
     expect(redirectMock).toHaveBeenCalledWith("/ja/login?next=%2Fja%2Fdonate%3Ftier%3Dyearly");
+  });
+
+  it("redirects anonymous requests without checking Supabase when no auth cookie is present", async () => {
+    cookiesMock.mockResolvedValue({
+      getAll: vi.fn(() => []),
+    });
+
+    await expect(requireUser("en", "/en/dashboard")).rejects.toThrow("redirect:/en/login?next=%2Fen%2Fdashboard");
+    expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
   });
 
   it("returns the current user when present", async () => {

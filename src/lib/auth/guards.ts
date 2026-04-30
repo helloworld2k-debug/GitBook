@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { defaultLocale, supportedLocales, type Locale } from "@/config/site";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -36,7 +37,17 @@ export function isAdminProfile(profile: AdminLike) {
   return profile?.is_admin === true;
 }
 
+async function hasSupabaseAuthCookie() {
+  const cookieStore = await cookies();
+
+  return cookieStore.getAll().some(({ name }) => name.startsWith("sb-") && name.endsWith("-auth-token"));
+}
+
 export async function requireUser(locale: Locale | string, nextPath: string) {
+  if (!(await hasSupabaseAuthCookie())) {
+    redirect(getLoginRedirectPath(locale, nextPath));
+  }
+
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
 
