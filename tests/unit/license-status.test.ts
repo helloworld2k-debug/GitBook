@@ -18,8 +18,16 @@ type ChainState = {
   updatePayload: unknown;
 };
 
+function rowMatchesFilters(row: unknown, filters: Array<[string, unknown]>) {
+  if (!row || typeof row !== "object") {
+    return filters.length === 0;
+  }
+
+  return filters.every(([column, value]) => (row as Record<string, unknown>)[column] === value);
+}
+
 function createMaybeSingleClient(
-  tableRows: Record<string, unknown>,
+  tableRows: Record<string, unknown> | Record<string, unknown[]>,
   tableErrors: Record<string, unknown> = {},
   tableUpdateErrors: Record<string, unknown> = {},
 ) {
@@ -50,7 +58,12 @@ function createMaybeSingleClient(
         state.filters.push([column, value]);
         return builder;
       }),
-      maybeSingle: vi.fn(async () => ({ data: tableRows[table] ?? null, error: tableErrors[table] ?? null })),
+      maybeSingle: vi.fn(async () => {
+        const rows = tableRows[table];
+        const data = Array.isArray(rows) ? rows.find((row) => rowMatchesFilters(row, state.filters)) ?? null : rows ?? null;
+
+        return { data, error: tableErrors[table] ?? null };
+      }),
       select: vi.fn((columns: string) => {
         state.selectColumns = columns;
         return builder;
@@ -120,7 +133,35 @@ describe("getLicenseStatus", () => {
     expect(client.states.get("machine_trial_claims")?.filters).toEqual([
       ["machine_code_hash", "machine-hash-1"],
       ["feature_code", "cloud_sync"],
+      ["user_id", "user-1"],
     ]);
+  });
+
+  it("does not allow a machine trial claimed by a different user", async () => {
+    const client = createMaybeSingleClient({
+      machine_trial_claims: [
+        {
+          feature_code: "cloud_sync",
+          machine_code_hash: "machine-hash-1",
+          trial_valid_until: "2026-05-04T00:00:00.000Z",
+          user_id: "user-1",
+        },
+      ],
+    });
+
+    const status = await getLicenseStatus(client, {
+      userId: "user-2",
+      machineCodeHash: "machine-hash-1",
+      now: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    expect(status).toEqual({
+      allowed: false,
+      feature: "cloud_sync",
+      reason: "trial_code_required",
+      remainingDays: 0,
+      validUntil: null,
+    });
   });
 
   it("allows active machine trial when a paid entitlement is expired", async () => {

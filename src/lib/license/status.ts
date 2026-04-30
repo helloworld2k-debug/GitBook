@@ -8,14 +8,19 @@ type LicenseStatusClient = {
 type LicenseStatusFrom = (table: "machine_trial_claims") => {
   select: (columns: "trial_valid_until") => {
     eq: (
-      column: "machine_code_hash" | "feature_code",
+      column: "machine_code_hash" | "feature_code" | "user_id",
       value: string,
     ) => {
       eq: (
-        column: "machine_code_hash" | "feature_code",
+        column: "machine_code_hash" | "feature_code" | "user_id",
         value: string,
       ) => {
-        maybeSingle: () => PromiseLike<{ data: { trial_valid_until: string } | null; error: unknown }>;
+        eq: (
+          column: "machine_code_hash" | "feature_code" | "user_id",
+          value: string,
+        ) => {
+          maybeSingle: () => PromiseLike<{ data: { trial_valid_until: string } | null; error: unknown }>;
+        };
       };
     };
   };
@@ -90,6 +95,7 @@ export async function getLicenseStatus(client: LicenseStatusClient, input: Licen
     .select("trial_valid_until")
     .eq("machine_code_hash", input.machineCodeHash)
     .eq("feature_code", CLOUD_SYNC_FEATURE)
+    .eq("user_id", input.userId)
     .maybeSingle();
 
   if (error) {
