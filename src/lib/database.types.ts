@@ -7,6 +7,8 @@ export type Database = {
       certificate_type: "donation" | "honor";
       donation_provider: "stripe" | "paypal" | "manual";
       donation_status: "pending" | "paid" | "cancelled" | "failed" | "refunded";
+      license_entitlement_status: "active" | "expired" | "revoked";
+      license_feature_code: "cloud_sync";
       software_release_platform: "macos" | "windows";
     };
     Tables: {
@@ -93,6 +95,404 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      license_entitlements: {
+        Row: {
+          id: string;
+          user_id: string;
+          feature_code: Database["public"]["Enums"]["license_feature_code"];
+          valid_until: string;
+          status: Database["public"]["Enums"]["license_entitlement_status"];
+          source_donation_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          feature_code?: Database["public"]["Enums"]["license_feature_code"];
+          valid_until: string;
+          status?: Database["public"]["Enums"]["license_entitlement_status"];
+          source_donation_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          feature_code?: Database["public"]["Enums"]["license_feature_code"];
+          valid_until?: string;
+          status?: Database["public"]["Enums"]["license_entitlement_status"];
+          source_donation_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "license_entitlements_source_donation_id_fkey";
+            columns: ["source_donation_id"];
+            isOneToOne: false;
+            referencedRelation: "donations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "license_entitlements_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      trial_codes: {
+        Row: {
+          id: string;
+          code_hash: string;
+          label: string;
+          feature_code: Database["public"]["Enums"]["license_feature_code"];
+          trial_days: number;
+          starts_at: string;
+          ends_at: string;
+          max_redemptions: number | null;
+          redemption_count: number;
+          is_active: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code_hash: string;
+          label: string;
+          feature_code?: Database["public"]["Enums"]["license_feature_code"];
+          trial_days?: number;
+          starts_at: string;
+          ends_at: string;
+          max_redemptions?: number | null;
+          redemption_count?: number;
+          is_active?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code_hash?: string;
+          label?: string;
+          feature_code?: Database["public"]["Enums"]["license_feature_code"];
+          trial_days?: number;
+          starts_at?: string;
+          ends_at?: string;
+          max_redemptions?: number | null;
+          redemption_count?: number;
+          is_active?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "trial_codes_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      trial_code_redemptions: {
+        Row: {
+          id: string;
+          trial_code_id: string;
+          user_id: string;
+          machine_code_hash: string;
+          feature_code: Database["public"]["Enums"]["license_feature_code"];
+          redeemed_at: string;
+          trial_valid_until: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          trial_code_id: string;
+          user_id: string;
+          machine_code_hash: string;
+          feature_code?: Database["public"]["Enums"]["license_feature_code"];
+          redeemed_at?: string;
+          trial_valid_until: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          trial_code_id?: string;
+          user_id?: string;
+          machine_code_hash?: string;
+          feature_code?: Database["public"]["Enums"]["license_feature_code"];
+          redeemed_at?: string;
+          trial_valid_until?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "trial_code_redemptions_trial_code_id_fkey";
+            columns: ["trial_code_id"];
+            isOneToOne: false;
+            referencedRelation: "trial_codes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "trial_code_redemptions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      machine_trial_claims: {
+        Row: {
+          id: string;
+          machine_code_hash: string;
+          user_id: string;
+          trial_code_id: string | null;
+          feature_code: Database["public"]["Enums"]["license_feature_code"];
+          trial_started_at: string;
+          trial_valid_until: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          machine_code_hash: string;
+          user_id: string;
+          trial_code_id?: string | null;
+          feature_code?: Database["public"]["Enums"]["license_feature_code"];
+          trial_started_at?: string;
+          trial_valid_until: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          machine_code_hash?: string;
+          user_id?: string;
+          trial_code_id?: string | null;
+          feature_code?: Database["public"]["Enums"]["license_feature_code"];
+          trial_started_at?: string;
+          trial_valid_until?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "machine_trial_claims_trial_code_id_fkey";
+            columns: ["trial_code_id"];
+            isOneToOne: false;
+            referencedRelation: "trial_codes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "machine_trial_claims_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      desktop_auth_codes: {
+        Row: {
+          id: string;
+          code_hash: string;
+          user_id: string;
+          device_session_id: string;
+          return_url: string;
+          expires_at: string;
+          used_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          code_hash: string;
+          user_id: string;
+          device_session_id: string;
+          return_url: string;
+          expires_at: string;
+          used_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          code_hash?: string;
+          user_id?: string;
+          device_session_id?: string;
+          return_url?: string;
+          expires_at?: string;
+          used_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "desktop_auth_codes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      desktop_devices: {
+        Row: {
+          id: string;
+          user_id: string;
+          device_id: string;
+          machine_code_hash: string;
+          platform: string;
+          device_name: string | null;
+          app_version: string | null;
+          last_seen_at: string;
+          revoked_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          device_id: string;
+          machine_code_hash: string;
+          platform: string;
+          device_name?: string | null;
+          app_version?: string | null;
+          last_seen_at?: string;
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          device_id?: string;
+          machine_code_hash?: string;
+          platform?: string;
+          device_name?: string | null;
+          app_version?: string | null;
+          last_seen_at?: string;
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "desktop_devices_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      desktop_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          token_hash: string;
+          device_id: string;
+          machine_code_hash: string;
+          platform: string;
+          app_version: string | null;
+          last_seen_at: string;
+          cloud_sync_active_until: string | null;
+          expires_at: string;
+          revoked_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          token_hash: string;
+          device_id: string;
+          machine_code_hash: string;
+          platform: string;
+          app_version?: string | null;
+          last_seen_at?: string;
+          cloud_sync_active_until?: string | null;
+          expires_at: string;
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          token_hash?: string;
+          device_id?: string;
+          machine_code_hash?: string;
+          platform?: string;
+          app_version?: string | null;
+          last_seen_at?: string;
+          cloud_sync_active_until?: string | null;
+          expires_at?: string;
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "desktop_sessions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cloud_sync_leases: {
+        Row: {
+          id: string;
+          user_id: string;
+          desktop_session_id: string;
+          device_id: string;
+          machine_code_hash: string;
+          lease_started_at: string;
+          last_heartbeat_at: string;
+          expires_at: string;
+          revoked_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          desktop_session_id: string;
+          device_id: string;
+          machine_code_hash: string;
+          lease_started_at?: string;
+          last_heartbeat_at?: string;
+          expires_at: string;
+          revoked_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          desktop_session_id?: string;
+          device_id?: string;
+          machine_code_hash?: string;
+          lease_started_at?: string;
+          last_heartbeat_at?: string;
+          expires_at?: string;
+          revoked_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cloud_sync_leases_desktop_session_id_fkey";
+            columns: ["desktop_session_id"];
+            isOneToOne: false;
+            referencedRelation: "desktop_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cloud_sync_leases_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       sponsor_levels: {
         Row: {
