@@ -38,7 +38,6 @@
     "continueWithProvider": "使用 {provider} 繼續",
     "google": "Google",
     "github": "GitHub",
-    "apple": "Apple",
     "passwordResetBack": "返回登入",
     "passwordResetComplete": "密碼已更新。你現在可以登入。",
     "passwordResetError": "無法寄送重設密碼郵件。請檢查地址後再試一次。",

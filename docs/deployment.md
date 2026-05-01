@@ -66,7 +66,7 @@ The migrations create profiles, donation tiers, sponsor levels, donations, certi
 
 Configure Auth:
 
-- Enable the sign-in methods the handoff team wants to support: email magic links, Google, GitHub, and Apple.
+- Enable the sign-in methods the handoff team wants to support: email/password, Google, and GitHub.
 - Verify the interactive login UI and `/auth/callback` route against the deployed Supabase project before relying on donation or admin flows through the browser.
 - Add local and deployed URLs to Supabase Auth redirect allowlists:
   - `http://localhost:3000/**`

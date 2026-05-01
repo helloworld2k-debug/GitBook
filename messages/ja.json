@@ -38,7 +38,6 @@
     "continueWithProvider": "{provider} で続行",
     "google": "Google",
     "github": "GitHub",
-    "apple": "Apple",
     "passwordResetBack": "サインインに戻る",
     "passwordResetComplete": "パスワードを更新しました。サインインできます。",
     "passwordResetError": "リセットメールを送信できませんでした。アドレスを確認してもう一度お試しください。",

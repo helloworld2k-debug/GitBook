@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-type OAuthProvider = "google" | "github" | "apple";
+type OAuthProvider = "google" | "github";
 type AuthMode = "forgot-password" | "sign-in" | "register";
 type FormStatus = "idle" | "submitting" | "success" | "error" | "password-mismatch" | "oauth-error" | "reset-sent" | "reset-error";
 
@@ -43,7 +43,46 @@ type LoginFormProps = {
   nextPath: string;
 };
 
-const providerOrder: OAuthProvider[] = ["google", "github", "apple"];
+const providerOrder: OAuthProvider[] = ["google", "github"];
+
+function GoogleIcon() {
+  return (
+    <svg aria-hidden="true" className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
+      <path
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+        fill="#4285F4"
+      />
+      <path
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+        fill="#34A853"
+      />
+      <path
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"
+        fill="#EA4335"
+      />
+    </svg>
+  );
+}
+
+function GitHubIcon() {
+  return (
+    <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-white" fill="currentColor" viewBox="0 0 24 24">
+      <path
+        clipRule="evenodd"
+        d="M12 2C6.48 2 2 6.58 2 12.22c0 4.51 2.87 8.33 6.84 9.68.5.09.68-.22.68-.49 0-.24-.01-1.04-.01-1.89-2.78.62-3.37-1.21-3.37-1.21-.45-1.19-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.36-2.22-.26-4.56-1.14-4.56-5.05 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05A9.37 9.37 0 0 1 12 6.92c.85 0 1.7.12 2.5.34 1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.79-4.57 5.04.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.81 0 .27.18.59.69.49A10.23 10.23 0 0 0 22 12.22C22 6.58 17.52 2 12 2z"
+        fillRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+function ProviderIcon({ provider }: { provider: OAuthProvider }) {
+  return provider === "google" ? <GoogleIcon /> : <GitHubIcon />;
+}
 
 export function LoginForm({ callbackUrl, messages, nextPath }: LoginFormProps) {
   const [mode, setMode] = useState<AuthMode>("sign-in");
@@ -301,12 +340,13 @@ export function LoginForm({ callbackUrl, messages, nextPath }: LoginFormProps) {
           <fieldset aria-label={messages.providersLabel} className="m-0 grid min-w-0 gap-2 border-0 p-0">
             {providerOrder.map((provider) => (
               <button
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-cyan-300/20 bg-white/[0.04] px-4 text-sm font-semibold text-slate-100 transition-colors hover:border-cyan-300/50 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-3 rounded-md border border-cyan-300/20 bg-white/[0.04] px-4 text-sm font-semibold text-slate-100 transition-colors hover:border-cyan-300/50 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSubmitting}
                 key={provider}
                 onClick={() => void handleProviderSignIn(provider)}
                 type="button"
               >
+                <ProviderIcon provider={provider} />
                 {isSubmitting && activeProvider === provider ? messages.sending : messages.providerButtons[provider]}
               </button>
             ))}

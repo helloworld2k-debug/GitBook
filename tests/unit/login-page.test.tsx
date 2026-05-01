@@ -13,7 +13,6 @@ vi.mock("@/app/[locale]/login/login-form", () => ({
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (key: string, values?: Record<string, string>) => {
     const messages: Record<string, string> = {
-      apple: "Apple",
       callbackError: "The sign-in link could not be verified.",
       confirmPassword: "Confirm password",
       confirmPasswordPlaceholder: "Repeat your password",

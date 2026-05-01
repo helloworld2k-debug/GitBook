@@ -35,7 +35,6 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
   const t = await getTranslations("login");
   const nextPath = sanitizeNextPath(query.next, getLocaleDashboardPath(locale));
   const providerNames = {
-    apple: t("apple"),
     github: t("github"),
     google: t("google"),
   };
@@ -56,7 +55,6 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
     passwordResetSubmit: t("passwordResetSubmit"),
     passwordResetTitle: t("passwordResetTitle"),
     providerButtons: {
-      apple: t("continueWithProvider", { provider: providerNames.apple }),
       github: t("continueWithProvider", { provider: providerNames.github }),
       google: t("continueWithProvider", { provider: providerNames.google }),
     },

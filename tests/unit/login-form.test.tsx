@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginForm, type LoginFormMessages } from "@/app/[locale]/login/login-form";
 
@@ -29,7 +29,6 @@ const messages: LoginFormMessages = {
   passwordResetSubmit: "Send reset email",
   passwordResetTitle: "Reset password",
   providerButtons: {
-    apple: "Continue with Apple",
     github: "Continue with GitHub",
     google: "Continue with Google",
   },
@@ -42,6 +41,7 @@ const messages: LoginFormMessages = {
   signingUp: "Creating account...",
   signInError: "Could not sign in. Check your email and password.",
   signUpError: "Could not create the account. Check your email and password.",
+  sending: "Sending...",
   title: "Email and password",
 };
 
@@ -144,10 +144,27 @@ describe("LoginForm", () => {
     expect(signUpMock).not.toHaveBeenCalled();
   });
 
-  it("starts OAuth sign-in with the selected provider and callback URL", async () => {
+  it("shows Google and GitHub quick sign-in options without Apple", () => {
     renderLoginForm();
 
-    expect(screen.getByRole("group", { name: "Quick sign-in options" })).toBeInTheDocument();
+    const providers = screen.getByRole("group", { name: "Quick sign-in options" });
+    expect(providers).toBeInTheDocument();
+    expect(within(providers).getAllByRole("button")).toHaveLength(2);
+    expect(within(providers).getByRole("button", { name: "Continue with Google" })).toBeInTheDocument();
+    expect(within(providers).getByRole("button", { name: "Continue with GitHub" })).toBeInTheDocument();
+    expect(within(providers).queryByRole("button", { name: "Continue with Apple" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+
+    const registrationProviders = screen.getByRole("group", { name: "Quick sign-in options" });
+    expect(within(registrationProviders).getAllByRole("button")).toHaveLength(2);
+    expect(within(registrationProviders).getByRole("button", { name: "Continue with Google" })).toBeInTheDocument();
+    expect(within(registrationProviders).getByRole("button", { name: "Continue with GitHub" })).toBeInTheDocument();
+    expect(within(registrationProviders).queryByRole("button", { name: "Continue with Apple" })).not.toBeInTheDocument();
+  });
+
+  it("starts OAuth sign-in with the selected provider and callback URL", async () => {
+    renderLoginForm();
 
     fireEvent.click(screen.getByRole("button", { name: "Continue with GitHub" }));
 
@@ -165,7 +182,7 @@ describe("LoginForm", () => {
     signInWithOAuthMock.mockResolvedValueOnce({ error: new Error("provider disabled") });
     renderLoginForm();
 
-    fireEvent.click(screen.getByRole("button", { name: "Continue with Apple" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not start sign in.");
   });
