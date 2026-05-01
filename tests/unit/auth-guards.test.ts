@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getLoginRedirectPath, isAdminProfile, requireAdmin, requireUser } from "@/lib/auth/guards";
+import { getLoginRedirectPath, isAdminProfile, isOwnerProfile, requireAdmin, requireOwner, requireUser } from "@/lib/auth/guards";
 
 const redirectMock = vi.hoisted(() =>
   vi.fn((path: string) => {
@@ -29,7 +29,7 @@ function createAuthClient(user: { id: string } | null) {
   };
 }
 
-function createProfileClient(profile: { is_admin: boolean } | null) {
+function createProfileClient(profile: { is_admin?: boolean; admin_role?: "owner" | "operator" | "user"; account_status?: "active" | "disabled" } | null) {
   return {
     from: vi.fn(() => ({
       select: vi.fn(() => ({
@@ -59,8 +59,17 @@ describe("auth guards", () => {
 
   it("recognizes admin profiles", () => {
     expect(isAdminProfile({ is_admin: true })).toBe(true);
-    expect(isAdminProfile({ is_admin: false })).toBe(false);
+    expect(isAdminProfile({ is_admin: false, admin_role: "operator", account_status: "active" })).toBe(true);
+    expect(isAdminProfile({ is_admin: false, admin_role: "user", account_status: "active" })).toBe(false);
+    expect(isAdminProfile({ is_admin: false, admin_role: "operator", account_status: "disabled" })).toBe(false);
     expect(isAdminProfile(null)).toBe(false);
+  });
+
+  it("recognizes owner profiles", () => {
+    expect(isOwnerProfile({ is_admin: true })).toBe(true);
+    expect(isOwnerProfile({ admin_role: "owner", account_status: "active" })).toBe(true);
+    expect(isOwnerProfile({ admin_role: "operator", account_status: "active" })).toBe(false);
+    expect(isOwnerProfile({ admin_role: "owner", account_status: "disabled" })).toBe(false);
   });
 
   it("redirects users to locale-aware login when no user is present", async () => {
@@ -92,7 +101,7 @@ describe("auth guards", () => {
   it("redirects non-admin users to the locale dashboard", async () => {
     createSupabaseServerClientMock
       .mockResolvedValueOnce(createAuthClient({ id: "user-1" }))
-      .mockResolvedValueOnce(createProfileClient({ is_admin: false }));
+      .mockResolvedValueOnce(createProfileClient({ is_admin: false, admin_role: "user", account_status: "active" }));
 
     await expect(requireAdmin("ko")).rejects.toThrow("redirect:/ko/dashboard");
     expect(redirectMock).toHaveBeenCalledWith("/ko/dashboard");
@@ -102,9 +111,18 @@ describe("auth guards", () => {
     const user = { id: "admin-1" };
     createSupabaseServerClientMock
       .mockResolvedValueOnce(createAuthClient(user))
-      .mockResolvedValueOnce(createProfileClient({ is_admin: true }));
+      .mockResolvedValueOnce(createProfileClient({ is_admin: false, admin_role: "operator", account_status: "active" }));
 
     await expect(requireAdmin("en")).resolves.toBe(user);
     expect(redirectMock).not.toHaveBeenCalled();
+  });
+
+  it("redirects operators away from owner-only pages", async () => {
+    createSupabaseServerClientMock
+      .mockResolvedValueOnce(createAuthClient({ id: "operator-1" }))
+      .mockResolvedValueOnce(createProfileClient({ is_admin: false, admin_role: "operator", account_status: "active" }));
+
+    await expect(requireOwner("en")).rejects.toThrow("redirect:/en/admin");
+    expect(redirectMock).toHaveBeenCalledWith("/en/admin");
   });
 });

@@ -117,11 +117,8 @@
     },
     "trial": {
       "title": "トライアルコード",
-      "description": "チームから提供されたコードを使用して、対象のコンピューター 1 台でクラウド同期を 3 日間有効にします。",
-      "device": "デスクトップデバイス",
-      "deviceHelp": "トライアルはこのコンピューターのマシンコードに紐づきます。",
-      "noDeviceTitle": "デスクトップデバイスがまだありません",
-      "noDeviceDescription": "コンピューターで GitBook AI を開いて一度サインインしてください。その後、このページにデバイスが表示され、トライアルをマシンコードに紐づけられます。",
+      "description": "チームから提供されたコードを使用して、クラウド同期の 3 日間トライアルを開始します。",
+      "bindingHelp": "トライアルは適用直後から開始されます。コンピューターで GitBook AI にサインインすると、アプリがこのトライアルをそのコンピューターへ安全に自動紐づけします。",
       "code": "コード",
       "submit": "トライアルを適用",
       "saved": "トライアルを適用しました。",
@@ -168,7 +165,9 @@
       "releasesTitle": "リリース",
       "releasesDescription": "macOS と Windows のインストーラーをアップロードし、バージョンとリリースノートを管理します。",
       "licensesTitle": "ライセンス",
-      "licensesDescription": "試用コード、権限、デスクトップのクラウド同期アクセスを管理します。"
+      "licensesDescription": "試用コード、権限、デスクトップのクラウド同期アクセスを管理します。",
+      "usersTitle": "ユーザー",
+      "usersDescription": "ユーザー状態、トライアル紐づけ、デスクトップデバイス、運用担当ロールを確認します。"
     },
     "donations": {
       "eyebrow": "管理画面",
@@ -291,7 +290,40 @@
       "emptyTrialCodes": "試用コードはありません。",
       "emptyEntitlements": "権限はありません。",
       "emptySessions": "デスクトップセッションはありません。",
-      "emptyLeases": "クラウド同期リースはありません。"
+      "emptyLeases": "クラウド同期リースはありません。",
+      "trialRedemptionsTitle": "トライアル適用履歴",
+      "machine": "マシン",
+      "bound": "紐づけ済み",
+      "unbound": "未紐づけ",
+      "emptyTrialRedemptions": "トライアル適用履歴はありません。"
+    },
+    "users": {
+      "eyebrow": "管理",
+      "title": "ユーザー管理",
+      "user": "ユーザー",
+      "role": "ロール",
+      "status": "状態",
+      "trials": "トライアル",
+      "devices": "デバイス",
+      "save": "保存",
+      "bound": "マシン紐づけ済み",
+      "unbound": "初回デスクトップログイン待ち",
+      "redeemed": "適用済み",
+      "validUntil": "有効期限",
+      "machine": "マシン",
+      "lastSeen": "最終確認",
+      "unbind": "マシン紐づけ解除",
+      "emptyTrials": "トライアルなし",
+      "emptyDevices": "デスクトップデバイスなし",
+      "roles": {
+        "owner": "オーナー",
+        "operator": "運用担当",
+        "user": "ユーザー"
+      },
+      "statuses": {
+        "active": "有効",
+        "disabled": "無効"
+      }
     }
   },
   "certificate": {

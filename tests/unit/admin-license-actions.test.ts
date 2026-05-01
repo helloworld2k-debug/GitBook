@@ -4,7 +4,10 @@ import {
   revokeCloudSyncLease,
   revokeDesktopSession,
   setTrialCodeActive,
+  unbindTrialMachine,
   updateTrialCode,
+  updateUserAccountStatus,
+  updateUserAdminRole,
 } from "@/app/[locale]/admin/actions";
 import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
 import { hashDesktopSecret } from "@/lib/license/hash";
@@ -14,11 +17,13 @@ type MutationResult = Promise<{ error: null }>;
 const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
   requireAdmin: vi.fn(),
+  requireOwner: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/guards", () => ({
   requireAdmin: mocks.requireAdmin,
+  requireOwner: mocks.requireOwner,
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -32,6 +37,7 @@ vi.mock("next/cache", () => ({
 describe("admin license actions", () => {
   beforeEach(() => {
     mocks.requireAdmin.mockReset().mockResolvedValue({ id: "admin-1" });
+    mocks.requireOwner.mockReset().mockResolvedValue({ id: "owner-1" });
     mocks.createSupabaseAdminClient.mockReset();
     mocks.revalidatePath.mockClear();
   });
@@ -206,5 +212,109 @@ describe("admin license actions", () => {
     });
     expect(eq).toHaveBeenCalledWith("id", "lease-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh-Hant/admin/licenses");
+  });
+
+  it("lets operators update user account status without reading passwords", async () => {
+    const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
+    const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return { update };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("user_id", "user-1");
+    formData.set("account_status", "disabled");
+
+    await updateUserAccountStatus(formData);
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(mocks.requireOwner).not.toHaveBeenCalled();
+    expect(from).toHaveBeenCalledWith("profiles");
+    expect(update).toHaveBeenCalledWith({ account_status: "disabled", updated_at: expect.any(String) });
+    expect(eq).toHaveBeenCalledWith("id", "user-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/users");
+  });
+
+  it("requires an owner before changing admin roles", async () => {
+    const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
+    const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return { update };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "ja");
+    formData.set("user_id", "user-1");
+    formData.set("admin_role", "operator");
+
+    await updateUserAdminRole(formData);
+
+    expect(mocks.requireOwner).toHaveBeenCalledWith("ja");
+    expect(mocks.requireAdmin).not.toHaveBeenCalled();
+    expect(update).toHaveBeenCalledWith({
+      admin_role: "operator",
+      is_admin: false,
+      updated_at: expect.any(String),
+    });
+    expect(eq).toHaveBeenCalledWith("id", "user-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/users");
+  });
+
+  it("unbinds a trial redemption machine claim for admin support", async () => {
+    const redemptionSingle = vi.fn(async () => ({
+      data: { id: "redemption-1", machine_code_hash: "hash-1" },
+      error: null,
+    }));
+    const redemptionSelectEq = vi.fn(() => ({ single: redemptionSingle }));
+    const redemptionSelect = vi.fn(() => ({ eq: redemptionSelectEq }));
+    const redemptionUpdateEq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
+    const redemptionUpdate = vi.fn(() => ({ eq: redemptionUpdateEq }));
+    const claimFeatureEq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
+    const claimMachineEq = vi.fn(() => ({ eq: claimFeatureEq }));
+    const claimDelete = vi.fn(() => ({ eq: claimMachineEq }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_code_redemptions") {
+        return { select: redemptionSelect, update: redemptionUpdate };
+      }
+
+      if (table === "machine_trial_claims") {
+        return { delete: claimDelete };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("trial_redemption_id", "redemption-1");
+
+    await unbindTrialMachine(formData);
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(redemptionSelect).toHaveBeenCalledWith("id,machine_code_hash");
+    expect(redemptionSelectEq).toHaveBeenCalledWith("id", "redemption-1");
+    expect(claimMachineEq).toHaveBeenCalledWith("machine_code_hash", "hash-1");
+    expect(claimFeatureEq).toHaveBeenCalledWith("feature_code", CLOUD_SYNC_FEATURE);
+    expect(redemptionUpdate).toHaveBeenCalledWith({
+      bound_at: null,
+      desktop_session_id: null,
+      device_id: null,
+      machine_code_hash: null,
+    });
+    expect(redemptionUpdateEq).toHaveBeenCalledWith("id", "redemption-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/users");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/licenses");
   });
 });

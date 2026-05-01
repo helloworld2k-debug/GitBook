@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { supportedLocales, type Locale } from "@/config/site";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireAdmin, requireOwner } from "@/lib/auth/guards";
 import { generateCertificatesForDonation } from "@/lib/certificates/service";
 import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
 import { extendCloudSyncEntitlementForDonation } from "@/lib/license/entitlements";
@@ -419,5 +419,98 @@ export async function revokeCloudSyncLease(formData: FormData) {
     throw new Error("Unable to revoke cloud sync lease");
   }
 
+  revalidatePath(`/${locale}/admin/licenses`);
+}
+
+export async function updateUserAccountStatus(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const userId = getRequiredString(formData, "user_id", "User is required");
+  const accountStatus = getRequiredString(formData, "account_status", "Account status is required");
+
+  if (accountStatus !== "active" && accountStatus !== "disabled") {
+    throw new Error("Invalid account status");
+  }
+
+  const { error } = await createSupabaseAdminClient()
+    .from("profiles")
+    .update({ account_status: accountStatus, updated_at: new Date().toISOString() })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error("Unable to update account status");
+  }
+
+  revalidatePath(`/${locale}/admin/users`);
+}
+
+export async function updateUserAdminRole(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireOwner(locale);
+  const userId = getRequiredString(formData, "user_id", "User is required");
+  const adminRole = getRequiredString(formData, "admin_role", "Admin role is required");
+
+  if (adminRole !== "owner" && adminRole !== "operator" && adminRole !== "user") {
+    throw new Error("Invalid admin role");
+  }
+
+  const { error } = await createSupabaseAdminClient()
+    .from("profiles")
+    .update({
+      admin_role: adminRole,
+      is_admin: adminRole === "owner",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+
+  if (error) {
+    throw new Error("Unable to update admin role");
+  }
+
+  revalidatePath(`/${locale}/admin/users`);
+}
+
+export async function unbindTrialMachine(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const redemptionId = getRequiredString(formData, "trial_redemption_id", "Trial redemption is required");
+  const supabase = createSupabaseAdminClient();
+  const { data: redemption, error: readError } = await supabase
+    .from("trial_code_redemptions")
+    .select("id,machine_code_hash")
+    .eq("id", redemptionId)
+    .single();
+
+  if (readError || !redemption) {
+    throw new Error("Trial redemption not found");
+  }
+
+  if (redemption.machine_code_hash) {
+    const { error: claimError } = await supabase
+      .from("machine_trial_claims")
+      .delete()
+      .eq("machine_code_hash", redemption.machine_code_hash)
+      .eq("feature_code", CLOUD_SYNC_FEATURE);
+
+    if (claimError) {
+      throw new Error("Unable to remove machine trial claim");
+    }
+  }
+
+  const { error } = await supabase
+    .from("trial_code_redemptions")
+    .update({
+      bound_at: null,
+      desktop_session_id: null,
+      device_id: null,
+      machine_code_hash: null,
+    })
+    .eq("id", redemptionId);
+
+  if (error) {
+    throw new Error("Unable to unbind trial machine");
+  }
+
+  revalidatePath(`/${locale}/admin/users`);
   revalidatePath(`/${locale}/admin/licenses`);
 }

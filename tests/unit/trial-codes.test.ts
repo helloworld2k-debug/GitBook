@@ -9,7 +9,7 @@ function createTrialClient(row: { ok: boolean; reason: string; valid_until: stri
 }
 
 describe("redeemTrialCode", () => {
-  it("returns a valid redemption and calls the RPC with hashed code and existing machine hash", async () => {
+  it("returns a valid redemption and calls the account-first RPC with a hashed code", async () => {
     const client = createTrialClient({
       ok: true,
       reason: "redeemed",
@@ -20,34 +20,15 @@ describe("redeemTrialCode", () => {
     const result = await redeemTrialCode(client, {
       userId: "user-1",
       code: "SPRING-2026",
-      machineCodeHash: "machine-hash",
       now,
     });
 
     expect(result).toEqual({ ok: true, validUntil: "2026-05-04T00:00:00.000Z" });
     expect(client.rpc).toHaveBeenCalledWith("redeem_trial_code", {
       input_code_hash: await hashDesktopSecret("SPRING-2026", "trial_code"),
-      input_machine_code_hash: "machine-hash",
       input_now: "2026-05-01T00:00:00.000Z",
       input_user_id: "user-1",
     });
-  });
-
-  it("maps a used machine to a machine trial failure", async () => {
-    const client = createTrialClient({
-      ok: false,
-      reason: "machine_trial_used",
-      valid_until: null,
-    });
-
-    const result = await redeemTrialCode(client, {
-      userId: "user-2",
-      code: "SPRING-2026",
-      machineCodeHash: "machine-hash",
-      now: new Date("2026-05-01T00:00:00.000Z"),
-    });
-
-    expect(result).toEqual({ ok: false, reason: "machine_trial_used" });
   });
 
   it("maps an inactive code to an inactive trial failure", async () => {
@@ -60,7 +41,6 @@ describe("redeemTrialCode", () => {
     const result = await redeemTrialCode(client, {
       userId: "user-1",
       code: "SPRING-2026",
-      machineCodeHash: "machine-hash",
       now: new Date("2026-05-01T00:00:00.000Z"),
     });
 
@@ -82,7 +62,6 @@ describe("redeemTrialCode", () => {
       redeemTrialCode(client, {
         userId: "user-1",
         code: "SPRING-2026",
-        machineCodeHash: "machine-hash",
         now: new Date("2026-05-01T00:00:00.000Z"),
       }),
     ).resolves.toEqual({ ok: false, reason });
@@ -95,7 +74,6 @@ describe("redeemTrialCode", () => {
       redeemTrialCode(client, {
         userId: "user-1",
         code: "SPRING-2026",
-        machineCodeHash: "machine-hash",
       }),
     ).rejects.toThrow("Unable to redeem trial code");
   });
@@ -111,7 +89,6 @@ describe("redeemTrialCode", () => {
       redeemTrialCode(client, {
         userId: "user-1",
         code: "SPRING-2026",
-        machineCodeHash: "machine-hash",
       }),
     ).rejects.toThrow("Trial code redemption response was malformed");
   });

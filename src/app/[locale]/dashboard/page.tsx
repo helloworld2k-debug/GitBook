@@ -64,7 +64,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
   const t = await getTranslations("dashboard");
   const certificateT = await getTranslations("certificate");
   const supabase = await createSupabaseServerClient();
-  const nowIso = new Date().toISOString();
 
   const [
     { count: donationCount, error: donationCountError },
@@ -72,7 +71,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
     { data: donations, error: donationsError },
     { data: certificates, error: certificatesError },
     { data: profile, error: profileError },
-    { data: desktopSessions, error: desktopSessionsError },
   ] = await Promise.all([
     supabase.from("donations").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "paid"),
     supabase
@@ -98,14 +96,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
       .select("email,display_name,public_supporter_enabled,public_display_name")
       .eq("id", user.id)
       .single(),
-    supabase
-      .from("desktop_sessions")
-      .select("id,device_id,platform,app_version,last_seen_at")
-      .eq("user_id", user.id)
-      .is("revoked_at", null)
-      .gt("expires_at", nowIso)
-      .order("last_seen_at", { ascending: false })
-      .limit(10),
   ]);
 
   if (donationCountError) {
@@ -128,22 +118,16 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
     throw profileError;
   }
 
-  if (desktopSessionsError) {
-    throw desktopSessionsError;
-  }
-
   const updatePrivacy = updatePublicSupporterPrivacy.bind(null, locale);
   const updateProfile = updateAccountProfile.bind(null, locale);
   const updatePassword = updateDashboardPassword.bind(null, locale);
   const redeemTrial = redeemDashboardTrialCode.bind(null, locale);
-  const hasDesktopSessions = Boolean(desktopSessions?.length);
   const trialStatusMessages = {
     duplicate: t("trial.duplicate"),
     error: t("trial.error"),
     inactive: t("trial.inactive"),
     invalid: t("trial.invalid"),
     limit: t("trial.limit"),
-    machine_used: t("trial.machineUsed"),
     saved: t("trial.saved"),
   } as const;
   const trialMessage = trialStatus && trialStatus in trialStatusMessages
@@ -221,30 +205,9 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                       {trialMessage}
                     </p>
                   ) : null}
-                  {hasDesktopSessions ? (
-                    <label className="block text-sm font-medium text-slate-950">
-                      {t("trial.device")}
-                      <select
-                        className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                        name="desktop_session_id"
-                        required
-                      >
-                        {(desktopSessions ?? []).map((session) => (
-                          <option key={session.id} value={session.id}>
-                            {[session.device_id, session.platform, session.app_version, formatDashboardDate(session.last_seen_at, locale)]
-                              .filter(Boolean)
-                              .join(" - ")}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="mt-2 block text-xs font-normal text-slate-500">{t("trial.deviceHelp")}</span>
-                    </label>
-                  ) : (
-                    <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
-                      <p className="font-medium">{t("trial.noDeviceTitle")}</p>
-                      <p className="mt-1 text-amber-900">{t("trial.noDeviceDescription")}</p>
-                    </div>
-                  )}
+                  <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-700">
+                    {t("trial.bindingHelp")}
+                  </p>
                   <label className="block text-sm font-medium text-slate-950">
                     {t("trial.code")}
                     <input
@@ -256,7 +219,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                   <button
                     type="submit"
                     className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-not-allowed disabled:bg-slate-400"
-                    disabled={!hasDesktopSessions}
                   >
                     {t("trial.submit")}
                   </button>

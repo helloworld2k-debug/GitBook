@@ -22,6 +22,8 @@ export type Database = {
           public_supporter_enabled: boolean;
           public_display_name: string | null;
           is_admin: boolean;
+          admin_role: "owner" | "operator" | "user";
+          account_status: "active" | "disabled";
           created_at: string;
           updated_at: string;
         };
@@ -34,6 +36,8 @@ export type Database = {
           public_supporter_enabled?: boolean;
           public_display_name?: string | null;
           is_admin?: boolean;
+          admin_role?: "owner" | "operator" | "user";
+          account_status?: "active" | "disabled";
           created_at?: string;
           updated_at?: string;
         };
@@ -46,6 +50,8 @@ export type Database = {
           public_supporter_enabled?: boolean;
           public_display_name?: string | null;
           is_admin?: boolean;
+          admin_role?: "owner" | "operator" | "user";
+          account_status?: "active" | "disabled";
           created_at?: string;
           updated_at?: string;
         };
@@ -253,30 +259,39 @@ export type Database = {
           id: string;
           trial_code_id: string;
           user_id: string;
-          machine_code_hash: string;
+          machine_code_hash: string | null;
           feature_code: Database["public"]["Enums"]["license_feature_code"];
           redeemed_at: string;
           trial_valid_until: string;
+          bound_at: string | null;
+          desktop_session_id: string | null;
+          device_id: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           trial_code_id: string;
           user_id: string;
-          machine_code_hash: string;
+          machine_code_hash?: string | null;
           feature_code?: Database["public"]["Enums"]["license_feature_code"];
           redeemed_at?: string;
           trial_valid_until: string;
+          bound_at?: string | null;
+          desktop_session_id?: string | null;
+          device_id?: string | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           trial_code_id?: string;
           user_id?: string;
-          machine_code_hash?: string;
+          machine_code_hash?: string | null;
           feature_code?: Database["public"]["Enums"]["license_feature_code"];
           redeemed_at?: string;
           trial_valid_until?: string;
+          bound_at?: string | null;
+          desktop_session_id?: string | null;
+          device_id?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -840,7 +855,6 @@ export type Database = {
       redeem_trial_code: {
         Args: {
           input_code_hash: string;
-          input_machine_code_hash: string;
           input_now: string;
           input_user_id: string;
         };

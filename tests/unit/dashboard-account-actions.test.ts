@@ -86,37 +86,18 @@ describe("dashboard account actions", () => {
     expect(updateUser).toHaveBeenCalledWith({ password: "new-password-1" });
   });
 
-  it("redeems trials only against an active owned desktop session", async () => {
-    const maybeSingle = vi.fn(async () => ({
-      data: { id: "session-1", machine_code_hash: "machine-hash" },
-      error: null,
-    }));
-    const gt = vi.fn(() => ({ maybeSingle }));
-    const is = vi.fn(() => ({ gt }));
-    const eqUser = vi.fn(() => ({ is }));
-    const eqId = vi.fn(() => ({ eq: eqUser }));
-    const select = vi.fn(() => ({ eq: eqId }));
-    const from = vi.fn(() => ({ select }));
-    createSupabaseServerClientMock.mockResolvedValue({ from });
-
+  it("redeems trials at the account level without requiring a desktop session", async () => {
     const formData = new FormData();
     formData.set("trial_code", "SPRING-2026");
-    formData.set("desktop_session_id", "session-1");
 
     await expect(redeemDashboardTrialCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=saved");
 
-    expect(from).toHaveBeenCalledWith("desktop_sessions");
-    expect(select).toHaveBeenCalledWith("id,machine_code_hash");
-    expect(eqId).toHaveBeenCalledWith("id", "session-1");
-    expect(eqUser).toHaveBeenCalledWith("user_id", "user-1");
-    expect(is).toHaveBeenCalledWith("revoked_at", null);
-    expect(gt).toHaveBeenCalledWith("expires_at", expect.any(String));
+    expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
     expect(redeemTrialCodeMock).toHaveBeenCalledWith(
       { admin: true },
       {
         userId: "user-1",
         code: "SPRING-2026",
-        machineCodeHash: "machine-hash",
       },
     );
   });

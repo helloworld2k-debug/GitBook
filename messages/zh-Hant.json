@@ -117,11 +117,8 @@
     },
     "trial": {
       "title": "試用碼",
-      "description": "兌換團隊提供的代碼，在一台符合條件的電腦上啟用 3 天雲端同步。",
-      "device": "桌面裝置",
-      "deviceHelp": "試用會綁定這台電腦的機器碼。",
-      "noDeviceTitle": "尚未有桌面裝置",
-      "noDeviceDescription": "請先在電腦上開啟 GitBook AI 並登入一次。之後此頁會顯示該裝置，試用才能綁定它的機器碼。",
+      "description": "兌換團隊提供的代碼，開始 3 天雲端同步試用。",
+      "bindingHelp": "試用會在兌換成功後立即開始計時。當你在電腦上登入 GitBook AI 時，軟體會安全地自動把這次試用綁定到該電腦。",
       "code": "代碼",
       "submit": "兌換試用",
       "saved": "試用已兌換。",
@@ -168,7 +165,9 @@
       "releasesTitle": "版本發布",
       "releasesDescription": "上傳 macOS 與 Windows 安裝包，發布版本並管理更新說明。",
       "licensesTitle": "授權",
-      "licensesDescription": "建立試用兌換碼、檢視權益，並撤銷桌面雲端同步存取。"
+      "licensesDescription": "建立試用兌換碼、檢視權益，並撤銷桌面雲端同步存取。",
+      "usersTitle": "使用者",
+      "usersDescription": "檢視使用者狀態、試用綁定、桌面裝置與營運人員角色。"
     },
     "donations": {
       "eyebrow": "管理後台",
@@ -291,7 +290,40 @@
       "emptyTrialCodes": "尚無試用碼。",
       "emptyEntitlements": "尚無授權權益。",
       "emptySessions": "尚無桌面工作階段。",
-      "emptyLeases": "尚無雲端同步租約。"
+      "emptyLeases": "尚無雲端同步租約。",
+      "trialRedemptionsTitle": "試用兌換記錄",
+      "machine": "機器",
+      "bound": "已綁定",
+      "unbound": "未綁定",
+      "emptyTrialRedemptions": "尚無試用兌換記錄。"
+    },
+    "users": {
+      "eyebrow": "管理後台",
+      "title": "使用者管理",
+      "user": "使用者",
+      "role": "角色",
+      "status": "狀態",
+      "trials": "試用",
+      "devices": "裝置",
+      "save": "儲存",
+      "bound": "已綁定機器",
+      "unbound": "等待首次桌面登入",
+      "redeemed": "已兌換",
+      "validUntil": "有效至",
+      "machine": "機器",
+      "lastSeen": "最後使用",
+      "unbind": "解除機器綁定",
+      "emptyTrials": "尚無試用",
+      "emptyDevices": "尚無桌面裝置",
+      "roles": {
+        "owner": "最高管理員",
+        "operator": "營運人員",
+        "user": "使用者"
+      },
+      "statuses": {
+        "active": "正常",
+        "disabled": "停用"
+      }
     }
   },
   "certificate": {

@@ -40,6 +40,10 @@ function shortId(value: string) {
   return value.slice(0, 8);
 }
 
+function shortHash(value: string | null | undefined) {
+  return value ? `${value.slice(0, 10)}...${value.slice(-6)}` : "-";
+}
+
 export default async function AdminLicensesPage({ params }: AdminLicensesPageProps) {
   const { locale } = await params;
 
@@ -52,11 +56,16 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
   const t = await getTranslations("admin");
   const supabase = createSupabaseAdminClient();
 
-  const [trialCodesResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
+  const [trialCodesResult, trialRedemptionsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
     supabase
       .from("trial_codes")
       .select("id,label,trial_days,starts_at,ends_at,max_redemptions,redemption_count,is_active,created_at")
       .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("trial_code_redemptions")
+      .select("id,user_id,machine_code_hash,device_id,redeemed_at,trial_valid_until,bound_at")
+      .order("redeemed_at", { ascending: false })
       .limit(50),
     supabase
       .from("license_entitlements")
@@ -65,7 +74,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
       .limit(50),
     supabase
       .from("desktop_sessions")
-      .select("id,user_id,device_id,platform,app_version,last_seen_at,cloud_sync_active_until,expires_at,revoked_at")
+      .select("id,user_id,device_id,machine_code_hash,platform,app_version,last_seen_at,cloud_sync_active_until,expires_at,revoked_at")
       .order("last_seen_at", { ascending: false })
       .limit(50),
     supabase
@@ -83,6 +92,10 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
     throw entitlementsResult.error;
   }
 
+  if (trialRedemptionsResult.error) {
+    throw trialRedemptionsResult.error;
+  }
+
   if (sessionsResult.error) {
     throw sessionsResult.error;
   }
@@ -92,6 +105,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
   }
 
   const trialCodes = trialCodesResult.data ?? [];
+  const trialRedemptions = trialRedemptionsResult.data ?? [];
   const entitlements = entitlementsResult.data ?? [];
   const sessions = sessionsResult.data ?? [];
   const leases = leasesResult.data ?? [];
@@ -304,6 +318,48 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
 
           <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-5 py-4">
+              <h2 className="text-base font-semibold text-slate-950">{t("licenses.trialRedemptionsTitle")}</h2>
+            </div>
+            {trialRedemptions.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                    <tr>
+                      <th className="px-5 py-3">{t("licenses.user")}</th>
+                      <th className="px-5 py-3">{t("licenses.status")}</th>
+                      <th className="px-5 py-3">{t("licenses.validUntil")}</th>
+                      <th className="px-5 py-3">{t("licenses.device")}</th>
+                      <th className="px-5 py-3">{t("licenses.machine")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {trialRedemptions.map((redemption) => (
+                      <tr key={redemption.id}>
+                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-950">
+                          {shortId(redemption.user_id)}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                          {redemption.bound_at ? t("licenses.bound") : t("licenses.unbound")}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                          {formatDateTime(redemption.trial_valid_until, locale)}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">{redemption.device_id ?? "-"}</td>
+                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
+                          {shortHash(redemption.machine_code_hash)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyTrialRedemptions")}</p>
+            )}
+          </section>
+
+          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 px-5 py-4">
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.entitlementsTitle")}</h2>
             </div>
             {entitlements.length > 0 ? (
@@ -354,6 +410,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                       <th className="px-5 py-3">{t("licenses.device")}</th>
                       <th className="px-5 py-3">{t("licenses.user")}</th>
                       <th className="px-5 py-3">{t("licenses.platform")}</th>
+                      <th className="px-5 py-3">{t("licenses.machine")}</th>
                       <th className="px-5 py-3">{t("licenses.lastSeen")}</th>
                       <th className="px-5 py-3">{t("licenses.expiresAt")}</th>
                       <th className="px-5 py-3">{t("licenses.revokedAt")}</th>
@@ -371,6 +428,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                           {shortId(session.user_id)}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">{session.platform}</td>
+                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
+                          {shortHash(session.machine_code_hash)}
+                        </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatDateTime(session.last_seen_at, locale)}
                         </td>

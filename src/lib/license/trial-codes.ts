@@ -5,7 +5,6 @@ export type TrialRedeemFailure =
   | "trial_code_invalid"
   | "trial_code_inactive"
   | "trial_code_limit_reached"
-  | "machine_trial_used"
   | "duplicate_trial_code_user";
 
 type RedeemClient = {
@@ -21,7 +20,6 @@ type RedeemClient = {
 type RedeemTrialCodeInput = {
   userId: string;
   code: string;
-  machineCodeHash: string;
   now?: Date;
 };
 
@@ -30,7 +28,6 @@ function isTrialRedeemFailure(reason: string): reason is TrialRedeemFailure {
     reason === "trial_code_invalid" ||
     reason === "trial_code_inactive" ||
     reason === "trial_code_limit_reached" ||
-    reason === "machine_trial_used" ||
     reason === "duplicate_trial_code_user"
   );
 }
@@ -43,7 +40,6 @@ export async function redeemTrialCode(
   const codeHash = await hashDesktopSecret(input.code, "trial_code");
   const { data, error } = await client.rpc("redeem_trial_code", {
     input_code_hash: codeHash,
-    input_machine_code_hash: input.machineCodeHash,
     input_now: now.toISOString(),
     input_user_id: input.userId,
   });

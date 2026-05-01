@@ -86,9 +86,8 @@ export async function updateDashboardPassword(locale: string, formData: FormData
   redirect(getDashboardPath(safeLocale, { password: "saved" }));
 }
 
-const trialStatusByReason: Record<TrialRedeemFailure, "invalid" | "inactive" | "limit" | "machine_used" | "duplicate"> = {
+const trialStatusByReason: Record<TrialRedeemFailure, "invalid" | "inactive" | "limit" | "duplicate"> = {
   duplicate_trial_code_user: "duplicate",
-  machine_trial_used: "machine_used",
   trial_code_inactive: "inactive",
   trial_code_invalid: "invalid",
   trial_code_limit_reached: "limit",
@@ -98,31 +97,14 @@ export async function redeemDashboardTrialCode(locale: string, formData: FormDat
   const safeLocale = getSafeLocale(locale);
   const user = await requireUser(safeLocale, `/${safeLocale}/dashboard`);
   const code = String(formData.get("trial_code") ?? "").trim();
-  const desktopSessionId = String(formData.get("desktop_session_id") ?? "").trim();
-  const nowIso = new Date().toISOString();
 
-  if (!code || !desktopSessionId) {
-    redirect(getDashboardPath(safeLocale, { trial: "invalid" }));
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const { data: session, error: sessionError } = await supabase
-    .from("desktop_sessions")
-    .select("id,machine_code_hash")
-    .eq("id", desktopSessionId)
-    .eq("user_id", user.id)
-    .is("revoked_at", null)
-    .gt("expires_at", nowIso)
-    .maybeSingle();
-
-  if (sessionError || !session) {
+  if (!code) {
     redirect(getDashboardPath(safeLocale, { trial: "invalid" }));
   }
 
   const result = await redeemTrialCode(createSupabaseAdminClient(), {
     userId: user.id,
     code,
-    machineCodeHash: session.machine_code_hash,
   }).catch(() => null);
 
   if (!result) {

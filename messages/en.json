@@ -140,11 +140,8 @@
     },
     "trial": {
       "title": "Trial code",
-      "description": "Redeem a team-provided code to enable 3 days of cloud sync on one eligible computer.",
-      "device": "Desktop device",
-      "deviceHelp": "The trial is tied to this computer's machine code.",
-      "noDeviceTitle": "No desktop device yet",
-      "noDeviceDescription": "Open GitBook AI on your computer and sign in once. This page will then show that device so the trial can be tied to its machine code.",
+      "description": "Redeem a team-provided code to start a 3-day cloud sync trial.",
+      "bindingHelp": "The 3-day trial starts immediately after redemption. When you sign in to GitBook AI on your computer, the app will securely bind this trial to that computer automatically.",
       "code": "Code",
       "submit": "Redeem trial",
       "saved": "Trial redeemed.",
@@ -175,6 +172,8 @@
       "releasesDescription": "Upload macOS and Windows installers, publish versions, and manage release notes.",
       "licensesTitle": "Licenses",
       "licensesDescription": "Create trial codes, review entitlements, and revoke desktop cloud sync access.",
+      "usersTitle": "Users",
+      "usersDescription": "Review user status, trial bindings, desktop devices, and operator roles.",
       "auditLogsTitle": "Audit logs",
       "auditLogsDescription": "Review admin corrections, revocations, and reasons."
     },
@@ -299,7 +298,40 @@
       "emptyTrialCodes": "No trial codes found.",
       "emptyEntitlements": "No entitlements found.",
       "emptySessions": "No desktop sessions found.",
-      "emptyLeases": "No cloud sync leases found."
+      "emptyLeases": "No cloud sync leases found.",
+      "trialRedemptionsTitle": "Trial redemptions",
+      "machine": "Machine",
+      "bound": "Bound",
+      "unbound": "Unbound",
+      "emptyTrialRedemptions": "No trial redemptions found."
+    },
+    "users": {
+      "eyebrow": "Admin",
+      "title": "User management",
+      "user": "User",
+      "role": "Role",
+      "status": "Status",
+      "trials": "Trials",
+      "devices": "Devices",
+      "save": "Save",
+      "bound": "Machine bound",
+      "unbound": "Awaiting first desktop login",
+      "redeemed": "Redeemed",
+      "validUntil": "Valid until",
+      "machine": "Machine",
+      "lastSeen": "Last seen",
+      "unbind": "Unbind machine",
+      "emptyTrials": "No trials",
+      "emptyDevices": "No desktop devices",
+      "roles": {
+        "owner": "Owner",
+        "operator": "Operator",
+        "user": "User"
+      },
+      "statuses": {
+        "active": "Active",
+        "disabled": "Disabled"
+      }
     }
   },
   "certificate": {

@@ -117,11 +117,8 @@
     },
     "trial": {
       "title": "체험 코드",
-      "description": "팀에서 제공한 코드를 사용해 조건에 맞는 컴퓨터 1대에서 클라우드 동기화를 3일 동안 활성화합니다.",
-      "device": "데스크톱 기기",
-      "deviceHelp": "체험은 이 컴퓨터의 머신 코드에 연결됩니다.",
-      "noDeviceTitle": "아직 데스크톱 기기가 없습니다",
-      "noDeviceDescription": "컴퓨터에서 GitBook AI를 열고 한 번 로그인하세요. 그러면 이 페이지에 해당 기기가 표시되고 체험을 머신 코드에 연결할 수 있습니다.",
+      "description": "팀에서 제공한 코드를 사용해 클라우드 동기화 3일 체험을 시작합니다.",
+      "bindingHelp": "체험은 적용되는 즉시 시작됩니다. 컴퓨터에서 GitBook AI에 로그인하면 앱이 이 체험을 해당 컴퓨터에 안전하게 자동 연결합니다.",
       "code": "코드",
       "submit": "체험 사용",
       "saved": "체험이 적용되었습니다.",
@@ -168,7 +165,9 @@
       "releasesTitle": "릴리스",
       "releasesDescription": "macOS 및 Windows 설치 파일을 업로드하고 버전과 릴리스 노트를 관리합니다.",
       "licensesTitle": "라이선스",
-      "licensesDescription": "체험 코드, 권한, 데스크톱 클라우드 동기화 접속을 관리합니다."
+      "licensesDescription": "체험 코드, 권한, 데스크톱 클라우드 동기화 접속을 관리합니다.",
+      "usersTitle": "사용자",
+      "usersDescription": "사용자 상태, 체험 연결, 데스크톱 기기, 운영자 역할을 확인합니다."
     },
     "donations": {
       "eyebrow": "관리",
@@ -291,7 +290,40 @@
       "emptyTrialCodes": "체험 코드가 없습니다.",
       "emptyEntitlements": "권한이 없습니다.",
       "emptySessions": "데스크톱 세션이 없습니다.",
-      "emptyLeases": "클라우드 동기화 임대가 없습니다."
+      "emptyLeases": "클라우드 동기화 임대가 없습니다.",
+      "trialRedemptionsTitle": "체험 사용 기록",
+      "machine": "머신",
+      "bound": "연결됨",
+      "unbound": "미연결",
+      "emptyTrialRedemptions": "체험 사용 기록이 없습니다."
+    },
+    "users": {
+      "eyebrow": "관리",
+      "title": "사용자 관리",
+      "user": "사용자",
+      "role": "역할",
+      "status": "상태",
+      "trials": "체험",
+      "devices": "기기",
+      "save": "저장",
+      "bound": "머신 연결됨",
+      "unbound": "첫 데스크톱 로그인 대기",
+      "redeemed": "사용됨",
+      "validUntil": "유효 기간",
+      "machine": "머신",
+      "lastSeen": "마지막 확인",
+      "unbind": "머신 연결 해제",
+      "emptyTrials": "체험 없음",
+      "emptyDevices": "데스크톱 기기 없음",
+      "roles": {
+        "owner": "소유자",
+        "operator": "운영자",
+        "user": "사용자"
+      },
+      "statuses": {
+        "active": "활성",
+        "disabled": "비활성"
+      }
     }
   },
   "certificate": {
