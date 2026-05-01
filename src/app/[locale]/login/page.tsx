@@ -24,6 +24,15 @@ function getCallbackUrl(nextPath: string) {
   return callbackUrl.toString();
 }
 
+function getPasswordResetCallbackUrl(locale: string) {
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const callbackUrl = new URL("/auth/callback", origin);
+  callbackUrl.searchParams.set("next", `/${locale}/reset-password`);
+  callbackUrl.searchParams.set("type", "recovery");
+
+  return callbackUrl.toString();
+}
+
 export default async function LoginPage({ params, searchParams }: LoginPageProps) {
   const { locale } = await params;
 
@@ -100,7 +109,12 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
                 {t("passwordResetComplete")}
               </p>
             ) : null}
-            <LoginForm callbackUrl={getCallbackUrl(nextPath)} messages={messages} nextPath={nextPath} />
+            <LoginForm
+              callbackUrl={getCallbackUrl(nextPath)}
+              messages={messages}
+              nextPath={nextPath}
+              passwordResetCallbackUrl={getPasswordResetCallbackUrl(locale)}
+            />
           </div>
         </section>
       </main>

@@ -51,6 +51,7 @@ function renderLoginForm() {
       callbackUrl="https://threefriends.example/auth/callback?next=%2Fen%2Fdonate"
       messages={messages}
       nextPath="/en/donate"
+      passwordResetCallbackUrl="https://threefriends.example/auth/callback?next=%2Fen%2Freset-password&type=recovery"
     />,
   );
 }
@@ -196,7 +197,7 @@ describe("LoginForm", () => {
 
     await waitFor(() => {
       expect(resetPasswordForEmailMock).toHaveBeenCalledWith("friend@example.com", {
-        redirectTo: "https://threefriends.example/auth/callback?next=%2Fen%2Fdonate",
+        redirectTo: "https://threefriends.example/auth/callback?next=%2Fen%2Freset-password&type=recovery",
       });
     });
     expect(await screen.findByRole("status")).toHaveTextContent("Check your email for a password reset link.");

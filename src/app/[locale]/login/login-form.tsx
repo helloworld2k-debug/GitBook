@@ -41,6 +41,7 @@ type LoginFormProps = {
   callbackUrl: string;
   messages: LoginFormMessages;
   nextPath: string;
+  passwordResetCallbackUrl: string;
 };
 
 const providerOrder: OAuthProvider[] = ["google", "github"];
@@ -84,7 +85,7 @@ function ProviderIcon({ provider }: { provider: OAuthProvider }) {
   return provider === "google" ? <GoogleIcon /> : <GitHubIcon />;
 }
 
-export function LoginForm({ callbackUrl, messages, nextPath }: LoginFormProps) {
+export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallbackUrl }: LoginFormProps) {
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [activeProvider, setActiveProvider] = useState<OAuthProvider | null>(null);
@@ -156,7 +157,7 @@ export function LoginForm({ callbackUrl, messages, nextPath }: LoginFormProps) {
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: callbackUrl,
+      redirectTo: passwordResetCallbackUrl,
     });
 
     setStatus(error ? "reset-error" : "reset-sent");

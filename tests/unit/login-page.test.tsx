@@ -7,7 +7,12 @@ vi.mock("@/components/site-header", () => ({
 }));
 
 vi.mock("@/app/[locale]/login/login-form", () => ({
-  LoginForm: ({ callbackUrl }: { callbackUrl: string }) => <div data-testid="login-form">{callbackUrl}</div>,
+  LoginForm: ({ callbackUrl, passwordResetCallbackUrl }: { callbackUrl: string; passwordResetCallbackUrl: string }) => (
+    <div data-testid="login-form">
+      <span>{callbackUrl}</span>
+      <span>{passwordResetCallbackUrl}</span>
+    </div>
+  ),
 }));
 
 vi.mock("next-intl/server", () => ({
@@ -75,6 +80,9 @@ describe("LoginPage", () => {
     expect(screen.getByRole("heading", { name: "Sign in or create your account" })).toBeInTheDocument();
     expect(screen.getByTestId("login-form")).toHaveTextContent(
       "https://threefriends.example/auth/callback?next=%2Fen%2Fdonate%3Ftier%3Dyearly",
+    );
+    expect(screen.getByTestId("login-form")).toHaveTextContent(
+      "https://threefriends.example/auth/callback?next=%2Fen%2Freset-password&type=recovery",
     );
   });
 
