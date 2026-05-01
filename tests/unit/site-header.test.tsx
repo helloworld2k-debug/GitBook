@@ -33,8 +33,10 @@ const navMessages: Record<string, string> = {
   donate: "Donate",
   download: "Download",
   language: "Language",
+  notifications: "Notifications",
   signIn: "Sign in",
   signOut: "Sign out",
+  support: "Support",
   userMenu: "Open dashboard",
 };
 

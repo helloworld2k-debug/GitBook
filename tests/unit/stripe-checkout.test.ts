@@ -54,4 +54,24 @@ describe("Stripe checkout route", () => {
       }),
     );
   });
+
+  it("redirects anonymous checkout attempts to the localized donate page after login", async () => {
+    mocks.getUser.mockResolvedValue({ data: { user: null } });
+    const formData = new FormData();
+    formData.set("tier", "monthly");
+    formData.set("locale", "zh-Hant");
+
+    const response = await POST(
+      new Request("https://threefriends.example/api/checkout/stripe", {
+        body: formData,
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(
+      "https://threefriends.example/zh-Hant/login?next=%2Fzh-Hant%2Fdonate",
+    );
+    expect(mocks.createCheckoutSession).not.toHaveBeenCalled();
+  });
 });

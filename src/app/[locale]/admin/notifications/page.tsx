@@ -1,0 +1,150 @@
+import { notFound } from "next/navigation";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { supportedLocales, type Locale } from "@/config/site";
+import { getAdminShellProps } from "@/lib/admin/shell";
+import { requireAdmin } from "@/lib/auth/guards";
+import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createNotification, publishNotification, unpublishNotification } from "../actions";
+
+type AdminNotificationsPageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function AdminNotificationsPage({ params }: AdminNotificationsPageProps) {
+  const { locale } = await params;
+
+  if (!supportedLocales.includes(locale as Locale)) {
+    notFound();
+  }
+
+  setRequestLocale(locale);
+  await requireAdmin(locale);
+  const t = await getTranslations("admin");
+  const shellProps = await getAdminShellProps(locale as Locale, "/admin/notifications");
+  const { data: notifications, error } = await (await createSupabaseServerClient())
+    .from("notifications")
+    .select("id,title,body,locale,audience,priority,published_at,expires_at,created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (
+    <AdminShell {...shellProps}>
+      <section className="mx-auto max-w-7xl">
+        <AdminPageHeader
+          backHref="/admin"
+          backLabel={t("shell.backToAdmin")}
+          description={t("notifications.description")}
+          eyebrow={t("notifications.eyebrow")}
+          title={t("notifications.title")}
+        />
+
+        <AdminCard className="p-5">
+          <h2 className="text-base font-semibold text-slate-950">{t("notifications.createTitle")}</h2>
+          <form action={createNotification} className="mt-4 grid gap-4">
+            <input name="locale" type="hidden" value={locale} />
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("notifications.titleLabel")}
+                <input className="min-h-11 rounded-md border border-slate-300 px-3" maxLength={160} name="title" required />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("notifications.locale")}
+                <select className="min-h-11 rounded-md border border-slate-300 px-3" name="notification_locale">
+                  <option value="">{t("notifications.allLocales")}</option>
+                  {supportedLocales.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+              </label>
+            </div>
+            <label className="grid gap-1 text-sm font-medium text-slate-700">
+              {t("notifications.body")}
+              <textarea className="min-h-32 rounded-md border border-slate-300 px-3 py-2" maxLength={4000} name="body" required />
+            </label>
+            <div className="grid gap-4 md:grid-cols-4">
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("notifications.audience")}
+                <select className="min-h-11 rounded-md border border-slate-300 px-3" name="audience" defaultValue="all">
+                  <option value="all">all</option>
+                  <option value="authenticated">authenticated</option>
+                  <option value="admins">admins</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("notifications.priority")}
+                <select className="min-h-11 rounded-md border border-slate-300 px-3" name="priority" defaultValue="info">
+                  <option value="info">info</option>
+                  <option value="success">success</option>
+                  <option value="warning">warning</option>
+                  <option value="critical">critical</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("notifications.expiresAt")}
+                <input className="min-h-11 rounded-md border border-slate-300 px-3" name="expires_at" type="datetime-local" />
+              </label>
+              <label className="flex min-h-11 items-end gap-2 text-sm font-medium text-slate-700">
+                <input className="size-4" name="publish_now" type="checkbox" />
+                {t("notifications.publish")}
+              </label>
+            </div>
+            <button className="min-h-11 w-fit rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" type="submit">
+              {t("notifications.create")}
+            </button>
+          </form>
+        </AdminCard>
+
+        <AdminCard className="mt-6">
+          {notifications && notifications.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3">{t("notifications.titleLabel")}</th>
+                    <th className="px-5 py-3">{t("notifications.audience")}</th>
+                    <th className="px-5 py-3">{t("notifications.status")}</th>
+                    <th className="px-5 py-3">{t("notifications.publishedAt")}</th>
+                    <th className="px-5 py-3">{t("licenses.action")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {notifications.map((notification) => (
+                    <tr key={notification.id}>
+                      <td className="min-w-80 px-5 py-4">
+                        <p className="font-semibold text-slate-950">{notification.title}</p>
+                        <p className="mt-1 line-clamp-2 text-sm text-slate-600">{notification.body}</p>
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{notification.audience}</td>
+                      <td className="whitespace-nowrap px-5 py-4">
+                        <AdminStatusBadge tone={notification.published_at ? "success" : "neutral"}>
+                          {notification.published_at ? t("notifications.published") : t("notifications.draft")}
+                        </AdminStatusBadge>
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                        {notification.published_at ? formatDateTimeWithSeconds(notification.published_at, locale) : "-"}
+                      </td>
+                      <td className="px-5 py-4">
+                        <form action={notification.published_at ? unpublishNotification : publishNotification}>
+                          <input name="locale" type="hidden" value={locale} />
+                          <input name="notification_id" type="hidden" value={notification.id} />
+                          <button className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" type="submit">
+                            {notification.published_at ? t("notifications.unpublish") : t("notifications.publish")}
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="px-5 py-6 text-sm text-slate-600">{t("notifications.empty")}</p>
+          )}
+        </AdminCard>
+      </section>
+    </AdminShell>
+  );
+}

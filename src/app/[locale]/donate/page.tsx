@@ -3,7 +3,6 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { DonationTierCard } from "@/components/donation-tier-card";
 import { SiteHeader } from "@/components/site-header";
 import { donationTiers, supportedLocales, type Locale } from "@/config/site";
-import { requireUser } from "@/lib/auth/guards";
 
 type DonatePageProps = {
   params: Promise<{
@@ -19,7 +18,6 @@ export default async function DonatePage({ params }: DonatePageProps) {
   }
 
   setRequestLocale(locale);
-  await requireUser(locale, `/${locale}/donate`);
 
   const t = await getTranslations("donate");
 

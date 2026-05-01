@@ -6,7 +6,10 @@ import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
+  bulkAdjustLicenseDuration,
+  bulkDeleteLicenseCodes,
   createTrialCode,
+  generateLicenseCodeBatch,
   revokeCloudSyncLease,
   revokeDesktopSession,
   setTrialCodeActive,
@@ -61,7 +64,8 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
   const [trialCodesResult, trialRedemptionsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
     supabase
       .from("trial_codes")
-      .select("id,label,trial_days,starts_at,ends_at,max_redemptions,redemption_count,is_active,created_at")
+      .select("id,label,trial_days,duration_kind,code_mask,batch_id,starts_at,ends_at,max_redemptions,redemption_count,is_active,created_at")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(50),
     supabase
@@ -199,6 +203,96 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             </form>
           </AdminCard>
 
+          <AdminCard className="mt-6 p-5">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950">{t("licenses.batchGenerateTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.batchGenerateDescription")}</p>
+            </div>
+            <form action={generateLicenseCodeBatch} className="mt-4 grid gap-4">
+              <input name="locale" type="hidden" value={locale} />
+              <div className="grid gap-4 md:grid-cols-5">
+                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                  {t("licenses.duration")}
+                  <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" name="duration_kind" defaultValue="month_1">
+                    <option value="month_1">{t("licenses.durationMonth1")}</option>
+                    <option value="month_3">{t("licenses.durationMonth3")}</option>
+                    <option value="year_1">{t("licenses.durationYear1")}</option>
+                  </select>
+                </label>
+                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                  {t("licenses.quantity")}
+                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue="10" max="200" min="1" name="quantity" required type="number" />
+                </label>
+                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                  {t("licenses.label")}
+                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" maxLength={120} name="label" required />
+                </label>
+                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                  {t("licenses.startsAt")}
+                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" name="starts_at" required type="datetime-local" />
+                </label>
+                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                  {t("licenses.endsAt")}
+                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" name="ends_at" required type="datetime-local" />
+                </label>
+              </div>
+              <button className="inline-flex min-h-11 w-fit items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" type="submit">
+                {t("licenses.generateBatch")}
+              </button>
+            </form>
+          </AdminCard>
+
+          <AdminCard className="mt-6 p-5">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950">{t("licenses.bulkActionsTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.bulkActionsDescription")}</p>
+            </div>
+            <form action={bulkAdjustLicenseDuration} className="mt-4 grid gap-3 md:grid-cols-[1fr_12rem_1fr_auto]">
+              <input name="locale" type="hidden" value={locale} />
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("licenses.selectedIds")}
+                <select className="min-h-24 rounded-md border border-slate-300 px-3 py-2 text-sm" multiple name="trial_code_id">
+                  {trialCodes.map((trialCode) => (
+                    <option key={trialCode.id} value={trialCode.id}>
+                      {trialCode.code_mask ?? shortId(trialCode.id)} - {trialCode.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("licenses.adjustDays")}
+                <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" name="delta_days" required type="number" />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("donations.reason")}
+                <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" maxLength={500} name="reason" required />
+              </label>
+              <button className="min-h-11 self-end rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" type="submit">
+                {t("licenses.adjustDuration")}
+              </button>
+            </form>
+            <form action={bulkDeleteLicenseCodes} className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+              <input name="locale" type="hidden" value={locale} />
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("licenses.selectedIds")}
+                <select className="min-h-24 rounded-md border border-slate-300 px-3 py-2 text-sm" multiple name="trial_code_id">
+                  {trialCodes.map((trialCode) => (
+                    <option key={trialCode.id} value={trialCode.id}>
+                      {trialCode.code_mask ?? shortId(trialCode.id)} - {trialCode.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("donations.reason")}
+                <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" maxLength={500} name="reason" required />
+              </label>
+              <button className="min-h-11 self-end rounded-md border border-red-200 px-3 text-sm font-medium text-red-700" type="submit">
+                {t("licenses.bulkDelete")}
+              </button>
+            </form>
+          </AdminCard>
+
           <AdminCard className="mt-6">
             <div className="border-b border-slate-200 px-5 py-4">
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.trialCodesTitle")}</h2>
@@ -209,6 +303,8 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("licenses.label")}</th>
+                      <th className="px-5 py-3">{t("licenses.code")}</th>
+                      <th className="px-5 py-3">{t("licenses.duration")}</th>
                       <th className="px-5 py-3">{t("licenses.period")}</th>
                       <th className="px-5 py-3">{t("licenses.redemptions")}</th>
                       <th className="px-5 py-3">{t("licenses.status")}</th>
@@ -285,6 +381,12 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                               {t("licenses.save")}
                             </button>
                           </form>
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
+                          {trialCode.code_mask ?? "-"}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                          {trialCode.duration_kind ? t(`licenses.durations.${trialCode.duration_kind}`) : `${trialCode.trial_days} ${t("licenses.days")}`}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           <span className="block">{formatDateTime(trialCode.starts_at, locale)}</span>

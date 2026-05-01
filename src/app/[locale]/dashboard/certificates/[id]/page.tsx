@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Download } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { CertificateView, getCertificateTypeLabel } from "@/lib/certificates/render";
@@ -54,8 +55,8 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
   return (
     <>
       <SiteHeader />
-      <main className="flex-1 bg-slate-50">
-        <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+      <main className="tech-shell flex-1">
+        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
           <CertificateView
             certificateNumber={certificate.certificate_number}
             copy={{
@@ -77,18 +78,19 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
           />
           <section
             aria-labelledby="certificate-download-title"
-            className="mt-4 rounded-md border border-slate-200 bg-white px-4 py-4 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4"
+            className="mt-5 rounded-lg border border-cyan-300/15 bg-white/[0.05] px-4 py-4 shadow-2xl shadow-cyan-950/20 backdrop-blur-xl sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-5"
           >
             <div>
-              <h2 id="certificate-download-title" className="text-sm font-semibold tracking-normal text-slate-950">
+              <h2 id="certificate-download-title" className="text-sm font-semibold tracking-normal text-white">
                 {t("download.title")}
               </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">{t("download.note")}</p>
+              <p className="mt-1 text-sm leading-6 text-slate-300">{t("download.note")}</p>
             </div>
             <a
               href={`/${locale}/dashboard/certificates/${id}/download/svg`}
-              className="mt-3 inline-flex min-h-10 items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-950 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 sm:mt-0"
+              className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-cyan-300/30 bg-cyan-300/10 px-4 text-sm font-semibold text-cyan-50 transition-colors hover:border-cyan-200/70 hover:bg-cyan-300/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 sm:mt-0 sm:w-auto"
             >
+              <Download aria-hidden="true" className="size-4" />
               {t("download.svg")}
             </a>
           </section>

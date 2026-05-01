@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { supportedLocales, type Locale } from "@/config/site";
 import { requireAdmin, requireOwner } from "@/lib/auth/guards";
@@ -7,14 +8,33 @@ import { generateCertificatesForDonation } from "@/lib/certificates/service";
 import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
 import { extendCloudSyncEntitlementForDonation } from "@/lib/license/entitlements";
 import { hashDesktopSecret } from "@/lib/license/hash";
+import {
+  assertLicenseCode,
+  decryptLicenseCode,
+  encryptLicenseCode,
+  generateLicenseCode,
+  getLicenseCodeEncryptionKey,
+  getLicenseDurationDays,
+  isLicenseDurationKind,
+  maskLicenseCode,
+  type EncryptedLicenseCode,
+  type LicenseDurationKind,
+} from "@/lib/license/license-codes";
 import { SOFTWARE_RELEASES_BUCKET, type ReleasePlatform } from "@/lib/releases/software-releases";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { Json } from "@/lib/database.types";
 
 const MAX_REASON_LENGTH = 500;
 const MAX_MANUAL_REFERENCE_LENGTH = 120;
 const MAX_RELEASE_NOTES_LENGTH = 4000;
 const MAX_TRIAL_LABEL_LENGTH = 120;
 const MAX_TRIAL_DAYS = 365;
+const MAX_NOTIFICATION_TITLE_LENGTH = 160;
+const MAX_NOTIFICATION_BODY_LENGTH = 4000;
+const MAX_LICENSE_BATCH_SIZE = 200;
+const notificationAudiences = ["all", "authenticated", "admins"] as const;
+const notificationPriorities = ["info", "success", "warning", "critical"] as const;
+const feedbackStatuses = ["open", "reviewing", "closed"] as const;
 
 function getSafeLocale(locale: FormDataEntryValue | null) {
   const value = String(locale ?? "en");
@@ -79,6 +99,22 @@ function getDateIso(formData: FormData, key: string, message: string) {
   return date.toISOString();
 }
 
+function getOptionalDateIso(formData: FormData, key: string) {
+  const rawValue = String(formData.get(key) ?? "").trim();
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const date = new Date(rawValue);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Invalid date");
+  }
+
+  return date.toISOString();
+}
+
 function getRequiredReason(formData: FormData) {
   const reason = getRequiredString(formData, "reason", "Reason is required");
 
@@ -87,6 +123,40 @@ function getRequiredReason(formData: FormData) {
   }
 
   return reason;
+}
+
+function getBoundedString(formData: FormData, key: string, message: string, maxLength: number) {
+  const value = getRequiredString(formData, key, message);
+
+  if (value.length > maxLength) {
+    throw new Error(`${message} must be ${maxLength} characters or fewer`);
+  }
+
+  return value;
+}
+
+async function insertAdminAuditLog(input: {
+  action: string;
+  adminUserId: string;
+  after?: Json;
+  before?: Json;
+  reason: string;
+  targetId: string;
+  targetType: string;
+}) {
+  const { error } = await createSupabaseAdminClient().from("admin_audit_logs").insert({
+    action: input.action,
+    admin_user_id: input.adminUserId,
+    after: input.after ?? null,
+    before: input.before ?? null,
+    reason: input.reason,
+    target_id: input.targetId,
+    target_type: input.targetType,
+  });
+
+  if (error) {
+    throw new Error("Unable to write audit log");
+  }
 }
 
 function getManualReference(formData: FormData) {
@@ -181,6 +251,110 @@ export async function addManualDonation(formData: FormData) {
   revalidatePath(`/${locale}/admin/donations`);
   revalidatePath(`/${locale}/admin/certificates`);
   revalidatePath(`/${locale}/admin/audit-logs`);
+}
+
+export async function createNotification(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const title = getBoundedString(formData, "title", "Title is required", MAX_NOTIFICATION_TITLE_LENGTH);
+  const body = getBoundedString(formData, "body", "Body is required", MAX_NOTIFICATION_BODY_LENGTH);
+  const notificationLocale = String(formData.get("notification_locale") ?? "").trim();
+  const audience = getRequiredString(formData, "audience", "Audience is required");
+  const priority = getRequiredString(formData, "priority", "Priority is required");
+  const expiresAt = getOptionalDateIso(formData, "expires_at");
+  const shouldPublish = formData.get("publish_now") === "on";
+
+  if (!notificationAudiences.includes(audience as (typeof notificationAudiences)[number])) {
+    throw new Error("Invalid audience");
+  }
+
+  if (!notificationPriorities.includes(priority as (typeof notificationPriorities)[number])) {
+    throw new Error("Invalid priority");
+  }
+
+  if (notificationLocale && !supportedLocales.includes(notificationLocale as Locale)) {
+    throw new Error("Invalid locale");
+  }
+
+  const safeNotificationLocale = notificationLocale ? (notificationLocale as Locale) : null;
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("notifications").insert({
+    audience: audience as (typeof notificationAudiences)[number],
+    body,
+    created_by: admin.id,
+    expires_at: expiresAt,
+    locale: safeNotificationLocale,
+    priority: priority as (typeof notificationPriorities)[number],
+    published_at: shouldPublish ? new Date().toISOString() : null,
+    title,
+  });
+
+  if (error) {
+    throw new Error("Unable to create notification");
+  }
+
+  revalidatePath(`/${locale}/admin/notifications`);
+  revalidatePath(`/${locale}/notifications`);
+}
+
+export async function publishNotification(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const notificationId = getRequiredString(formData, "notification_id", "Notification is required");
+  const { error } = await createSupabaseAdminClient()
+    .from("notifications")
+    .update({ published_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("id", notificationId);
+
+  if (error) {
+    throw new Error("Unable to publish notification");
+  }
+
+  revalidatePath(`/${locale}/admin/notifications`);
+  revalidatePath(`/${locale}/notifications`);
+}
+
+export async function unpublishNotification(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const notificationId = getRequiredString(formData, "notification_id", "Notification is required");
+  const { error } = await createSupabaseAdminClient()
+    .from("notifications")
+    .update({ published_at: null, updated_at: new Date().toISOString() })
+    .eq("id", notificationId);
+
+  if (error) {
+    throw new Error("Unable to unpublish notification");
+  }
+
+  revalidatePath(`/${locale}/admin/notifications`);
+  revalidatePath(`/${locale}/notifications`);
+}
+
+export async function updateSupportFeedbackStatus(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const feedbackId = getRequiredString(formData, "feedback_id", "Feedback is required");
+  const status = getRequiredString(formData, "status", "Status is required");
+
+  if (!feedbackStatuses.includes(status as (typeof feedbackStatuses)[number])) {
+    throw new Error("Invalid feedback status");
+  }
+
+  const { error } = await createSupabaseAdminClient()
+    .from("support_feedback")
+    .update({
+      closed_at: status === "closed" ? new Date().toISOString() : null,
+      status: status as (typeof feedbackStatuses)[number],
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", feedbackId);
+
+  if (error) {
+    throw new Error("Unable to update feedback");
+  }
+
+  revalidatePath(`/${locale}/admin/support-feedback`);
 }
 
 export async function revokeCertificate(formData: FormData) {
@@ -290,7 +464,7 @@ export async function setSoftwareReleasePublished(formData: FormData) {
 export async function createTrialCode(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);
-  const code = getRequiredString(formData, "code", "Trial code is required");
+  const code = assertLicenseCode(getRequiredString(formData, "code", "Trial code is required"));
   const label = getRequiredString(formData, "label", "Label is required");
 
   if (label.length > MAX_TRIAL_LABEL_LENGTH) {
@@ -311,10 +485,17 @@ export async function createTrialCode(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const encryptedCode = encryptLicenseCode(code, getLicenseCodeEncryptionKey());
   const { error } = await supabase.from("trial_codes").insert({
     code_hash: await hashDesktopSecret(code, "trial_code"),
+    code_mask: maskLicenseCode(code),
     created_by: admin.id,
+    duration_kind: "trial_3_day",
     ends_at: endsAt,
+    encrypted_code_algorithm: encryptedCode.algorithm,
+    encrypted_code_ciphertext: encryptedCode.ciphertext,
+    encrypted_code_iv: encryptedCode.iv,
+    encrypted_code_tag: encryptedCode.tag,
     feature_code: CLOUD_SYNC_FEATURE,
     is_active: true,
     label,
@@ -328,6 +509,244 @@ export async function createTrialCode(formData: FormData) {
   }
 
   revalidatePath(`/${locale}/admin/licenses`);
+}
+
+function getLicenseDurationKind(formData: FormData): LicenseDurationKind {
+  const durationKind = getRequiredString(formData, "duration_kind", "Duration is required");
+
+  if (!isLicenseDurationKind(durationKind)) {
+    throw new Error("Invalid license duration");
+  }
+
+  return durationKind;
+}
+
+function getSelectedLicenseCodeIds(formData: FormData) {
+  return formData.getAll("trial_code_id").map((value) => String(value).trim()).filter(Boolean);
+}
+
+export async function generateLicenseCodeBatch(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const durationKind = getLicenseDurationKind(formData);
+
+  if (durationKind === "trial_3_day") {
+    throw new Error("3-day trial codes are created manually");
+  }
+
+  const quantity = getPositiveInteger(formData, "quantity", "Quantity must be a positive integer");
+
+  if (quantity > MAX_LICENSE_BATCH_SIZE) {
+    throw new Error("Quantity must be 200 or fewer");
+  }
+
+  const label = getRequiredString(formData, "label", "Label is required");
+
+  if (label.length > MAX_TRIAL_LABEL_LENGTH) {
+    throw new Error("Label must be 120 characters or fewer");
+  }
+
+  const startsAt = getDateIso(formData, "starts_at", "Start date is required");
+  const endsAt = getDateIso(formData, "ends_at", "End date is required");
+
+  if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
+    throw new Error("End date must be after start date");
+  }
+
+  const batchId = randomUUID();
+  const key = getLicenseCodeEncryptionKey();
+  const trialDays = getLicenseDurationDays(durationKind);
+  const codes = Array.from({ length: quantity }, () => generateLicenseCode());
+  const rows = await Promise.all(codes.map(async (code) => {
+    const encryptedCode = encryptLicenseCode(code, key);
+
+    return {
+      batch_id: batchId,
+      code_hash: await hashDesktopSecret(code, "trial_code"),
+      code_mask: maskLicenseCode(code),
+      created_by: admin.id,
+      duration_kind: durationKind,
+      ends_at: endsAt,
+      encrypted_code_algorithm: encryptedCode.algorithm,
+      encrypted_code_ciphertext: encryptedCode.ciphertext,
+      encrypted_code_iv: encryptedCode.iv,
+      encrypted_code_tag: encryptedCode.tag,
+      feature_code: CLOUD_SYNC_FEATURE,
+      is_active: true,
+      label,
+      max_redemptions: 1,
+      starts_at: startsAt,
+      trial_days: trialDays,
+    };
+  }));
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("trial_codes").insert(rows);
+
+  if (error) {
+    throw new Error("Unable to generate license codes");
+  }
+
+  await insertAdminAuditLog({
+    action: "generate_license_codes",
+    adminUserId: admin.id,
+    after: { batch_id: batchId, duration_kind: durationKind, quantity },
+    reason: "Generated license code batch",
+    targetId: batchId,
+    targetType: "license_code_batch",
+  });
+
+  revalidatePath(`/${locale}/admin/licenses`);
+}
+
+export async function revealLicenseCode(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const trialCodeId = getRequiredString(formData, "trial_code_id", "License code is required");
+  const supabase = createSupabaseAdminClient();
+  const { data: trialCode, error } = await supabase
+    .from("trial_codes")
+    .select("id,encrypted_code_algorithm,encrypted_code_ciphertext,encrypted_code_iv,encrypted_code_tag")
+    .eq("id", trialCodeId)
+    .single();
+
+  if (error || !trialCode?.encrypted_code_ciphertext || !trialCode.encrypted_code_iv || !trialCode.encrypted_code_tag) {
+    throw new Error("License code cannot be revealed");
+  }
+
+  const code = decryptLicenseCode({
+    algorithm: trialCode.encrypted_code_algorithm as EncryptedLicenseCode["algorithm"],
+    ciphertext: trialCode.encrypted_code_ciphertext,
+    iv: trialCode.encrypted_code_iv,
+    tag: trialCode.encrypted_code_tag,
+  }, getLicenseCodeEncryptionKey());
+
+  await insertAdminAuditLog({
+    action: "reveal_license_code",
+    adminUserId: admin.id,
+    reason: "Revealed encrypted license code",
+    targetId: trialCodeId,
+    targetType: "trial_code",
+  });
+
+  return { code };
+}
+
+export async function bulkDeleteLicenseCodes(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const reason = getRequiredReason(formData);
+  const ids = getSelectedLicenseCodeIds(formData);
+
+  if (ids.length === 0) {
+    throw new Error("Select at least one license code");
+  }
+
+  const now = new Date().toISOString();
+  const { error } = await createSupabaseAdminClient()
+    .from("trial_codes")
+    .update({ deleted_at: now, is_active: false, updated_at: now, updated_by: admin.id })
+    .in("id", ids);
+
+  if (error) {
+    throw new Error("Unable to delete license codes");
+  }
+
+  await insertAdminAuditLog({
+    action: "bulk_delete_license_codes",
+    adminUserId: admin.id,
+    after: { ids },
+    reason,
+    targetId: ids[0],
+    targetType: "trial_codes",
+  });
+
+  revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+}
+
+export async function bulkAdjustLicenseDuration(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const reason = getRequiredReason(formData);
+  const ids = getSelectedLicenseCodeIds(formData);
+  const deltaDays = Number(formData.get("delta_days"));
+
+  if (ids.length === 0) {
+    throw new Error("Select at least one license code");
+  }
+
+  if (!Number.isInteger(deltaDays) || deltaDays === 0 || Math.abs(deltaDays) > 3650) {
+    throw new Error("Adjustment must be between -3650 and 3650 days");
+  }
+
+  const now = new Date().toISOString();
+  const supabase = createSupabaseAdminClient();
+  const { data: trialCodes, error: readError } = await supabase
+    .from("trial_codes")
+    .select("id,trial_days")
+    .in("id", ids);
+
+  if (readError || !trialCodes) {
+    throw new Error("Unable to read license codes");
+  }
+
+  await Promise.all(trialCodes.map(async (trialCode) => {
+    const trialDays = Math.max(1, Math.min(MAX_TRIAL_DAYS, trialCode.trial_days + deltaDays));
+    const { error } = await supabase
+      .from("trial_codes")
+      .update({ trial_days: trialDays, updated_at: now, updated_by: admin.id })
+      .eq("id", trialCode.id);
+
+    if (error) {
+      throw new Error("Unable to adjust license codes");
+    }
+  }));
+
+  const { data: redemptions, error: redemptionError } = await supabase
+    .from("trial_code_redemptions")
+    .select("id,trial_valid_until,user_id")
+    .in("trial_code_id", ids);
+
+  if (redemptionError) {
+    throw new Error("Unable to read redemptions");
+  }
+
+  await Promise.all((redemptions ?? []).map(async (redemption) => {
+    const validUntil = new Date(redemption.trial_valid_until);
+    validUntil.setUTCDate(validUntil.getUTCDate() + deltaDays);
+    const nextValidUntil = validUntil.toISOString();
+    const { error: redemptionUpdateError } = await supabase
+      .from("trial_code_redemptions")
+      .update({ trial_valid_until: nextValidUntil })
+      .eq("id", redemption.id);
+
+    if (redemptionUpdateError) {
+      throw new Error("Unable to update redemptions");
+    }
+
+    const { error: entitlementError } = await supabase
+      .from("license_entitlements")
+      .update({ updated_at: now, valid_until: nextValidUntil })
+      .eq("user_id", redemption.user_id)
+      .eq("feature_code", CLOUD_SYNC_FEATURE);
+
+    if (entitlementError) {
+      throw new Error("Unable to update entitlements");
+    }
+  }));
+
+  await insertAdminAuditLog({
+    action: "bulk_adjust_license_duration",
+    adminUserId: admin.id,
+    after: { delta_days: deltaDays, ids },
+    reason,
+    targetId: ids[0],
+    targetType: "trial_codes",
+  });
+
+  revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
 }
 
 export async function setTrialCodeActive(formData: FormData) {

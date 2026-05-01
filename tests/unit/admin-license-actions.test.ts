@@ -36,6 +36,7 @@ vi.mock("next/cache", () => ({
 
 describe("admin license actions", () => {
   beforeEach(() => {
+    process.env.LICENSE_CODE_ENCRYPTION_KEY = Buffer.alloc(32, 3).toString("base64");
     mocks.requireAdmin.mockReset().mockResolvedValue({ id: "admin-1" });
     mocks.requireOwner.mockReset().mockResolvedValue({ id: "owner-1" });
     mocks.createSupabaseAdminClient.mockReset();
@@ -55,7 +56,7 @@ describe("admin license actions", () => {
 
     const formData = new FormData();
     formData.set("locale", "en");
-    formData.set("code", "SPRING-2026");
+    formData.set("code", "ABCD-EFGH-IJKL-MNOP");
     formData.set("label", "Spring 2026 launch trial");
     formData.set("trial_days", "3");
     formData.set("max_redemptions", "100");
@@ -67,9 +68,15 @@ describe("admin license actions", () => {
     const inserted = insert.mock.calls[0]?.[0];
     expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
     expect(inserted).toEqual({
-      code_hash: await hashDesktopSecret("SPRING-2026", "trial_code"),
+      code_hash: await hashDesktopSecret("ABCD-EFGH-IJKL-MNOP", "trial_code"),
+      code_mask: "ABCD-****-****-MNOP",
       created_by: "admin-1",
+      duration_kind: "trial_3_day",
       ends_at: "2026-06-01T00:00:00.000Z",
+      encrypted_code_algorithm: "aes-256-gcm",
+      encrypted_code_ciphertext: expect.any(String),
+      encrypted_code_iv: expect.any(String),
+      encrypted_code_tag: expect.any(String),
       feature_code: CLOUD_SYNC_FEATURE,
       is_active: true,
       label: "Spring 2026 launch trial",
@@ -77,14 +84,14 @@ describe("admin license actions", () => {
       starts_at: "2026-05-01T00:00:00.000Z",
       trial_days: 3,
     });
-    expect(JSON.stringify(inserted)).not.toContain("SPRING-2026");
+    expect(JSON.stringify(inserted)).not.toContain("ABCD-EFGH-IJKL-MNOP");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/licenses");
   });
 
   it("rejects invalid trial code windows before writing", async () => {
     const formData = new FormData();
     formData.set("locale", "en");
-    formData.set("code", "SPRING-2026");
+    formData.set("code", "ABCD-EFGH-IJKL-MNOP");
     formData.set("label", "Spring 2026 launch trial");
     formData.set("trial_days", "3");
     formData.set("starts_at", "2026-06-01T00:00:00.000Z");
@@ -98,7 +105,7 @@ describe("admin license actions", () => {
   it("rejects trial code durations over 365 days before writing", async () => {
     const formData = new FormData();
     formData.set("locale", "en");
-    formData.set("code", "SPRING-2026");
+    formData.set("code", "ABCD-EFGH-IJKL-MNOP");
     formData.set("label", "Spring 2026 launch trial");
     formData.set("trial_days", "366");
     formData.set("starts_at", "2026-05-01T00:00:00.000Z");

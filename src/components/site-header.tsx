@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { ChevronDown, LayoutDashboard, LogOut, UserCircle } from "lucide-react";
+import { Bell, ChevronDown, Headset, LayoutDashboard, LogOut, UserCircle } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { siteConfig, supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
@@ -48,6 +48,14 @@ export async function SiteHeader() {
           </Link>
           <Link href="/donate" className={navLinkClass}>
             {t("donate")}
+          </Link>
+          <Link href="/support" className={navLinkClass}>
+            <Headset aria-hidden="true" className="mr-1 size-4" />
+            {t("support")}
+          </Link>
+          <Link href="/notifications" className={navLinkClass}>
+            <Bell aria-hidden="true" className="mr-1 size-4" />
+            {t("notifications")}
           </Link>
           {userLabel ? (
             <details className="group relative max-w-full">

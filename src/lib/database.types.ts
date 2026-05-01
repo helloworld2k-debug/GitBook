@@ -7,9 +7,13 @@ export type Database = {
       certificate_type: "donation" | "honor";
       donation_provider: "stripe" | "paypal" | "manual";
       donation_status: "pending" | "paid" | "cancelled" | "failed" | "refunded";
+      license_code_duration_kind: "trial_3_day" | "month_1" | "month_3" | "year_1";
       license_entitlement_status: "active" | "expired" | "revoked";
       license_feature_code: "cloud_sync";
+      notification_audience: "all" | "authenticated" | "admins";
+      notification_priority: "info" | "success" | "warning" | "critical";
       software_release_platform: "macos" | "windows";
+      support_feedback_status: "open" | "reviewing" | "closed";
     };
     Tables: {
       profiles: {
@@ -211,6 +215,15 @@ export type Database = {
           redemption_count: number;
           is_active: boolean;
           created_by: string | null;
+          duration_kind: Database["public"]["Enums"]["license_code_duration_kind"];
+          code_mask: string | null;
+          encrypted_code_ciphertext: string | null;
+          encrypted_code_iv: string | null;
+          encrypted_code_tag: string | null;
+          encrypted_code_algorithm: string;
+          batch_id: string | null;
+          deleted_at: string | null;
+          updated_by: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -226,6 +239,15 @@ export type Database = {
           redemption_count?: number;
           is_active?: boolean;
           created_by?: string | null;
+          duration_kind?: Database["public"]["Enums"]["license_code_duration_kind"];
+          code_mask?: string | null;
+          encrypted_code_ciphertext?: string | null;
+          encrypted_code_iv?: string | null;
+          encrypted_code_tag?: string | null;
+          encrypted_code_algorithm?: string;
+          batch_id?: string | null;
+          deleted_at?: string | null;
+          updated_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -241,6 +263,15 @@ export type Database = {
           redemption_count?: number;
           is_active?: boolean;
           created_by?: string | null;
+          duration_kind?: Database["public"]["Enums"]["license_code_duration_kind"];
+          code_mask?: string | null;
+          encrypted_code_ciphertext?: string | null;
+          encrypted_code_iv?: string | null;
+          encrypted_code_tag?: string | null;
+          encrypted_code_algorithm?: string;
+          batch_id?: string | null;
+          deleted_at?: string | null;
+          updated_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -248,6 +279,13 @@ export type Database = {
           {
             foreignKeyName: "trial_codes_created_by_fkey";
             columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "trial_codes_updated_by_fkey";
+            columns: ["updated_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -749,6 +787,139 @@ export type Database = {
           {
             foreignKeyName: "admin_audit_logs_admin_user_id_fkey";
             columns: ["admin_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          title: string;
+          body: string;
+          locale: "en" | "zh-Hant" | "ja" | "ko" | null;
+          audience: Database["public"]["Enums"]["notification_audience"];
+          priority: Database["public"]["Enums"]["notification_priority"];
+          published_at: string | null;
+          expires_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          body: string;
+          locale?: "en" | "zh-Hant" | "ja" | "ko" | null;
+          audience?: Database["public"]["Enums"]["notification_audience"];
+          priority?: Database["public"]["Enums"]["notification_priority"];
+          published_at?: string | null;
+          expires_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          body?: string;
+          locale?: "en" | "zh-Hant" | "ja" | "ko" | null;
+          audience?: Database["public"]["Enums"]["notification_audience"];
+          priority?: Database["public"]["Enums"]["notification_priority"];
+          published_at?: string | null;
+          expires_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notification_reads: {
+        Row: {
+          notification_id: string;
+          user_id: string;
+          read_at: string;
+        };
+        Insert: {
+          notification_id: string;
+          user_id: string;
+          read_at?: string;
+        };
+        Update: {
+          notification_id?: string;
+          user_id?: string;
+          read_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notification_reads_notification_id_fkey";
+            columns: ["notification_id"];
+            isOneToOne: false;
+            referencedRelation: "notifications";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notification_reads_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      support_feedback: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          email: string | null;
+          contact: string | null;
+          category: string;
+          subject: string;
+          message: string;
+          status: Database["public"]["Enums"]["support_feedback_status"];
+          created_at: string;
+          updated_at: string;
+          closed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          email?: string | null;
+          contact?: string | null;
+          category?: string;
+          subject: string;
+          message: string;
+          status?: Database["public"]["Enums"]["support_feedback_status"];
+          created_at?: string;
+          updated_at?: string;
+          closed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          email?: string | null;
+          contact?: string | null;
+          category?: string;
+          subject?: string;
+          message?: string;
+          status?: Database["public"]["Enums"]["support_feedback_status"];
+          created_at?: string;
+          updated_at?: string;
+          closed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "support_feedback_user_id_fkey";
+            columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];

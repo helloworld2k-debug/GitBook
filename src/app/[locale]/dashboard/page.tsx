@@ -6,6 +6,7 @@ import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { requireUser } from "@/lib/auth/guards";
 import { formatCertificateIssuedDate, getCertificateTypeLabel } from "@/lib/certificates/render";
+import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   redeemDashboardTrialCode,
@@ -32,18 +33,6 @@ function formatDonationAmount(amount: number, currency: string, locale: string) 
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(amount / 100);
-}
-
-function formatDashboardDate(value: string | null, locale: string) {
-  if (!value) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(value));
 }
 
 function formatDashboardDateTime(value: string | null, locale: string) {
@@ -334,7 +323,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                             </span>
                           </td>
                           <td className="whitespace-nowrap px-5 py-4 text-slate-300">
-                            {formatDashboardDate(donation.paid_at ?? donation.created_at, locale)}
+                            {formatDateTimeWithSeconds(donation.paid_at ?? donation.created_at, locale)}
                           </td>
                         </tr>
                       ))}

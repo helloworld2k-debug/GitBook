@@ -99,6 +99,9 @@ describe("certificate detail page", () => {
     render(await CertificatePage({ params: Promise.resolve({ id: "cert-1", locale: "ko" }) }));
 
     expect(screen.getByRole("heading", { name: "후원 인증서" })).toBeInTheDocument();
+    expect(screen.getByLabelText("후원 인증서")).toHaveClass("overflow-hidden", "rounded-lg");
+    expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
+    expect(screen.getByText("TF-DON-2026-0001")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "인증서 다운로드" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "SVG 다운로드" })).toHaveAttribute(
       "href",
