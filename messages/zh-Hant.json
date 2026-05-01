@@ -2,7 +2,6 @@
   "nav": {
     "download": "下載",
     "donate": "贊助",
-    "sponsors": "支持者",
     "dashboard": "儀表板",
     "signIn": "登入",
     "language": "語言"
@@ -11,7 +10,7 @@
     "eyebrow": "安全存取",
     "title": "登入你的 AI 工作區",
     "subtitle": "使用電子郵件與密碼，或透過可信任的 OAuth 服務商繼續下載、捐贈、證書與儀表板流程。",
-    "privacyNote": "你的帳戶用於保存捐贈記錄、證書與支持者隱私設定。",
+    "privacyNote": "你的帳戶用於保存捐贈記錄、證書與儀表板設定。",
     "formTitle": "電子郵件與密碼",
     "signInTab": "登入",
     "registerTab": "註冊",
@@ -73,22 +72,6 @@
     "oneTimeNote": "一次性捐贈。不會自動續費。",
     "payPalUnavailable": "PayPal 尚未啟用，因為 PayPal 捐贈記錄與證書仍在整合中。"
   },
-  "sponsors": {
-    "eyebrow": "信號牆",
-    "title": "支持 GitBook AI 的支持者",
-    "subtitle": "感謝已完成捐贈並選擇公開列名的支持者。",
-    "wallTitle": "公開支持者",
-    "fallbackDisplayName": "支持者",
-    "paidSummary": "{count} 筆已付款捐贈 · {total}",
-    "empty": "尚無公開支持者。",
-    "unavailable": "贊助牆暫時無法使用。",
-    "levels": {
-      "bronze": "銅牌",
-      "silver": "銀牌",
-      "gold": "金牌",
-      "platinum": "白金"
-    }
-  },
   "dashboard": {
     "title": "個人中心",
     "donations": "已付款捐贈",
@@ -103,18 +86,6 @@
     "viewCertificate": "查看證書",
     "noDonations": "尚無捐贈記錄。",
     "noCertificates": "尚無有效證書。",
-    "privacy": {
-      "title": "公開支持者隱私",
-      "description": "選擇是否在贊助牆上顯示你的支持。",
-      "publicLabel": "將我列在贊助牆",
-      "publicHelp": "只會顯示你的公開名稱與已付款捐贈摘要。",
-      "displayName": "公開顯示名稱",
-      "displayNamePlaceholder": "支持者",
-      "displayNameHelp": "留空時會顯示本地化的「支持者」。你的電子郵件永遠不會顯示。",
-      "save": "儲存隱私設定",
-      "saved": "隱私設定已儲存。",
-      "error": "無法儲存隱私設定。請再試一次。"
-    },
     "trial": {
       "title": "試用碼",
       "description": "兌換團隊提供的代碼，開始 3 天雲端同步試用。",
@@ -140,7 +111,6 @@
     "email": "Email",
     "displayName": "顯示名稱",
     "displayNamePlaceholder": "你的名稱",
-    "publicDisplayName": "公開顯示名稱",
     "saveProfile": "儲存資料",
     "profileSaved": "資料已儲存。",
     "profileError": "無法儲存資料。",

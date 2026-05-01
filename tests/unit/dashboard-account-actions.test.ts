@@ -52,11 +52,10 @@ describe("dashboard account actions", () => {
 
     const formData = new FormData();
     formData.set("display_name", "Ada");
-    formData.set("public_display_name", "Ada Supporter");
 
     await expect(updateAccountProfile("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?profile=saved");
 
-    expect(update).toHaveBeenCalledWith({ display_name: "Ada", public_display_name: "Ada Supporter" });
+    expect(update).toHaveBeenCalledWith({ display_name: "Ada" });
     expect(eq).toHaveBeenCalledWith("id", "user-1");
   });
 

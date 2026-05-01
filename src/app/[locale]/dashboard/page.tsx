@@ -10,7 +10,6 @@ import {
   redeemDashboardTrialCode,
   updateAccountProfile,
   updateDashboardPassword,
-  updatePublicSupporterPrivacy,
 } from "./actions";
 
 type DashboardPageProps = {
@@ -18,7 +17,6 @@ type DashboardPageProps = {
     locale: string;
   }>;
   searchParams?: Promise<{
-    privacy?: string;
     profile?: string;
     password?: string;
     trial?: string;
@@ -50,7 +48,6 @@ function formatDashboardDate(value: string | null, locale: string) {
 export default async function DashboardPage({ params, searchParams }: DashboardPageProps) {
   const { locale } = await params;
   const statusParams = await searchParams;
-  const privacyStatus = statusParams?.privacy;
   const profileStatus = statusParams?.profile;
   const passwordStatus = statusParams?.password;
   const trialStatus = statusParams?.trial;
@@ -93,7 +90,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
       .limit(5),
     supabase
       .from("profiles")
-      .select("email,display_name,public_supporter_enabled,public_display_name")
+      .select("email,display_name")
       .eq("id", user.id)
       .single(),
   ]);
@@ -118,7 +115,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
     throw profileError;
   }
 
-  const updatePrivacy = updatePublicSupporterPrivacy.bind(null, locale);
   const updateProfile = updateAccountProfile.bind(null, locale);
   const updatePassword = updateDashboardPassword.bind(null, locale);
   const redeemTrial = redeemDashboardTrialCode.bind(null, locale);
@@ -251,16 +247,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                       placeholder={t("displayNamePlaceholder")}
                     />
                   </label>
-                  <label className="block text-sm font-medium text-slate-950">
-                    {t("publicDisplayName")}
-                    <input
-                      className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                      defaultValue={profile?.public_display_name ?? ""}
-                      maxLength={80}
-                      name="public_display_name"
-                      placeholder={t("privacy.displayNamePlaceholder")}
-                    />
-                  </label>
                   <button
                     type="submit"
                     className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
@@ -337,56 +323,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                 ) : (
                   <p className="px-5 py-6 text-sm text-slate-600">{t("noCertificates")}</p>
                 )}
-              </section>
-              <section className="rounded-md border border-slate-200 bg-white shadow-sm">
-                <div className="border-b border-slate-200 px-5 py-4">
-                  <h2 className="text-lg font-semibold tracking-normal text-slate-950">{t("privacy.title")}</h2>
-                  <p className="mt-1 text-sm text-slate-600">{t("privacy.description")}</p>
-                </div>
-                <form action={updatePrivacy} className="space-y-4 px-5 py-5">
-                  {privacyStatus === "saved" ? (
-                    <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
-                      {t("privacy.saved")}
-                    </p>
-                  ) : null}
-                  {privacyStatus === "error" ? (
-                    <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-950" role="alert">
-                      {t("privacy.error")}
-                    </p>
-                  ) : null}
-                  <label className="flex gap-3 text-sm text-slate-700">
-                    <input
-                      className="mt-1 size-4 rounded border-slate-300 text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                      type="checkbox"
-                      name="public_supporter_enabled"
-                      defaultChecked={profile?.public_supporter_enabled ?? false}
-                    />
-                    <span>
-                      <span className="block font-medium text-slate-950">{t("privacy.publicLabel")}</span>
-                      <span className="mt-1 block leading-6 text-slate-600">{t("privacy.publicHelp")}</span>
-                    </span>
-                  </label>
-                  <div>
-                    <label className="text-sm font-medium text-slate-950" htmlFor="public-display-name">
-                      {t("privacy.displayName")}
-                    </label>
-                    <input
-                      className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                      id="public-display-name"
-                      name="public_display_name"
-                      maxLength={80}
-                      defaultValue={profile?.public_display_name ?? ""}
-                      placeholder={t("privacy.displayNamePlaceholder")}
-                    />
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{t("privacy.displayNameHelp")}</p>
-                  </div>
-                  <button
-                    type="submit"
-                    className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                  >
-                    {t("privacy.save")}
-                  </button>
-                </form>
               </section>
             </div>
           </div>

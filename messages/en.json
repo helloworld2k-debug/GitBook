@@ -2,7 +2,6 @@
   "nav": {
     "download": "Download",
     "donate": "Donate",
-    "sponsors": "Sponsors",
     "dashboard": "Dashboard",
     "signIn": "Sign in",
     "language": "Language"
@@ -11,7 +10,7 @@
     "eyebrow": "Secure access",
     "title": "Sign in to your AI workspace",
     "subtitle": "Use email and password, or a trusted OAuth provider, to continue to downloads, donations, certificates, and your dashboard.",
-    "privacyNote": "Your account keeps donation records, certificates, and supporter privacy tied to you.",
+    "privacyNote": "Your account keeps donation records, certificates, and dashboard settings tied to you.",
     "formTitle": "Email and password",
     "signInTab": "Sign in",
     "registerTab": "Register",
@@ -81,22 +80,6 @@
     "oneTimeNote": "One-time donation. No automatic renewal.",
     "payPalUnavailable": "PayPal is not enabled yet because PayPal donation records and certificates are still being integrated."
   },
-  "sponsors": {
-    "eyebrow": "Signal wall",
-    "title": "Supporters powering GitBook AI",
-    "subtitle": "A public thank-you for supporters who chose to be listed after a paid donation.",
-    "wallTitle": "Public supporters",
-    "fallbackDisplayName": "Supporter",
-    "paidSummary": "{count, plural, one {# paid donation} other {# paid donations}} · {total}",
-    "empty": "No public supporters yet.",
-    "unavailable": "The sponsor wall is temporarily unavailable.",
-    "levels": {
-      "bronze": "Bronze",
-      "silver": "Silver",
-      "gold": "Gold",
-      "platinum": "Platinum"
-    }
-  },
   "dashboard": {
     "title": "Personal center",
     "donations": "Paid donations",
@@ -105,7 +88,6 @@
     "email": "Email",
     "displayName": "Display name",
     "displayNamePlaceholder": "Your name",
-    "publicDisplayName": "Public display name",
     "saveProfile": "Save profile",
     "profileSaved": "Profile saved.",
     "profileError": "Could not save profile.",
@@ -126,18 +108,6 @@
     "viewCertificate": "View certificate",
     "noDonations": "No donation records yet.",
     "noCertificates": "No active certificates yet.",
-    "privacy": {
-      "title": "Public supporter privacy",
-      "description": "Choose whether your support appears on the sponsor wall.",
-      "publicLabel": "List me on the sponsor wall",
-      "publicHelp": "Only your public display name and paid donation summary will appear.",
-      "displayName": "Public display name",
-      "displayNamePlaceholder": "Supporter",
-      "displayNameHelp": "Leave blank to show the localized Supporter fallback. Your email is never shown.",
-      "save": "Save privacy",
-      "saved": "Privacy settings saved.",
-      "error": "Could not save privacy settings. Please try again."
-    },
     "trial": {
       "title": "Trial code",
       "description": "Redeem a team-provided code to start a 3-day cloud sync trial.",
