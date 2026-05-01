@@ -136,6 +136,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
   const updateProfile = updateAccountProfile.bind(null, locale);
   const updatePassword = updateDashboardPassword.bind(null, locale);
   const redeemTrial = redeemDashboardTrialCode.bind(null, locale);
+  const hasDesktopSessions = Boolean(desktopSessions?.length);
   const trialStatusMessages = {
     duplicate: t("trial.duplicate"),
     error: t("trial.error"),
@@ -220,22 +221,30 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                       {trialMessage}
                     </p>
                   ) : null}
-                  <label className="block text-sm font-medium text-slate-950">
-                    {t("trial.device")}
-                    <select
-                      className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                      name="desktop_session_id"
-                      required
-                    >
-                      {(desktopSessions ?? []).map((session) => (
-                        <option key={session.id} value={session.id}>
-                          {[session.device_id, session.platform, session.app_version, formatDashboardDate(session.last_seen_at, locale)]
-                            .filter(Boolean)
-                            .join(" - ")}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  {hasDesktopSessions ? (
+                    <label className="block text-sm font-medium text-slate-950">
+                      {t("trial.device")}
+                      <select
+                        className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                        name="desktop_session_id"
+                        required
+                      >
+                        {(desktopSessions ?? []).map((session) => (
+                          <option key={session.id} value={session.id}>
+                            {[session.device_id, session.platform, session.app_version, formatDashboardDate(session.last_seen_at, locale)]
+                              .filter(Boolean)
+                              .join(" - ")}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="mt-2 block text-xs font-normal text-slate-500">{t("trial.deviceHelp")}</span>
+                    </label>
+                  ) : (
+                    <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+                      <p className="font-medium">{t("trial.noDeviceTitle")}</p>
+                      <p className="mt-1 text-amber-900">{t("trial.noDeviceDescription")}</p>
+                    </div>
+                  )}
                   <label className="block text-sm font-medium text-slate-950">
                     {t("trial.code")}
                     <input
@@ -247,7 +256,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                   <button
                     type="submit"
                     className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 disabled:cursor-not-allowed disabled:bg-slate-400"
-                    disabled={!desktopSessions || desktopSessions.length === 0}
+                    disabled={!hasDesktopSessions}
                   >
                     {t("trial.submit")}
                   </button>
