@@ -77,9 +77,9 @@ describe("auth callback route", () => {
     expect(response.headers.get("location")).toBe("https://threefriends.example/ja/dashboard");
   });
 
-  it("redirects password recovery callbacks to the localized reset password page", async () => {
+  it("redirects reset password callbacks to the localized reset password page", async () => {
     const response = await GET(
-      new Request("https://threefriends.example/auth/callback?code=abc123&next=%2Fja%2Freset-password&type=recovery"),
+      new Request("https://threefriends.example/auth/callback?code=abc123&next=%2Fja%2Freset-password"),
     );
 
     expect(exchangeCodeForSessionMock).toHaveBeenCalledWith("abc123");

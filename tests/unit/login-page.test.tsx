@@ -9,8 +9,8 @@ vi.mock("@/components/site-header", () => ({
 vi.mock("@/app/[locale]/login/login-form", () => ({
   LoginForm: ({ callbackUrl, passwordResetCallbackUrl }: { callbackUrl: string; passwordResetCallbackUrl: string }) => (
     <div data-testid="login-form">
-      <span>{callbackUrl}</span>
-      <span>{passwordResetCallbackUrl}</span>
+      <span data-testid="login-callback">{callbackUrl}</span>
+      <span data-testid="password-reset-callback">{passwordResetCallbackUrl}</span>
     </div>
   ),
 }));
@@ -78,11 +78,11 @@ describe("LoginPage", () => {
     render(page);
 
     expect(screen.getByRole("heading", { name: "Sign in or create your account" })).toBeInTheDocument();
-    expect(screen.getByTestId("login-form")).toHaveTextContent(
+    expect(screen.getByTestId("login-callback").textContent).toBe(
       "https://threefriends.example/auth/callback?next=%2Fen%2Fdonate%3Ftier%3Dyearly",
     );
-    expect(screen.getByTestId("login-form")).toHaveTextContent(
-      "https://threefriends.example/auth/callback?next=%2Fen%2Freset-password&type=recovery",
+    expect(screen.getByTestId("password-reset-callback").textContent).toBe(
+      "https://threefriends.example/auth/callback?next=%2Fen%2Freset-password",
     );
   });
 
