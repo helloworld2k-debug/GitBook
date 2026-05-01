@@ -1,0 +1,192 @@
+import {
+  ArrowLeft,
+  BadgeCheck,
+  ClipboardList,
+  FileText,
+  Gauge,
+  Gift,
+  Home,
+  KeyRound,
+  Menu,
+  Package,
+  Users,
+} from "lucide-react";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { siteConfig, type Locale } from "@/config/site";
+import { Link } from "@/i18n/routing";
+
+type AdminShellLabels = {
+  auditLogs: string;
+  backToAdmin: string;
+  certificates: string;
+  dashboard: string;
+  donations: string;
+  language: string;
+  licenses: string;
+  menu: string;
+  releases: string;
+  returnToSite: string;
+  users: string;
+};
+
+type AdminShellProps = {
+  adminLabel: string;
+  children: React.ReactNode;
+  currentPath: string;
+  labels: AdminShellLabels;
+  locale: Locale;
+};
+
+const navIconClass = "size-4 shrink-0";
+
+function getAdminItems(labels: AdminShellLabels) {
+  return [
+    { href: "/admin", label: labels.dashboard, icon: Gauge },
+    { href: "/admin/donations", label: labels.donations, icon: Gift },
+    { href: "/admin/certificates", label: labels.certificates, icon: BadgeCheck },
+    { href: "/admin/releases", label: labels.releases, icon: Package },
+    { href: "/admin/licenses", label: labels.licenses, icon: KeyRound },
+    { href: "/admin/users", label: labels.users, icon: Users },
+    { href: "/admin/audit-logs", label: labels.auditLogs, icon: ClipboardList },
+  ];
+}
+
+function isActive(currentPath: string, href: string) {
+  return href === "/admin" ? currentPath === href : currentPath.startsWith(href);
+}
+
+function AdminNavList({ currentPath, items }: { currentPath: string; items: ReturnType<typeof getAdminItems> }) {
+  return (
+    <>
+      {items.map((item) => {
+        const Icon = item.icon;
+        const active = isActive(currentPath, item.href);
+        return (
+          <Link
+            className={`flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 ${
+              active ? "bg-slate-950 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+            }`}
+            href={item.href}
+            key={item.href}
+          >
+            <Icon aria-hidden="true" className={navIconClass} />
+            {item.label}
+          </Link>
+        );
+      })}
+    </>
+  );
+}
+
+export function AdminShell({ adminLabel, children, currentPath, labels, locale }: AdminShellProps) {
+  const items = getAdminItems(labels);
+
+  return (
+    <main className="min-h-dvh bg-slate-100 text-slate-950">
+      <div className="mx-auto flex min-h-dvh w-full max-w-[1800px]">
+        <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white lg:block" aria-label="Admin sidebar">
+          <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
+            <span className="flex size-10 items-center justify-center rounded-md bg-slate-950 text-sm font-semibold text-white">AI</span>
+            <div>
+              <p className="text-sm font-semibold text-slate-950">{siteConfig.name}</p>
+              <p className="text-xs text-slate-500">Admin Console</p>
+            </div>
+          </div>
+          <nav aria-label="Admin" className="space-y-1 px-3 py-4">
+            <AdminNavList currentPath={currentPath} items={items} />
+          </nav>
+        </aside>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
+            <div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6">
+              <div className="flex items-center gap-2">
+                <details className="group relative lg:hidden">
+                  <summary
+                    aria-label={labels.menu}
+                    className="inline-flex size-11 cursor-pointer list-none items-center justify-center rounded-md border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 [&::-webkit-details-marker]:hidden"
+                  >
+                    <Menu aria-hidden="true" className="size-5" />
+                  </summary>
+                  <nav
+                    aria-label="Admin mobile"
+                    className="absolute left-0 top-12 z-50 w-[min(82vw,20rem)] space-y-1 rounded-md border border-slate-200 bg-white p-2 shadow-xl"
+                  >
+                    <AdminNavList currentPath={currentPath} items={items} />
+                  </nav>
+                </details>
+                <Link
+                  className="inline-flex min-h-10 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                  href="/"
+                >
+                  <Home aria-hidden="true" className="size-4" />
+                  {labels.returnToSite}
+                </Link>
+              </div>
+              <div className="flex min-w-0 items-center gap-3">
+                <LanguageSwitcher currentLocale={locale} label={labels.language} variant="admin" />
+                <div className="hidden min-h-10 max-w-52 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 sm:flex">
+                  <FileText aria-hidden="true" className="size-4 shrink-0 text-slate-400" />
+                  <span className="truncate">{adminLabel}</span>
+                </div>
+              </div>
+            </div>
+          </header>
+          <div className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+type AdminPageHeaderProps = {
+  backHref?: string;
+  backLabel?: string;
+  description?: string;
+  eyebrow: string;
+  title: string;
+};
+
+export function AdminPageHeader({ backHref, backLabel, description, eyebrow, title }: AdminPageHeaderProps) {
+  return (
+    <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        {backHref && backLabel ? (
+          <Link
+            className="mb-4 inline-flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+            href={backHref}
+          >
+            <ArrowLeft aria-hidden="true" className="size-4" />
+            {backLabel}
+          </Link>
+        ) : null}
+        <p className="text-sm font-medium text-slate-500">{eyebrow}</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">{title}</h1>
+        {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+export function AdminCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <section className={`rounded-md border border-slate-200 bg-white shadow-sm ${className}`}>{children}</section>;
+}
+
+export function AdminTableShell({ children, empty }: { children: React.ReactNode; empty?: React.ReactNode }) {
+  return (
+    <div className="overflow-x-auto">
+      {empty ?? null}
+      {children}
+    </div>
+  );
+}
+
+export function AdminStatusBadge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "danger" | "neutral" | "success" | "warning" }) {
+  const toneClass = {
+    danger: "border-red-200 bg-red-50 text-red-700",
+    neutral: "border-slate-200 bg-slate-50 text-slate-700",
+    success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    warning: "border-amber-200 bg-amber-50 text-amber-700",
+  }[tone];
+
+  return <span className={`inline-flex min-h-7 items-center rounded-md border px-2 text-xs font-semibold ${toneClass}`}>{children}</span>;
+}

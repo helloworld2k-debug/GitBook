@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
+import { AdminCard, AdminPageHeader, AdminShell } from "@/components/admin/admin-shell";
 import { supportedLocales, type Locale } from "@/config/site";
+import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -42,6 +43,7 @@ export default async function AdminAuditLogsPage({ params }: AdminAuditLogsPageP
   setRequestLocale(locale);
   await requireAdmin(locale);
   const t = await getTranslations("admin");
+  const shellProps = await getAdminShellProps(locale as Locale, "/admin/audit-logs");
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -56,17 +58,16 @@ export default async function AdminAuditLogsPage({ params }: AdminAuditLogsPageP
   const logs = (data ?? []) as AuditLogRow[];
 
   return (
-    <>
-      <SiteHeader />
-      <main className="flex-1 bg-slate-50">
-        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <div>
-            <p className="text-sm font-medium text-slate-600">{t("auditLogs.eyebrow")}</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">
-              {t("auditLogs.title")}
-            </h1>
-          </div>
-          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+    <AdminShell {...shellProps}>
+      <section className="mx-auto max-w-7xl">
+          <AdminPageHeader
+            backHref="/admin"
+            backLabel={t("shell.backToAdmin")}
+            description={t("auditLogs.description")}
+            eyebrow={t("auditLogs.eyebrow")}
+            title={t("auditLogs.title")}
+          />
+          <AdminCard>
             {logs.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
@@ -104,9 +105,8 @@ export default async function AdminAuditLogsPage({ params }: AdminAuditLogsPageP
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("auditLogs.empty")}</p>
             )}
-          </section>
-        </section>
-      </main>
-    </>
+          </AdminCard>
+      </section>
+    </AdminShell>
   );
 }

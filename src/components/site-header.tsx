@@ -1,4 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
+import { ChevronRight, UserCircle } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { siteConfig, supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
@@ -29,7 +30,7 @@ export async function SiteHeader() {
   }
 
   return (
-    <header className="border-b border-cyan-300/10 bg-slate-950/90 backdrop-blur-xl">
+    <header className="relative z-50 border-b border-cyan-300/10 bg-slate-950/90 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between">
         <Link
           href="/"
@@ -47,12 +48,15 @@ export async function SiteHeader() {
           <Link href="/donate" className={navLinkClass}>
             {t("donate")}
           </Link>
-          <Link href="/dashboard" className={navLinkClass}>
-            {t("dashboard")}
-          </Link>
           {userLabel ? (
-            <Link href="/dashboard" className={navLinkClass}>
-              {userLabel}
+            <Link
+              href="/dashboard"
+              className="flex min-h-11 max-w-full items-center gap-2 rounded-md border border-cyan-300/15 bg-cyan-300/10 px-2 text-sm font-medium text-cyan-100 transition-colors hover:border-cyan-300/30 hover:text-cyan-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 sm:max-w-60"
+            >
+              <UserCircle aria-hidden="true" className="size-4 shrink-0" />
+              <span className="min-w-0 truncate">{userLabel}</span>
+              <span className="sr-only">{t("userMenu")}</span>
+              <ChevronRight aria-hidden="true" className="size-4 shrink-0" />
             </Link>
           ) : (
             <Link href="/login" className={navLinkClass}>

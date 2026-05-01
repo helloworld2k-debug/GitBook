@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
+import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { supportedLocales, type Locale } from "@/config/site";
+import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { unbindTrialMachine, updateUserAccountStatus, updateUserAdminRole } from "../actions";
@@ -38,6 +39,8 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
   setRequestLocale(locale);
   await requireAdmin(locale);
   const t = await getTranslations("admin.users");
+  const adminT = await getTranslations("admin");
+  const shellProps = await getAdminShellProps(locale as Locale, "/admin/users");
   const supabase = createSupabaseAdminClient();
   const [profilesResult, trialsResult, sessionsResult] = await Promise.all([
     supabase
@@ -76,16 +79,16 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
   }
 
   return (
-    <>
-      <SiteHeader />
-      <main className="flex-1 bg-slate-50">
-        <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-          <div>
-            <p className="text-sm font-medium text-slate-600">{t("eyebrow")}</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">{t("title")}</h1>
-          </div>
-
-          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+    <AdminShell {...shellProps}>
+        <section className="mx-auto max-w-7xl">
+          <AdminPageHeader
+            backHref="/admin"
+            backLabel={adminT("shell.backToAdmin")}
+            description={adminT("users.description")}
+            eyebrow={t("eyebrow")}
+            title={t("title")}
+          />
+          <AdminCard>
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
@@ -142,7 +145,9 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
                               {trials.map((trial) => (
                                 <div key={trial.id} className="rounded-md border border-slate-200 p-3">
                                   <p className="font-medium text-slate-950">
-                                    {trial.bound_at ? t("bound") : t("unbound")}
+                                    <AdminStatusBadge tone={trial.bound_at ? "success" : "warning"}>
+                                      {trial.bound_at ? t("bound") : t("unbound")}
+                                    </AdminStatusBadge>
                                   </p>
                                   <p className="mt-1 text-xs text-slate-600">
                                     {t("redeemed")}: {formatDate(trial.redeemed_at, locale)}
@@ -197,9 +202,8 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
                 </tbody>
               </table>
             </div>
-          </section>
+          </AdminCard>
         </section>
-      </main>
-    </>
+    </AdminShell>
   );
 }

@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
+import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { supportedLocales, type Locale } from "@/config/site";
+import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
@@ -54,6 +55,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
   setRequestLocale(locale);
   await requireAdmin(locale);
   const t = await getTranslations("admin");
+  const shellProps = await getAdminShellProps(locale as Locale, "/admin/licenses");
   const supabase = createSupabaseAdminClient();
 
   const [trialCodesResult, trialRedemptionsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
@@ -111,16 +113,17 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
   const leases = leasesResult.data ?? [];
 
   return (
-    <>
-      <SiteHeader />
-      <main className="flex-1 bg-slate-50">
-        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <div>
-            <p className="text-sm font-medium text-slate-600">{t("licenses.eyebrow")}</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">{t("licenses.title")}</h1>
-          </div>
+    <AdminShell {...shellProps}>
+        <section className="mx-auto max-w-7xl">
+          <AdminPageHeader
+            backHref="/admin"
+            backLabel={t("shell.backToAdmin")}
+            description={t("licenses.description")}
+            eyebrow={t("licenses.eyebrow")}
+            title={t("licenses.title")}
+          />
 
-          <section className="mt-6 rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+          <AdminCard className="p-5">
             <div>
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.createTrialTitle")}</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.createTrialDescription")}</p>
@@ -194,9 +197,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                 {t("licenses.createTrial")}
               </button>
             </form>
-          </section>
+          </AdminCard>
 
-          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+          <AdminCard className="mt-6">
             <div className="border-b border-slate-200 px-5 py-4">
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.trialCodesTitle")}</h2>
             </div>
@@ -291,7 +294,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                           {trialCode.redemption_count} / {trialCode.max_redemptions ?? t("licenses.unlimited")}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
-                          {trialCode.is_active ? t("licenses.active") : t("licenses.inactive")}
+                          <AdminStatusBadge tone={trialCode.is_active ? "success" : "neutral"}>
+                            {trialCode.is_active ? t("licenses.active") : t("licenses.inactive")}
+                          </AdminStatusBadge>
                         </td>
                         <td className="px-5 py-4">
                           <form action={setTrialCodeActive}>
@@ -314,9 +319,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyTrialCodes")}</p>
             )}
-          </section>
+          </AdminCard>
 
-          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+          <AdminCard className="mt-6">
             <div className="border-b border-slate-200 px-5 py-4">
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.trialRedemptionsTitle")}</h2>
             </div>
@@ -339,7 +344,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                           {shortId(redemption.user_id)}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
-                          {redemption.bound_at ? t("licenses.bound") : t("licenses.unbound")}
+                          <AdminStatusBadge tone={redemption.bound_at ? "success" : "warning"}>
+                            {redemption.bound_at ? t("licenses.bound") : t("licenses.unbound")}
+                          </AdminStatusBadge>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatDateTime(redemption.trial_valid_until, locale)}
@@ -356,9 +363,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyTrialRedemptions")}</p>
             )}
-          </section>
+          </AdminCard>
 
-          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+          <AdminCard className="mt-6">
             <div className="border-b border-slate-200 px-5 py-4">
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.entitlementsTitle")}</h2>
             </div>
@@ -396,9 +403,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyEntitlements")}</p>
             )}
-          </section>
+          </AdminCard>
 
-          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+          <AdminCard className="mt-6">
             <div className="border-b border-slate-200 px-5 py-4">
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.desktopSessionsTitle")}</h2>
             </div>
@@ -462,9 +469,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptySessions")}</p>
             )}
-          </section>
+          </AdminCard>
 
-          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+          <AdminCard className="mt-6">
             <div className="border-b border-slate-200 px-5 py-4">
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.cloudSyncLeasesTitle")}</h2>
             </div>
@@ -523,9 +530,8 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyLeases")}</p>
             )}
-          </section>
+          </AdminCard>
         </section>
-      </main>
-    </>
+    </AdminShell>
   );
 }

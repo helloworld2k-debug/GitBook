@@ -13,6 +13,10 @@ vi.mock("@/components/site-header", () => ({
   SiteHeader: () => <header>Site header</header>,
 }));
 
+vi.mock("@/components/language-switcher", () => ({
+  LanguageSwitcher: ({ currentLocale }: { currentLocale: string }) => <div>Language {currentLocale}</div>,
+}));
+
 vi.mock("@/i18n/routing", () => ({
   Link: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
     <a href={href} {...props}>
@@ -22,8 +26,16 @@ vi.mock("@/i18n/routing", () => ({
 }));
 
 vi.mock("next-intl/server", () => ({
+  getLocale: vi.fn(() => intlState.locale),
   getTranslations: vi.fn((namespace: "admin") => {
-    const messages = testMessages[intlState.locale as keyof typeof testMessages][namespace];
+    const value = namespace.split(".").reduce<unknown>((current, segment) => {
+      if (current && typeof current === "object" && segment in current) {
+        return (current as Record<string, unknown>)[segment];
+      }
+
+      return undefined;
+    }, testMessages[intlState.locale as keyof typeof testMessages]);
+    const messages = value as Record<string, unknown>;
 
     return (key: string, values?: Record<string, string>) => {
       const value = key.split(".").reduce<unknown>((current, segment) => {
@@ -70,6 +82,7 @@ const testMessages = {
       overview: {
         eyebrow: "Admin tools",
         title: "Admin",
+        description: "Manage donations, certificates, releases, licenses, users, and audit activity.",
         donationsTitle: "Donations",
         donationsDescription: "Review payment provider records, statuses, and transaction IDs.",
         certificatesTitle: "Certificates",
@@ -86,6 +99,7 @@ const testMessages = {
       donations: {
         eyebrow: "Admin",
         title: "Admin donations",
+        description: "Review payment records and add verified manual donations.",
         provider: "Provider",
         status: "Status",
         amount: "Amount",
@@ -114,6 +128,7 @@ const testMessages = {
       certificates: {
         eyebrow: "Admin",
         title: "Admin certificates",
+        description: "Review issued certificates and revoke records when needed.",
         certificateNumber: "Certificate number",
         type: "Type",
         status: "Status",
@@ -137,12 +152,26 @@ const testMessages = {
       auditLogs: {
         eyebrow: "Admin",
         title: "Audit logs",
+        description: "Review administrative changes and support actions.",
         action: "Action",
         target: "Target",
         reason: "Reason",
         createdAt: "Created",
         admin: "Admin",
         empty: "No audit logs found.",
+      },
+      shell: {
+        auditLogs: "Audit Logs",
+        backToAdmin: "Back to admin",
+        certificates: "Certificates",
+        dashboard: "Overview",
+        donations: "Donations",
+        language: "Language",
+        licenses: "Licenses",
+        menu: "Menu",
+        releases: "Releases",
+        returnToSite: "Return to site",
+        users: "Users",
       },
     },
   },
@@ -151,6 +180,7 @@ const testMessages = {
       overview: {
         eyebrow: "管理工具",
         title: "管理後台",
+        description: "管理捐贈、證書、版本、授權、使用者與稽核活動。",
         donationsTitle: "捐贈",
         donationsDescription: "檢視付款服務商記錄、狀態與交易 ID。",
         certificatesTitle: "證書",
@@ -167,6 +197,7 @@ const testMessages = {
       donations: {
         eyebrow: "管理後台",
         title: "管理捐贈",
+        description: "檢視付款記錄，並新增已驗證的人工捐贈。",
         provider: "服務商",
         status: "狀態",
         amount: "金額",
@@ -195,6 +226,7 @@ const testMessages = {
       certificates: {
         eyebrow: "管理後台",
         title: "管理證書",
+        description: "檢視已頒發證書，必要時撤銷記錄。",
         certificateNumber: "證書編號",
         type: "類型",
         status: "狀態",
@@ -218,12 +250,26 @@ const testMessages = {
       auditLogs: {
         eyebrow: "管理後台",
         title: "稽核紀錄",
+        description: "檢視管理變更與支援操作。",
         action: "操作",
         target: "目標",
         reason: "原因",
         createdAt: "建立時間",
         admin: "管理員",
         empty: "尚無稽核紀錄。",
+      },
+      shell: {
+        auditLogs: "稽核紀錄",
+        backToAdmin: "返回管理首頁",
+        certificates: "證書",
+        dashboard: "總覽",
+        donations: "捐贈",
+        language: "語言",
+        licenses: "授權",
+        menu: "選單",
+        releases: "版本發布",
+        returnToSite: "返回網站",
+        users: "使用者",
       },
     },
   },
@@ -232,6 +278,7 @@ const testMessages = {
       overview: {
         eyebrow: "管理ツール",
         title: "管理画面",
+        description: "寄付、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。",
         donationsTitle: "寄付",
         donationsDescription: "決済プロバイダーの記録、ステータス、取引 ID を確認します。",
         certificatesTitle: "証明書",
@@ -248,6 +295,7 @@ const testMessages = {
       donations: {
         eyebrow: "管理画面",
         title: "管理者向け寄付",
+        description: "決済記録を確認し、検証済みの手動寄付を追加します。",
         provider: "プロバイダー",
         status: "ステータス",
         amount: "金額",
@@ -276,6 +324,7 @@ const testMessages = {
       certificates: {
         eyebrow: "管理画面",
         title: "管理者向け証明書",
+        description: "発行済み証明書を確認し、必要に応じて取り消します。",
         certificateNumber: "証明書番号",
         type: "種類",
         status: "ステータス",
@@ -299,12 +348,26 @@ const testMessages = {
       auditLogs: {
         eyebrow: "管理画面",
         title: "監査ログ",
+        description: "管理変更とサポート操作を確認します。",
         action: "操作",
         target: "対象",
         reason: "理由",
         createdAt: "作成日時",
         admin: "管理者",
         empty: "監査ログはまだありません。",
+      },
+      shell: {
+        auditLogs: "監査ログ",
+        backToAdmin: "管理画面へ戻る",
+        certificates: "証明書",
+        dashboard: "概要",
+        donations: "寄付",
+        language: "言語",
+        licenses: "ライセンス",
+        menu: "メニュー",
+        releases: "リリース",
+        returnToSite: "サイトへ戻る",
+        users: "ユーザー",
       },
     },
   },
@@ -313,6 +376,7 @@ const testMessages = {
       overview: {
         eyebrow: "관리 도구",
         title: "관리",
+        description: "후원, 인증서, 릴리스, 라이선스, 사용자, 감사 활동을 관리합니다.",
         donationsTitle: "후원",
         donationsDescription: "결제 제공업체 기록, 상태, 거래 ID를 확인합니다.",
         certificatesTitle: "인증서",
@@ -329,6 +393,7 @@ const testMessages = {
       donations: {
         eyebrow: "관리",
         title: "관리자 후원",
+        description: "결제 기록을 확인하고 검증된 수동 후원을 추가합니다.",
         provider: "제공업체",
         status: "상태",
         amount: "금액",
@@ -357,6 +422,7 @@ const testMessages = {
       certificates: {
         eyebrow: "관리",
         title: "관리자 인증서",
+        description: "발급된 인증서를 확인하고 필요한 경우 폐기합니다.",
         certificateNumber: "인증서 번호",
         type: "유형",
         status: "상태",
@@ -380,12 +446,26 @@ const testMessages = {
       auditLogs: {
         eyebrow: "관리",
         title: "감사 로그",
+        description: "관리 변경과 지원 작업을 확인합니다.",
         action: "작업",
         target: "대상",
         reason: "사유",
         createdAt: "생성일",
         admin: "관리자",
         empty: "감사 로그가 없습니다.",
+      },
+      shell: {
+        auditLogs: "감사 로그",
+        backToAdmin: "관리 홈으로 돌아가기",
+        certificates: "인증서",
+        dashboard: "개요",
+        donations: "후원",
+        language: "언어",
+        licenses: "라이선스",
+        menu: "메뉴",
+        releases: "릴리스",
+        returnToSite: "사이트로 돌아가기",
+        users: "사용자",
       },
     },
   },
@@ -405,11 +485,11 @@ describe("admin pages", () => {
 
     expect(requireAdminMock).toHaveBeenCalledWith("en");
     expect(screen.getByRole("heading", { name: "Admin" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /donations/i })).toHaveAttribute("href", "/admin/donations");
-    expect(screen.getByRole("link", { name: /certificates/i })).toHaveAttribute("href", "/admin/certificates");
-    expect(screen.getByRole("link", { name: /releases/i })).toHaveAttribute("href", "/admin/releases");
-    expect(screen.getByRole("link", { name: /audit logs/i })).toHaveAttribute("href", "/admin/audit-logs");
-    expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
+    expect(screen.getAllByRole("link", { name: /donations/i }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /certificates/i }).some((link) => link.getAttribute("href") === "/admin/certificates")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /releases/i }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /audit logs/i }).some((link) => link.getAttribute("href") === "/admin/audit-logs")).toBe(true);
+    expect(createSupabaseServerClientMock).toHaveBeenCalled();
   });
 
   it("renders localized admin overview copy beyond English", async () => {
@@ -420,9 +500,9 @@ describe("admin pages", () => {
     expect(requireAdminMock).toHaveBeenCalledWith("zh-Hant");
     expect(screen.getByText("管理工具")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "管理後台" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /捐贈/ })).toHaveAttribute("href", "/admin/donations");
-    expect(screen.getByRole("link", { name: /版本發布/ })).toHaveAttribute("href", "/admin/releases");
-    expect(screen.getByRole("link", { name: /稽核紀錄/ })).toHaveAttribute("href", "/admin/audit-logs");
+    expect(screen.getAllByRole("link", { name: /捐贈/ }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /版本發布/ }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /稽核紀錄/ }).some((link) => link.getAttribute("href") === "/admin/audit-logs")).toBe(true);
     expect(screen.getByText("檢視付款服務商記錄、狀態與交易 ID。")).toBeInTheDocument();
   });
 
@@ -453,7 +533,7 @@ describe("admin pages", () => {
     render(element);
 
     expect(requireAdminMock).toHaveBeenCalledWith("zh-Hant");
-    expect(createSupabaseServerClientMock).toHaveBeenCalledTimes(1);
+    expect(createSupabaseServerClientMock).toHaveBeenCalled();
     expect(requireAdminMock.mock.invocationCallOrder[0]).toBeLessThan(
       createSupabaseServerClientMock.mock.invocationCallOrder[0],
     );
@@ -533,7 +613,7 @@ describe("admin pages", () => {
     render(element);
 
     expect(requireAdminMock).toHaveBeenCalledWith("ko");
-    expect(createSupabaseServerClientMock).toHaveBeenCalledTimes(1);
+    expect(createSupabaseServerClientMock).toHaveBeenCalled();
     expect(requireAdminMock.mock.invocationCallOrder[0]).toBeLessThan(
       createSupabaseServerClientMock.mock.invocationCallOrder[0],
     );
@@ -610,7 +690,7 @@ describe("admin pages", () => {
     render(element);
 
     expect(requireAdminMock).toHaveBeenCalledWith("en");
-    expect(createSupabaseServerClientMock).toHaveBeenCalledTimes(1);
+    expect(createSupabaseServerClientMock).toHaveBeenCalled();
     expect(requireAdminMock.mock.invocationCallOrder[0]).toBeLessThan(
       createSupabaseServerClientMock.mock.invocationCallOrder[0],
     );

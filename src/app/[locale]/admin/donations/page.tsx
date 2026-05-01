@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
+import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { supportedLocales, type Locale } from "@/config/site";
+import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { addManualDonation } from "../actions";
@@ -25,6 +26,13 @@ function formatAmount(amount: number, currency: string, locale: string) {
   return `${formattedAmount} ${currencyCode}`;
 }
 
+function getDonationStatusTone(status: DonationStatus) {
+  if (status === "paid") return "success";
+  if (status === "failed" || status === "refunded") return "danger";
+  if (status === "pending") return "warning";
+  return "neutral";
+}
+
 export default async function AdminDonationsPage({ params }: AdminDonationsPageProps) {
   const { locale } = await params;
 
@@ -35,6 +43,7 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
   setRequestLocale(locale);
   await requireAdmin(locale);
   const t = await getTranslations("admin");
+  const shellProps = await getAdminShellProps(locale as Locale, "/admin/donations");
 
   const supabase = await createSupabaseServerClient();
   const { data: donations, error } = await supabase
@@ -47,15 +56,16 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
   }
 
   return (
-    <>
-      <SiteHeader />
-      <main className="flex-1 bg-slate-50">
-        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <div>
-            <p className="text-sm font-medium text-slate-600">{t("donations.eyebrow")}</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">{t("donations.title")}</h1>
-          </div>
-          <section className="mt-6 rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+    <AdminShell {...shellProps}>
+      <section className="mx-auto max-w-7xl">
+          <AdminPageHeader
+            backHref="/admin"
+            backLabel={t("shell.backToAdmin")}
+            description={t("donations.description")}
+            eyebrow={t("donations.eyebrow")}
+            title={t("donations.title")}
+          />
+          <AdminCard className="p-5">
             <div>
               <h2 className="text-base font-semibold text-slate-950">{t("donations.manualEntryTitle")}</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">{t("donations.manualEntryDescription")}</p>
@@ -105,8 +115,8 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
                 {t("donations.submitManualDonation")}
               </button>
             </form>
-          </section>
-          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+          </AdminCard>
+          <AdminCard className="mt-6">
             {donations && donations.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
@@ -125,7 +135,9 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
                           {t(`donations.providers.${donation.provider as DonationProvider}`)}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
-                          {t(`donations.statuses.${donation.status as DonationStatus}`)}
+                          <AdminStatusBadge tone={getDonationStatusTone(donation.status as DonationStatus)}>
+                            {t(`donations.statuses.${donation.status as DonationStatus}`)}
+                          </AdminStatusBadge>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatAmount(donation.amount, donation.currency, locale)}
@@ -141,9 +153,8 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("donations.empty")}</p>
             )}
-          </section>
-        </section>
-      </main>
-    </>
+          </AdminCard>
+      </section>
+    </AdminShell>
   );
 }

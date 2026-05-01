@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type OAuthProvider = "google" | "github" | "apple";
@@ -43,7 +43,6 @@ export function LoginForm({ callbackUrl, messages, nextPath }: LoginFormProps) {
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [activeProvider, setActiveProvider] = useState<OAuthProvider | null>(null);
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
   async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,6 +52,14 @@ export function LoginForm({ callbackUrl, messages, nextPath }: LoginFormProps) {
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
+    let supabase: ReturnType<typeof createSupabaseBrowserClient>;
+
+    try {
+      supabase = createSupabaseBrowserClient();
+    } catch {
+      setStatus("error");
+      return;
+    }
 
     if (mode === "register") {
       const confirmPassword = String(formData.get("confirm-password") ?? "");
@@ -90,6 +97,15 @@ export function LoginForm({ callbackUrl, messages, nextPath }: LoginFormProps) {
   async function handleProviderSignIn(provider: OAuthProvider) {
     setStatus("submitting");
     setActiveProvider(provider);
+    let supabase: ReturnType<typeof createSupabaseBrowserClient>;
+
+    try {
+      supabase = createSupabaseBrowserClient();
+    } catch {
+      setStatus("oauth-error");
+      setActiveProvider(null);
+      return;
+    }
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider,

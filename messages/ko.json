@@ -4,7 +4,8 @@
     "donate": "후원",
     "dashboard": "대시보드",
     "signIn": "로그인",
-    "language": "언어"
+    "language": "언어",
+    "userMenu": "대시보드 열기"
   },
   "login": {
     "eyebrow": "보안 접근",
@@ -137,7 +138,8 @@
       "licensesTitle": "라이선스",
       "licensesDescription": "체험 코드, 권한, 데스크톱 클라우드 동기화 접속을 관리합니다.",
       "usersTitle": "사용자",
-      "usersDescription": "사용자 상태, 체험 연결, 데스크톱 기기, 운영자 역할을 확인합니다."
+      "usersDescription": "사용자 상태, 체험 연결, 데스크톱 기기, 운영자 역할을 확인합니다.",
+      "description": "후원, 인증서, 릴리스, 라이선스, 사용자, 감사 활동을 관리합니다."
     },
     "donations": {
       "eyebrow": "관리",
@@ -165,7 +167,8 @@
         "cancelled": "취소됨",
         "failed": "실패",
         "refunded": "환불됨"
-      }
+      },
+      "description": "결제 기록을 확인하고 검증된 수동 후원을 추가합니다."
     },
     "certificates": {
       "eyebrow": "관리",
@@ -188,7 +191,8 @@
         "active": "활성",
         "revoked": "폐기됨",
         "generation_failed": "생성 실패"
-      }
+      },
+      "description": "발급된 인증서를 확인하고 필요한 경우 폐기합니다."
     },
     "auditLogs": {
       "eyebrow": "관리",
@@ -198,7 +202,8 @@
       "reason": "사유",
       "createdAt": "생성일",
       "admin": "관리자",
-      "empty": "감사 로그가 없습니다."
+      "empty": "감사 로그가 없습니다.",
+      "description": "관리 변경과 지원 작업을 확인합니다."
     },
     "releases": {
       "eyebrow": "관리자",
@@ -214,7 +219,8 @@
       "unpublish": "게시 해제",
       "create": "릴리스 만들기",
       "assets": "파일",
-      "empty": "릴리스가 없습니다."
+      "empty": "릴리스가 없습니다.",
+      "description": "설치 파일을 업로드하고 공개 릴리스 상태를 관리합니다."
     },
     "licenses": {
       "eyebrow": "관리",
@@ -265,7 +271,8 @@
       "machine": "머신",
       "bound": "연결됨",
       "unbound": "미연결",
-      "emptyTrialRedemptions": "체험 사용 기록이 없습니다."
+      "emptyTrialRedemptions": "체험 사용 기록이 없습니다.",
+      "description": "체험 코드, 체험 연결, 권한, 데스크톱 세션, 클라우드 동기화 임대를 관리합니다."
     },
     "users": {
       "eyebrow": "관리",
@@ -293,7 +300,21 @@
       "statuses": {
         "active": "활성",
         "disabled": "비활성"
-      }
+      },
+      "description": "계정 역할, 상태, 체험 연결, 데스크톱 기기를 확인합니다."
+    },
+    "shell": {
+      "auditLogs": "감사 로그",
+      "backToAdmin": "관리 홈으로 돌아가기",
+      "certificates": "인증서",
+      "dashboard": "개요",
+      "donations": "후원",
+      "language": "언어",
+      "licenses": "라이선스",
+      "menu": "메뉴",
+      "releases": "릴리스",
+      "returnToSite": "사이트로 돌아가기",
+      "users": "사용자"
     }
   },
   "certificate": {

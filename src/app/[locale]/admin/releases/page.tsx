@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
+import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { supportedLocales, type Locale } from "@/config/site";
+import { getAdminShellProps } from "@/lib/admin/shell";
 import { SOFTWARE_RELEASES_BUCKET, type ReleaseClient, type SoftwareRelease } from "@/lib/releases/software-releases";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -35,6 +36,7 @@ export default async function AdminReleasesPage({ params }: AdminReleasesPagePro
   setRequestLocale(locale);
   await requireAdmin(locale);
   const t = await getTranslations("admin");
+  const shellProps = await getAdminShellProps(locale as Locale, "/admin/releases");
   const createRelease = createSoftwareRelease;
   const togglePublished = setSoftwareReleasePublished;
   let releases: AdminReleaseRow[] = [];
@@ -72,14 +74,16 @@ export default async function AdminReleasesPage({ params }: AdminReleasesPagePro
   }
 
   return (
-    <>
-      <SiteHeader />
-      <main className="flex-1 bg-slate-50">
-        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <p className="text-sm font-medium text-slate-600">{t("releases.eyebrow")}</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">{t("releases.title")}</h1>
-
-          <section className="mt-6 rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+    <AdminShell {...shellProps}>
+        <section className="mx-auto max-w-7xl">
+          <AdminPageHeader
+            backHref="/admin"
+            backLabel={t("shell.backToAdmin")}
+            description={t("releases.description")}
+            eyebrow={t("releases.eyebrow")}
+            title={t("releases.title")}
+          />
+          <AdminCard className="p-5">
             <h2 className="text-lg font-semibold tracking-normal text-slate-950">{t("releases.createTitle")}</h2>
             <form action={createRelease} className="mt-5 grid gap-4">
               <input name="locale" type="hidden" value={locale} />
@@ -120,9 +124,9 @@ export default async function AdminReleasesPage({ params }: AdminReleasesPagePro
                 {t("releases.create")}
               </button>
             </form>
-          </section>
+          </AdminCard>
 
-          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+          <AdminCard className="mt-6">
             {releases.length > 0 ? (
               <ul className="divide-y divide-slate-200">
                 {releases.map((release) => (
@@ -131,9 +135,9 @@ export default async function AdminReleasesPage({ params }: AdminReleasesPagePro
                       <div>
                         <div className="flex flex-wrap items-center gap-3">
                           <h2 className="text-lg font-semibold text-slate-950">{release.version}</h2>
-                          <span className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600">
+                          <AdminStatusBadge tone={release.isPublished ? "success" : "neutral"}>
                             {release.isPublished ? t("releases.published") : t("releases.unpublish")}
-                          </span>
+                          </AdminStatusBadge>
                         </div>
                         <p className="mt-1 text-sm text-slate-600">{formatReleaseDate(release.releasedAt, locale)}</p>
                         {release.notes ? <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">{release.notes}</p> : null}
@@ -161,9 +165,8 @@ export default async function AdminReleasesPage({ params }: AdminReleasesPagePro
             ) : (
               <p className="p-5 text-sm text-slate-600">{t("releases.empty")}</p>
             )}
-          </section>
+          </AdminCard>
         </section>
-      </main>
-    </>
+    </AdminShell>
   );
 }

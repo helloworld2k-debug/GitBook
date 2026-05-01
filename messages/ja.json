@@ -4,7 +4,8 @@
     "donate": "寄付",
     "dashboard": "ダッシュボード",
     "signIn": "サインイン",
-    "language": "言語"
+    "language": "言語",
+    "userMenu": "ダッシュボードを開く"
   },
   "login": {
     "eyebrow": "安全なアクセス",
@@ -137,7 +138,8 @@
       "licensesTitle": "ライセンス",
       "licensesDescription": "試用コード、権限、デスクトップのクラウド同期アクセスを管理します。",
       "usersTitle": "ユーザー",
-      "usersDescription": "ユーザー状態、トライアル紐づけ、デスクトップデバイス、運用担当ロールを確認します。"
+      "usersDescription": "ユーザー状態、トライアル紐づけ、デスクトップデバイス、運用担当ロールを確認します。",
+      "description": "寄付、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。"
     },
     "donations": {
       "eyebrow": "管理画面",
@@ -165,7 +167,8 @@
         "cancelled": "キャンセル済み",
         "failed": "失敗",
         "refunded": "返金済み"
-      }
+      },
+      "description": "決済記録を確認し、検証済みの手動寄付を追加します。"
     },
     "certificates": {
       "eyebrow": "管理画面",
@@ -188,7 +191,8 @@
         "active": "有効",
         "revoked": "取り消し済み",
         "generation_failed": "生成失敗"
-      }
+      },
+      "description": "発行済み証明書を確認し、必要に応じて取り消します。"
     },
     "auditLogs": {
       "eyebrow": "管理画面",
@@ -198,7 +202,8 @@
       "reason": "理由",
       "createdAt": "作成日時",
       "admin": "管理者",
-      "empty": "監査ログはまだありません。"
+      "empty": "監査ログはまだありません。",
+      "description": "管理変更とサポート操作を確認します。"
     },
     "releases": {
       "eyebrow": "管理者",
@@ -214,7 +219,8 @@
       "unpublish": "非公開",
       "create": "作成",
       "assets": "ファイル",
-      "empty": "リリースはありません。"
+      "empty": "リリースはありません。",
+      "description": "インストーラーをアップロードし、公開状態を管理します。"
     },
     "licenses": {
       "eyebrow": "管理者",
@@ -265,7 +271,8 @@
       "machine": "マシン",
       "bound": "紐づけ済み",
       "unbound": "未紐づけ",
-      "emptyTrialRedemptions": "トライアル適用履歴はありません。"
+      "emptyTrialRedemptions": "トライアル適用履歴はありません。",
+      "description": "試用コード、試用紐付け、権限、デスクトップセッション、クラウド同期リースを管理します。"
     },
     "users": {
       "eyebrow": "管理",
@@ -293,7 +300,21 @@
       "statuses": {
         "active": "有効",
         "disabled": "無効"
-      }
+      },
+      "description": "アカウント権限、状態、トライアル紐付け、デスクトップ端末を確認します。"
+    },
+    "shell": {
+      "auditLogs": "監査ログ",
+      "backToAdmin": "管理画面へ戻る",
+      "certificates": "証明書",
+      "dashboard": "概要",
+      "donations": "寄付",
+      "language": "言語",
+      "licenses": "ライセンス",
+      "menu": "メニュー",
+      "releases": "リリース",
+      "returnToSite": "サイトへ戻る",
+      "users": "ユーザー"
     }
   },
   "certificate": {

@@ -4,7 +4,8 @@
     "donate": "Donate",
     "dashboard": "Dashboard",
     "signIn": "Sign in",
-    "language": "Language"
+    "language": "Language",
+    "userMenu": "Open dashboard"
   },
   "login": {
     "eyebrow": "Secure access",
@@ -145,7 +146,8 @@
       "usersTitle": "Users",
       "usersDescription": "Review user status, trial bindings, desktop devices, and operator roles.",
       "auditLogsTitle": "Audit logs",
-      "auditLogsDescription": "Review admin corrections, revocations, and reasons."
+      "auditLogsDescription": "Review admin corrections, revocations, and reasons.",
+      "description": "Manage donations, certificates, releases, licenses, users, and audit activity."
     },
     "releases": {
       "eyebrow": "Admin",
@@ -161,7 +163,8 @@
       "unpublish": "Unpublish",
       "create": "Create release",
       "assets": "Assets",
-      "empty": "No releases found."
+      "empty": "No releases found.",
+      "description": "Upload installers and control public release availability."
     },
     "donations": {
       "eyebrow": "Admin",
@@ -189,7 +192,8 @@
         "cancelled": "Cancelled",
         "failed": "Failed",
         "refunded": "Refunded"
-      }
+      },
+      "description": "Review payment records and add verified manual donations."
     },
     "certificates": {
       "eyebrow": "Admin",
@@ -212,7 +216,8 @@
         "active": "Active",
         "revoked": "Revoked",
         "generation_failed": "Generation failed"
-      }
+      },
+      "description": "Review issued certificates and revoke records when needed."
     },
     "auditLogs": {
       "eyebrow": "Admin",
@@ -222,7 +227,8 @@
       "reason": "Reason",
       "createdAt": "Created",
       "admin": "Admin",
-      "empty": "No audit logs found."
+      "empty": "No audit logs found.",
+      "description": "Review administrative changes and support actions."
     },
     "licenses": {
       "eyebrow": "Admin",
@@ -273,7 +279,8 @@
       "machine": "Machine",
       "bound": "Bound",
       "unbound": "Unbound",
-      "emptyTrialRedemptions": "No trial redemptions found."
+      "emptyTrialRedemptions": "No trial redemptions found.",
+      "description": "Manage trial codes, trial bindings, entitlements, desktop sessions, and cloud sync leases."
     },
     "users": {
       "eyebrow": "Admin",
@@ -301,7 +308,21 @@
       "statuses": {
         "active": "Active",
         "disabled": "Disabled"
-      }
+      },
+      "description": "Review account roles, statuses, trial bindings, and desktop devices."
+    },
+    "shell": {
+      "auditLogs": "Audit Logs",
+      "backToAdmin": "Back to admin",
+      "certificates": "Certificates",
+      "dashboard": "Overview",
+      "donations": "Donations",
+      "language": "Language",
+      "licenses": "Licenses",
+      "menu": "Menu",
+      "releases": "Releases",
+      "returnToSite": "Return to site",
+      "users": "Users"
     }
   },
   "certificate": {

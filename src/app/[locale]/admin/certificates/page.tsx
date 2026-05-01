@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
+import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { supportedLocales, type Locale } from "@/config/site";
+import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revokeCertificate } from "../actions";
@@ -27,6 +28,12 @@ function formatIssuedAt(value: string | null, locale: string, fallback: string) 
   }).format(new Date(value));
 }
 
+function getCertificateStatusTone(status: CertificateStatus) {
+  if (status === "active") return "success";
+  if (status === "revoked") return "danger";
+  return "warning";
+}
+
 export default async function AdminCertificatesPage({ params }: AdminCertificatesPageProps) {
   const { locale } = await params;
 
@@ -37,6 +44,7 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
   setRequestLocale(locale);
   await requireAdmin(locale);
   const t = await getTranslations("admin");
+  const shellProps = await getAdminShellProps(locale as Locale, "/admin/certificates");
 
   const supabase = await createSupabaseServerClient();
   const { data: certificates, error } = await supabase
@@ -49,17 +57,16 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
   }
 
   return (
-    <>
-      <SiteHeader />
-      <main className="flex-1 bg-slate-50">
-        <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-          <div>
-            <p className="text-sm font-medium text-slate-600">{t("certificates.eyebrow")}</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">
-              {t("certificates.title")}
-            </h1>
-          </div>
-          <section className="mt-6 rounded-md border border-slate-200 bg-white shadow-sm">
+    <AdminShell {...shellProps}>
+      <section className="mx-auto max-w-7xl">
+          <AdminPageHeader
+            backHref="/admin"
+            backLabel={t("shell.backToAdmin")}
+            description={t("certificates.description")}
+            eyebrow={t("certificates.eyebrow")}
+            title={t("certificates.title")}
+          />
+          <AdminCard>
             {certificates && certificates.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
@@ -82,7 +89,9 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
                           {t(`certificates.types.${certificate.type as CertificateType}`)}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
-                          {t(`certificates.statuses.${certificate.status as CertificateStatus}`)}
+                          <AdminStatusBadge tone={getCertificateStatusTone(certificate.status as CertificateStatus)}>
+                            {t(`certificates.statuses.${certificate.status as CertificateStatus}`)}
+                          </AdminStatusBadge>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatIssuedAt(certificate.issued_at, locale, t("certificates.notIssued"))}
@@ -123,9 +132,8 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("certificates.empty")}</p>
             )}
-          </section>
-        </section>
-      </main>
-    </>
+          </AdminCard>
+      </section>
+    </AdminShell>
   );
 }

@@ -4,7 +4,8 @@
     "donate": "贊助",
     "dashboard": "儀表板",
     "signIn": "登入",
-    "language": "語言"
+    "language": "語言",
+    "userMenu": "開啟儀表板"
   },
   "login": {
     "eyebrow": "安全存取",
@@ -137,7 +138,8 @@
       "licensesTitle": "授權",
       "licensesDescription": "建立試用兌換碼、檢視權益，並撤銷桌面雲端同步存取。",
       "usersTitle": "使用者",
-      "usersDescription": "檢視使用者狀態、試用綁定、桌面裝置與營運人員角色。"
+      "usersDescription": "檢視使用者狀態、試用綁定、桌面裝置與營運人員角色。",
+      "description": "管理捐贈、證書、版本、授權、使用者與稽核活動。"
     },
     "donations": {
       "eyebrow": "管理後台",
@@ -165,7 +167,8 @@
         "cancelled": "已取消",
         "failed": "失敗",
         "refunded": "已退款"
-      }
+      },
+      "description": "檢視付款記錄，並新增已驗證的人工捐贈。"
     },
     "certificates": {
       "eyebrow": "管理後台",
@@ -188,7 +191,8 @@
         "active": "有效",
         "revoked": "已撤銷",
         "generation_failed": "產生失敗"
-      }
+      },
+      "description": "檢視已頒發證書，必要時撤銷記錄。"
     },
     "auditLogs": {
       "eyebrow": "管理後台",
@@ -198,7 +202,8 @@
       "reason": "原因",
       "createdAt": "建立時間",
       "admin": "管理員",
-      "empty": "尚無稽核紀錄。"
+      "empty": "尚無稽核紀錄。",
+      "description": "檢視管理變更與支援操作。"
     },
     "releases": {
       "eyebrow": "管理員",
@@ -214,7 +219,8 @@
       "unpublish": "下架",
       "create": "建立版本",
       "assets": "檔案",
-      "empty": "尚無版本。"
+      "empty": "尚無版本。",
+      "description": "上傳安裝包並控制公開版本狀態。"
     },
     "licenses": {
       "eyebrow": "管理後台",
@@ -265,7 +271,8 @@
       "machine": "機器",
       "bound": "已綁定",
       "unbound": "未綁定",
-      "emptyTrialRedemptions": "尚無試用兌換記錄。"
+      "emptyTrialRedemptions": "尚無試用兌換記錄。",
+      "description": "管理試用碼、試用綁定、權益、桌面工作階段與雲端同步租約。"
     },
     "users": {
       "eyebrow": "管理後台",
@@ -293,7 +300,21 @@
       "statuses": {
         "active": "正常",
         "disabled": "停用"
-      }
+      },
+      "description": "檢視帳號角色、狀態、試用綁定與桌面裝置。"
+    },
+    "shell": {
+      "auditLogs": "稽核紀錄",
+      "backToAdmin": "返回管理首頁",
+      "certificates": "證書",
+      "dashboard": "總覽",
+      "donations": "捐贈",
+      "language": "語言",
+      "licenses": "授權",
+      "menu": "選單",
+      "releases": "版本發布",
+      "returnToSite": "返回網站",
+      "users": "使用者"
     }
   },
   "certificate": {
