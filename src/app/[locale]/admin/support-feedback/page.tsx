@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { supportedLocales, type Locale } from "@/config/site";
+import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
@@ -54,7 +55,7 @@ export default async function AdminSupportFeedbackPage({ params }: AdminSupportF
         <AdminCard>
           {feedback && feedback.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
+                <table className="min-w-[980px] text-left text-sm">
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                   <tr>
                     <th className="px-5 py-3">{t("supportFeedback.subject")}</th>
@@ -68,12 +69,18 @@ export default async function AdminSupportFeedbackPage({ params }: AdminSupportF
                 <tbody className="divide-y divide-slate-200">
                   {feedback.map((item) => (
                     <tr key={item.id}>
-                      <td className="min-w-56 px-5 py-4 font-medium text-slate-950">{item.subject}</td>
+                      <td className="min-w-56 px-5 py-4 font-medium text-slate-950">
+                        <Link className="underline-offset-4 hover:underline" href={`/admin/support-feedback/${item.id}`}>
+                          {item.subject}
+                        </Link>
+                      </td>
                       <td className="min-w-56 px-5 py-4 text-slate-700">
                         <span className="block">{item.email ?? "-"}</span>
                         <span className="block text-xs text-slate-500">{item.contact ?? "-"}</span>
                       </td>
-                      <td className="min-w-80 px-5 py-4 text-slate-700">{item.message}</td>
+                      <td className="max-w-md px-5 py-4 text-slate-700">
+                        <p className="line-clamp-3 whitespace-pre-wrap break-words">{item.message}</p>
+                      </td>
                       <td className="whitespace-nowrap px-5 py-4">
                         <AdminStatusBadge tone={statusTone(item.status as FeedbackStatus)}>
                           {t(`supportFeedback.statuses.${item.status as FeedbackStatus}`)}
@@ -91,10 +98,13 @@ export default async function AdminSupportFeedbackPage({ params }: AdminSupportF
                             <option value="reviewing">{t("supportFeedback.statuses.reviewing")}</option>
                             <option value="closed">{t("supportFeedback.statuses.closed")}</option>
                           </select>
-                          <button className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" type="submit">
+                          <button className="min-h-10 whitespace-nowrap rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" type="submit">
                             {t("supportFeedback.save")}
                           </button>
                         </form>
+                        <Link className="mt-2 inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/support-feedback/${item.id}`}>
+                          {t("supportFeedback.view")}
+                        </Link>
                       </td>
                     </tr>
                   ))}

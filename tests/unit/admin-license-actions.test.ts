@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createTrialCode,
+  generateLicenseCodeBatch,
   revokeCloudSyncLease,
   revokeDesktopSession,
   setTrialCodeActive,
@@ -60,8 +61,6 @@ describe("admin license actions", () => {
     formData.set("label", "Spring 2026 launch trial");
     formData.set("trial_days", "3");
     formData.set("max_redemptions", "100");
-    formData.set("starts_at", "2026-05-01T00:00:00.000Z");
-    formData.set("ends_at", "2026-06-01T00:00:00.000Z");
 
     await createTrialCode(formData);
 
@@ -72,7 +71,6 @@ describe("admin license actions", () => {
       code_mask: "ABCD-****-****-MNOP",
       created_by: "admin-1",
       duration_kind: "trial_3_day",
-      ends_at: "2026-06-01T00:00:00.000Z",
       encrypted_code_algorithm: "aes-256-gcm",
       encrypted_code_ciphertext: expect.any(String),
       encrypted_code_iv: expect.any(String),
@@ -81,25 +79,12 @@ describe("admin license actions", () => {
       is_active: true,
       label: "Spring 2026 launch trial",
       max_redemptions: 100,
-      starts_at: "2026-05-01T00:00:00.000Z",
       trial_days: 3,
     });
+    expect(inserted).not.toHaveProperty("starts_at");
+    expect(inserted).not.toHaveProperty("ends_at");
     expect(JSON.stringify(inserted)).not.toContain("ABCD-EFGH-IJKL-MNOP");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/licenses");
-  });
-
-  it("rejects invalid trial code windows before writing", async () => {
-    const formData = new FormData();
-    formData.set("locale", "en");
-    formData.set("code", "ABCD-EFGH-IJKL-MNOP");
-    formData.set("label", "Spring 2026 launch trial");
-    formData.set("trial_days", "3");
-    formData.set("starts_at", "2026-06-01T00:00:00.000Z");
-    formData.set("ends_at", "2026-05-01T00:00:00.000Z");
-
-    await expect(createTrialCode(formData)).rejects.toThrow("End date must be after start date");
-
-    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
   it("rejects trial code durations over 365 days before writing", async () => {
@@ -108,12 +93,53 @@ describe("admin license actions", () => {
     formData.set("code", "ABCD-EFGH-IJKL-MNOP");
     formData.set("label", "Spring 2026 launch trial");
     formData.set("trial_days", "366");
-    formData.set("starts_at", "2026-05-01T00:00:00.000Z");
-    formData.set("ends_at", "2026-06-01T00:00:00.000Z");
 
     await expect(createTrialCode(formData)).rejects.toThrow("Trial days must be between 1 and 365");
 
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
+  });
+
+  it("batch generates license codes without activation windows", async () => {
+    const insert = vi.fn<(payload: unknown) => MutationResult>(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") {
+        return { insert };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: vi.fn(async () => ({ error: null })) };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("duration_kind", "month_1");
+    formData.set("quantity", "2");
+    formData.set("label", "May sponsor codes");
+
+    await generateLicenseCodeBatch(formData);
+
+    const inserted = insert.mock.calls[0]?.[0];
+    expect(inserted).toEqual([
+      expect.objectContaining({
+        duration_kind: "month_1",
+        label: "May sponsor codes",
+        max_redemptions: 1,
+        trial_days: 30,
+      }),
+      expect.objectContaining({
+        duration_kind: "month_1",
+        label: "May sponsor codes",
+        max_redemptions: 1,
+        trial_days: 30,
+      }),
+    ]);
+    expect(JSON.stringify(inserted)).not.toContain("starts_at");
+    expect(JSON.stringify(inserted)).not.toContain("ends_at");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/licenses");
   });
 
   it("toggles trial code active state", async () => {
@@ -141,7 +167,7 @@ describe("admin license actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/licenses");
   });
 
-  it("updates trial code labels, limits, and active periods", async () => {
+  it("updates trial code labels and redemption limits without activation windows", async () => {
     const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
     const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
     const from = vi.fn((table: string) => {
@@ -159,16 +185,12 @@ describe("admin license actions", () => {
     formData.set("label", "Spring maintenance trial");
     formData.set("trial_days", "3");
     formData.set("max_redemptions", "");
-    formData.set("starts_at", "2026-05-01T00:00:00.000Z");
-    formData.set("ends_at", "2026-07-01T00:00:00.000Z");
 
     await updateTrialCode(formData);
 
     expect(update).toHaveBeenCalledWith({
-      ends_at: "2026-07-01T00:00:00.000Z",
       label: "Spring maintenance trial",
       max_redemptions: null,
-      starts_at: "2026-05-01T00:00:00.000Z",
       trial_days: 3,
       updated_at: expect.any(String),
     });

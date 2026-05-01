@@ -29,15 +29,12 @@ function formatDateTime(value: string, locale: string) {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    second: "2-digit",
   }).format(new Date(value));
 }
 
 function formatOptionalDateTime(value: string | null, locale: string, fallback: string) {
   return value ? formatDateTime(value, locale) : fallback;
-}
-
-function formatDateTimeInput(value: string) {
-  return value.slice(0, 16);
 }
 
 function shortId(value: string) {
@@ -64,7 +61,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
   const [trialCodesResult, trialRedemptionsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
     supabase
       .from("trial_codes")
-      .select("id,label,trial_days,duration_kind,code_mask,batch_id,starts_at,ends_at,max_redemptions,redemption_count,is_active,created_at")
+      .select("id,label,trial_days,duration_kind,code_mask,batch_id,max_redemptions,redemption_count,is_active,created_at")
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -153,7 +150,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                   />
                 </label>
               </div>
-              <div className="grid gap-4 md:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("licenses.trialDays")}
                   <input
@@ -175,27 +172,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                     type="number"
                   />
                 </label>
-                <label className="grid gap-1 text-sm font-medium text-slate-700">
-                  {t("licenses.startsAt")}
-                  <input
-                    className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
-                    name="starts_at"
-                    required
-                    type="datetime-local"
-                  />
-                </label>
-                <label className="grid gap-1 text-sm font-medium text-slate-700">
-                  {t("licenses.endsAt")}
-                  <input
-                    className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
-                    name="ends_at"
-                    required
-                    type="datetime-local"
-                  />
-                </label>
               </div>
               <button
-                className="inline-flex min-h-11 w-fit items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 sm:w-fit"
                 type="submit"
               >
                 {t("licenses.createTrial")}
@@ -210,7 +189,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             </div>
             <form action={generateLicenseCodeBatch} className="mt-4 grid gap-4">
               <input name="locale" type="hidden" value={locale} />
-              <div className="grid gap-4 md:grid-cols-5">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("licenses.duration")}
                   <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" name="duration_kind" defaultValue="month_1">
@@ -227,16 +206,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                   {t("licenses.label")}
                   <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" maxLength={120} name="label" required />
                 </label>
-                <label className="grid gap-1 text-sm font-medium text-slate-700">
-                  {t("licenses.startsAt")}
-                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" name="starts_at" required type="datetime-local" />
-                </label>
-                <label className="grid gap-1 text-sm font-medium text-slate-700">
-                  {t("licenses.endsAt")}
-                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" name="ends_at" required type="datetime-local" />
-                </label>
               </div>
-              <button className="inline-flex min-h-11 w-fit items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" type="submit">
+              <p className="text-sm leading-6 text-slate-600">{t("licenses.activationStartsOnRedeem")}</p>
+              <button className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white sm:w-fit" type="submit">
                 {t("licenses.generateBatch")}
               </button>
             </form>
@@ -247,7 +219,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.bulkActionsTitle")}</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.bulkActionsDescription")}</p>
             </div>
-            <form action={bulkAdjustLicenseDuration} className="mt-4 grid gap-3 md:grid-cols-[1fr_12rem_1fr_auto]">
+            <form action={bulkAdjustLicenseDuration} className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_minmax(0,1fr)_auto]">
               <input name="locale" type="hidden" value={locale} />
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("licenses.selectedIds")}
@@ -271,7 +243,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                 {t("licenses.adjustDuration")}
               </button>
             </form>
-            <form action={bulkDeleteLicenseCodes} className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+            <form action={bulkDeleteLicenseCodes} className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
               <input name="locale" type="hidden" value={locale} />
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("licenses.selectedIds")}
@@ -299,13 +271,13 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             </div>
             {trialCodes.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+                <table className="min-w-[1000px] text-left text-sm">
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("licenses.label")}</th>
                       <th className="px-5 py-3">{t("licenses.code")}</th>
                       <th className="px-5 py-3">{t("licenses.duration")}</th>
-                      <th className="px-5 py-3">{t("licenses.period")}</th>
+                      <th className="px-5 py-3">{t("licenses.generatedAt")}</th>
                       <th className="px-5 py-3">{t("licenses.redemptions")}</th>
                       <th className="px-5 py-3">{t("licenses.status")}</th>
                       <th className="px-5 py-3">{t("licenses.action")}</th>
@@ -352,28 +324,6 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                                 />
                               </label>
                             </div>
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              <label className="grid gap-1 text-xs font-medium text-slate-600">
-                                {t("licenses.startsAt")}
-                                <input
-                                  className="min-h-10 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
-                                  defaultValue={formatDateTimeInput(trialCode.starts_at)}
-                                  name="starts_at"
-                                  required
-                                  type="datetime-local"
-                                />
-                              </label>
-                              <label className="grid gap-1 text-xs font-medium text-slate-600">
-                                {t("licenses.endsAt")}
-                                <input
-                                  className="min-h-10 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
-                                  defaultValue={formatDateTimeInput(trialCode.ends_at)}
-                                  name="ends_at"
-                                  required
-                                  type="datetime-local"
-                                />
-                              </label>
-                            </div>
                             <button
                               className="inline-flex min-h-10 w-fit items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                               type="submit"
@@ -389,8 +339,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                           {trialCode.duration_kind ? t(`licenses.durations.${trialCode.duration_kind}`) : `${trialCode.trial_days} ${t("licenses.days")}`}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
-                          <span className="block">{formatDateTime(trialCode.starts_at, locale)}</span>
-                          <span className="block">{formatDateTime(trialCode.ends_at, locale)}</span>
+                          {formatDateTime(trialCode.created_at, locale)}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {trialCode.redemption_count} / {trialCode.max_redemptions ?? t("licenses.unlimited")}
@@ -429,10 +378,11 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             </div>
             {trialRedemptions.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+                <table className="min-w-[900px] text-left text-sm">
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("licenses.user")}</th>
+                      <th className="px-5 py-3">{t("licenses.redeemedAt")}</th>
                       <th className="px-5 py-3">{t("licenses.status")}</th>
                       <th className="px-5 py-3">{t("licenses.validUntil")}</th>
                       <th className="px-5 py-3">{t("licenses.device")}</th>
@@ -444,6 +394,9 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                       <tr key={redemption.id}>
                         <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-950">
                           {shortId(redemption.user_id)}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                          {formatDateTime(redemption.redeemed_at, locale)}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           <AdminStatusBadge tone={redemption.bound_at ? "success" : "warning"}>

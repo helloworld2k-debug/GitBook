@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addManualDonation, createSoftwareRelease, revokeCertificate, setSoftwareReleasePublished } from "@/app/[locale]/admin/actions";
+import { addManualDonation, createSoftwareRelease, replySupportFeedbackAsAdmin, revokeCertificate, setSoftwareReleasePublished } from "@/app/[locale]/admin/actions";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
@@ -121,6 +121,52 @@ describe("admin actions", () => {
     await expect(addManualDonation(formData)).rejects.toThrow("Reason must be 500 characters or fewer");
 
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
+  });
+
+  it("stores admin support replies and audits the action", async () => {
+    const messageInsert = vi.fn(async () => ({ error: null }));
+    const feedbackEq = vi.fn(async () => ({ error: null }));
+    const feedbackUpdate = vi.fn(() => ({ eq: feedbackEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "support_feedback_messages") {
+        return { insert: messageInsert };
+      }
+
+      if (table === "support_feedback") {
+        return { update: feedbackUpdate };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("feedback_id", "feedback-1");
+    formData.set("message", "We checked your account and fixed the issue.");
+
+    await replySupportFeedbackAsAdmin(formData);
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(messageInsert).toHaveBeenCalledWith({
+      admin_user_id: "admin-1",
+      author_role: "admin",
+      body: "We checked your account and fixed the issue.",
+      feedback_id: "feedback-1",
+    });
+    expect(feedbackUpdate).toHaveBeenCalledWith({ status: "reviewing", updated_at: expect.any(String) });
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "reply_support_feedback",
+      admin_user_id: "admin-1",
+      target_id: "feedback-1",
+      target_type: "support_feedback",
+    }));
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/support-feedback/feedback-1");
   });
 
   it("revokes certificates through the audited RPC", async () => {

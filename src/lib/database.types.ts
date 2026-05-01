@@ -209,8 +209,8 @@ export type Database = {
           label: string;
           feature_code: Database["public"]["Enums"]["license_feature_code"];
           trial_days: number;
-          starts_at: string;
-          ends_at: string;
+          starts_at: string | null;
+          ends_at: string | null;
           max_redemptions: number | null;
           redemption_count: number;
           is_active: boolean;
@@ -233,8 +233,8 @@ export type Database = {
           label: string;
           feature_code?: Database["public"]["Enums"]["license_feature_code"];
           trial_days?: number;
-          starts_at: string;
-          ends_at: string;
+          starts_at?: string | null;
+          ends_at?: string | null;
           max_redemptions?: number | null;
           redemption_count?: number;
           is_active?: boolean;
@@ -257,8 +257,8 @@ export type Database = {
           label?: string;
           feature_code?: Database["public"]["Enums"]["license_feature_code"];
           trial_days?: number;
-          starts_at?: string;
-          ends_at?: string;
+          starts_at?: string | null;
+          ends_at?: string | null;
           max_redemptions?: number | null;
           redemption_count?: number;
           is_active?: boolean;
@@ -919,6 +919,58 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "support_feedback_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      support_feedback_messages: {
+        Row: {
+          id: string;
+          feedback_id: string;
+          user_id: string | null;
+          admin_user_id: string | null;
+          author_role: "user" | "admin";
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          feedback_id: string;
+          user_id?: string | null;
+          admin_user_id?: string | null;
+          author_role: "user" | "admin";
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          feedback_id?: string;
+          user_id?: string | null;
+          admin_user_id?: string | null;
+          author_role?: "user" | "admin";
+          body?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "support_feedback_messages_admin_user_id_fkey";
+            columns: ["admin_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "support_feedback_messages_feedback_id_fkey";
+            columns: ["feedback_id"];
+            isOneToOne: false;
+            referencedRelation: "support_feedback";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "support_feedback_messages_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";

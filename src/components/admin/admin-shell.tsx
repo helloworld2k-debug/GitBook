@@ -104,8 +104,8 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale }
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
-            <div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6">
-              <div className="flex items-center gap-2">
+            <div className="flex min-h-16 flex-col items-stretch gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <details className="group relative lg:hidden">
                   <summary
                     aria-label={labels.menu}
@@ -121,14 +121,14 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale }
                   </nav>
                 </details>
                 <Link
-                  className="inline-flex min-h-10 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                  className="inline-flex min-h-10 min-w-0 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                   href="/"
                 >
                   <Home aria-hidden="true" className="size-4" />
-                  {labels.returnToSite}
+                  <span className="truncate">{labels.returnToSite}</span>
                 </Link>
               </div>
-              <div className="flex min-w-0 items-center gap-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-3">
                 <LanguageSwitcher currentLocale={locale} label={labels.language} variant="admin" />
                 <div className="hidden min-h-10 max-w-52 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 sm:flex">
                   <FileText aria-hidden="true" className="size-4 shrink-0 text-slate-400" />

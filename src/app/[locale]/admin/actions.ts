@@ -88,17 +88,6 @@ function getOptionalPositiveInteger(formData: FormData, key: string, message: st
   return value;
 }
 
-function getDateIso(formData: FormData, key: string, message: string) {
-  const rawValue = getRequiredString(formData, key, message);
-  const date = new Date(rawValue);
-
-  if (Number.isNaN(date.getTime())) {
-    throw new Error(message);
-  }
-
-  return date.toISOString();
-}
-
 function getOptionalDateIso(formData: FormData, key: string) {
   const rawValue = String(formData.get(key) ?? "").trim();
 
@@ -355,6 +344,47 @@ export async function updateSupportFeedbackStatus(formData: FormData) {
   }
 
   revalidatePath(`/${locale}/admin/support-feedback`);
+  revalidatePath(`/${locale}/admin/support-feedback/${feedbackId}`);
+  revalidatePath(`/${locale}/support/feedback/${feedbackId}`);
+}
+
+export async function replySupportFeedbackAsAdmin(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const feedbackId = getRequiredString(formData, "feedback_id", "Feedback is required");
+  const message = getBoundedString(formData, "message", "Message is required", MAX_NOTIFICATION_BODY_LENGTH);
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("support_feedback_messages").insert({
+    admin_user_id: admin.id,
+    author_role: "admin",
+    body: message,
+    feedback_id: feedbackId,
+  });
+
+  if (error) {
+    throw new Error("Unable to reply to feedback");
+  }
+
+  const now = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from("support_feedback")
+    .update({ status: "reviewing", updated_at: now })
+    .eq("id", feedbackId);
+
+  if (updateError) {
+    throw new Error("Unable to update feedback");
+  }
+
+  await insertAdminAuditLog({
+    action: "reply_support_feedback",
+    adminUserId: admin.id,
+    reason: "Admin replied to support feedback",
+    targetId: feedbackId,
+    targetType: "support_feedback",
+  });
+
+  revalidatePath(`/${locale}/admin/support-feedback`);
+  revalidatePath(`/${locale}/admin/support-feedback/${feedbackId}`);
 }
 
 export async function revokeCertificate(formData: FormData) {
@@ -477,13 +507,6 @@ export async function createTrialCode(formData: FormData) {
     "max_redemptions",
     "Max redemptions must be a positive integer",
   );
-  const startsAt = getDateIso(formData, "starts_at", "Start date is required");
-  const endsAt = getDateIso(formData, "ends_at", "End date is required");
-
-  if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
-    throw new Error("End date must be after start date");
-  }
-
   const supabase = createSupabaseAdminClient();
   const encryptedCode = encryptLicenseCode(code, getLicenseCodeEncryptionKey());
   const { error } = await supabase.from("trial_codes").insert({
@@ -491,7 +514,6 @@ export async function createTrialCode(formData: FormData) {
     code_mask: maskLicenseCode(code),
     created_by: admin.id,
     duration_kind: "trial_3_day",
-    ends_at: endsAt,
     encrypted_code_algorithm: encryptedCode.algorithm,
     encrypted_code_ciphertext: encryptedCode.ciphertext,
     encrypted_code_iv: encryptedCode.iv,
@@ -500,7 +522,6 @@ export async function createTrialCode(formData: FormData) {
     is_active: true,
     label,
     max_redemptions: maxRedemptions,
-    starts_at: startsAt,
     trial_days: trialDays,
   });
 
@@ -546,13 +567,6 @@ export async function generateLicenseCodeBatch(formData: FormData) {
     throw new Error("Label must be 120 characters or fewer");
   }
 
-  const startsAt = getDateIso(formData, "starts_at", "Start date is required");
-  const endsAt = getDateIso(formData, "ends_at", "End date is required");
-
-  if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
-    throw new Error("End date must be after start date");
-  }
-
   const batchId = randomUUID();
   const key = getLicenseCodeEncryptionKey();
   const trialDays = getLicenseDurationDays(durationKind);
@@ -566,7 +580,6 @@ export async function generateLicenseCodeBatch(formData: FormData) {
       code_mask: maskLicenseCode(code),
       created_by: admin.id,
       duration_kind: durationKind,
-      ends_at: endsAt,
       encrypted_code_algorithm: encryptedCode.algorithm,
       encrypted_code_ciphertext: encryptedCode.ciphertext,
       encrypted_code_iv: encryptedCode.iv,
@@ -575,7 +588,6 @@ export async function generateLicenseCodeBatch(formData: FormData) {
       is_active: true,
       label,
       max_redemptions: 1,
-      starts_at: startsAt,
       trial_days: trialDays,
     };
   }));
@@ -782,20 +794,11 @@ export async function updateTrialCode(formData: FormData) {
     "max_redemptions",
     "Max redemptions must be a positive integer",
   );
-  const startsAt = getDateIso(formData, "starts_at", "Start date is required");
-  const endsAt = getDateIso(formData, "ends_at", "End date is required");
-
-  if (new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
-    throw new Error("End date must be after start date");
-  }
-
   const { error } = await createSupabaseAdminClient()
     .from("trial_codes")
     .update({
-      ends_at: endsAt,
       label,
       max_redemptions: maxRedemptions,
-      starts_at: startsAt,
       trial_days: trialDays,
       updated_at: new Date().toISOString(),
     })
