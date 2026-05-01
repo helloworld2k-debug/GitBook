@@ -32,6 +32,7 @@ export function DonationTierCard({
       <div className="mt-6 grid gap-2">
         <form action="/api/checkout/stripe" method="post">
           <input type="hidden" name="tier" value={tier.code} />
+          <input type="hidden" name="locale" value={locale} />
           <button
             className="neon-button flex min-h-11 w-full cursor-pointer items-center justify-center rounded-md px-4 py-2 text-sm font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
             type="submit"

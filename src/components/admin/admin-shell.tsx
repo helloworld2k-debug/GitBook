@@ -1,12 +1,14 @@
 import {
   ArrowLeft,
   BadgeCheck,
+  Bell,
   ClipboardList,
   FileText,
   Gauge,
   Gift,
   Home,
   KeyRound,
+  MessageSquareText,
   Menu,
   Package,
   Users,
@@ -24,8 +26,10 @@ type AdminShellLabels = {
   language: string;
   licenses: string;
   menu: string;
+  notifications: string;
   releases: string;
   returnToSite: string;
+  supportFeedback: string;
   users: string;
 };
 
@@ -45,6 +49,8 @@ function getAdminItems(labels: AdminShellLabels) {
     { href: "/admin/donations", label: labels.donations, icon: Gift },
     { href: "/admin/certificates", label: labels.certificates, icon: BadgeCheck },
     { href: "/admin/releases", label: labels.releases, icon: Package },
+    { href: "/admin/notifications", label: labels.notifications, icon: Bell },
+    { href: "/admin/support-feedback", label: labels.supportFeedback, icon: MessageSquareText },
     { href: "/admin/licenses", label: labels.licenses, icon: KeyRound },
     { href: "/admin/users", label: labels.users, icon: Users },
     { href: "/admin/audit-logs", label: labels.auditLogs, icon: ClipboardList },

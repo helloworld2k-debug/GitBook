@@ -41,6 +41,16 @@ export default async function AdminPage({ params }: AdminPageProps) {
       description: t("overview.releasesDescription"),
     },
     {
+      href: "/admin/notifications",
+      title: t("overview.notificationsTitle"),
+      description: t("overview.notificationsDescription"),
+    },
+    {
+      href: "/admin/support-feedback",
+      title: t("overview.supportFeedbackTitle"),
+      description: t("overview.supportFeedbackDescription"),
+    },
+    {
       href: "/admin/licenses",
       title: t("overview.licensesTitle"),
       description: t("overview.licensesDescription"),

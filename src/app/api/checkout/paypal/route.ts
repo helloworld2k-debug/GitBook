@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { supportedLocales, type Locale } from "@/config/site";
 import { findDonationTier } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -14,10 +15,17 @@ function getSiteOrigin() {
   return origin;
 }
 
+function getSafeLocale(value: FormDataEntryValue | null) {
+  const locale = String(value ?? "en");
+
+  return supportedLocales.includes(locale as Locale) ? locale : "en";
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData();
   const tier = findDonationTier(formData.get("tier"));
   const origin = getSiteOrigin();
+  const locale = getSafeLocale(formData.get("locale"));
 
   if (!tier) {
     return NextResponse.json({ error: "Invalid donation tier" }, { status: 400 });
@@ -27,7 +35,7 @@ export async function POST(request: Request) {
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    return NextResponse.redirect(`${origin}/en/login?next=${encodeURIComponent("/en/donate")}`, 303);
+    return NextResponse.redirect(`${origin}/${locale}/login?next=${encodeURIComponent(`/${locale}/donate`)}`, 303);
   }
 
   return NextResponse.json({ error: "PayPal checkout is not enabled yet." }, { status: 503 });

@@ -4,6 +4,7 @@ import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/comp
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
+import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { addManualDonation } from "../actions";
 
@@ -48,7 +49,7 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
   const supabase = await createSupabaseServerClient();
   const { data: donations, error } = await supabase
     .from("donations")
-    .select("id,provider,status,amount,currency,provider_transaction_id")
+    .select("id,provider,status,amount,currency,provider_transaction_id,paid_at,created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -125,6 +126,7 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
                       <th className="px-5 py-3">{t("donations.provider")}</th>
                       <th className="px-5 py-3">{t("donations.status")}</th>
                       <th className="px-5 py-3">{t("donations.amount")}</th>
+                      <th className="px-5 py-3">{t("donations.paidAt")}</th>
                       <th className="px-5 py-3">{t("donations.transactionId")}</th>
                     </tr>
                   </thead>
@@ -141,6 +143,9 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatAmount(donation.amount, donation.currency, locale)}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                          {formatDateTimeWithSeconds(donation.paid_at ?? donation.created_at, locale)}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
                           {donation.provider_transaction_id}

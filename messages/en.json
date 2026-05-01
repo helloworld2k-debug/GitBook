@@ -3,6 +3,8 @@
     "download": "Download",
     "donate": "Donate",
     "dashboard": "Dashboard",
+    "notifications": "Notifications",
+    "support": "Support",
     "signIn": "Sign in",
     "language": "Language",
     "userMenu": "Open dashboard",
@@ -89,6 +91,29 @@
     "oneTimeNote": "One-time donation. No automatic renewal.",
     "payPalUnavailable": "PayPal is not enabled yet because PayPal donation records and certificates are still being integrated."
   },
+  "notifications": {
+    "eyebrow": "Notification center",
+    "title": "Notifications",
+    "subtitle": "Read product updates, service notices, and account-related announcements.",
+    "empty": "No notifications are available right now.",
+    "markRead": "Mark as read",
+    "published": "Published"
+  },
+  "support": {
+    "eyebrow": "Support",
+    "title": "Help and feedback",
+    "subtitle": "Use chat channels for the fastest help, or send account issue details through the feedback form.",
+    "channelsTitle": "Chat channels",
+    "channelsEmpty": "No chat channels are configured yet.",
+    "formTitle": "Submit account feedback",
+    "email": "Email",
+    "contact": "Preferred contact",
+    "subject": "Subject",
+    "message": "Message",
+    "submit": "Send feedback",
+    "success": "Feedback sent. We will review it soon.",
+    "error": "Could not send feedback. Please try again."
+  },
   "dashboard": {
     "title": "Personal center",
     "donations": "Paid donations",
@@ -160,6 +185,10 @@
       "certificatesDescription": "Review issued certificate numbers, types, statuses, and issue dates.",
       "releasesTitle": "Releases",
       "releasesDescription": "Upload macOS and Windows installers, publish versions, and manage release notes.",
+      "notificationsTitle": "Notifications",
+      "notificationsDescription": "Publish and unpublish in-app announcements.",
+      "supportFeedbackTitle": "Feedback",
+      "supportFeedbackDescription": "Review account issue reports and support requests.",
       "licensesTitle": "Licenses",
       "licensesDescription": "Create trial codes, review entitlements, and revoke desktop cloud sync access.",
       "usersTitle": "Users",
@@ -191,6 +220,7 @@
       "provider": "Provider",
       "status": "Status",
       "amount": "Amount",
+      "paidAt": "Paid at (UTC)",
       "transactionId": "Transaction ID",
       "manualEntryTitle": "Manual paid donation",
       "manualEntryDescription": "Create one paid manual record for an existing user by email or user ID.",
@@ -213,6 +243,44 @@
         "refunded": "Refunded"
       },
       "description": "Review payment records and add verified manual donations."
+    },
+    "notifications": {
+      "eyebrow": "Admin",
+      "title": "Notifications",
+      "description": "Publish in-app announcements for public visitors, signed-in users, or admins.",
+      "createTitle": "Create notification",
+      "titleLabel": "Title",
+      "body": "Body",
+      "locale": "Language",
+      "allLocales": "All languages",
+      "audience": "Audience",
+      "priority": "Priority",
+      "expiresAt": "Expires at",
+      "create": "Create notification",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "empty": "No notifications found.",
+      "publishedAt": "Published",
+      "status": "Status",
+      "draft": "Draft",
+      "published": "Published"
+    },
+    "supportFeedback": {
+      "eyebrow": "Admin",
+      "title": "Support feedback",
+      "description": "Review account issue reports submitted through the support page.",
+      "subject": "Subject",
+      "contact": "Contact",
+      "message": "Message",
+      "status": "Status",
+      "createdAt": "Created",
+      "save": "Save",
+      "empty": "No feedback found.",
+      "statuses": {
+        "open": "Open",
+        "reviewing": "Reviewing",
+        "closed": "Closed"
+      }
     },
     "certificates": {
       "eyebrow": "Admin",
@@ -255,6 +323,20 @@
       "createTrialTitle": "Create trial code",
       "createTrialDescription": "Create a 3-day advanced cloud sync trial code for website redemption.",
       "code": "Code",
+      "duration": "Duration",
+      "durationMonth1": "1 month",
+      "durationMonth3": "3 months",
+      "durationYear1": "1 year",
+      "quantity": "Quantity",
+      "batchGenerateTitle": "Batch generate license codes",
+      "batchGenerateDescription": "Generate 1-month, 3-month, or 1-year license codes. Codes are encrypted and managed centrally.",
+      "generateBatch": "Generate codes",
+      "bulkActionsTitle": "Bulk license code actions",
+      "bulkActionsDescription": "Select license codes to soft-delete them or add/reduce validity days with an audit reason.",
+      "selectedIds": "License codes",
+      "adjustDays": "Adjust days",
+      "adjustDuration": "Adjust duration",
+      "bulkDelete": "Delete selected",
       "label": "Label",
       "trialDays": "Trial days",
       "maxRedemptions": "Max redemptions",
@@ -299,6 +381,12 @@
       "bound": "Bound",
       "unbound": "Unbound",
       "emptyTrialRedemptions": "No trial redemptions found.",
+      "durations": {
+        "trial_3_day": "3-day trial",
+        "month_1": "1 month",
+        "month_3": "3 months",
+        "year_1": "1 year"
+      },
       "description": "Manage trial codes, trial bindings, entitlements, desktop sessions, and cloud sync leases."
     },
     "users": {
@@ -340,6 +428,8 @@
       "licenses": "Licenses",
       "menu": "Menu",
       "releases": "Releases",
+      "notifications": "Notifications",
+      "supportFeedback": "Feedback",
       "returnToSite": "Return to site",
       "users": "Users"
     }
