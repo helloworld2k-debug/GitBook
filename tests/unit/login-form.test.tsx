@@ -6,6 +6,7 @@ const createSupabaseBrowserClientMock = vi.hoisted(() => vi.fn());
 const signInWithPasswordMock = vi.hoisted(() => vi.fn());
 const signUpMock = vi.hoisted(() => vi.fn());
 const signInWithOAuthMock = vi.hoisted(() => vi.fn());
+const resetPasswordForEmailMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/supabase/client", () => ({
   createSupabaseBrowserClient: createSupabaseBrowserClientMock,
@@ -21,6 +22,12 @@ const messages: LoginFormMessages = {
   password: "Password",
   passwordMismatch: "Passwords do not match.",
   passwordPlaceholder: "Enter your password",
+  passwordResetBack: "Back to sign in",
+  passwordResetError: "Could not send the reset email.",
+  passwordResetMode: "Forgot password?",
+  passwordResetSent: "Check your email for a password reset link.",
+  passwordResetSubmit: "Send reset email",
+  passwordResetTitle: "Reset password",
   providerButtons: {
     apple: "Continue with Apple",
     github: "Continue with GitHub",
@@ -56,6 +63,7 @@ describe("LoginForm", () => {
     signInWithPasswordMock.mockReset();
     signUpMock.mockReset();
     signInWithOAuthMock.mockReset();
+    resetPasswordForEmailMock.mockReset();
     locationAssign.mockReset();
     Object.defineProperty(window, "location", {
       configurable: true,
@@ -64,8 +72,10 @@ describe("LoginForm", () => {
     signInWithPasswordMock.mockResolvedValue({ error: null });
     signUpMock.mockResolvedValue({ error: null });
     signInWithOAuthMock.mockResolvedValue({ error: null });
+    resetPasswordForEmailMock.mockResolvedValue({ error: null });
     createSupabaseBrowserClientMock.mockReturnValue({
       auth: {
+        resetPasswordForEmail: resetPasswordForEmailMock,
         signInWithOAuth: signInWithOAuthMock,
         signInWithPassword: signInWithPasswordMock,
         signUp: signUpMock,
@@ -158,5 +168,20 @@ describe("LoginForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue with Apple" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not start sign in.");
+  });
+
+  it("sends a password reset email with the callback URL", async () => {
+    renderLoginForm();
+
+    fireEvent.click(screen.getByRole("button", { name: "Forgot password?" }));
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "friend@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send reset email" }));
+
+    await waitFor(() => {
+      expect(resetPasswordForEmailMock).toHaveBeenCalledWith("friend@example.com", {
+        redirectTo: "https://threefriends.example/auth/callback?next=%2Fen%2Fdonate",
+      });
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent("Check your email for a password reset link.");
   });
 });

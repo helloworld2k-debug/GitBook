@@ -38,7 +38,14 @@
     "continueWithProvider": "Continue with {provider}",
     "google": "Google",
     "github": "GitHub",
-    "apple": "Apple"
+    "apple": "Apple",
+    "passwordResetBack": "Back to sign in",
+    "passwordResetComplete": "Password updated. You can now sign in.",
+    "passwordResetError": "Could not send the reset email. Check the address and try again.",
+    "passwordResetMode": "Forgot password?",
+    "passwordResetSent": "Check your email for a password reset link.",
+    "passwordResetSubmit": "Send reset email",
+    "passwordResetTitle": "Reset password"
   },
   "home": {
     "eyebrow": "AI coding book tool",
@@ -356,5 +363,15 @@
       "donation": "Donation Certificate",
       "honor": "Honor Certificate"
     }
+  },
+  "resetPassword": {
+    "eyebrow": "Password recovery",
+    "title": "Set a new password",
+    "subtitle": "Enter a new password for your GitBook AI account.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "submit": "Update password",
+    "mismatch": "Passwords do not match.",
+    "error": "Could not update your password. Open the latest reset email link and try again."
   }
 }

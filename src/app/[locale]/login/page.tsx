@@ -12,6 +12,7 @@ type LoginPageProps = {
   searchParams: Promise<{
     error?: string;
     next?: string | string[];
+    password?: string;
   }>;
 };
 
@@ -48,6 +49,12 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
     password: t("password"),
     passwordMismatch: t("passwordMismatch"),
     passwordPlaceholder: t("passwordPlaceholder"),
+    passwordResetBack: t("passwordResetBack"),
+    passwordResetError: t("passwordResetError"),
+    passwordResetMode: t("passwordResetMode"),
+    passwordResetSent: t("passwordResetSent"),
+    passwordResetSubmit: t("passwordResetSubmit"),
+    passwordResetTitle: t("passwordResetTitle"),
     providerButtons: {
       apple: t("continueWithProvider", { provider: providerNames.apple }),
       github: t("continueWithProvider", { provider: providerNames.github }),
@@ -85,6 +92,14 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
             {query.error ? (
               <p className="mb-3 rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">
                 {t("callbackError")}
+              </p>
+            ) : null}
+            {query.password === "reset" ? (
+              <p
+                className="mb-3 rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100"
+                role="status"
+              >
+                {t("passwordResetComplete")}
               </p>
             ) : null}
             <LoginForm callbackUrl={getCallbackUrl(nextPath)} messages={messages} nextPath={nextPath} />

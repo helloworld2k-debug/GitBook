@@ -29,6 +29,13 @@ vi.mock("next-intl/server", () => ({
       password: "Password",
       passwordMismatch: "Passwords do not match.",
       passwordPlaceholder: "Enter your password",
+      passwordResetBack: "Back to sign in",
+      passwordResetComplete: "Password updated. You can now sign in.",
+      passwordResetError: "Could not send the reset email.",
+      passwordResetMode: "Forgot password?",
+      passwordResetSent: "Check your email for a password reset link.",
+      passwordResetSubmit: "Send reset email",
+      passwordResetTitle: "Reset password",
       privacyNote: "We only use your account for donations and certificates.",
       providersLabel: "Other sign-in options",
       registerTab: "Register",
@@ -123,5 +130,16 @@ describe("LoginPage", () => {
     render(page);
 
     expect(screen.getByRole("alert")).toHaveTextContent("The sign-in link could not be verified.");
+  });
+
+  it("shows a password reset completion status", async () => {
+    const page = await LoginPage({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ password: "reset" }),
+    });
+
+    render(page);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Password updated. You can now sign in.");
   });
 });

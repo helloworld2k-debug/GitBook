@@ -38,7 +38,14 @@
     "continueWithProvider": "使用 {provider} 繼續",
     "google": "Google",
     "github": "GitHub",
-    "apple": "Apple"
+    "apple": "Apple",
+    "passwordResetBack": "返回登入",
+    "passwordResetComplete": "密碼已更新。你現在可以登入。",
+    "passwordResetError": "無法寄送重設密碼郵件。請檢查地址後再試一次。",
+    "passwordResetMode": "忘記密碼？",
+    "passwordResetSent": "請查看電子郵件中的密碼重設連結。",
+    "passwordResetSubmit": "寄送重設郵件",
+    "passwordResetTitle": "重設密碼"
   },
   "home": {
     "eyebrow": "AI 編程書籍工具",
@@ -356,5 +363,15 @@
     "downloadMac": "macOS",
     "downloadWindows": "Windows",
     "empty": "尚未發布公開版本。"
+  },
+  "resetPassword": {
+    "eyebrow": "密碼復原",
+    "title": "設定新密碼",
+    "subtitle": "為你的 GitBook AI 帳戶輸入一組新密碼。",
+    "newPassword": "新密碼",
+    "confirmPassword": "確認密碼",
+    "submit": "更新密碼",
+    "mismatch": "兩次輸入的密碼不一致。",
+    "error": "無法更新密碼。請開啟最新的重設密碼郵件連結後再試一次。"
   }
 }

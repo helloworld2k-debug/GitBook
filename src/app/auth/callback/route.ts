@@ -28,5 +28,10 @@ export async function GET(request: Request) {
     return buildLoginRedirect(requestUrl, "callback", nextPath);
   }
 
+  if (requestUrl.searchParams.get("type") === "recovery") {
+    const locale = getLocaleFromPath(nextPath);
+    return NextResponse.redirect(new URL(`/${locale}/reset-password`, requestUrl.origin));
+  }
+
   return NextResponse.redirect(new URL(nextPath, requestUrl.origin));
 }
