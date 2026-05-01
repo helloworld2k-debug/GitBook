@@ -95,3 +95,11 @@ export async function redeemDashboardTrialCode(locale: string, formData: FormDat
 
   redirect(getDashboardPath(safeLocale, { trial: trialStatusByReason[result.reason] }));
 }
+
+export async function signOutAction(locale: string) {
+  const safeLocale = getSafeLocale(locale);
+  const supabase = await createSupabaseServerClient();
+
+  await supabase.auth.signOut();
+  redirect(`/${safeLocale}`);
+}

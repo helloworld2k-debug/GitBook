@@ -5,7 +5,9 @@
     "dashboard": "대시보드",
     "signIn": "로그인",
     "language": "언어",
-    "userMenu": "대시보드 열기"
+    "userMenu": "대시보드 열기",
+    "accountMenu": "계정 메뉴",
+    "signOut": "로그아웃"
   },
   "login": {
     "eyebrow": "보안 접근",
@@ -121,7 +123,18 @@
     "savePassword": "비밀번호 업데이트",
     "passwordSaved": "비밀번호가 업데이트되었습니다.",
     "passwordMismatch": "비밀번호가 일치하지 않습니다.",
-    "passwordError": "비밀번호를 업데이트할 수 없습니다."
+    "passwordError": "비밀번호를 업데이트할 수 없습니다.",
+    "eyebrow": "AI 계정 워크스페이스",
+    "subtitle": "클라우드 동기화 권한, 체험 코드, 후원 내역, 인증서, 계정 보안을 한곳에서 관리합니다.",
+    "cloudSync": "클라우드 동기화",
+    "cloudSyncActive": "활성",
+    "cloudSyncInactive": "비활성",
+    "cloudSyncStatus": "클라우드 동기화 권한",
+    "accessValidUntil": "사용 가능 기한",
+    "accessNotActive": "아직 활성 클라우드 동기화 권한이 없습니다",
+    "notAvailable": "사용 불가",
+    "trialRedeemedAt": "체험 적용 시간",
+    "memberFallback": "GitBook AI 멤버"
   },
   "admin": {
     "overview": {

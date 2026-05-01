@@ -5,7 +5,9 @@
     "dashboard": "儀表板",
     "signIn": "登入",
     "language": "語言",
-    "userMenu": "開啟儀表板"
+    "userMenu": "開啟儀表板",
+    "accountMenu": "帳戶選單",
+    "signOut": "登出"
   },
   "login": {
     "eyebrow": "安全存取",
@@ -121,7 +123,18 @@
     "savePassword": "更新密碼",
     "passwordSaved": "密碼已更新。",
     "passwordMismatch": "兩次密碼不一致。",
-    "passwordError": "無法更新密碼。"
+    "passwordError": "無法更新密碼。",
+    "eyebrow": "AI 帳戶工作區",
+    "subtitle": "集中管理雲端同步權限、試用兌換碼、捐贈記錄、證書與帳戶安全。",
+    "cloudSync": "雲端同步",
+    "cloudSyncActive": "有效中",
+    "cloudSyncInactive": "未啟用",
+    "cloudSyncStatus": "雲端同步權限",
+    "accessValidUntil": "可使用至",
+    "accessNotActive": "目前沒有有效的雲端同步權限",
+    "notAvailable": "暫無資料",
+    "trialRedeemedAt": "試用兌換時間",
+    "memberFallback": "GitBook AI 會員"
   },
   "admin": {
     "overview": {

@@ -28,11 +28,13 @@ vi.mock("@/components/language-switcher", () => ({
 }));
 
 const navMessages: Record<string, string> = {
+  accountMenu: "Account menu",
   dashboard: "Dashboard",
   donate: "Donate",
   download: "Download",
   language: "Language",
   signIn: "Sign in",
+  signOut: "Sign out",
   userMenu: "Open dashboard",
 };
 
@@ -56,7 +58,7 @@ describe("SiteHeader", () => {
     expect(screen.queryByRole("link", { name: "Dashboard" })).not.toBeInTheDocument();
   });
 
-  it("uses the signed-in account label as the only dashboard entry", async () => {
+  it("shows a signed-in account menu with dashboard and sign-out actions", async () => {
     createSupabaseServerClientMock.mockResolvedValue({
       auth: { getUser: vi.fn(async () => ({ data: { user: { id: "user-1", email: "user@example.com" } } })) },
       from: vi.fn(() => ({
@@ -73,9 +75,9 @@ describe("SiteHeader", () => {
 
     render(await SiteHeader());
 
-    expect(screen.queryByRole("link", { name: "Dashboard" })).not.toBeInTheDocument();
-    const accountLink = screen.getByRole("link", { name: /Ada Lovelace.*Open dashboard/ });
-    expect(accountLink).toHaveAttribute("href", "/dashboard");
-    expect(accountLink.querySelector("svg")).toBeTruthy();
+    expect(screen.getByLabelText("Open dashboard")).toBeInTheDocument();
+    expect(screen.getAllByText("Ada Lovelace")).toHaveLength(2);
+    expect(screen.getByRole("link", { name: /Dashboard/ })).toHaveAttribute("href", "/dashboard");
+    expect(screen.getByRole("button", { name: /Sign out/ })).toBeInTheDocument();
   });
 });

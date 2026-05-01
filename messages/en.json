@@ -5,7 +5,9 @@
     "dashboard": "Dashboard",
     "signIn": "Sign in",
     "language": "Language",
-    "userMenu": "Open dashboard"
+    "userMenu": "Open dashboard",
+    "accountMenu": "Account menu",
+    "signOut": "Sign out"
   },
   "login": {
     "eyebrow": "Secure access",
@@ -129,7 +131,18 @@
       "cancelled": "Cancelled",
       "failed": "Failed",
       "refunded": "Refunded"
-    }
+    },
+    "eyebrow": "AI account workspace",
+    "subtitle": "Manage cloud sync access, trial codes, donation history, certificates, and account security in one place.",
+    "cloudSync": "Cloud sync",
+    "cloudSyncActive": "Active",
+    "cloudSyncInactive": "Not active",
+    "cloudSyncStatus": "Cloud sync access",
+    "accessValidUntil": "Available until",
+    "accessNotActive": "No active cloud sync access yet",
+    "notAvailable": "Not available",
+    "trialRedeemedAt": "Trial redeemed at",
+    "memberFallback": "GitBook AI member"
   },
   "admin": {
     "overview": {

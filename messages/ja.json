@@ -5,7 +5,9 @@
     "dashboard": "ダッシュボード",
     "signIn": "サインイン",
     "language": "言語",
-    "userMenu": "ダッシュボードを開く"
+    "userMenu": "ダッシュボードを開く",
+    "accountMenu": "アカウントメニュー",
+    "signOut": "サインアウト"
   },
   "login": {
     "eyebrow": "安全なアクセス",
@@ -121,7 +123,18 @@
     "savePassword": "パスワードを更新",
     "passwordSaved": "パスワードを更新しました。",
     "passwordMismatch": "パスワードが一致しません。",
-    "passwordError": "パスワードを更新できませんでした。"
+    "passwordError": "パスワードを更新できませんでした。",
+    "eyebrow": "AI アカウントワークスペース",
+    "subtitle": "クラウド同期アクセス、トライアルコード、寄付履歴、証明書、アカウントの安全性をまとめて管理します。",
+    "cloudSync": "クラウド同期",
+    "cloudSyncActive": "有効",
+    "cloudSyncInactive": "未有効",
+    "cloudSyncStatus": "クラウド同期アクセス",
+    "accessValidUntil": "利用可能期限",
+    "accessNotActive": "有効なクラウド同期アクセスはまだありません",
+    "notAvailable": "利用不可",
+    "trialRedeemedAt": "トライアル適用日時",
+    "memberFallback": "GitBook AI メンバー"
   },
   "admin": {
     "overview": {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { redeemDashboardTrialCode, updateAccountProfile, updateDashboardPassword } from "@/app/[locale]/dashboard/actions";
+import { redeemDashboardTrialCode, signOutAction, updateAccountProfile, updateDashboardPassword } from "@/app/[locale]/dashboard/actions";
 
 const createSupabaseServerClientMock = vi.hoisted(() => vi.fn());
 const createSupabaseAdminClientMock = vi.hoisted(() => vi.fn());
@@ -99,5 +99,14 @@ describe("dashboard account actions", () => {
         code: "SPRING-2026",
       },
     );
+  });
+
+  it("signs out and returns to the localized home page", async () => {
+    const signOut = vi.fn(async () => ({ error: null }));
+    createSupabaseServerClientMock.mockResolvedValue({ auth: { signOut } });
+
+    await expect(signOutAction("ja")).rejects.toThrow("NEXT_REDIRECT:/ja");
+
+    expect(signOut).toHaveBeenCalled();
   });
 });
