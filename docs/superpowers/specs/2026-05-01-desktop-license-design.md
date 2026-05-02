@@ -275,7 +275,7 @@ The license status API treats a valid trial like a temporary entitlement for `cl
 2. Desktop app generates `device_session_id` and a custom protocol return URL such as `gitbookai://auth/callback`.
 3. Desktop app opens:
 
-   `https://gitbook.us.ci/en/login?client=desktop&device_session_id=...&return_url=gitbookai://auth/callback`
+   `https://gitbookai.ccwu.cc/en/login?client=desktop&device_session_id=...&return_url=gitbookai://auth/callback`
 
 4. User logs in on the website using email/password or OAuth.
 5. Website creates a short-lived `desktop_auth_code`.
