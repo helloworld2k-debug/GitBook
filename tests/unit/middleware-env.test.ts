@@ -71,4 +71,22 @@ describe("middleware Supabase environment handling", () => {
 
     expect(refreshSupabaseSession).toHaveBeenCalled();
   });
+
+  it("refreshes Supabase sessions for split OAuth auth cookies", async () => {
+    process.env = {
+      ...originalEnv,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+    };
+
+    const request = new NextRequest("https://threefriends.example/en/dashboard", {
+      headers: {
+        cookie: "sb-dzsnhbszojdaghvolcnq-auth-token.0=token-part",
+      },
+    });
+
+    await middleware(request);
+
+    expect(refreshSupabaseSession).toHaveBeenCalled();
+  });
 });

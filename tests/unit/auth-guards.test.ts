@@ -90,6 +90,17 @@ describe("auth guards", () => {
     expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
   });
 
+  it("recognizes split Supabase auth cookies created by OAuth providers", async () => {
+    cookiesMock.mockResolvedValue({
+      getAll: vi.fn(() => [{ name: "sb-dzsnhbszojdaghvolcnq-auth-token.0", value: "token-part" }]),
+    });
+    const user = { id: "oauth-user-1" };
+    createSupabaseServerClientMock.mockResolvedValue(createAuthClient(user));
+
+    await expect(requireUser("en", "/en/dashboard")).resolves.toBe(user);
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
   it("returns the current user when present", async () => {
     const user = { id: "user-1" };
     createSupabaseServerClientMock.mockResolvedValue(createAuthClient(user));

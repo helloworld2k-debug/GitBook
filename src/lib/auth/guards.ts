@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { defaultLocale, supportedLocales, type Locale } from "@/config/site";
+import { isSupabaseAuthCookieName } from "@/lib/auth/supabase-cookies";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type AdminRole = "owner" | "operator" | "user";
@@ -47,7 +48,7 @@ export function isOwnerProfile(profile: AdminLike) {
 async function hasSupabaseAuthCookie() {
   const cookieStore = await cookies();
 
-  return cookieStore.getAll().some(({ name }) => name.startsWith("sb-") && name.endsWith("-auth-token"));
+  return cookieStore.getAll().some(({ name }) => isSupabaseAuthCookieName(name));
 }
 
 export async function requireUser(locale: Locale | string, nextPath: string) {
