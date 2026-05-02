@@ -4,6 +4,8 @@ import { Download } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { CertificateView, getCertificateTypeLabel } from "@/lib/certificates/render";
+import { getCertificateTemplate } from "@/lib/certificates/templates";
+import { getDonationTierCodeForCertificate } from "@/lib/certificates/tier";
 import { requireUser } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -38,7 +40,7 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 
   const { data: certificate, error } = await supabase
     .from("certificates")
-    .select("certificate_number,type,issued_at")
+    .select("certificate_number,type,issued_at,donation_id")
     .eq("id", id)
     .eq("user_id", user.id)
     .eq("status", "active")
@@ -51,6 +53,8 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
   if (!certificate) {
     notFound();
   }
+
+  const donationTierCode = await getDonationTierCodeForCertificate(supabase, certificate, user.id);
 
   return (
     <>
@@ -75,6 +79,7 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
             })}
             locale={locale}
             recipientName={getRecipientName(user, t("fallbackRecipient"))}
+            template={getCertificateTemplate(certificate.type, donationTierCode)}
           />
           <section
             aria-labelledby="certificate-download-title"

@@ -5,6 +5,7 @@ import { getCertificateExportFilename, renderCertificateSvg } from "@/lib/certif
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
   cookies: vi.fn(),
+  donationMaybeSingle: vi.fn(),
   getUser: vi.fn(),
   maybeSingle: vi.fn(),
   notFound: vi.fn(() => {
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   redirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`);
   }),
+  tierMaybeSingle: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -76,15 +78,35 @@ function createAuthClient(user: unknown) {
 }
 
 function createCertificateClient() {
-  const query = {
-    eq: vi.fn(() => query),
+  const certificateQuery = {
+    eq: vi.fn(() => certificateQuery),
     maybeSingle: mocks.maybeSingle,
-    select: vi.fn(() => query),
+    select: vi.fn(() => certificateQuery),
+  };
+  const donationQuery = {
+    eq: vi.fn(() => donationQuery),
+    maybeSingle: mocks.donationMaybeSingle,
+    select: vi.fn(() => donationQuery),
+  };
+  const tierQuery = {
+    eq: vi.fn(() => tierQuery),
+    maybeSingle: mocks.tierMaybeSingle,
+    select: vi.fn(() => tierQuery),
   };
 
   return {
-    from: vi.fn(() => query),
-    query,
+    certificateQuery,
+    from: vi.fn((table: string) => {
+      if (table === "donations") {
+        return donationQuery;
+      }
+
+      if (table === "donation_tiers") {
+        return tierQuery;
+      }
+
+      return certificateQuery;
+    }),
   };
 }
 
@@ -99,10 +121,12 @@ describe("certificate export route", () => {
     mocks.cookies.mockResolvedValue({
       getAll: vi.fn(() => [{ name: "sb-test-auth-token", value: "token" }]),
     });
+    mocks.donationMaybeSingle.mockReset();
     mocks.getUser.mockReset();
     mocks.maybeSingle.mockReset();
     mocks.notFound.mockClear();
     mocks.redirect.mockClear();
+    mocks.tierMaybeSingle.mockReset();
   });
 
   it("redirects unauthenticated users to localized login with the certificate download path", async () => {
@@ -133,9 +157,9 @@ describe("certificate export route", () => {
     ).rejects.toThrow("notFound");
 
     expect(certificateClient.from).toHaveBeenCalledWith("certificates");
-    expect(certificateClient.query.eq).toHaveBeenCalledWith("id", "cert-1");
-    expect(certificateClient.query.eq).toHaveBeenCalledWith("user_id", "user-1");
-    expect(certificateClient.query.eq).toHaveBeenCalledWith("status", "active");
+    expect(certificateClient.certificateQuery.eq).toHaveBeenCalledWith("id", "cert-1");
+    expect(certificateClient.certificateQuery.eq).toHaveBeenCalledWith("user_id", "user-1");
+    expect(certificateClient.certificateQuery.eq).toHaveBeenCalledWith("status", "active");
   });
 
   it("downloads a localized SVG certificate with attachment headers", async () => {
@@ -152,11 +176,14 @@ describe("certificate export route", () => {
     mocks.maybeSingle.mockResolvedValue({
       data: {
         certificate_number: "TF-DON-2026-0001",
+        donation_id: "donation-1",
         issued_at: "2026-04-30T00:00:00.000Z",
         type: "donation",
       },
       error: null,
     });
+    mocks.donationMaybeSingle.mockResolvedValue({ data: { tier_id: "tier-quarterly" }, error: null });
+    mocks.tierMaybeSingle.mockResolvedValue({ data: { code: "quarterly" }, error: null });
 
     const response = await GET(
       new Request("https://threefriends.example/ja/dashboard/certificates/cert-1/download/svg"),
@@ -169,6 +196,8 @@ describe("certificate export route", () => {
       'attachment; filename="three-friends-certificate-TF-DON-2026-0001.svg"',
     );
     expect(body).toContain("<svg");
+    expect(body).toContain('data-certificate-template="quarterly"');
+    expect(body).toContain("data:image/webp;base64,");
     expect(body).toContain("Three Friends");
     expect(body).toContain("支援証明書");
     expect(body).toContain("Ada Lovelace");
@@ -203,8 +232,21 @@ describe("certificate export route", () => {
       label: "Donation & Honor",
       locale: "en",
       recipientName: "<script>alert('x')</script>",
+      template: {
+        accent: "#22d3ee",
+        backgroundUrl: "/certificates/monthly-bg.webp",
+        code: "monthly",
+        foil: "#fef3c7",
+        panelFill: "rgba(15, 23, 42, 0.72)",
+        panelStroke: "rgba(125, 211, 252, 0.32)",
+        text: "#ffffff",
+        textMuted: "#cbd5e1",
+      },
+      templateBackgroundDataUri: "data:image/webp;base64,dGVzdA==",
     });
 
+    expect(body).toContain('data-certificate-template="monthly"');
+    expect(body).toContain("data:image/webp;base64,dGVzdA==");
     expect(body).toContain("Three &amp; Friends");
     expect(body).toContain("Support &lt;Certificate&gt;");
     expect(body).toContain("Thank &lt;you&gt; &amp; &quot;friends&quot;");

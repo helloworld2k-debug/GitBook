@@ -4,8 +4,10 @@ import CertificatePage from "@/app/[locale]/dashboard/certificates/[id]/page";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
+  donationMaybeSingle: vi.fn(),
   maybeSingle: vi.fn(),
   requireUser: vi.fn(),
+  tierMaybeSingle: vi.fn(),
 }));
 
 vi.mock("@/components/site-header", () => ({
@@ -62,22 +64,44 @@ vi.mock("next-intl/server", () => ({
 }));
 
 function createCertificateClient() {
-  const query = {
-    eq: vi.fn(() => query),
+  const certificateQuery = {
+    eq: vi.fn(() => certificateQuery),
     maybeSingle: mocks.maybeSingle,
-    select: vi.fn(() => query),
+    select: vi.fn(() => certificateQuery),
+  };
+  const donationQuery = {
+    eq: vi.fn(() => donationQuery),
+    maybeSingle: mocks.donationMaybeSingle,
+    select: vi.fn(() => donationQuery),
+  };
+  const tierQuery = {
+    eq: vi.fn(() => tierQuery),
+    maybeSingle: mocks.tierMaybeSingle,
+    select: vi.fn(() => tierQuery),
   };
 
   return {
-    from: vi.fn(() => query),
+    from: vi.fn((table: string) => {
+      if (table === "donations") {
+        return donationQuery;
+      }
+
+      if (table === "donation_tiers") {
+        return tierQuery;
+      }
+
+      return certificateQuery;
+    }),
   };
 }
 
 describe("certificate detail page", () => {
   beforeEach(() => {
     mocks.createSupabaseServerClient.mockReset();
+    mocks.donationMaybeSingle.mockReset();
     mocks.maybeSingle.mockReset();
     mocks.requireUser.mockReset();
+    mocks.tierMaybeSingle.mockReset();
   });
 
   it("renders a localized protected SVG download link", async () => {
@@ -90,16 +114,23 @@ describe("certificate detail page", () => {
     mocks.maybeSingle.mockResolvedValue({
       data: {
         certificate_number: "TF-DON-2026-0001",
+        donation_id: "donation-1",
         issued_at: "2026-04-30T00:00:00.000Z",
         type: "donation",
       },
       error: null,
     });
+    mocks.donationMaybeSingle.mockResolvedValue({ data: { tier_id: "tier-yearly" }, error: null });
+    mocks.tierMaybeSingle.mockResolvedValue({ data: { code: "yearly" }, error: null });
 
     render(await CertificatePage({ params: Promise.resolve({ id: "cert-1", locale: "ko" }) }));
 
     expect(screen.getByRole("heading", { name: "후원 인증서" })).toBeInTheDocument();
     expect(screen.getByLabelText("후원 인증서")).toHaveClass("overflow-hidden", "rounded-lg");
+    expect(screen.getByLabelText("후원 인증서")).toHaveAttribute("data-certificate-template", "yearly");
+    expect(screen.getByTestId("certificate-background")).toHaveStyle({
+      backgroundImage: "url(/certificates/yearly-bg.webp)",
+    });
     expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
     expect(screen.getByText("TF-DON-2026-0001")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "인증서 다운로드" })).toBeInTheDocument();

@@ -16,6 +16,45 @@ export type Database = {
       support_feedback_status: "open" | "reviewing" | "closed";
     };
     Tables: {
+      donation_tiers: {
+        Row: {
+          id: string;
+          code: string;
+          label: string;
+          description: string;
+          amount: number;
+          currency: string;
+          sort_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          label: string;
+          description: string;
+          amount: number;
+          currency?: string;
+          sort_order: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          label?: string;
+          description?: string;
+          amount?: number;
+          currency?: string;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;

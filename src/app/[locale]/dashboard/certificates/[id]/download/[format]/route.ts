@@ -2,8 +2,11 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { supportedLocales, type Locale } from "@/config/site";
 import { requireUser } from "@/lib/auth/guards";
+import { getCertificateTemplateBackgroundDataUri } from "@/lib/certificates/backgrounds";
 import { getCertificateExportFilename, renderCertificateSvg } from "@/lib/certificates/export";
 import { getCertificateTypeLabel } from "@/lib/certificates/render";
+import { getCertificateTemplate } from "@/lib/certificates/templates";
+import { getDonationTierCodeForCertificate } from "@/lib/certificates/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type CertificateDownloadRouteContext = {
@@ -44,7 +47,7 @@ export async function GET(_request: Request, { params }: CertificateDownloadRout
 
   const { data: certificate, error } = await supabase
     .from("certificates")
-    .select("certificate_number,type,issued_at")
+    .select("certificate_number,type,issued_at,donation_id")
     .eq("id", id)
     .eq("user_id", user.id)
     .eq("status", "active")
@@ -59,6 +62,8 @@ export async function GET(_request: Request, { params }: CertificateDownloadRout
   }
 
   const certificateNumber = certificate.certificate_number;
+  const donationTierCode = await getDonationTierCodeForCertificate(supabase, certificate, user.id);
+  const template = getCertificateTemplate(certificate.type, donationTierCode);
   const body = renderCertificateSvg({
     certificateNumber,
     copy: {
@@ -77,6 +82,8 @@ export async function GET(_request: Request, { params }: CertificateDownloadRout
     }),
     locale,
     recipientName: getRecipientName(user, t("fallbackRecipient")),
+    template,
+    templateBackgroundDataUri: getCertificateTemplateBackgroundDataUri(template),
   });
 
   return new Response(body, {
