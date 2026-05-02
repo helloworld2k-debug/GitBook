@@ -293,7 +293,7 @@ describe("cloud sync lease routes", () => {
     const { POST } = await import("@/app/api/license/cloud-sync/activate/route");
 
     const response = await POST(
-      new Request("https://threefriends.example/api/license/cloud-sync/activate", {
+      new Request("https://gitbookai.example/api/license/cloud-sync/activate", {
         headers: { authorization: "Bearer desktop-token" },
         method: "POST",
       }),
@@ -325,7 +325,7 @@ describe("cloud sync lease routes", () => {
     routeMocks.readBearerToken.mockReturnValueOnce(null);
 
     const missingToken = await POST(
-      new Request("https://threefriends.example/api/license/cloud-sync/activate", { method: "POST" }),
+      new Request("https://gitbookai.example/api/license/cloud-sync/activate", { method: "POST" }),
     );
 
     expect(missingToken.status).toBe(401);
@@ -334,7 +334,7 @@ describe("cloud sync lease routes", () => {
     routeMocks.validateDesktopSession.mockResolvedValueOnce(null);
 
     const invalidToken = await POST(
-      new Request("https://threefriends.example/api/license/cloud-sync/activate", {
+      new Request("https://gitbookai.example/api/license/cloud-sync/activate", {
         headers: { authorization: "Bearer desktop-token" },
         method: "POST",
       }),
@@ -357,7 +357,7 @@ describe("cloud sync lease routes", () => {
     });
 
     const response = await POST(
-      new Request("https://threefriends.example/api/license/cloud-sync/activate", {
+      new Request("https://gitbookai.example/api/license/cloud-sync/activate", {
         headers: { authorization: "Bearer desktop-token" },
         method: "POST",
       }),
@@ -384,7 +384,7 @@ describe("cloud sync lease routes", () => {
     });
 
     const response = await POST(
-      new Request("https://threefriends.example/api/license/cloud-sync/activate", {
+      new Request("https://gitbookai.example/api/license/cloud-sync/activate", {
         headers: { authorization: "Bearer desktop-token" },
         method: "POST",
       }),
@@ -401,7 +401,7 @@ describe("cloud sync lease routes", () => {
     const { POST } = await import("@/app/api/license/cloud-sync/heartbeat/route");
 
     const response = await POST(
-      new Request("https://threefriends.example/api/license/cloud-sync/heartbeat", {
+      new Request("https://gitbookai.example/api/license/cloud-sync/heartbeat", {
         headers: { authorization: "Bearer desktop-token" },
         method: "POST",
       }),
@@ -429,7 +429,7 @@ describe("cloud sync lease routes", () => {
     });
 
     const response = await POST(
-      new Request("https://threefriends.example/api/license/cloud-sync/heartbeat", {
+      new Request("https://gitbookai.example/api/license/cloud-sync/heartbeat", {
         headers: { authorization: "Bearer desktop-token" },
         method: "POST",
       }),
@@ -455,7 +455,7 @@ describe("cloud sync lease routes", () => {
     });
 
     const response = await POST(
-      new Request("https://threefriends.example/api/license/cloud-sync/heartbeat", {
+      new Request("https://gitbookai.example/api/license/cloud-sync/heartbeat", {
         headers: { authorization: "Bearer desktop-token" },
         method: "POST",
       }),
@@ -480,7 +480,7 @@ describe("cloud sync lease routes", () => {
     });
 
     const response = await POST(
-      new Request("https://threefriends.example/api/license/cloud-sync/heartbeat", {
+      new Request("https://gitbookai.example/api/license/cloud-sync/heartbeat", {
         headers: { authorization: "Bearer desktop-token" },
         method: "POST",
       }),
@@ -499,7 +499,7 @@ describe("cloud sync lease routes", () => {
     const { POST } = await import("@/app/api/license/cloud-sync/release/route");
 
     const response = await POST(
-      new Request("https://threefriends.example/api/license/cloud-sync/release", {
+      new Request("https://gitbookai.example/api/license/cloud-sync/release", {
         headers: { authorization: "Bearer desktop-token" },
         method: "POST",
       }),
@@ -524,7 +524,7 @@ describe("cloud sync lease routes", () => {
     });
 
     const response = await GET(
-      new Request("https://threefriends.example/api/license/status", {
+      new Request("https://gitbookai.example/api/license/status", {
         headers: { authorization: "Bearer desktop-token" },
       }),
     );

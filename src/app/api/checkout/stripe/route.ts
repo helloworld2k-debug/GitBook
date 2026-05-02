@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         quantity: 1,
       },
     ],
-    success_url: `${origin}/${locale}/dashboard?payment=stripe-success`,
+    success_url: `${origin}/${locale}/dashboard/certificates/latest?payment=stripe-success`,
     cancel_url: `${origin}/${locale}/donate?payment=cancelled`,
     metadata: {
       user_id: data.user.id,

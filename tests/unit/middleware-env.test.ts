@@ -35,7 +35,7 @@ describe("middleware Supabase environment handling", () => {
       NEXT_PUBLIC_SUPABASE_URL: "",
     };
 
-    const response = await middleware(new NextRequest("https://threefriends.example/en"));
+    const response = await middleware(new NextRequest("https://gitbookai.example/en"));
 
     expect(response).toBeInstanceOf(NextResponse);
     expect(refreshSupabaseSession).not.toHaveBeenCalled();
@@ -48,7 +48,7 @@ describe("middleware Supabase environment handling", () => {
       NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
     };
 
-    const response = await middleware(new NextRequest("https://threefriends.example/en/login"));
+    const response = await middleware(new NextRequest("https://gitbookai.example/en/login"));
 
     expect(response).toBeInstanceOf(NextResponse);
     expect(refreshSupabaseSession).not.toHaveBeenCalled();
@@ -61,7 +61,7 @@ describe("middleware Supabase environment handling", () => {
       NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
     };
 
-    const request = new NextRequest("https://threefriends.example/en/dashboard", {
+    const request = new NextRequest("https://gitbookai.example/en/dashboard", {
       headers: {
         cookie: "sb-dzsnhbszojdaghvolcnq-auth-token=token",
       },
@@ -79,7 +79,7 @@ describe("middleware Supabase environment handling", () => {
       NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
     };
 
-    const request = new NextRequest("https://threefriends.example/en/dashboard", {
+    const request = new NextRequest("https://gitbookai.example/en/dashboard", {
       headers: {
         cookie: "sb-dzsnhbszojdaghvolcnq-auth-token.0=token-part",
       },

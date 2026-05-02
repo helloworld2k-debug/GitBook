@@ -29,7 +29,7 @@ describe("PayPal payment helper", () => {
       "https://paypal.test/v2/checkout/orders/ORDER-123/capture",
       expect.objectContaining({
         headers: expect.objectContaining({
-          "PayPal-Request-Id": "three-friends-capture-ORDER-123",
+          "PayPal-Request-Id": "gitbook-ai-capture-ORDER-123",
         }),
         method: "POST",
       }),

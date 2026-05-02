@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Download } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
-import { CertificateView, getCertificateTypeLabel } from "@/lib/certificates/render";
+import { Link } from "@/i18n/routing";
+import { CertificateView, formatCertificateAmount, getCertificateTypeLabel } from "@/lib/certificates/render";
 import { getCertificateTemplate } from "@/lib/certificates/templates";
-import { getDonationTierCodeForCertificate } from "@/lib/certificates/tier";
+import { getDonationDetailsForCertificate } from "@/lib/certificates/tier";
 import { requireUser } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -54,7 +54,8 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
     notFound();
   }
 
-  const donationTierCode = await getDonationTierCodeForCertificate(supabase, certificate, user.id);
+  const donationDetails = await getDonationDetailsForCertificate(supabase, certificate, user.id);
+  const donationAmount = formatCertificateAmount(donationDetails, locale);
 
   return (
     <>
@@ -64,6 +65,7 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
           <CertificateView
             certificateNumber={certificate.certificate_number}
             copy={{
+              amount: t("amount"),
               brand: t("brand"),
               certificateNumber: t("certificateNumber"),
               description: t("description"),
@@ -73,31 +75,31 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
               title: t("title"),
             }}
             issuedAt={certificate.issued_at}
+            donationAmount={donationAmount}
             label={getCertificateTypeLabel(certificate.type, {
               donation: t("types.donation"),
               honor: t("types.honor"),
             })}
             locale={locale}
             recipientName={getRecipientName(user, t("fallbackRecipient"))}
-            template={getCertificateTemplate(certificate.type, donationTierCode)}
+            template={getCertificateTemplate(certificate.type, donationDetails?.tierCode)}
           />
           <section
-            aria-labelledby="certificate-download-title"
-            className="mt-5 rounded-lg border border-cyan-300/15 bg-white/[0.05] px-4 py-4 shadow-2xl shadow-cyan-950/20 backdrop-blur-xl sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-5"
+            aria-label={t("navigation.title")}
+            className="mt-5 flex flex-col gap-3 rounded-lg border border-cyan-300/15 bg-white/[0.05] px-4 py-4 shadow-2xl shadow-cyan-950/20 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-end sm:px-5"
           >
-            <div>
-              <h2 id="certificate-download-title" className="text-sm font-semibold tracking-normal text-white">
-                {t("download.title")}
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-300">{t("download.note")}</p>
-            </div>
-            <a
-              href={`/${locale}/dashboard/certificates/${id}/download/svg`}
-              className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-cyan-300/30 bg-cyan-300/10 px-4 text-sm font-semibold text-cyan-50 transition-colors hover:border-cyan-200/70 hover:bg-cyan-300/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 sm:mt-0 sm:w-auto"
+            <Link
+              href="/"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-cyan-300/30 bg-cyan-300/10 px-4 text-sm font-semibold text-cyan-50 transition-colors hover:border-cyan-200/70 hover:bg-cyan-300/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 sm:w-auto"
             >
-              <Download aria-hidden="true" className="size-4" />
-              {t("download.svg")}
-            </a>
+              {t("navigation.home")}
+            </Link>
+            <Link
+              href="/dashboard"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-cyan-300 px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 sm:w-auto"
+            >
+              {t("navigation.dashboard")}
+            </Link>
           </section>
         </section>
       </main>

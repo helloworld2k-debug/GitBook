@@ -6,18 +6,40 @@ export type CertificateTierLookupRecord = {
   type: string;
 };
 
-export async function getDonationTierCodeForCertificate(
+export type CertificateDonationDetails = {
+  amount: number;
+  currency: string;
+  tierCode: string | null;
+};
+
+export function inferDonationTierCodeFromAmount(amount: number, currency: string) {
+  if (currency.toLowerCase() !== "usd") {
+    return null;
+  }
+
+  if (amount >= 5000) {
+    return "yearly";
+  }
+
+  if (amount >= 1500) {
+    return "quarterly";
+  }
+
+  return "monthly";
+}
+
+export async function getDonationDetailsForCertificate(
   supabase: SupabaseClient<Database>,
   certificate: CertificateTierLookupRecord,
   userId: string,
-) {
+): Promise<CertificateDonationDetails | null> {
   if (certificate.type !== "donation" || !certificate.donation_id) {
     return null;
   }
 
   const { data: donation, error: donationError } = await supabase
     .from("donations")
-    .select("tier_id")
+    .select("amount,currency,tier_id")
     .eq("id", certificate.donation_id)
     .eq("user_id", userId)
     .maybeSingle();
@@ -26,8 +48,16 @@ export async function getDonationTierCodeForCertificate(
     throw donationError;
   }
 
-  if (!donation?.tier_id) {
+  if (!donation) {
     return null;
+  }
+
+  if (!donation.tier_id) {
+    return {
+      amount: donation.amount,
+      currency: donation.currency,
+      tierCode: inferDonationTierCodeFromAmount(donation.amount, donation.currency),
+    };
   }
 
   const { data: tier, error: tierError } = await supabase
@@ -40,5 +70,9 @@ export async function getDonationTierCodeForCertificate(
     throw tierError;
   }
 
-  return tier?.code ?? null;
+  return {
+    amount: donation.amount,
+    currency: donation.currency,
+    tierCode: tier?.code ?? inferDonationTierCodeFromAmount(donation.amount, donation.currency),
+  };
 }

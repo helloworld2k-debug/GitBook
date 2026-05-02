@@ -25,17 +25,6 @@ $$;
 revoke execute on function public.allocate_certificate_number(certificate_type) from anon, authenticated, public;
 grant execute on function public.allocate_certificate_number(certificate_type) to service_role;
 
-create or replace function public.get_paid_total(input_user_id uuid)
-returns integer
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select coalesce(sum(amount), 0)::integer
-  from public.donations
-  where user_id = input_user_id and status = 'paid' and currency = 'usd';
-$$;
-
-revoke execute on function public.get_paid_total(uuid) from anon, authenticated, public;
-grant execute on function public.get_paid_total(uuid) to service_role;
+update public.certificates
+set certificate_number = regexp_replace(certificate_number, '^TFD-', 'GBAI-')
+where certificate_number like 'TFD-%';

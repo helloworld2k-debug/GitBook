@@ -477,9 +477,10 @@
     }
   },
   "certificate": {
-    "brand": "Three Friends",
+    "brand": "GitBook AI",
     "title": "支持證書",
     "description": "謹以此證書感謝你對獨立軟體開發的珍貴支持。",
+    "amount": "捐贈金額",
     "presentedTo": "頒發給",
     "certificateNumber": "證書編號",
     "issued": "頒發日期",
@@ -489,6 +490,11 @@
       "title": "下載證書",
       "svg": "下載 SVG",
       "note": "目前僅支援 SVG 匯出。你可在瀏覽器中開啟後列印或另存為 PDF；原生 PNG/PDF 匯出將在後續版本加入。"
+    },
+    "navigation": {
+      "title": "證書導覽",
+      "home": "返回首頁",
+      "dashboard": "返回個人中心"
     },
     "types": {
       "donation": "捐贈證書",

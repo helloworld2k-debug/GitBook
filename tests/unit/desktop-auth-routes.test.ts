@@ -42,7 +42,7 @@ describe("desktop auth exchange route", () => {
 
   it("rejects invalid request bodies with 400", async () => {
     const response = await POST(
-      new Request("https://threefriends.example/api/desktop/auth/exchange", {
+      new Request("https://gitbookai.example/api/desktop/auth/exchange", {
         body: JSON.stringify({ code: "short" }),
         method: "POST",
       }),
@@ -59,7 +59,7 @@ describe("desktop auth exchange route", () => {
     mocks.exchangeDesktopAuthCode.mockRejectedValueOnce(new InvalidDesktopAuthCodeError());
 
     const response = await POST(
-      new Request("https://threefriends.example/api/desktop/auth/exchange", {
+      new Request("https://gitbookai.example/api/desktop/auth/exchange", {
         body: JSON.stringify({
           code: "a".repeat(20),
           deviceId: "device-a",
@@ -80,7 +80,7 @@ describe("desktop auth exchange route", () => {
     mocks.exchangeDesktopAuthCode.mockRejectedValueOnce(new Error("database unavailable"));
 
     const response = await POST(
-      new Request("https://threefriends.example/api/desktop/auth/exchange", {
+      new Request("https://gitbookai.example/api/desktop/auth/exchange", {
         body: JSON.stringify({
           code: "a".repeat(20),
           deviceId: "device-a",
@@ -97,7 +97,7 @@ describe("desktop auth exchange route", () => {
 
   it("returns desktop token details for valid exchanges", async () => {
     const response = await POST(
-      new Request("https://threefriends.example/api/desktop/auth/exchange", {
+      new Request("https://gitbookai.example/api/desktop/auth/exchange", {
         body: JSON.stringify({
           code: "a".repeat(20),
           deviceId: "device-a",
@@ -136,7 +136,7 @@ describe("desktop authorize route", () => {
   });
 
   it("rejects unsupported locales with 404", async () => {
-    const response = await GET(new Request("https://threefriends.example/fr/desktop/authorize"), {
+    const response = await GET(new Request("https://gitbookai.example/fr/desktop/authorize"), {
       params: Promise.resolve({ locale: "fr" }),
     });
 
@@ -148,7 +148,7 @@ describe("desktop authorize route", () => {
   it("rejects callback URLs outside the desktop auth protocol", async () => {
     const response = await GET(
       new Request(
-        "https://threefriends.example/en/desktop/authorize?device_session_id=session-1&return_url=https%3A%2F%2Fevil.example%2Fcallback",
+        "https://gitbookai.example/en/desktop/authorize?device_session_id=session-1&return_url=https%3A%2F%2Fevil.example%2Fcallback",
       ),
       {
         params: Promise.resolve({ locale: "en" }),
@@ -163,7 +163,7 @@ describe("desktop authorize route", () => {
   it("rejects callback prefix bypass attempts", async () => {
     const response = await GET(
       new Request(
-        "https://threefriends.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback.evil",
+        "https://gitbookai.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback.evil",
       ),
       {
         params: Promise.resolve({ locale: "en" }),
@@ -178,7 +178,7 @@ describe("desktop authorize route", () => {
   it("rejects callback URLs with caller query parameters", async () => {
     const response = await GET(
       new Request(
-        "https://threefriends.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback%3Fstate%3Dabc",
+        "https://gitbookai.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback%3Fstate%3Dabc",
       ),
       {
         params: Promise.resolve({ locale: "en" }),
@@ -195,7 +195,7 @@ describe("desktop authorize route", () => {
 
     const response = await GET(
       new Request(
-        "https://threefriends.example/ja/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback",
+        "https://gitbookai.example/ja/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback",
       ),
       {
         params: Promise.resolve({ locale: "ja" }),
@@ -204,7 +204,7 @@ describe("desktop authorize route", () => {
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
-      "https://threefriends.example/ja/login?next=%2Fja%2Fdesktop%2Fauthorize%3Fdevice_session_id%3Dsession-1%26return_url%3Dgitbookai%253A%252F%252Fauth%252Fcallback",
+      "https://gitbookai.example/ja/login?next=%2Fja%2Fdesktop%2Fauthorize%3Fdevice_session_id%3Dsession-1%26return_url%3Dgitbookai%253A%252F%252Fauth%252Fcallback",
     );
     expect(mocks.createDesktopAuthCode).not.toHaveBeenCalled();
   });
@@ -212,7 +212,7 @@ describe("desktop authorize route", () => {
   it("creates an auth code for signed-in users and redirects to the callback", async () => {
     const response = await GET(
       new Request(
-        "https://threefriends.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback",
+        "https://gitbookai.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback",
       ),
       {
         params: Promise.resolve({ locale: "en" }),

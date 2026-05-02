@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import ResetPasswordPage from "@/app/[locale]/reset-password/page";
 
 vi.mock("@/components/site-header", () => ({
-  SiteHeader: () => <header>Three Friends</header>,
+  SiteHeader: () => <header>GitBook AI</header>,
 }));
 
 vi.mock("next-intl/server", () => ({

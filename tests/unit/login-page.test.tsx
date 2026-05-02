@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import LoginPage from "@/app/[locale]/login/page";
 
 vi.mock("@/components/site-header", () => ({
-  SiteHeader: () => <header>Three Friends</header>,
+  SiteHeader: () => <header>GitBook AI</header>,
 }));
 
 vi.mock("@/app/[locale]/login/login-form", () => ({
@@ -69,7 +69,7 @@ vi.mock("next-intl/server", () => ({
 
 describe("LoginPage", () => {
   it("renders a localized login page with a safe callback next path", async () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://threefriends.example";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     const page = await LoginPage({
       params: Promise.resolve({ locale: "en" }),
       searchParams: Promise.resolve({ next: "/en/donate?tier=yearly" }),
@@ -79,15 +79,15 @@ describe("LoginPage", () => {
 
     expect(screen.getByRole("heading", { name: "Sign in or create your account" })).toBeInTheDocument();
     expect(screen.getByTestId("login-callback").textContent).toBe(
-      "https://threefriends.example/auth/callback?next=%2Fen%2Fdonate%3Ftier%3Dyearly",
+      "https://gitbookai.example/auth/callback?next=%2Fen%2Fdonate%3Ftier%3Dyearly",
     );
     expect(screen.getByTestId("password-reset-callback").textContent).toBe(
-      "https://threefriends.example/auth/callback?next=%2Fen%2Freset-password",
+      "https://gitbookai.example/auth/callback?next=%2Fen%2Freset-password",
     );
   });
 
   it("falls back to the default dashboard when next is external", async () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://threefriends.example";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     const page = await LoginPage({
       params: Promise.resolve({ locale: "ja" }),
       searchParams: Promise.resolve({ next: "https://evil.example/take" }),
@@ -96,12 +96,12 @@ describe("LoginPage", () => {
     render(page);
 
     expect(screen.getByTestId("login-form")).toHaveTextContent(
-      "https://threefriends.example/auth/callback?next=%2Fja%2Fdashboard",
+      "https://gitbookai.example/auth/callback?next=%2Fja%2Fdashboard",
     );
   });
 
   it("uses the current locale dashboard when next is absent", async () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://threefriends.example";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     const page = await LoginPage({
       params: Promise.resolve({ locale: "ko" }),
       searchParams: Promise.resolve({}),
@@ -110,12 +110,12 @@ describe("LoginPage", () => {
     render(page);
 
     expect(screen.getByTestId("login-form")).toHaveTextContent(
-      "https://threefriends.example/auth/callback?next=%2Fko%2Fdashboard",
+      "https://gitbookai.example/auth/callback?next=%2Fko%2Fdashboard",
     );
   });
 
   it("uses the first safe value when next is repeated", async () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://threefriends.example";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     const page = await LoginPage({
       params: Promise.resolve({ locale: "ko" }),
       searchParams: Promise.resolve({ next: ["/ko/dashboard", "https://evil.example/take"] }),
@@ -124,7 +124,7 @@ describe("LoginPage", () => {
     render(page);
 
     expect(screen.getByTestId("login-form")).toHaveTextContent(
-      "https://threefriends.example/auth/callback?next=%2Fko%2Fdashboard",
+      "https://gitbookai.example/auth/callback?next=%2Fko%2Fdashboard",
     );
   });
 

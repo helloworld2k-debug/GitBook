@@ -164,7 +164,7 @@ describe("dashboard page", () => {
     const donationCertificatesQuery = createThenableQuery({
       data: [
         {
-          certificate_number: "TF-DON-2026-0001",
+          certificate_number: "GBAI-2026-D-000001",
           donation_id: "donation-1",
           id: "certificate-1",
           issued_at: "2026-04-30T10:00:31.000Z",
@@ -208,6 +208,6 @@ describe("dashboard page", () => {
       "href",
       "/dashboard/certificates/certificate-1",
     );
-    expect(within(donationHistory as HTMLElement).getByText("TF-DON-2026-0001")).toBeInTheDocument();
+    expect(within(donationHistory as HTMLElement).getByText("GBAI-2026-D-000001")).toBeInTheDocument();
   });
 });

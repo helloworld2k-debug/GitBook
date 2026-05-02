@@ -48,10 +48,10 @@ const messages: LoginFormMessages = {
 function renderLoginForm() {
   render(
     <LoginForm
-      callbackUrl="https://threefriends.example/auth/callback?next=%2Fen%2Fdonate"
+      callbackUrl="https://gitbookai.example/auth/callback?next=%2Fen%2Fdonate"
       messages={messages}
       nextPath="/en/donate"
-      passwordResetCallbackUrl="https://threefriends.example/auth/callback?next=%2Fen%2Freset-password"
+      passwordResetCallbackUrl="https://gitbookai.example/auth/callback?next=%2Fen%2Freset-password"
     />,
   );
 }
@@ -125,7 +125,7 @@ describe("LoginForm", () => {
         email: "new@example.com",
         password: "new-password",
         options: {
-          emailRedirectTo: "https://threefriends.example/auth/callback?next=%2Fen%2Fdonate",
+          emailRedirectTo: "https://gitbookai.example/auth/callback?next=%2Fen%2Fdonate",
         },
       });
     });
@@ -173,7 +173,7 @@ describe("LoginForm", () => {
       expect(signInWithOAuthMock).toHaveBeenCalledWith({
         provider: "github",
         options: {
-          redirectTo: "https://threefriends.example/auth/callback?next=%2Fen%2Fdonate",
+          redirectTo: "https://gitbookai.example/auth/callback?next=%2Fen%2Fdonate",
         },
       });
     });
@@ -197,7 +197,7 @@ describe("LoginForm", () => {
 
     await waitFor(() => {
       expect(resetPasswordForEmailMock).toHaveBeenCalledWith("friend@example.com", {
-        redirectTo: "https://threefriends.example/auth/callback?next=%2Fen%2Freset-password",
+        redirectTo: "https://gitbookai.example/auth/callback?next=%2Fen%2Freset-password",
       });
     });
     expect(await screen.findByRole("status")).toHaveTextContent("Check your email for a password reset link.");

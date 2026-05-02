@@ -2,6 +2,7 @@ import { formatCertificateIssuedDate } from "@/lib/certificates/render";
 import { getCertificateTemplate, type CertificateTemplate } from "@/lib/certificates/templates";
 
 export type CertificateExportCopy = {
+  amount: string;
   brand: string;
   certificateNumber: string;
   description: string;
@@ -17,6 +18,7 @@ export type CertificateExportData = {
   issuedAt: string | Date | null;
   label: string;
   locale: string;
+  donationAmount?: string | null;
   recipientName: string;
   template?: CertificateTemplate;
   templateBackgroundDataUri?: string | null;
@@ -38,12 +40,13 @@ function text(value: string) {
 export function getCertificateExportFilename(certificateNumber: string, format: "svg") {
   const safeNumber = certificateNumber.replace(/[^a-zA-Z0-9._-]+/g, "-");
 
-  return `three-friends-certificate-${safeNumber}.${format}`;
+  return `gitbook-ai-certificate-${safeNumber}.${format}`;
 }
 
 export function renderCertificateSvg({
   certificateNumber,
   copy,
+  donationAmount,
   issuedAt,
   label,
   locale,
@@ -82,12 +85,15 @@ export function renderCertificateSvg({
   <text x="800" y="635" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="6" fill="${foil}">${text(copy.presentedTo.toUpperCase())}</text>
   <text x="800" y="716" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="62" font-weight="700" fill="${titleFill}">${text(recipientName)}</text>
   <text x="800" y="780" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="600" fill="${mutedFill}">${text(label)}</text>
-  <rect x="250" y="860" width="470" height="88" rx="12" fill="${panelFill}" stroke="${panelStroke}" stroke-width="2"/>
-  <text x="285" y="898" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="${titleFill}">${text(copy.certificateNumber)}</text>
-  <text x="285" y="930" font-family="Inter, Arial, sans-serif" font-size="21" fill="${mutedFill}">${text(certificateNumber)}</text>
-  <rect x="880" y="860" width="470" height="88" rx="12" fill="${panelFill}" stroke="${panelStroke}" stroke-width="2"/>
-  <text x="915" y="898" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="${titleFill}">${text(copy.issued)}</text>
-  <text x="915" y="930" font-family="Inter, Arial, sans-serif" font-size="21" fill="${mutedFill}">${text(issuedDate)}</text>
+  <rect x="170" y="860" width="390" height="88" rx="12" fill="${panelFill}" stroke="${panelStroke}" stroke-width="2"/>
+  <text x="200" y="898" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="${titleFill}">${text(copy.certificateNumber)}</text>
+  <text x="200" y="930" font-family="Inter, Arial, sans-serif" font-size="21" fill="${mutedFill}">${text(certificateNumber)}</text>
+  ${donationAmount ? `<rect x="605" y="860" width="390" height="88" rx="12" fill="${panelFill}" stroke="${panelStroke}" stroke-width="2"/>
+  <text x="635" y="898" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="${titleFill}">${text(copy.amount)}</text>
+  <text x="635" y="930" font-family="Inter, Arial, sans-serif" font-size="21" fill="${mutedFill}">${text(donationAmount)}</text>` : ""}
+  <rect x="1040" y="860" width="390" height="88" rx="12" fill="${panelFill}" stroke="${panelStroke}" stroke-width="2"/>
+  <text x="1070" y="898" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="${titleFill}">${text(copy.issued)}</text>
+  <text x="1070" y="930" font-family="Inter, Arial, sans-serif" font-size="21" fill="${mutedFill}">${text(issuedDate)}</text>
 </svg>
 `;
 }

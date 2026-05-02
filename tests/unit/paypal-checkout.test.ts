@@ -20,7 +20,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 describe("PayPal checkout route", () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://threefriends.example";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     mocks.createPayPalOrder.mockReset();
     mocks.createPayPalOrder.mockResolvedValue({
       id: "ORDER-123",
@@ -35,7 +35,7 @@ describe("PayPal checkout route", () => {
     formData.set("tier", "yearly");
 
     const response = await POST(
-      new Request("https://threefriends.example/api/checkout/paypal", {
+      new Request("https://gitbookai.example/api/checkout/paypal", {
         body: formData,
         headers: {
           Origin: "https://evil.example",
@@ -56,7 +56,7 @@ describe("PayPal checkout route", () => {
     formData.set("tier", "lifetime");
 
     const response = await POST(
-      new Request("https://threefriends.example/api/checkout/paypal", {
+      new Request("https://gitbookai.example/api/checkout/paypal", {
         body: formData,
         method: "POST",
       }),
@@ -73,7 +73,7 @@ describe("PayPal checkout route", () => {
     formData.set("tier", "monthly");
 
     const response = await POST(
-      new Request("https://threefriends.example/api/checkout/paypal", {
+      new Request("https://gitbookai.example/api/checkout/paypal", {
         body: formData,
         headers: {
           Origin: "https://evil.example",
@@ -83,7 +83,7 @@ describe("PayPal checkout route", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("https://threefriends.example/en/login?next=%2Fen%2Fdonate");
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/en/login?next=%2Fen%2Fdonate");
     expect(mocks.createPayPalOrder).not.toHaveBeenCalled();
   });
 });

@@ -485,9 +485,10 @@
     }
   },
   "certificate": {
-    "brand": "Three Friends",
+    "brand": "GitBook AI",
     "title": "Certificate of Support",
     "description": "This certificate is presented with gratitude for meaningful support of independent software development.",
+    "amount": "Donation amount",
     "presentedTo": "Presented to",
     "certificateNumber": "Certificate No.",
     "issued": "Issued",
@@ -497,6 +498,11 @@
       "title": "Download certificate",
       "svg": "Download SVG",
       "note": "Current exports are SVG only. Open the file in your browser to print or save as PDF; native PNG/PDF export is planned for a later release."
+    },
+    "navigation": {
+      "title": "Certificate navigation",
+      "home": "Back to home",
+      "dashboard": "Back to dashboard"
     },
     "types": {
       "donation": "Donation Certificate",

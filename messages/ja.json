@@ -477,9 +477,10 @@
     }
   },
   "certificate": {
-    "brand": "Three Friends",
+    "brand": "GitBook AI",
     "title": "支援証明書",
     "description": "独立したソフトウェア開発への大切なご支援に、感謝を込めてこの証明書を贈ります。",
+    "amount": "寄付金額",
     "presentedTo": "贈呈先",
     "certificateNumber": "証明書番号",
     "issued": "発行日",
@@ -489,6 +490,11 @@
       "title": "証明書をダウンロード",
       "svg": "SVG をダウンロード",
       "note": "現在のエクスポートは SVG のみです。ブラウザーで開いて印刷または PDF として保存できます。ネイティブ PNG/PDF エクスポートは今後のリリースで対応予定です。"
+    },
+    "navigation": {
+      "title": "証明書ナビゲーション",
+      "home": "ホームへ戻る",
+      "dashboard": "ダッシュボードへ戻る"
     },
     "types": {
       "donation": "寄付証明書",

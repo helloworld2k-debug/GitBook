@@ -3,6 +3,7 @@ import { getCertificateTemplate, type CertificateTemplate } from "@/lib/certific
 type CertificateViewProps = {
   certificateNumber: string;
   copy: {
+    amount: string;
     brand: string;
     certificateNumber: string;
     description: string;
@@ -15,6 +16,7 @@ type CertificateViewProps = {
   label: string;
   issuedAt: string | Date | null;
   locale: string;
+  donationAmount?: string | null;
   template?: CertificateTemplate;
 };
 
@@ -39,9 +41,24 @@ export function getCertificateTypeLabel(type: "donation" | "honor", labels: { do
   return type === "honor" ? labels.honor : labels.donation;
 }
 
+export function formatCertificateAmount(
+  donation: { amount: number; currency: string } | null | undefined,
+  locale: string,
+) {
+  if (!donation) {
+    return null;
+  }
+
+  return new Intl.NumberFormat(locale, {
+    currency: donation.currency.toUpperCase(),
+    style: "currency",
+  }).format(donation.amount / 100);
+}
+
 export function CertificateView({
   certificateNumber,
   copy,
+  donationAmount,
   recipientName,
   label,
   issuedAt,
@@ -109,11 +126,17 @@ export function CertificateView({
             </p>
           </div>
 
-          <div className="relative mt-10 grid gap-3 text-left text-sm sm:grid-cols-2">
+          <div className="relative mt-10 grid gap-3 text-left text-sm sm:grid-cols-3">
             <div className="rounded-md border border-cyan-300/15 bg-white/[0.05] p-4">
               <p className="font-semibold text-cyan-100">{copy.certificateNumber}</p>
               <p className="mt-2 break-words font-mono text-sm text-slate-200">{certificateNumber}</p>
             </div>
+            {donationAmount ? (
+              <div className="rounded-md border border-cyan-300/15 bg-white/[0.05] p-4">
+                <p className="font-semibold text-cyan-100">{copy.amount}</p>
+                <p className="mt-2 text-slate-200">{donationAmount}</p>
+              </div>
+            ) : null}
             <div className="rounded-md border border-amber-200/20 bg-amber-200/[0.06] p-4">
               <p className="font-semibold text-amber-100">{copy.issued}</p>
               <p className="mt-2 text-slate-200">{issuedDate}</p>

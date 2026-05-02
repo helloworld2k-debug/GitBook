@@ -26,7 +26,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 describe("Stripe checkout route", () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://threefriends.example";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     mocks.createCheckoutSession.mockReset();
     mocks.createCheckoutSession.mockResolvedValue({ url: "https://checkout.stripe.test/session" });
     mocks.getUser.mockReset();
@@ -38,7 +38,7 @@ describe("Stripe checkout route", () => {
     formData.set("tier", "yearly");
 
     await POST(
-      new Request("https://threefriends.example/api/checkout/stripe", {
+      new Request("https://gitbookai.example/api/checkout/stripe", {
         body: formData,
         headers: {
           Origin: "https://evil.example",
@@ -49,8 +49,8 @@ describe("Stripe checkout route", () => {
 
     expect(mocks.createCheckoutSession).toHaveBeenCalledWith(
       expect.objectContaining({
-        cancel_url: "https://threefriends.example/en/donate?payment=cancelled",
-        success_url: "https://threefriends.example/en/dashboard?payment=stripe-success",
+        cancel_url: "https://gitbookai.example/en/donate?payment=cancelled",
+        success_url: "https://gitbookai.example/en/dashboard/certificates/latest?payment=stripe-success",
       }),
     );
   });
@@ -62,7 +62,7 @@ describe("Stripe checkout route", () => {
     formData.set("locale", "zh-Hant");
 
     const response = await POST(
-      new Request("https://threefriends.example/api/checkout/stripe", {
+      new Request("https://gitbookai.example/api/checkout/stripe", {
         body: formData,
         method: "POST",
       }),
@@ -70,7 +70,7 @@ describe("Stripe checkout route", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "https://threefriends.example/zh-Hant/login?next=%2Fzh-Hant%2Fdonate",
+      "https://gitbookai.example/zh-Hant/login?next=%2Fzh-Hant%2Fdonate",
     );
     expect(mocks.createCheckoutSession).not.toHaveBeenCalled();
   });

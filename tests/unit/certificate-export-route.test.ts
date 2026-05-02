@@ -33,9 +33,10 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async (namespace: "certificate") => {
     const messages = {
-      brand: "Three Friends",
+      brand: "GitBook AI",
       title: "支援証明書",
       description: "独立したソフトウェア開発への大切なご支援に、感謝を込めてこの証明書を贈ります。",
+      amount: "寄付金額",
       presentedTo: "贈呈先",
       certificateNumber: "証明書番号",
       issued: "発行日",
@@ -133,7 +134,7 @@ describe("certificate export route", () => {
     mocks.createSupabaseServerClient.mockResolvedValue(createAuthClient(null));
 
     await expect(
-      GET(new Request("https://threefriends.example/ja/dashboard/certificates/cert-1/download/svg"), {
+      GET(new Request("https://gitbookai.example/ja/dashboard/certificates/cert-1/download/svg"), {
         params: params(),
       }),
     ).rejects.toThrow("redirect:/ja/login?next=%2Fja%2Fdashboard%2Fcertificates%2Fcert-1%2Fdownload%2Fsvg");
@@ -151,7 +152,7 @@ describe("certificate export route", () => {
     mocks.maybeSingle.mockResolvedValue({ data: null, error: null });
 
     await expect(
-      GET(new Request("https://threefriends.example/ja/dashboard/certificates/cert-1/download/svg"), {
+      GET(new Request("https://gitbookai.example/ja/dashboard/certificates/cert-1/download/svg"), {
         params: params(),
       }),
     ).rejects.toThrow("notFound");
@@ -175,40 +176,41 @@ describe("certificate export route", () => {
       .mockResolvedValueOnce(certificateClient);
     mocks.maybeSingle.mockResolvedValue({
       data: {
-        certificate_number: "TF-DON-2026-0001",
+        certificate_number: "GBAI-2026-D-000001",
         donation_id: "donation-1",
         issued_at: "2026-04-30T00:00:00.000Z",
         type: "donation",
       },
       error: null,
     });
-    mocks.donationMaybeSingle.mockResolvedValue({ data: { tier_id: "tier-quarterly" }, error: null });
+    mocks.donationMaybeSingle.mockResolvedValue({ data: { amount: 1500, currency: "usd", tier_id: "tier-quarterly" }, error: null });
     mocks.tierMaybeSingle.mockResolvedValue({ data: { code: "quarterly" }, error: null });
 
     const response = await GET(
-      new Request("https://threefriends.example/ja/dashboard/certificates/cert-1/download/svg"),
+      new Request("https://gitbookai.example/ja/dashboard/certificates/cert-1/download/svg"),
       { params: params() },
     );
     const body = await response.text();
 
     expect(response.headers.get("content-type")).toBe("image/svg+xml; charset=utf-8");
     expect(response.headers.get("content-disposition")).toBe(
-      'attachment; filename="three-friends-certificate-TF-DON-2026-0001.svg"',
+      'attachment; filename="gitbook-ai-certificate-GBAI-2026-D-000001.svg"',
     );
     expect(body).toContain("<svg");
     expect(body).toContain('data-certificate-template="quarterly"');
     expect(body).toContain("data:image/webp;base64,");
-    expect(body).toContain("Three Friends");
+    expect(body).toContain("GitBook AI");
     expect(body).toContain("支援証明書");
     expect(body).toContain("Ada Lovelace");
-    expect(body).toContain("TF-DON-2026-0001");
+    expect(body).toContain("GBAI-2026-D-000001");
     expect(body).toContain("寄付証明書");
+    expect(body).toContain("$15.00");
     expect(body).toContain("2026年4月30日");
   });
 
   it("does not advertise unsupported binary formats", async () => {
     await expect(
-      GET(new Request("https://threefriends.example/ja/dashboard/certificates/cert-1/download/png"), {
+      GET(new Request("https://gitbookai.example/ja/dashboard/certificates/cert-1/download/png"), {
         params: params("png"),
       }),
     ).rejects.toThrow("notFound");
@@ -218,9 +220,10 @@ describe("certificate export route", () => {
 
   it("escapes SVG text content from certificate fields and recipient names", () => {
     const body = renderCertificateSvg({
-      certificateNumber: "TFD-2026-D-<001>",
+      certificateNumber: "GBAI-2026-D-<001>",
       copy: {
-        brand: "Three & Friends",
+        amount: "Amount",
+        brand: "GitBook & AI",
         certificateNumber: "Certificate No.",
         description: "Thank <you> & \"friends\"",
         issued: "Issued",
@@ -231,6 +234,7 @@ describe("certificate export route", () => {
       issuedAt: null,
       label: "Donation & Honor",
       locale: "en",
+      donationAmount: "$5.00",
       recipientName: "<script>alert('x')</script>",
       template: {
         accent: "#22d3ee",
@@ -247,7 +251,8 @@ describe("certificate export route", () => {
 
     expect(body).toContain('data-certificate-template="monthly"');
     expect(body).toContain("data:image/webp;base64,dGVzdA==");
-    expect(body).toContain("Three &amp; Friends");
+    expect(body).toContain("GitBook &amp; AI");
+    expect(body).toContain("$5.00");
     expect(body).toContain("Support &lt;Certificate&gt;");
     expect(body).toContain("Thank &lt;you&gt; &amp; &quot;friends&quot;");
     expect(body).toContain("&lt;script&gt;alert(&apos;x&apos;)&lt;/script&gt;");
@@ -255,8 +260,8 @@ describe("certificate export route", () => {
   });
 
   it("sanitizes certificate numbers before using them in attachment filenames", () => {
-    expect(getCertificateExportFilename('TFD/2026 "<D>" 001', "svg")).toBe(
-      "three-friends-certificate-TFD-2026-D-001.svg",
+    expect(getCertificateExportFilename('GBAI/2026 "<D>" 001', "svg")).toBe(
+      "gitbook-ai-certificate-GBAI-2026-D-001.svg",
     );
   });
 });

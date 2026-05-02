@@ -6,5 +6,5 @@ const typeCode: Record<CertificateType, string> = {
 };
 
 export function formatCertificateNumber(type: CertificateType, year: number, sequence: number) {
-  return `TFD-${year}-${typeCode[type]}-${String(sequence).padStart(6, "0")}`;
+  return `GBAI-${year}-${typeCode[type]}-${String(sequence).padStart(6, "0")}`;
 }

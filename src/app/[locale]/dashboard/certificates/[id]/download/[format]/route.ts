@@ -4,9 +4,9 @@ import { supportedLocales, type Locale } from "@/config/site";
 import { requireUser } from "@/lib/auth/guards";
 import { getCertificateTemplateBackgroundDataUri } from "@/lib/certificates/backgrounds";
 import { getCertificateExportFilename, renderCertificateSvg } from "@/lib/certificates/export";
-import { getCertificateTypeLabel } from "@/lib/certificates/render";
+import { formatCertificateAmount, getCertificateTypeLabel } from "@/lib/certificates/render";
 import { getCertificateTemplate } from "@/lib/certificates/templates";
-import { getDonationTierCodeForCertificate } from "@/lib/certificates/tier";
+import { getDonationDetailsForCertificate } from "@/lib/certificates/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type CertificateDownloadRouteContext = {
@@ -62,11 +62,12 @@ export async function GET(_request: Request, { params }: CertificateDownloadRout
   }
 
   const certificateNumber = certificate.certificate_number;
-  const donationTierCode = await getDonationTierCodeForCertificate(supabase, certificate, user.id);
-  const template = getCertificateTemplate(certificate.type, donationTierCode);
+  const donationDetails = await getDonationDetailsForCertificate(supabase, certificate, user.id);
+  const template = getCertificateTemplate(certificate.type, donationDetails?.tierCode);
   const body = renderCertificateSvg({
     certificateNumber,
     copy: {
+      amount: t("amount"),
       brand: t("brand"),
       certificateNumber: t("certificateNumber"),
       description: t("description"),
@@ -75,6 +76,7 @@ export async function GET(_request: Request, { params }: CertificateDownloadRout
       presentedTo: t("presentedTo"),
       title: t("title"),
     },
+    donationAmount: formatCertificateAmount(donationDetails, locale),
     issuedAt: certificate.issued_at,
     label: getCertificateTypeLabel(certificate.type, {
       donation: t("types.donation"),

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatCertificateIssuedDate, getCertificateTypeLabel } from "@/lib/certificates/render";
+import { inferDonationTierCodeFromAmount } from "@/lib/certificates/tier";
+import { formatCertificateAmount, formatCertificateIssuedDate, getCertificateTypeLabel } from "@/lib/certificates/render";
 import { getCertificateTemplate, getCertificateTemplateForRecord } from "@/lib/certificates/templates";
 
 describe("certificate rendering helpers", () => {
@@ -12,6 +13,19 @@ describe("certificate rendering helpers", () => {
     expect(formatCertificateIssuedDate("2026-04-30T00:00:00.000Z", "en", "Pending")).toBe("April 30, 2026");
     expect(formatCertificateIssuedDate("2026-04-30T00:00:00.000Z", "ja", "未発行")).toBe("2026年4月30日");
     expect(formatCertificateIssuedDate(null, "ja", "未発行")).toBe("未発行");
+  });
+
+  it("formats donation amounts for certificate display", () => {
+    expect(formatCertificateAmount({ amount: 5000, currency: "usd" }, "en")).toBe("$50.00");
+    expect(formatCertificateAmount({ amount: 1500, currency: "usd" }, "zh-Hant")).toBe("US$15.00");
+    expect(formatCertificateAmount(null, "en")).toBeNull();
+  });
+
+  it("infers donation certificate tiers from paid amounts when old records lack tier links", () => {
+    expect(inferDonationTierCodeFromAmount(500, "usd")).toBe("monthly");
+    expect(inferDonationTierCodeFromAmount(1500, "usd")).toBe("quarterly");
+    expect(inferDonationTierCodeFromAmount(5000, "usd")).toBe("yearly");
+    expect(inferDonationTierCodeFromAmount(5000, "eur")).toBeNull();
   });
 
   it("selects donation certificate templates from tier codes", () => {

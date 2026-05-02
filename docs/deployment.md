@@ -1,6 +1,6 @@
 # Deployment
 
-This guide covers a low-cost deployment path for the Three Friends software donation site. It assumes Vercel for the Next.js app, Supabase for Auth and Postgres, Stripe for card checkout, and PayPal for PayPal checkout scaffolding.
+This guide covers a low-cost deployment path for the GitBook AI software donation site. It assumes Vercel for the Next.js app, Supabase for Auth and Postgres, Stripe for card checkout, and PayPal for PayPal checkout scaffolding.
 
 The current codebase is a deployable baseline, not a finished production launch. Stripe payment persistence and certificate generation are wired through the Stripe webhook. Supabase login UI and callback handling are implemented, but Auth providers and redirect allowlists still need deployment configuration. PayPal payments are not yet persisted to the `donations` table or used to generate certificates.
 

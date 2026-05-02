@@ -477,9 +477,10 @@
     }
   },
   "certificate": {
-    "brand": "Three Friends",
+    "brand": "GitBook AI",
     "title": "후원 인증서",
     "description": "독립 소프트웨어 개발을 위한 의미 있는 후원에 감사드리며 이 인증서를 드립니다.",
+    "amount": "후원 금액",
     "presentedTo": "수여 대상",
     "certificateNumber": "인증서 번호",
     "issued": "발급일",
@@ -489,6 +490,11 @@
       "title": "인증서 다운로드",
       "svg": "SVG 다운로드",
       "note": "현재 내보내기는 SVG만 지원합니다. 브라우저에서 열어 인쇄하거나 PDF로 저장할 수 있으며, 기본 PNG/PDF 내보내기는 이후 릴리스에서 지원할 예정입니다."
+    },
+    "navigation": {
+      "title": "인증서 탐색",
+      "home": "홈으로 돌아가기",
+      "dashboard": "대시보드로 돌아가기"
     },
     "types": {
       "donation": "후원 인증서",

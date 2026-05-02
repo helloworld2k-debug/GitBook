@@ -263,14 +263,14 @@ describe("desktop session helpers", () => {
   it("reads bearer authorization tokens case-insensitively", () => {
     expect(
       readBearerToken(
-        new Request("https://threefriends.example/api/license/status", {
+        new Request("https://gitbookai.example/api/license/status", {
           headers: { authorization: "Bearer desktop-token" },
         }),
       ),
     ).toBe("desktop-token");
     expect(
       readBearerToken(
-        new Request("https://threefriends.example/api/license/status", {
+        new Request("https://gitbookai.example/api/license/status", {
           headers: { Authorization: "bearer another-token" },
         }),
       ),
@@ -279,7 +279,7 @@ describe("desktop session helpers", () => {
 
   it("returns null for malformed bearer authorization headers", () => {
     const requestWithAuthorization = (authorization: string) =>
-      new Request("https://threefriends.example/api/license/status", {
+      new Request("https://gitbookai.example/api/license/status", {
         headers: { authorization },
       });
 
@@ -422,7 +422,7 @@ describe("license status route", () => {
   });
 
   it("returns unsupported_feature for non-cloud-sync feature queries", async () => {
-    const response = await GET(new Request("https://threefriends.example/api/license/status?feature=other"));
+    const response = await GET(new Request("https://gitbookai.example/api/license/status?feature=other"));
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
@@ -435,7 +435,7 @@ describe("license status route", () => {
   });
 
   it("returns 401 for missing or invalid desktop tokens", async () => {
-    let response = await GET(new Request("https://threefriends.example/api/license/status"));
+    let response = await GET(new Request("https://gitbookai.example/api/license/status"));
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({
@@ -447,7 +447,7 @@ describe("license status route", () => {
 
     routeMocks.createSupabaseAdminClient.mockReturnValueOnce(createMaybeSingleClient({}));
     response = await GET(
-      new Request("https://threefriends.example/api/license/status", {
+      new Request("https://gitbookai.example/api/license/status", {
         headers: { authorization: "Bearer desktop-token" },
       }),
     );
@@ -463,7 +463,7 @@ describe("license status route", () => {
 
   it("returns authenticated license status for valid desktop tokens", async () => {
     const response = await GET(
-      new Request("https://threefriends.example/api/license/status", {
+      new Request("https://gitbookai.example/api/license/status", {
         headers: { authorization: "Bearer desktop-token" },
       }),
     );
@@ -501,7 +501,7 @@ describe("license status route", () => {
     );
 
     const response = await GET(
-      new Request("https://threefriends.example/api/license/status", {
+      new Request("https://gitbookai.example/api/license/status", {
         headers: { authorization: "Bearer desktop-token" },
       }),
     );

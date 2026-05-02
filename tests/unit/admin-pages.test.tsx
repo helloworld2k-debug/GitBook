@@ -885,7 +885,7 @@ describe("admin pages", () => {
     const certificatesQuery = createAdminListQuery([
       {
         id: "certificate-1",
-        certificate_number: "TF-DON-2026-0001",
+        certificate_number: "GBAI-2026-D-000001",
         type: "donation",
         status: "active",
         issued_at: "2026-04-30T10:00:01.000Z",
@@ -958,7 +958,7 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "Donations" })).toBeInTheDocument();
     expect(screen.getByText("manual_ada")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Certificates" })).toBeInTheDocument();
-    expect(screen.getByText("TF-DON-2026-0001")).toBeInTheDocument();
+    expect(screen.getByText("GBAI-2026-D-000001")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Trials" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Unbind machine" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Desktop sessions" })).toBeInTheDocument();

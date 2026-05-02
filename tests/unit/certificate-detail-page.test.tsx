@@ -14,6 +14,14 @@ vi.mock("@/components/site-header", () => ({
   SiteHeader: () => <header>Site header</header>,
 }));
 
+vi.mock("@/i18n/routing", () => ({
+  Link: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock("@/lib/auth/guards", () => ({
   requireUser: mocks.requireUser,
 }));
@@ -25,9 +33,10 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async (namespace: "certificate") => {
     const messages = {
-      brand: "Three Friends",
+      brand: "GitBook AI",
       title: "후원 인증서",
       description: "독립 소프트웨어 개발을 위한 의미 있는 후원에 감사드리며 이 인증서를 드립니다.",
+      amount: "후원 금액",
       presentedTo: "수여 대상",
       certificateNumber: "인증서 번호",
       issued: "발급일",
@@ -41,6 +50,11 @@ vi.mock("next-intl/server", () => ({
         title: "인증서 다운로드",
         svg: "SVG 다운로드",
         note: "SVG 파일은 브라우저에서 열거나 인쇄할 수 있습니다.",
+      },
+      navigation: {
+        title: "인증서 탐색",
+        home: "홈으로 돌아가기",
+        dashboard: "대시보드로 돌아가기",
       },
     };
 
@@ -104,7 +118,7 @@ describe("certificate detail page", () => {
     mocks.tierMaybeSingle.mockReset();
   });
 
-  it("renders a localized protected SVG download link", async () => {
+  it("renders a localized protected certificate with amount and return navigation only", async () => {
     mocks.requireUser.mockResolvedValue({
       id: "user-1",
       email: "ada@example.com",
@@ -113,14 +127,14 @@ describe("certificate detail page", () => {
     mocks.createSupabaseServerClient.mockResolvedValue(createCertificateClient());
     mocks.maybeSingle.mockResolvedValue({
       data: {
-        certificate_number: "TF-DON-2026-0001",
+        certificate_number: "GBAI-2026-D-000001",
         donation_id: "donation-1",
         issued_at: "2026-04-30T00:00:00.000Z",
         type: "donation",
       },
       error: null,
     });
-    mocks.donationMaybeSingle.mockResolvedValue({ data: { tier_id: "tier-yearly" }, error: null });
+    mocks.donationMaybeSingle.mockResolvedValue({ data: { amount: 5000, currency: "usd", tier_id: "tier-yearly" }, error: null });
     mocks.tierMaybeSingle.mockResolvedValue({ data: { code: "yearly" }, error: null });
 
     render(await CertificatePage({ params: Promise.resolve({ id: "cert-1", locale: "ko" }) }));
@@ -132,12 +146,11 @@ describe("certificate detail page", () => {
       backgroundImage: "url(/certificates/yearly-bg.webp)",
     });
     expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
-    expect(screen.getByText("TF-DON-2026-0001")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "인증서 다운로드" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "SVG 다운로드" })).toHaveAttribute(
-      "href",
-      "/ko/dashboard/certificates/cert-1/download/svg",
-    );
-    expect(screen.getByText("SVG 파일은 브라우저에서 열거나 인쇄할 수 있습니다.")).toBeInTheDocument();
+    expect(screen.getByText("GBAI-2026-D-000001")).toBeInTheDocument();
+    expect(screen.getByText("US$50.00")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "SVG 다운로드" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "인증서 다운로드" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "홈으로 돌아가기" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "대시보드로 돌아가기" })).toHaveAttribute("href", "/dashboard");
   });
 });

@@ -53,56 +53,56 @@ describe("auth callback route", () => {
 
   it("exchanges the code and redirects to a safe next path", async () => {
     const response = await GET(
-      new Request("https://threefriends.example/auth/callback?code=abc123&next=%2Fja%2Fdonate%3Ftier%3Dyearly"),
+      new Request("https://gitbookai.example/auth/callback?code=abc123&next=%2Fja%2Fdonate%3Ftier%3Dyearly"),
     );
 
     expect(exchangeCodeForSessionMock).toHaveBeenCalledWith("abc123");
     expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("https://threefriends.example/ja/donate?tier=yearly");
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/ja/donate?tier=yearly");
   });
 
   it("falls back to the English dashboard for external next paths", async () => {
     const response = await GET(
-      new Request("https://threefriends.example/auth/callback?code=abc123&next=https%3A%2F%2Fevil.example%2Ftake"),
+      new Request("https://gitbookai.example/auth/callback?code=abc123&next=https%3A%2F%2Fevil.example%2Ftake"),
     );
 
-    expect(response.headers.get("location")).toBe("https://threefriends.example/en/dashboard");
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/en/dashboard");
   });
 
   it("falls back to a localized dashboard when next has a supported locale but is otherwise unsafe", async () => {
     const response = await GET(
-      new Request("https://threefriends.example/auth/callback?code=abc123&next=%2Fja%2F..%5Cdashboard"),
+      new Request("https://gitbookai.example/auth/callback?code=abc123&next=%2Fja%2F..%5Cdashboard"),
     );
 
-    expect(response.headers.get("location")).toBe("https://threefriends.example/ja/dashboard");
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/ja/dashboard");
   });
 
   it("redirects reset password callbacks to the localized reset password page", async () => {
     const response = await GET(
-      new Request("https://threefriends.example/auth/callback?code=abc123&next=%2Fja%2Freset-password"),
+      new Request("https://gitbookai.example/auth/callback?code=abc123&next=%2Fja%2Freset-password"),
     );
 
     expect(exchangeCodeForSessionMock).toHaveBeenCalledWith("abc123");
-    expect(response.headers.get("location")).toBe("https://threefriends.example/ja/reset-password");
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/ja/reset-password");
   });
 
   it("redirects to login with an error when the code is missing", async () => {
-    const response = await GET(new Request("https://threefriends.example/auth/callback?next=%2Fen%2Fdonate"));
+    const response = await GET(new Request("https://gitbookai.example/auth/callback?next=%2Fen%2Fdonate"));
 
     expect(exchangeCodeForSessionMock).not.toHaveBeenCalled();
     expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("https://threefriends.example/en/login?error=missing-code&next=%2Fen%2Fdonate");
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/en/login?error=missing-code&next=%2Fen%2Fdonate");
   });
 
   it("redirects to login with an error when Supabase rejects the code", async () => {
     exchangeCodeForSessionMock.mockResolvedValueOnce({ data: { session: null }, error: new Error("expired") });
 
     const response = await GET(
-      new Request("https://threefriends.example/auth/callback?code=bad-code&next=%2Fko%2Fdashboard"),
+      new Request("https://gitbookai.example/auth/callback?code=bad-code&next=%2Fko%2Fdashboard"),
     );
 
     expect(response.headers.get("location")).toBe(
-      "https://threefriends.example/ko/login?error=callback&next=%2Fko%2Fdashboard",
+      "https://gitbookai.example/ko/login?error=callback&next=%2Fko%2Fdashboard",
     );
   });
 });
