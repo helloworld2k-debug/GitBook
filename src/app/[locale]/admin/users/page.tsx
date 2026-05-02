@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { supportedLocales, type Locale } from "@/config/site";
+import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -111,6 +112,9 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
                           <p className="font-medium text-slate-950">{profile.email}</p>
                           <p className="mt-1 text-slate-600">{profile.display_name ?? "-"}</p>
                           <p className="mt-1 font-mono text-xs text-slate-500">{profile.id}</p>
+                          <Link className="mt-3 inline-flex min-h-9 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/users/${profile.id}`}>
+                            {t("viewDetails")}
+                          </Link>
                         </td>
                         <td className="px-5 py-4 align-top">
                           <form action={updateUserAdminRole} className="flex gap-2">

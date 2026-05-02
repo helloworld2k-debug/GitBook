@@ -5,7 +5,6 @@ import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { requireUser } from "@/lib/auth/guards";
-import { formatCertificateIssuedDate, getCertificateTypeLabel } from "@/lib/certificates/render";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -26,7 +25,6 @@ type DashboardPageProps = {
 };
 
 type DonationStatus = "pending" | "paid" | "cancelled" | "failed" | "refunded";
-type CertificateType = "donation" | "honor";
 
 function formatDonationAmount(amount: number, currency: string, locale: string) {
   return new Intl.NumberFormat(locale, {
@@ -83,14 +81,12 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
   setRequestLocale(locale);
   const user = await requireUser(locale, `/${locale}/dashboard`);
   const t = await getTranslations("dashboard");
-  const certificateT = await getTranslations("certificate");
   const supabase = await createSupabaseServerClient();
 
   const [
     { count: donationCount, error: donationCountError },
     { count: certificateCount, error: certificateCountError },
     { data: donations, error: donationsError },
-    { data: certificates, error: certificatesError },
     { data: profile, error: profileError },
     { data: entitlement, error: entitlementError },
     { data: trialRedemption, error: trialError },
@@ -106,13 +102,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
       .select("id,amount,currency,status,paid_at,created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(5),
-    supabase
-      .from("certificates")
-      .select("id,certificate_number,type,issued_at")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .order("issued_at", { ascending: false })
       .limit(5),
     supabase
       .from("profiles")
@@ -149,10 +138,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
     throw donationsError;
   }
 
-  if (certificatesError) {
-    throw certificatesError;
-  }
-
   if (profileError) {
     throw profileError;
   }
@@ -165,12 +150,32 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
     throw trialError;
   }
 
+  const recentDonationIds = (donations ?? []).map((donation) => donation.id);
+  const { data: donationCertificates, error: donationCertificatesError } = recentDonationIds.length
+    ? await supabase
+        .from("certificates")
+        .select("id,certificate_number,donation_id")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .eq("type", "donation")
+        .in("donation_id", recentDonationIds)
+    : { data: [], error: null };
+
+  if (donationCertificatesError) {
+    throw donationCertificatesError;
+  }
+
   const updateProfile = updateAccountProfile.bind(null, locale);
   const updatePassword = updateDashboardPassword.bind(null, locale);
   const redeemTrial = redeemDashboardTrialCode.bind(null, locale);
   const accountLabel = profile?.display_name || profile?.email || user.email || t("memberFallback");
   const cloudSyncValidUntil = entitlement?.valid_until ?? trialRedemption?.trial_valid_until ?? null;
   const hasCloudSyncAccess = isDateInFuture(cloudSyncValidUntil);
+  const donationCertificateByDonationId = new Map(
+    (donationCertificates ?? [])
+      .filter((certificate) => certificate.donation_id)
+      .map((certificate) => [certificate.donation_id as string, certificate]),
+  );
   const trialStatusMessages = {
     duplicate: t("trial.duplicate"),
     error: t("trial.error"),
@@ -309,70 +314,52 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                         <th className="px-5 py-3">{t("amount")}</th>
                         <th className="px-5 py-3">{t("status")}</th>
                         <th className="px-5 py-3">{t("date")}</th>
+                        <th className="px-5 py-3">{t("certificateNumber")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-cyan-300/10">
-                      {donations.map((donation) => (
-                        <tr key={donation.id}>
-                          <td className="whitespace-nowrap px-5 py-4 font-medium text-white">
-                            {formatDonationAmount(donation.amount, donation.currency, locale)}
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-4">
-                            <span className={getStatusPillClass(donation.status as DonationStatus)}>
-                              {t(`donationStatuses.${donation.status as DonationStatus}`)}
-                            </span>
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-4 text-slate-300">
-                            {formatDateTimeWithSeconds(donation.paid_at ?? donation.created_at, locale)}
-                          </td>
-                        </tr>
-                      ))}
+                      {donations.map((donation) => {
+                        const certificate = donationCertificateByDonationId.get(donation.id);
+
+                        return (
+                          <tr key={donation.id}>
+                            <td className="whitespace-nowrap px-5 py-4 font-medium text-white">
+                              {formatDonationAmount(donation.amount, donation.currency, locale)}
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-4">
+                              <span className={getStatusPillClass(donation.status as DonationStatus)}>
+                                {t(`donationStatuses.${donation.status as DonationStatus}`)}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-5 py-4 text-slate-300">
+                              {formatDateTimeWithSeconds(donation.paid_at ?? donation.created_at, locale)}
+                            </td>
+                            <td className="px-5 py-4">
+                              {certificate ? (
+                                <div className="flex min-w-44 flex-col gap-2 sm:min-w-52">
+                                  <span className="break-words font-mono text-xs text-slate-300">
+                                    {certificate.certificate_number}
+                                  </span>
+                                  <Link
+                                    href={`/dashboard/certificates/${certificate.id}`}
+                                    className="inline-flex min-h-10 w-fit items-center justify-center rounded-md border border-cyan-300/20 px-3 text-sm font-medium text-cyan-100 transition-colors hover:border-cyan-300/50 hover:bg-cyan-300/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                                  >
+                                    {t("viewCertificate")}
+                                  </Link>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-slate-500">{t("notAvailable")}</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               ) : (
                 <p className="px-5 py-6 text-sm text-slate-400">{t("noDonations")}</p>
               )}
-              </DashboardCard>
-
-              <DashboardCard className="overflow-hidden">
-                <div className="border-b border-cyan-300/10 px-5 py-4">
-                  <h2 className="text-lg font-semibold tracking-normal text-white">{t("recentCertificates")}</h2>
-                </div>
-                {certificates && certificates.length > 0 ? (
-                  <ul className="divide-y divide-cyan-300/10">
-                    {certificates.map((certificate) => (
-                      <li key={certificate.id} className="px-5 py-4">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-white">{certificate.certificate_number}</p>
-                            <p className="mt-1 text-sm text-slate-400">
-                              {getCertificateTypeLabel(certificate.type as CertificateType, {
-                                donation: certificateT("types.donation"),
-                                honor: certificateT("types.honor"),
-                              })}
-                              {certificate.issued_at
-                                ? ` - ${formatCertificateIssuedDate(
-                                    certificate.issued_at,
-                                    locale,
-                                    certificateT("pendingIssueDate"),
-                                  )}`
-                                : ""}
-                            </p>
-                          </div>
-                          <Link
-                            href={`/dashboard/certificates/${certificate.id}`}
-                            className="inline-flex min-h-10 items-center justify-center rounded-md border border-cyan-300/20 px-3 text-sm font-medium text-cyan-100 transition-colors hover:border-cyan-300/50 hover:bg-cyan-300/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
-                          >
-                            {t("viewCertificate")}
-                          </Link>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="px-5 py-6 text-sm text-slate-400">{t("noCertificates")}</p>
-                )}
               </DashboardCard>
             </div>
 

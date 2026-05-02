@@ -6,6 +6,10 @@ const migration = readFileSync(
   join(process.cwd(), "supabase/migrations/0010_support_threads_license_activation.sql"),
   "utf8",
 );
+const trialOnlyMigration = readFileSync(
+  join(process.cwd(), "supabase/migrations/0011_trial_only_license_management.sql"),
+  "utf8",
+);
 
 describe("support threads and license activation migration", () => {
   it("adds threaded feedback replies with user ownership policies", () => {
@@ -23,5 +27,13 @@ describe("support threads and license activation migration", () => {
     expect(migration).not.toContain("input_now > trial.ends_at");
     expect(migration).toContain("trial.deleted_at is not null");
     expect(migration).toContain("trial_valid_until := input_now + make_interval(days => trial.trial_days)");
+  });
+
+  it("stops legacy paid license codes and limits each user to one cloud sync trial", () => {
+    expect(trialOnlyMigration).toContain("duration_kind in ('month_1', 'month_3', 'year_1')");
+    expect(trialOnlyMigration).toContain("set is_active = false");
+    expect(trialOnlyMigration).toContain("user_id = input_user_id");
+    expect(trialOnlyMigration).toContain("feature_code = 'cloud_sync'");
+    expect(trialOnlyMigration).not.toContain("where trial_code_id = trial.id");
   });
 });

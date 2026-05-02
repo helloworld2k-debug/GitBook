@@ -4,9 +4,12 @@ import AdminPage from "@/app/[locale]/admin/page";
 import AdminAuditLogsPage from "@/app/[locale]/admin/audit-logs/page";
 import AdminCertificatesPage from "@/app/[locale]/admin/certificates/page";
 import AdminDonationsPage from "@/app/[locale]/admin/donations/page";
+import AdminLicensesPage from "@/app/[locale]/admin/licenses/page";
+import AdminUserDetailPage from "@/app/[locale]/admin/users/[id]/page";
 
 const requireAdminMock = vi.hoisted(() => vi.fn());
 const createSupabaseServerClientMock = vi.hoisted(() => vi.fn());
+const createSupabaseAdminClientMock = vi.hoisted(() => vi.fn());
 const intlState = vi.hoisted(() => ({ locale: "en" }));
 
 vi.mock("@/components/site-header", () => ({
@@ -69,11 +72,28 @@ vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: createSupabaseServerClientMock,
 }));
 
+vi.mock("@/lib/supabase/admin", () => ({
+  createSupabaseAdminClient: createSupabaseAdminClientMock,
+}));
+
 function createOrderedQuery(data: unknown, error: Error | null = null) {
   const order = vi.fn().mockResolvedValue({ data, error });
   const select = vi.fn(() => ({ order }));
 
   return { order, select };
+}
+
+function createAdminListQuery(data: unknown, error: Error | null = null) {
+  const query = {
+    eq: vi.fn(() => query),
+    is: vi.fn(() => query),
+    limit: vi.fn(() => Promise.resolve({ data, error })),
+    order: vi.fn(() => query),
+    select: vi.fn(() => query),
+    single: vi.fn(() => Promise.resolve({ data, error })),
+  };
+
+  return query;
 }
 
 const testMessages = {
@@ -164,6 +184,108 @@ const testMessages = {
         createdAt: "Created",
         admin: "Admin",
         empty: "No audit logs found.",
+      },
+      licenses: {
+        eyebrow: "Admin",
+        title: "License management",
+        description: "Manage short cloud sync trial codes, trial bindings, entitlements, desktop sessions, and cloud sync leases.",
+        createTrialTitle: "Create trial code",
+        createTrialDescription: "Create one auto-generated website trial code. Trials default to 3 days and can be set up to 7 days.",
+        trialDays: "Trial days",
+        label: "Label",
+        createTrial: "Create trial code",
+        trialCodesTitle: "Trial codes",
+        code: "Code",
+        duration: "Duration",
+        generatedAt: "Generated",
+        redemptions: "Redemptions",
+        status: "Status",
+        action: "Action",
+        days: "days",
+        active: "Active",
+        inactive: "Inactive",
+        activate: "Activate",
+        deactivate: "Deactivate",
+        save: "Save",
+        emptyTrialCodes: "No trial codes found.",
+        trialRedemptionsTitle: "Trial redemptions",
+        user: "User",
+        redeemedAt: "Redeemed",
+        validUntil: "Valid until",
+        device: "Device",
+        machine: "Machine",
+        bound: "Bound",
+        unbound: "Unbound",
+        emptyTrialRedemptions: "No trial redemptions found.",
+        entitlementsTitle: "Entitlements",
+        feature: "Feature",
+        sourceDonation: "Source donation",
+        none: "None",
+        emptyEntitlements: "No entitlements found.",
+        desktopSessionsTitle: "Desktop sessions",
+        platform: "Platform",
+        lastSeen: "Last seen",
+        expiresAt: "Expires",
+        revokedAt: "Revoked",
+        notRevoked: "Not revoked",
+        revoke: "Revoke",
+        emptySessions: "No desktop sessions found.",
+        cloudSyncLeasesTitle: "Cloud sync leases",
+        session: "Session",
+        lastHeartbeat: "Last heartbeat",
+        emptyLeases: "No cloud sync leases found.",
+        durations: {
+          trial_3_day: "Trial",
+          month_1: "Legacy 1 month",
+          month_3: "Legacy 3 months",
+          year_1: "Legacy 1 year",
+        },
+      },
+      users: {
+        eyebrow: "Admin",
+        title: "User management",
+        detailTitle: "User operations",
+        detailDescription: "Review and maintain one user's profile, donations, certificates, trials, devices, and entitlements.",
+        user: "User",
+        details: "Details",
+        role: "Role",
+        status: "Status",
+        trials: "Trials",
+        devices: "Devices",
+        donations: "Donations",
+        certificates: "Certificates",
+        entitlements: "Entitlements",
+        leases: "Leases",
+        sessions: "Desktop sessions",
+        save: "Save",
+        viewDetails: "View details",
+        displayName: "Display name",
+        publicDisplayName: "Public display name",
+        publicSupporter: "Public supporter",
+        bound: "Bound",
+        unbound: "Awaiting first desktop login",
+        redeemed: "Redeemed",
+        validUntil: "Valid until",
+        machine: "Machine",
+        lastSeen: "Last seen",
+        unbind: "Unbind machine",
+        addDonation: "Add manual donation",
+        emptyTrials: "No trials",
+        emptyDevices: "No desktop devices",
+        emptyDonations: "No donations",
+        emptyCertificates: "No certificates",
+        emptyEntitlements: "No entitlements",
+        emptyLeases: "No leases",
+        roles: {
+          owner: "Owner",
+          operator: "Operator",
+          user: "User",
+        },
+        statuses: {
+          active: "Active",
+          disabled: "Disabled",
+        },
+        description: "Review account roles, statuses, trial bindings, and desktop devices.",
       },
       shell: {
         auditLogs: "Audit Logs",
@@ -504,6 +626,7 @@ describe("admin pages", () => {
     intlState.locale = "en";
     requireAdminMock.mockReset().mockResolvedValue({ id: "admin-1" });
     createSupabaseServerClientMock.mockReset();
+    createSupabaseAdminClientMock.mockReset();
   });
 
   it("renders the guarded admin overview with admin tool links", async () => {
@@ -695,6 +818,154 @@ describe("admin pages", () => {
     await expect(AdminCertificatesPage({ params: Promise.resolve({ locale: "en" }) })).rejects.toThrow(
       "certificates failed",
     );
+  });
+
+  it("renders trial-only license management without paid code batch actions", async () => {
+    const trialCodesQuery = createAdminListQuery([
+      {
+        id: "trial-code-1",
+        label: "Launch trial",
+        trial_days: 3,
+        duration_kind: "trial_3_day",
+        code_mask: "ABCD-****-****-MNOP",
+        batch_id: null,
+        max_redemptions: 1,
+        redemption_count: 0,
+        is_active: true,
+        created_at: "2026-05-01T10:00:00.000Z",
+      },
+    ]);
+    const emptyQuery = createAdminListQuery([]);
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") return trialCodesQuery;
+      return emptyQuery;
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+
+    const element = await AdminLicensesPage({ params: Promise.resolve({ locale: "en" }) });
+
+    render(element);
+
+    expect(from).toHaveBeenCalledWith("trial_codes");
+    expect(trialCodesQuery.select).toHaveBeenCalledWith("id,label,trial_days,duration_kind,code_mask,max_redemptions,redemption_count,is_active,created_at");
+    expect(screen.getByRole("heading", { name: "License management" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Create trial code" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Code")).not.toBeInTheDocument();
+    expect(screen.getAllByLabelText("Trial days")[0]).toHaveAttribute("max", "7");
+    expect(screen.queryByText("Batch generate license codes")).not.toBeInTheDocument();
+    expect(screen.queryByText("Bulk license code actions")).not.toBeInTheDocument();
+    expect(screen.queryByText("1 month")).not.toBeInTheDocument();
+    expect(screen.getByText("ABCD-****-****-MNOP")).toBeInTheDocument();
+  });
+
+  it("renders a user operations detail page with profile, donations, certificates, trials, devices, and entitlements", async () => {
+    const profileQuery = createAdminListQuery({
+      id: "user-1",
+      email: "ada@example.com",
+      display_name: "Ada Lovelace",
+      public_display_name: "Ada",
+      public_supporter_enabled: true,
+      admin_role: "user",
+      account_status: "active",
+      is_admin: false,
+      created_at: "2026-04-29T00:00:00.000Z",
+    });
+    const donationsQuery = createAdminListQuery([
+      {
+        id: "donation-1",
+        provider: "manual",
+        status: "paid",
+        amount: 5000,
+        currency: "usd",
+        provider_transaction_id: "manual_ada",
+        paid_at: "2026-04-30T10:00:00.000Z",
+        created_at: "2026-04-30T10:00:00.000Z",
+      },
+    ]);
+    const certificatesQuery = createAdminListQuery([
+      {
+        id: "certificate-1",
+        certificate_number: "TF-DON-2026-0001",
+        type: "donation",
+        status: "active",
+        issued_at: "2026-04-30T10:00:01.000Z",
+      },
+    ]);
+    const trialsQuery = createAdminListQuery([
+      {
+        id: "trial-redemption-1",
+        machine_code_hash: "machinehash123456",
+        device_id: "MacBook",
+        redeemed_at: "2026-04-30T10:01:00.000Z",
+        trial_valid_until: "2026-05-03T10:01:00.000Z",
+        bound_at: "2026-04-30T10:02:00.000Z",
+      },
+    ]);
+    const sessionsQuery = createAdminListQuery([
+      {
+        id: "session-1",
+        device_id: "MacBook",
+        machine_code_hash: "machinehash123456",
+        platform: "macos",
+        app_version: "1.0.0",
+        last_seen_at: "2026-04-30T10:03:00.000Z",
+        revoked_at: null,
+      },
+    ]);
+    const entitlementsQuery = createAdminListQuery([
+      {
+        id: "entitlement-1",
+        feature_code: "cloud_sync",
+        valid_until: "2026-05-03T10:01:00.000Z",
+        status: "active",
+        source_donation_id: null,
+        updated_at: "2026-04-30T10:01:00.000Z",
+      },
+    ]);
+    const leasesQuery = createAdminListQuery([
+      {
+        id: "lease-1",
+        desktop_session_id: "session-1",
+        device_id: "MacBook",
+        last_heartbeat_at: "2026-04-30T10:04:00.000Z",
+        expires_at: "2026-04-30T10:10:00.000Z",
+        revoked_at: null,
+        updated_at: "2026-04-30T10:04:00.000Z",
+      },
+    ]);
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return profileQuery;
+      if (table === "donations") return donationsQuery;
+      if (table === "certificates") return certificatesQuery;
+      if (table === "trial_code_redemptions") return trialsQuery;
+      if (table === "desktop_sessions") return sessionsQuery;
+      if (table === "license_entitlements") return entitlementsQuery;
+      if (table === "cloud_sync_leases") return leasesQuery;
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+
+    const element = await AdminUserDetailPage({
+      params: Promise.resolve({ id: "user-1", locale: "en" }),
+    });
+
+    render(element);
+
+    expect(profileQuery.select).toHaveBeenCalledWith("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,created_at");
+    expect(screen.getByRole("heading", { name: "User operations" })).toBeInTheDocument();
+    expect(screen.getAllByText("ada@example.com").length).toBeGreaterThan(0);
+    expect(screen.getByDisplayValue("Ada Lovelace")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Donations" })).toBeInTheDocument();
+    expect(screen.getByText("manual_ada")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Certificates" })).toBeInTheDocument();
+    expect(screen.getByText("TF-DON-2026-0001")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Trials" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Unbind machine" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Desktop sessions" })).toBeInTheDocument();
+    expect(screen.getAllByText("MacBook").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Entitlements" })).toBeInTheDocument();
+    expect(screen.getByText("cloud_sync")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Leases" })).toBeInTheDocument();
   });
 
   it("queries and renders newest audit logs for admins", async () => {
