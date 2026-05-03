@@ -1,21 +1,21 @@
-# Software Donation Website Design
+# Software Support Website Design
 
 Date: 2026-04-29
 
 ## Summary
 
-Build an international software download website with public downloads, required login before donation, one-time donation tiers, donation records, and managed certificates. The default language is English, with Traditional Chinese, Japanese, and Korean supported from the first version.
+Build an international software download website with public downloads, required login before contribution, one-time voluntary contribution tiers, contribution records, and managed certificates. The default language is English, with Chinese (`zh-Hant`), Japanese, and Korean supported from the first version.
 
-The donation model is voluntary support for development. Donations do not unlock software access, paid features, or licenses. The account system exists to bind donations to users, generate certificates, and let users manage recognition preferences.
+The support model is voluntary support for development. Contributions do not unlock software access, paid features, or licenses. The account system exists to bind contributions to users, generate certificates, and let users manage recognition preferences.
 
 ## Confirmed Product Decisions
 
 - Downloads are public and do not require login.
-- Donation requires registration or login before payment.
-- Donation tiers are one-time payments labeled as monthly, quarterly, and yearly support.
+- Support requires registration or login before payment.
+- Support tiers are one-time payments labeled as monthly, quarterly, and yearly support.
 - Stripe and PayPal are the first payment providers.
 - Login supports email magic link plus Google, GitHub, and Apple.
-- Users can view donation history, per-donation certificates, and cumulative honor certificates.
+- Users can view contribution history, per-contribution certificates, and cumulative honor certificates.
 - Certificate numbers are generated and managed only by the backend/admin system.
 - Admin features are intentionally lightweight for the first version.
 - Deployment uses Vercel with Supabase for authentication and database.
@@ -29,30 +29,37 @@ The site uses locale-prefixed routes:
 - `/ja`
 - `/ko`
 
-English is the default language. All user-facing product text, donation copy, payment status messages, certificate text, emails, legal pages, and dashboard labels must be localizable.
+English is the default language. All user-facing product text, support copy, payment status messages, certificate text, emails, legal pages, and dashboard labels must be localizable.
+
+Language switcher labels must be short and region-aware:
+
+- English: `English`
+- `zh-Hant`: `中文`, shown with the Hong Kong icon.
+- Japanese: `日本語`
+- Korean: `한국어`
 
 ## Page Structure
 
 ### Public Pages
 
-- Home and download page: product introduction, latest version, OS download buttons, release notes, and donation prompt.
-- Donate page: one-time support tiers, Stripe and PayPal checkout entry points, and clear wording that donations do not auto-renew.
+- Home and download page: product introduction, latest version, OS download buttons, release notes, and support prompt.
+- Support page: one-time support tiers, Stripe and PayPal checkout entry points, and clear wording that contributions do not auto-renew.
 - Sponsors page: optional public supporter wall with privacy controls.
-- Legal and policy pages: privacy policy, terms, donation explanation, and refund explanation.
+- Legal and policy pages: privacy policy, terms, contribution explanation, and refund explanation.
 
 ### Account Pages
 
 - Sign in and registration page: magic link, Google, GitHub, and Apple.
-- Dashboard: profile summary, donation history, certificate list, cumulative supporter level, and public display settings.
-- Certificate detail page: certificate number, recipient display name, donation tier or honor level, issue date, project name, and downloadable PNG/PDF export.
+- Dashboard: profile summary, contribution history, certificate list, cumulative supporter level, and public display settings.
+- Certificate detail page: certificate number, recipient display name, support tier or honor level, issue date, project name, and downloadable PNG/PDF export.
 
 ### Admin Pages
 
 - Users: view user profiles and public display settings.
-- Donations: view payment records, status, provider, amount, currency, and provider transaction ID.
-- Certificates: view, regenerate certificate files, revoke certificates, and generate certificates for manually added donations.
-- Manual corrections: add or correct donation records with required source notes.
-- Audit logs: list all admin changes related to donations and certificates.
+- Contributions: view payment records, status, provider, amount, currency, and provider transaction ID.
+- Certificates: view, regenerate certificate files, revoke certificates, and generate certificates for manually added contributions.
+- Manual corrections: add or correct contribution records with required source notes.
+- Audit logs: list all admin changes related to contributions and certificates.
 
 ## User Flow
 
@@ -61,25 +68,25 @@ English is the default language. All user-facing product text, donation copy, pa
 1. Visitor lands on the home/download page.
 2. Visitor chooses the correct OS download button.
 3. File download starts or the user is taken to the release asset.
-4. The page shows a non-blocking donation prompt near the download area.
+4. The page shows a non-blocking support prompt near the download area.
 
-### Donation Flow
+### Support Flow
 
-1. User clicks a donation tier.
+1. User clicks a support tier.
 2. System checks authentication.
 3. If the user is not logged in, redirect to sign in/register.
-4. After login, return to the donation page or selected tier.
+4. After login, return to the support page or selected tier.
 5. User chooses Stripe or PayPal.
 6. Checkout metadata includes `user_id`, `tier`, `locale`, `amount`, and `currency`.
 7. Payment provider redirects back to a success or cancelled page.
-8. Webhook confirms payment and creates or updates the donation record.
+8. Webhook confirms payment and creates or updates the contribution record.
 9. Backend certificate service generates certificate numbers and certificate records.
-10. Dashboard shows the completed donation and certificates.
+10. Dashboard shows the completed contribution and certificates.
 
 ### Certificate Flow
 
-1. A successful donation triggers certificate generation on the backend.
-2. A per-donation certificate is created for the specific payment.
+1. A successful contribution triggers certificate generation on the backend.
+2. A per-contribution certificate is created for the specific payment.
 3. The cumulative sponsor level is recalculated.
 4. If the cumulative level changes, an honor certificate is created or updated.
 5. Users can view and download certificate renderings.
@@ -117,9 +124,9 @@ Key fields:
 - `created_at`
 - `updated_at`
 
-### `donation_tiers`
+### `support_tiers`
 
-Stores active one-time donation tiers.
+Stores active one-time voluntary contribution tiers.
 
 Key fields:
 
@@ -142,9 +149,9 @@ Initial tier labels:
 
 These labels do not imply recurring billing.
 
-### `donations`
+### `contributions`
 
-Stores donation payment records.
+Stores contribution payment records.
 
 Key fields:
 
@@ -195,7 +202,7 @@ Key fields:
 - `id`
 - `certificate_number`
 - `user_id`
-- `donation_id`
+- `contribution_id`
 - `sponsor_level_id`
 - `type`
 - `status`
@@ -207,12 +214,12 @@ Key fields:
 
 Certificate types:
 
-- `donation`: one certificate for an individual successful donation.
+- `contribution`: one certificate for an individual successful contribution.
 - `honor`: cumulative contribution certificate.
 
 Example certificate numbers:
 
-- `TFD-2026-D-000001`
+- `TFD-2026-C-000001`
 - `TFD-2026-H-000001`
 
 The implementation must use a database sequence, transaction, or equivalent server-side mechanism to avoid duplicate numbers under concurrent payments.
@@ -238,32 +245,32 @@ Key fields:
 - Anonymous visitors can view public pages and download software.
 - Anonymous visitors cannot start payment checkout.
 - Authenticated users can view and edit their own profile.
-- Authenticated users can view their own donations and certificates.
+- Authenticated users can view their own contributions and certificates.
 - Public sponsor pages show only users who opt in.
 - Admin pages require server-side admin checks.
-- Admin changes to donations and certificates must be audit logged.
+- Admin changes to contributions and certificates must be audit logged.
 - Payment webhooks use server-side secrets and never trust client-submitted payment status.
 
 ## Error Handling
 
-- Login required for donation: redirect to login and return to the selected donation tier after authentication.
-- Checkout cancelled: return to the donation page with a non-destructive cancelled state.
+- Login required for contribution: redirect to login and return to the selected support tier after authentication.
+- Checkout cancelled: return to the support page with a non-destructive cancelled state.
 - Webhook delayed: dashboard can show a pending state while payment confirmation is processing.
 - Duplicate webhook: ignore or update idempotently using provider and provider transaction ID.
-- Certificate generation failure: keep the donation record paid, mark certificate generation as failed, and expose retry in admin.
+- Certificate generation failure: keep the contribution record paid, mark certificate generation as failed, and expose retry in admin.
 - Admin correction: require a reason and write an audit log entry.
 - User hides public supporter status: remove the user from public sponsor listings immediately.
 
 ## UI Direction
 
-The visual tone should feel like a professional software product with open-source sponsor culture. Downloads should be the primary visible action. Donation should be visible, warm, and trustworthy, but not coercive.
+The visual tone should feel like a professional software product with open-source sponsor culture. Downloads should be the primary visible action. Support should be visible, warm, and trustworthy, but not coercive.
 
 UI guidance:
 
 - Put product name, latest version, OS download buttons, and release notes near the top of the page.
-- Keep the donation prompt close to the download area without blocking the download.
-- On the donate page, clearly state that monthly, quarterly, and yearly support are one-time donations and do not auto-renew.
-- Use a quiet dashboard layout with navigation, donation records, certificates, and public profile controls.
+- Keep the support prompt close to the download area without blocking the download.
+- On the support page, clearly state that monthly, quarterly, and yearly support are one-time voluntary contributions and do not auto-renew.
+- Use a quiet dashboard layout with navigation, contribution records, certificates, and public profile controls.
 - Make certificates more ceremonial than the rest of the dashboard, with certificate number, recipient name, issue date, project name, and signature/seal styling.
 - Avoid any copy that implies paid access or licensing.
 
@@ -272,10 +279,10 @@ UI guidance:
 Included:
 
 - View users.
-- View donations.
+- View contributions.
 - View certificates.
-- Manually add or correct donation records.
-- Generate certificates for manually added donations.
+- Manually add or correct contribution records.
+- Generate certificates for manually added contributions.
 - Revoke certificates.
 - Regenerate certificate files.
 - View audit logs.
@@ -295,8 +302,8 @@ Excluded from version one:
 ### Unit and Integration Tests
 
 - Locale routing and language fallback.
-- Donation tier selection.
-- Login-required donation guard.
+- Support tier selection.
+- Login-required contribution guard.
 - Certificate number generation.
 - Sponsor level calculation.
 - Public supporter visibility rules.
@@ -314,11 +321,11 @@ Excluded from version one:
 ### End-to-End Tests
 
 - Anonymous user downloads software.
-- Anonymous user tries to donate and is redirected to login.
-- Logged-in user completes test donation and sees dashboard record.
+- Anonymous user tries to support and is redirected to login.
+- Logged-in user completes test contribution and sees dashboard record.
 - Certificate appears after payment confirmation.
 - User hides public supporter display and disappears from sponsor wall.
-- Admin manually corrects a donation and audit log is written.
+- Admin manually corrects a contribution and audit log is written.
 
 ## Deployment Plan
 
@@ -350,8 +357,8 @@ If traffic or cost pressure grows, the architecture can later move to a VPS or c
 
 Use these defaults for the first implementation unless the product owner changes them before development starts:
 
-- Donation currency: USD.
-- Donation tiers: Monthly Support at USD 5, Quarterly Support at USD 15, and Yearly Support at USD 50.
+- Support currency: USD.
+- Support tiers: Monthly Support at USD 5, Quarterly Support at USD 15, and Yearly Support at USD 50.
 - Sponsor levels: Bronze from USD 5, Silver from USD 50, Gold from USD 150, and Platinum from USD 500.
 - Software release files: GitHub Releases, linked from the public download page.
 - Certificate rendering: server-rendered certificate pages with backend-controlled PNG/PDF export.

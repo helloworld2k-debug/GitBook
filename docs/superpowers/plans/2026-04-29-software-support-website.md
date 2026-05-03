@@ -1,10 +1,10 @@
-# Software Donation Website Implementation Plan
+# Software Support Website Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the first production-ready version of an international software download site with public downloads, login-required one-time donations, user donation history, backend-managed certificates, and lightweight admin tooling.
+**Goal:** Build the first production-ready version of an international software download site with public downloads, login-required one-time voluntary contributions, user contribution history, backend-managed certificates, and lightweight admin tooling.
 
-**Architecture:** Use a Next.js App Router application deployed to Vercel, with Supabase Auth/Postgres for accounts and data, Stripe and PayPal for one-time donation checkout, and server-side certificate generation. Public downloads remain open; donation, dashboard, certificate, and admin actions are protected by server-side auth checks.
+**Architecture:** Use a Next.js App Router application deployed to Vercel, with Supabase Auth/Postgres for accounts and data, Stripe and PayPal for one-time voluntary contribution checkout, and server-side certificate generation. Public downloads remain open; contribution, dashboard, certificate, and admin actions are protected by server-side auth checks.
 
 **Tech Stack:** Next.js, TypeScript, Tailwind CSS, next-intl, Supabase Auth/Postgres, Stripe Checkout, PayPal Checkout, Vitest, Testing Library, Playwright.
 
@@ -17,7 +17,7 @@ Create the project as a focused Next.js app. Keep domain logic in `src/lib`, rou
 - `src/i18n/routing.ts`: supported locales, default locale, localized route helpers.
 - `src/i18n/request.ts`: next-intl request configuration.
 - `messages/en.json`, `messages/zh-Hant.json`, `messages/ja.json`, `messages/ko.json`: localized copy.
-- `src/config/site.ts`: product name, download links, donation amounts, sponsor thresholds.
+- `src/config/site.ts`: product name, download links, contribution amounts, sponsor thresholds.
 - `src/lib/supabase/server.ts`: server Supabase client helpers.
 - `src/lib/supabase/client.ts`: browser Supabase client helper.
 - `src/lib/auth/guards.ts`: login and admin guards.
@@ -27,7 +27,7 @@ Create the project as a focused Next.js app. Keep domain logic in `src/lib`, rou
 - `src/lib/certificates/levels.ts`: cumulative sponsor level calculation.
 - `src/lib/certificates/render.tsx`: certificate rendering component shared by page/export.
 - `src/app/[locale]/page.tsx`: public download homepage.
-- `src/app/[locale]/donate/page.tsx`: login-required donation page.
+- `src/app/[locale]/support/page.tsx`: login-required support page.
 - `src/app/[locale]/dashboard/page.tsx`: user dashboard.
 - `src/app/[locale]/dashboard/certificates/[id]/page.tsx`: certificate detail.
 - `src/app/[locale]/admin/page.tsx`: admin overview.
@@ -37,6 +37,7 @@ Create the project as a focused Next.js app. Keep domain logic in `src/lib`, rou
 - `src/app/api/webhooks/paypal/route.ts`: PayPal webhook handler.
 - `src/app/api/certificates/[id]/png/route.ts`: PNG export endpoint.
 - `src/app/api/certificates/[id]/pdf/route.ts`: PDF export endpoint.
+- `src/components/language-switcher.tsx`: locale switcher using short display labels and locale icons.
 - `supabase/migrations/0001_initial_schema.sql`: database schema, RLS, functions, seed tiers.
 - `tests/unit/*.test.ts`: domain and route logic tests.
 - `tests/e2e/*.spec.ts`: browser flows.
@@ -190,7 +191,7 @@ Create `tests/unit/config.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import { donationTiers, sponsorLevels, supportedLocales } from "@/config/site";
+import { languageOptions, supportTiers, sponsorLevels, supportedLocales } from "@/config/site";
 
 describe("site config", () => {
   it("uses English as the default supported locale", () => {
@@ -198,17 +199,25 @@ describe("site config", () => {
     expect(supportedLocales).toEqual(["en", "zh-Hant", "ja", "ko"]);
   });
 
-  it("defines one-time USD donation tiers", () => {
-    expect(donationTiers).toEqual([
-      { code: "monthly", labelKey: "donate.tiers.monthly", amount: 500, currency: "usd" },
-      { code: "quarterly", labelKey: "donate.tiers.quarterly", amount: 1500, currency: "usd" },
-      { code: "yearly", labelKey: "donate.tiers.yearly", amount: 5000, currency: "usd" },
+  it("defines one-time USD support tiers", () => {
+    expect(supportTiers).toEqual([
+      { code: "monthly", labelKey: "support.tiers.monthly", amount: 500, currency: "usd" },
+      { code: "quarterly", labelKey: "support.tiers.quarterly", amount: 1500, currency: "usd" },
+      { code: "yearly", labelKey: "support.tiers.yearly", amount: 5000, currency: "usd" },
     ]);
   });
 
   it("defines cumulative sponsor thresholds in ascending order", () => {
     expect(sponsorLevels.map((level) => level.code)).toEqual(["bronze", "silver", "gold", "platinum"]);
     expect(sponsorLevels.map((level) => level.minimumAmount)).toEqual([500, 5000, 15000, 50000]);
+  });
+
+  it("uses short language switcher labels and a Hong Kong icon for Chinese", () => {
+    expect(languageOptions.find((option) => option.locale === "zh-Hant")).toMatchObject({
+      label: "中文",
+      icon: "🇭🇰",
+      iconLabel: "Hong Kong",
+    });
   });
 });
 ```
@@ -234,9 +243,16 @@ export type Locale = (typeof supportedLocales)[number];
 
 export const defaultLocale: Locale = "en";
 
+export const languageOptions = [
+  { locale: "en", label: "English", icon: "🇺🇸", iconLabel: "United States" },
+  { locale: "zh-Hant", label: "中文", icon: "🇭🇰", iconLabel: "Hong Kong" },
+  { locale: "ja", label: "日本語", icon: "🇯🇵", iconLabel: "Japan" },
+  { locale: "ko", label: "한국어", icon: "🇰🇷", iconLabel: "South Korea" },
+] as const;
+
 export const siteConfig = {
   name: "Three Friends",
-  description: "Public software downloads supported by voluntary donations.",
+  description: "Public software downloads supported by voluntary contributions.",
   githubReleasesUrl: "https://github.com/threefriends/app/releases/latest",
   downloadLinks: {
     macos: "https://github.com/threefriends/app/releases/latest",
@@ -245,10 +261,10 @@ export const siteConfig = {
   },
 };
 
-export const donationTiers = [
-  { code: "monthly", labelKey: "donate.tiers.monthly", amount: 500, currency: "usd" },
-  { code: "quarterly", labelKey: "donate.tiers.quarterly", amount: 1500, currency: "usd" },
-  { code: "yearly", labelKey: "donate.tiers.yearly", amount: 5000, currency: "usd" },
+export const supportTiers = [
+  { code: "monthly", labelKey: "support.tiers.monthly", amount: 500, currency: "usd" },
+  { code: "quarterly", labelKey: "support.tiers.quarterly", amount: 1500, currency: "usd" },
+  { code: "yearly", labelKey: "support.tiers.yearly", amount: 5000, currency: "usd" },
 ] as const;
 
 export const sponsorLevels = [
@@ -316,7 +332,7 @@ Create `messages/en.json`:
 {
   "nav": {
     "download": "Download",
-    "donate": "Donate",
+    "support": "Support",
     "sponsors": "Sponsors",
     "dashboard": "Dashboard",
     "signIn": "Sign in"
@@ -327,11 +343,11 @@ Create `messages/en.json`:
     "downloadMac": "Download for macOS",
     "downloadWindows": "Download for Windows",
     "downloadLinux": "Download for Linux",
-    "supportPrompt": "Downloads are free. Donations support ongoing development."
+    "supportPrompt": "Downloads are free. Voluntary support helps ongoing development."
   },
-  "donate": {
+  "support": {
     "title": "Support development",
-    "subtitle": "Choose a one-time support amount. These donations do not auto-renew.",
+    "subtitle": "Choose a one-time support amount. These contributions do not auto-renew.",
     "tiers": {
       "monthly": "Monthly Support",
       "quarterly": "Quarterly Support",
@@ -351,7 +367,7 @@ Create `messages/en.json`:
   },
   "dashboard": {
     "title": "Dashboard",
-    "donations": "Donations",
+    "contributions": "Contributions",
     "certificates": "Certificates"
   }
 }
@@ -363,7 +379,7 @@ Create `messages/zh-Hant.json`:
 {
   "nav": {
     "download": "下載",
-    "donate": "贊助",
+    "support": "支持",
     "sponsors": "支持者",
     "dashboard": "儀表板",
     "signIn": "登入"
@@ -374,11 +390,11 @@ Create `messages/zh-Hant.json`:
     "downloadMac": "下載 macOS 版",
     "downloadWindows": "下載 Windows 版",
     "downloadLinux": "下載 Linux 版",
-    "supportPrompt": "下載免費。捐贈將用於支持持續開發。"
+    "supportPrompt": "下載免費。你的自願支持將幫助持續開發。"
   },
-  "donate": {
+  "support": {
     "title": "支持開發",
-    "subtitle": "選擇一次性支持金額。這些捐贈不會自動續費。",
+    "subtitle": "選擇一次性支持金額。這些自願支持不會自動續費。",
     "tiers": {
       "monthly": "月度支持",
       "quarterly": "季度支持",
@@ -398,7 +414,7 @@ Create `messages/zh-Hant.json`:
   },
   "dashboard": {
     "title": "儀表板",
-    "donations": "捐贈記錄",
+    "contributions": "支持記錄",
     "certificates": "證書"
   }
 }
@@ -410,7 +426,7 @@ Create `messages/ja.json`:
 {
   "nav": {
     "download": "ダウンロード",
-    "donate": "寄付",
+    "support": "応援",
     "sponsors": "サポーター",
     "dashboard": "ダッシュボード",
     "signIn": "サインイン"
@@ -421,9 +437,9 @@ Create `messages/ja.json`:
     "downloadMac": "macOS 版をダウンロード",
     "downloadWindows": "Windows 版をダウンロード",
     "downloadLinux": "Linux 版をダウンロード",
-    "supportPrompt": "ダウンロードは無料です。寄付は継続的な開発を支えます。"
+    "supportPrompt": "ダウンロードは無料です。任意の応援が継続的な開発を支えます。"
   },
-  "donate": {
+  "support": {
     "title": "開発を支援する",
     "subtitle": "一回限りの支援金額を選択してください。自動更新はありません。",
     "tiers": {
@@ -445,7 +461,7 @@ Create `messages/ja.json`:
   },
   "dashboard": {
     "title": "ダッシュボード",
-    "donations": "寄付履歴",
+    "contributions": "応援履歴",
     "certificates": "証明書"
   }
 }
@@ -457,32 +473,32 @@ Create `messages/ko.json`:
 {
   "nav": {
     "download": "다운로드",
-    "donate": "후원",
-    "sponsors": "후원자",
+    "support": "지원",
+    "sponsors": "지원자",
     "dashboard": "대시보드",
     "signIn": "로그인"
   },
   "home": {
     "title": "Three Friends",
-    "subtitle": "최신 버전을 자유롭게 다운로드하세요. 도움이 되었다면 개발을 후원할 수 있습니다.",
+    "subtitle": "최신 버전을 자유롭게 다운로드하세요. 도움이 되었다면 개발을 자발적으로 지원할 수 있습니다.",
     "downloadMac": "macOS용 다운로드",
     "downloadWindows": "Windows용 다운로드",
     "downloadLinux": "Linux용 다운로드",
-    "supportPrompt": "다운로드는 무료입니다. 후원은 지속적인 개발을 돕습니다."
+    "supportPrompt": "다운로드는 무료입니다. 자발적인 지원은 지속적인 개발을 돕습니다."
   },
-  "donate": {
-    "title": "개발 후원",
-    "subtitle": "일회성 후원 금액을 선택하세요. 자동 갱신되지 않습니다.",
+  "support": {
+    "title": "개발 지원",
+    "subtitle": "일회성 지원 금액을 선택하세요. 자동 갱신되지 않습니다.",
     "tiers": {
-      "monthly": "월간 후원",
-      "quarterly": "분기 후원",
-      "yearly": "연간 후원"
+      "monthly": "월간 지원",
+      "quarterly": "분기 지원",
+      "yearly": "연간 지원"
     },
     "checkoutStripe": "Stripe로 결제",
     "checkoutPayPal": "PayPal로 결제"
   },
   "sponsors": {
-    "title": "후원자",
+    "title": "지원자",
     "levels": {
       "bronze": "브론즈",
       "silver": "실버",
@@ -492,7 +508,7 @@ Create `messages/ko.json`:
   },
   "dashboard": {
     "title": "대시보드",
-    "donations": "후원 내역",
+    "contributions": "지원 내역",
     "certificates": "인증서"
   }
 }
@@ -533,8 +549,8 @@ import { describe, expect, it } from "vitest";
 import { formatCertificateNumber } from "@/lib/certificates/numbers";
 
 describe("formatCertificateNumber", () => {
-  it("formats donation certificate numbers", () => {
-    expect(formatCertificateNumber("donation", 2026, 1)).toBe("TFD-2026-D-000001");
+  it("formats contribution certificate numbers", () => {
+    expect(formatCertificateNumber("contribution", 2026, 1)).toBe("TFD-2026-C-000001");
   });
 
   it("formats honor certificate numbers", () => {
@@ -558,10 +574,10 @@ Expected: FAIL because `src/lib/certificates/numbers.ts` does not exist.
 Create `src/lib/certificates/numbers.ts`:
 
 ```ts
-export type CertificateType = "donation" | "honor";
+export type CertificateType = "contribution" | "honor";
 
 const typeCode: Record<CertificateType, string> = {
-  donation: "D",
+  contribution: "C",
   honor: "H",
 };
 
@@ -575,9 +591,9 @@ export function formatCertificateNumber(type: CertificateType, year: number, seq
 Create `supabase/migrations/0001_initial_schema.sql`:
 
 ```sql
-create type donation_provider as enum ('stripe', 'paypal', 'manual');
-create type donation_status as enum ('pending', 'paid', 'cancelled', 'failed', 'refunded');
-create type certificate_type as enum ('donation', 'honor');
+create type contribution_provider as enum ('stripe', 'paypal', 'manual');
+create type contribution_status as enum ('pending', 'paid', 'cancelled', 'failed', 'refunded');
+create type certificate_type as enum ('contribution', 'honor');
 create type certificate_status as enum ('active', 'revoked', 'generation_failed');
 
 create table public.profiles (
@@ -593,7 +609,7 @@ create table public.profiles (
   updated_at timestamptz not null default now()
 );
 
-create table public.donation_tiers (
+create table public.support_tiers (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
   label text not null,
@@ -616,15 +632,15 @@ create table public.sponsor_levels (
   is_active boolean not null default true
 );
 
-create table public.donations (
+create table public.contributions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  tier_id uuid references public.donation_tiers(id),
+  tier_id uuid references public.support_tiers(id),
   amount integer not null check (amount > 0),
   currency text not null default 'usd',
-  provider donation_provider not null,
+  provider contribution_provider not null,
   provider_transaction_id text not null,
-  status donation_status not null default 'pending',
+  status contribution_status not null default 'pending',
   paid_at timestamptz,
   metadata jsonb not null default '{}',
   created_at timestamptz not null default now(),
@@ -632,14 +648,14 @@ create table public.donations (
   unique (provider, provider_transaction_id)
 );
 
-create sequence public.donation_certificate_seq;
+create sequence public.contribution_certificate_seq;
 create sequence public.honor_certificate_seq;
 
 create table public.certificates (
   id uuid primary key default gen_random_uuid(),
   certificate_number text not null unique,
   user_id uuid not null references public.profiles(id) on delete cascade,
-  donation_id uuid references public.donations(id) on delete cascade,
+  contribution_id uuid references public.contributions(id) on delete cascade,
   sponsor_level_id uuid references public.sponsor_levels(id),
   type certificate_type not null,
   status certificate_status not null default 'active',
@@ -649,7 +665,7 @@ create table public.certificates (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (
-    (type = 'donation' and donation_id is not null)
+    (type = 'contribution' and contribution_id is not null)
     or
     (type = 'honor' and sponsor_level_id is not null)
   )
@@ -667,7 +683,7 @@ create table public.admin_audit_logs (
   created_at timestamptz not null default now()
 );
 
-insert into public.donation_tiers (code, label, description, amount, currency, sort_order) values
+insert into public.support_tiers (code, label, description, amount, currency, sort_order) values
   ('monthly', 'Monthly Support', 'One-time support equal to a monthly contribution.', 500, 'usd', 1),
   ('quarterly', 'Quarterly Support', 'One-time support equal to a quarterly contribution.', 1500, 'usd', 2),
   ('yearly', 'Yearly Support', 'One-time support equal to a yearly contribution.', 5000, 'usd', 3);
@@ -692,17 +708,17 @@ as $$
 $$;
 
 alter table public.profiles enable row level security;
-alter table public.donation_tiers enable row level security;
+alter table public.support_tiers enable row level security;
 alter table public.sponsor_levels enable row level security;
-alter table public.donations enable row level security;
+alter table public.contributions enable row level security;
 alter table public.certificates enable row level security;
 alter table public.admin_audit_logs enable row level security;
 
 create policy "profiles_select_own_or_admin" on public.profiles for select using (id = auth.uid() or public.is_admin());
 create policy "profiles_update_own" on public.profiles for update using (id = auth.uid()) with check (id = auth.uid() and is_admin = false);
-create policy "tiers_public_read" on public.donation_tiers for select using (is_active = true);
+create policy "tiers_public_read" on public.support_tiers for select using (is_active = true);
 create policy "levels_public_read" on public.sponsor_levels for select using (is_active = true);
-create policy "donations_select_own_or_admin" on public.donations for select using (user_id = auth.uid() or public.is_admin());
+create policy "contributions_select_own_or_admin" on public.contributions for select using (user_id = auth.uid() or public.is_admin());
 create policy "certificates_select_own_or_admin" on public.certificates for select using (user_id = auth.uid() or public.is_admin());
 create policy "audit_admin_read" on public.admin_audit_logs for select using (public.is_admin());
 ```
@@ -718,8 +734,8 @@ export type Database = {
   public: {
     Tables: {
       profiles: { Row: { id: string; email: string; is_admin: boolean } };
-      donations: { Row: { id: string; user_id: string; amount: number; currency: string; status: string } };
-      certificates: { Row: { id: string; certificate_number: string; user_id: string; type: "donation" | "honor"; status: string } };
+      contributions: { Row: { id: string; user_id: string; amount: number; currency: string; status: string } };
+      certificates: { Row: { id: string; certificate_number: string; user_id: string; type: "contribution" | "honor"; status: string } };
     };
   };
 };
@@ -763,8 +779,8 @@ import { getLoginRedirectPath, isAdminProfile } from "@/lib/auth/guards";
 
 describe("auth guards", () => {
   it("builds locale-aware login redirects", () => {
-    expect(getLoginRedirectPath("ja", "/ja/donate?tier=yearly")).toBe(
-      "/ja/login?next=%2Fja%2Fdonate%3Ftier%3Dyearly",
+    expect(getLoginRedirectPath("ja", "/ja/support?tier=yearly")).toBe(
+      "/ja/login?next=%2Fja%2Fsupport%3Ftier%3Dyearly",
     );
   });
 
@@ -917,14 +933,15 @@ git commit -m "feat: add auth clients and guards"
 
 ---
 
-### Task 5: Build Public Download and Donation Pages
+### Task 5: Build Public Download and Support Pages
 
 **Files:**
 - Create: `src/app/[locale]/layout.tsx`
 - Create: `src/app/[locale]/page.tsx`
-- Create: `src/app/[locale]/donate/page.tsx`
+- Create: `src/app/[locale]/support/page.tsx`
 - Create: `src/components/site-header.tsx`
-- Create: `src/components/donation-tier-card.tsx`
+- Create: `src/components/language-switcher.tsx`
+- Create: `src/components/contribution-tier-card.tsx`
 - Test: `tests/e2e/public-download.spec.ts`
 
 - [ ] **Step 1: Write public download E2E test**
@@ -940,7 +957,7 @@ test("anonymous visitor can see public download buttons", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Download for macOS" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Download for Windows" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Download for Linux" })).toBeVisible();
-  await expect(page.getByText("Downloads are free. Donations support ongoing development.")).toBeVisible();
+  await expect(page.getByText("Downloads are free. Voluntary support helps ongoing development.")).toBeVisible();
 });
 ```
 
@@ -977,11 +994,41 @@ export default async function LocaleLayout({ children }: { children: ReactNode }
 
 - [ ] **Step 4: Add header component**
 
+Create `src/components/language-switcher.tsx`:
+
+```tsx
+import { getLocale } from "next-intl/server";
+import { languageOptions } from "@/config/site";
+import { Link } from "@/i18n/routing";
+
+export async function LanguageSwitcher() {
+  const currentLocale = await getLocale();
+
+  return (
+    <div className="flex items-center gap-2" aria-label="Language selector">
+      {languageOptions.map((option) => (
+        <Link
+          aria-current={option.locale === currentLocale ? "page" : undefined}
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm text-slate-700 hover:bg-slate-100"
+          href="/"
+          key={option.locale}
+          locale={option.locale}
+        >
+          <span aria-label={option.iconLabel} role="img">{option.icon}</span>
+          <span>{option.label}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+```
+
 Create `src/components/site-header.tsx`:
 
 ```tsx
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export async function SiteHeader() {
   const t = await getTranslations("nav");
@@ -992,10 +1039,11 @@ export async function SiteHeader() {
         <Link href="/" className="font-semibold">Three Friends</Link>
         <div className="flex items-center gap-5 text-sm text-slate-700">
           <Link href="/">{t("download")}</Link>
-          <Link href="/donate">{t("donate")}</Link>
+          <Link href="/support">{t("support")}</Link>
           <Link href="/sponsors">{t("sponsors")}</Link>
           <Link href="/dashboard">{t("dashboard")}</Link>
           <Link href="/login">{t("signIn")}</Link>
+          <LanguageSwitcher />
         </div>
       </nav>
     </header>
@@ -1035,7 +1083,7 @@ export default async function HomePage() {
             </a>
           </div>
           <div className="mt-8 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-            {t("supportPrompt")} <Link className="font-medium underline" href="/donate">Donate</Link>
+            {t("supportPrompt")} <Link className="font-medium underline" href="/support">Support</Link>
           </div>
         </section>
       </main>
@@ -1044,23 +1092,23 @@ export default async function HomePage() {
 }
 ```
 
-- [ ] **Step 6: Add donation card component and page**
+- [ ] **Step 6: Add contribution card component and page**
 
-Create `src/components/donation-tier-card.tsx`:
+Create `src/components/contribution-tier-card.tsx`:
 
 ```tsx
-import type { donationTiers } from "@/config/site";
+import type { supportTiers } from "@/config/site";
 
-type Tier = (typeof donationTiers)[number];
+type Tier = (typeof supportTiers)[number];
 
-export function DonationTierCard({ tier, label }: { tier: Tier; label: string }) {
+export function ContributionTierCard({ tier, label }: { tier: Tier; label: string }) {
   const dollars = new Intl.NumberFormat("en", { style: "currency", currency: tier.currency }).format(tier.amount / 100);
 
   return (
     <article className="rounded-lg border border-slate-200 p-6">
       <h2 className="text-lg font-semibold">{label}</h2>
       <p className="mt-3 text-3xl font-semibold">{dollars}</p>
-      <p className="mt-3 text-sm text-slate-600">One-time donation. No automatic renewal.</p>
+      <p className="mt-3 text-sm text-slate-600">One-time contribution. No automatic renewal.</p>
       <div className="mt-6 grid gap-2">
         <form action="/api/checkout/stripe" method="post">
           <input type="hidden" name="tier" value={tier.code} />
@@ -1080,19 +1128,19 @@ export function DonationTierCard({ tier, label }: { tier: Tier; label: string })
 }
 ```
 
-Create `src/app/[locale]/donate/page.tsx`:
+Create `src/app/[locale]/support/page.tsx`:
 
 ```tsx
 import { getTranslations } from "next-intl/server";
-import { donationTiers } from "@/config/site";
+import { supportTiers } from "@/config/site";
 import { requireUser } from "@/lib/auth/guards";
-import { DonationTierCard } from "@/components/donation-tier-card";
+import { ContributionTierCard } from "@/components/contribution-tier-card";
 import { SiteHeader } from "@/components/site-header";
 
-export default async function DonatePage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function SupportPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  await requireUser(locale, `/${locale}/donate`);
-  const t = await getTranslations("donate");
+  await requireUser(locale, `/${locale}/support`);
+  const t = await getTranslations("support");
 
   return (
     <>
@@ -1101,8 +1149,8 @@ export default async function DonatePage({ params }: { params: Promise<{ locale:
         <h1 className="text-4xl font-semibold">{t("title")}</h1>
         <p className="mt-3 max-w-2xl text-slate-600">{t("subtitle")}</p>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {donationTiers.map((tier) => (
-            <DonationTierCard key={tier.code} tier={tier} label={t(`tiers.${tier.code}`)} />
+          {supportTiers.map((tier) => (
+            <ContributionTierCard key={tier.code} tier={tier} label={t(`tiers.${tier.code}`)} />
           ))}
         </div>
       </main>
@@ -1125,7 +1173,7 @@ Expected: PASS.
 
 ```bash
 git add src/app src/components tests/e2e/public-download.spec.ts
-git commit -m "feat: build public download and donation pages"
+git commit -m "feat: build public download and support pages"
 ```
 
 ---
@@ -1215,15 +1263,15 @@ Create `tests/unit/payment-tier.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import { findDonationTier } from "@/lib/payments/tier";
+import { findContributionTier } from "@/lib/payments/tier";
 
-describe("findDonationTier", () => {
+describe("findContributionTier", () => {
   it("returns a tier by code", () => {
-    expect(findDonationTier("yearly")?.amount).toBe(5000);
+    expect(findContributionTier("yearly")?.amount).toBe(5000);
   });
 
   it("returns null for invalid tier codes", () => {
-    expect(findDonationTier("lifetime")).toBeNull();
+    expect(findContributionTier("lifetime")).toBeNull();
   });
 });
 ```
@@ -1243,14 +1291,14 @@ Expected: FAIL because `src/lib/payments/tier.ts` does not exist.
 Create `src/lib/payments/tier.ts`:
 
 ```ts
-import { donationTiers } from "@/config/site";
+import { supportTiers } from "@/config/site";
 
-export function findDonationTier(code: FormDataEntryValue | string | null) {
+export function findContributionTier(code: FormDataEntryValue | string | null) {
   if (typeof code !== "string") {
     return null;
   }
 
-  return donationTiers.find((tier) => tier.code === code) ?? null;
+  return supportTiers.find((tier) => tier.code === code) ?? null;
 }
 ```
 
@@ -1277,25 +1325,25 @@ Create `src/app/api/checkout/stripe/route.ts`:
 ```ts
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { findDonationTier } from "@/lib/payments/tier";
+import { findContributionTier } from "@/lib/payments/tier";
 import { stripe } from "@/lib/payments/stripe";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
-  const tier = findDonationTier(formData.get("tier"));
+  const tier = findContributionTier(formData.get("tier"));
   const headerStore = await headers();
   const origin = headerStore.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL!;
 
   if (!tier) {
-    return NextResponse.json({ error: "Invalid donation tier" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid support tier" }, { status: 400 });
   }
 
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    return NextResponse.redirect(`${origin}/en/login?next=${encodeURIComponent("/en/donate")}`, 303);
+    return NextResponse.redirect(`${origin}/en/login?next=${encodeURIComponent("/en/support")}`, 303);
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -1311,7 +1359,7 @@ export async function POST(request: Request) {
       },
     ],
     success_url: `${origin}/en/dashboard?payment=stripe-success`,
-    cancel_url: `${origin}/en/donate?payment=cancelled`,
+    cancel_url: `${origin}/en/support?payment=cancelled`,
     metadata: {
       user_id: data.user.id,
       tier: tier.code,
@@ -1497,24 +1545,24 @@ Create `src/app/api/checkout/paypal/route.ts`:
 ```ts
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { findDonationTier } from "@/lib/payments/tier";
+import { findContributionTier } from "@/lib/payments/tier";
 import { createPayPalOrder } from "@/lib/payments/paypal";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
-  const tier = findDonationTier(formData.get("tier"));
+  const tier = findContributionTier(formData.get("tier"));
   const origin = (await headers()).get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL!;
 
   if (!tier) {
-    return NextResponse.json({ error: "Invalid donation tier" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid support tier" }, { status: 400 });
   }
 
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    return NextResponse.redirect(`${origin}/en/login?next=${encodeURIComponent("/en/donate")}`, 303);
+    return NextResponse.redirect(`${origin}/en/login?next=${encodeURIComponent("/en/support")}`, 303);
   }
 
   const order = await createPayPalOrder({
@@ -1523,7 +1571,7 @@ export async function POST(request: Request) {
     userId: data.user.id,
     tierCode: tier.code,
     returnUrl: `${origin}/en/dashboard?payment=paypal-success`,
-    cancelUrl: `${origin}/en/donate?payment=cancelled`,
+    cancelUrl: `${origin}/en/support?payment=cancelled`,
   });
   const approval = order.links.find((link) => link.rel === "approve");
 
@@ -1557,7 +1605,7 @@ export async function POST(request: Request) {
     const customId = resource.custom_id ? JSON.parse(resource.custom_id) as { userId?: string; tierCode?: string } : {};
 
     if (!resource.id || !customId.userId || !customId.tierCode) {
-      return NextResponse.json({ error: "Missing PayPal donation metadata" }, { status: 400 });
+      return NextResponse.json({ error: "Missing PayPal contribution metadata" }, { status: 400 });
     }
   }
 
@@ -1585,26 +1633,26 @@ git commit -m "feat: add paypal checkout route"
 
 ---
 
-### Task 9: Implement Donation Persistence and Certificate Generation Service
+### Task 9: Implement Contribution Persistence and Certificate Generation Service
 
 **Files:**
 - Create: `src/lib/supabase/admin.ts`
-- Create: `src/lib/donations/record.ts`
+- Create: `src/lib/contributions/record.ts`
 - Create: `src/lib/certificates/service.ts`
 - Create: `supabase/migrations/0002_certificate_functions.sql`
-- Test: `tests/unit/donation-record.test.ts`
+- Test: `tests/unit/contribution-record.test.ts`
 
-- [ ] **Step 1: Write donation normalization tests**
+- [ ] **Step 1: Write contribution normalization tests**
 
-Create `tests/unit/donation-record.test.ts`:
+Create `tests/unit/contribution-record.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import { buildDonationRecord } from "@/lib/donations/record";
+import { buildContributionRecord } from "@/lib/contributions/record";
 
-describe("buildDonationRecord", () => {
-  it("creates a paid donation record from provider data", () => {
-    expect(buildDonationRecord({
+describe("buildContributionRecord", () => {
+  it("creates a paid contribution record from provider data", () => {
+    expect(buildContributionRecord({
       userId: "user_123",
       tierCode: "monthly",
       amount: 500,
@@ -1628,7 +1676,7 @@ describe("buildDonationRecord", () => {
 Run:
 
 ```bash
-npm test -- tests/unit/donation-record.test.ts
+npm test -- tests/unit/contribution-record.test.ts
 ```
 
 Expected: FAIL because `record.ts` does not exist.
@@ -1655,14 +1703,14 @@ export function createSupabaseAdminClient() {
 }
 ```
 
-- [ ] **Step 4: Add donation record builder**
+- [ ] **Step 4: Add contribution record builder**
 
-Create `src/lib/donations/record.ts`:
+Create `src/lib/contributions/record.ts`:
 
 ```ts
 type Provider = "stripe" | "paypal" | "manual";
 
-export type ProviderDonationInput = {
+export type ProviderContributionInput = {
   userId: string;
   tierCode: string;
   amount: number;
@@ -1671,7 +1719,7 @@ export type ProviderDonationInput = {
   providerTransactionId: string;
 };
 
-export function buildDonationRecord(input: ProviderDonationInput) {
+export function buildContributionRecord(input: ProviderContributionInput) {
   return {
     user_id: input.userId,
     amount: input.amount,
@@ -1700,8 +1748,8 @@ declare
   seq_value bigint;
   prefix text;
 begin
-  if input_type = 'donation' then
-    seq_value := nextval('public.donation_certificate_seq');
+  if input_type = 'contribution' then
+    seq_value := nextval('public.contribution_certificate_seq');
     prefix := 'D';
   elsif input_type = 'honor' then
     seq_value := nextval('public.honor_certificate_seq');
@@ -1722,7 +1770,7 @@ security definer
 set search_path = public
 as $$
   select coalesce(sum(amount), 0)::integer
-  from public.donations
+  from public.contributions
   where user_id = input_user_id and status = 'paid' and currency = 'usd';
 $$;
 ```
@@ -1740,59 +1788,59 @@ export function buildCertificateNumber(type: CertificateType, sequence: number, 
   return formatCertificateNumber(type, issuedAt.getUTCFullYear(), sequence);
 }
 
-export async function generateCertificatesForDonation(donationId: string) {
+export async function generateCertificatesForContribution(contributionId: string) {
   const supabase = createSupabaseAdminClient() as any;
-  const { data: donation, error: donationError } = await supabase
-    .from("donations")
+  const { data: contribution, error: contributionError } = await supabase
+    .from("contributions")
     .select("*")
-    .eq("id", donationId)
+    .eq("id", contributionId)
     .eq("status", "paid")
     .single();
 
-  if (donationError || !donation) {
-    throw new Error(`Paid donation not found: ${donationId}`);
+  if (contributionError || !contribution) {
+    throw new Error(`Paid contribution not found: ${contributionId}`);
   }
 
-  const { data: existingDonationCertificate } = await supabase
+  const { data: existingContributionCertificate } = await supabase
     .from("certificates")
     .select("id")
-    .eq("donation_id", donationId)
-    .eq("type", "donation")
+    .eq("contribution_id", contributionId)
+    .eq("type", "contribution")
     .maybeSingle();
 
-  if (!existingDonationCertificate) {
-    const { data: donationNumber, error: numberError } = await supabase.rpc("allocate_certificate_number", {
-      input_type: "donation",
+  if (!existingContributionCertificate) {
+    const { data: contributionNumber, error: numberError } = await supabase.rpc("allocate_certificate_number", {
+      input_type: "contribution",
     });
 
-    if (numberError || !donationNumber) {
-      throw new Error("Unable to allocate donation certificate number");
+    if (numberError || !contributionNumber) {
+      throw new Error("Unable to allocate contribution certificate number");
     }
 
-    const { error: insertDonationCertificateError } = await supabase.from("certificates").insert({
-      certificate_number: donationNumber,
-      user_id: donation.user_id,
-      donation_id: donation.id,
-      type: "donation",
+    const { error: insertContributionCertificateError } = await supabase.from("certificates").insert({
+      certificate_number: contributionNumber,
+      user_id: contribution.user_id,
+      contribution_id: contribution.id,
+      type: "contribution",
       status: "active",
     });
 
-    if (insertDonationCertificateError) {
-      throw new Error("Unable to create donation certificate");
+    if (insertContributionCertificateError) {
+      throw new Error("Unable to create contribution certificate");
     }
   }
 
   const { data: totalAmount, error: totalError } = await supabase.rpc("get_paid_total", {
-    input_user_id: donation.user_id,
+    input_user_id: contribution.user_id,
   });
 
   if (totalError) {
-    throw new Error("Unable to calculate paid donation total");
+    throw new Error("Unable to calculate paid contribution total");
   }
 
   const level = getSponsorLevelForTotal(totalAmount ?? 0);
   if (!level) {
-    return { donationId, honorCertificateCreated: false };
+    return { contributionId, honorCertificateCreated: false };
   }
 
   const { data: sponsorLevel, error: sponsorLevelError } = await supabase
@@ -1808,13 +1856,13 @@ export async function generateCertificatesForDonation(donationId: string) {
   const { data: existingHonorCertificate } = await supabase
     .from("certificates")
     .select("id")
-    .eq("user_id", donation.user_id)
+    .eq("user_id", contribution.user_id)
     .eq("sponsor_level_id", sponsorLevel.id)
     .eq("type", "honor")
     .maybeSingle();
 
   if (existingHonorCertificate) {
-    return { donationId, honorCertificateCreated: false };
+    return { contributionId, honorCertificateCreated: false };
   }
 
   const { data: honorNumber, error: honorNumberError } = await supabase.rpc("allocate_certificate_number", {
@@ -1827,7 +1875,7 @@ export async function generateCertificatesForDonation(donationId: string) {
 
   const { error: insertHonorCertificateError } = await supabase.from("certificates").insert({
     certificate_number: honorNumber,
-    user_id: donation.user_id,
+    user_id: contribution.user_id,
     sponsor_level_id: sponsorLevel.id,
     type: "honor",
     status: "active",
@@ -1837,7 +1885,7 @@ export async function generateCertificatesForDonation(donationId: string) {
     throw new Error("Unable to create honor certificate");
   }
 
-  return { donationId, honorCertificateCreated: true };
+  return { contributionId, honorCertificateCreated: true };
 }
 ```
 
@@ -1848,8 +1896,8 @@ Replace `src/app/api/webhooks/stripe/route.ts` with:
 ```ts
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { buildDonationRecord } from "@/lib/donations/record";
-import { generateCertificatesForDonation } from "@/lib/certificates/service";
+import { buildContributionRecord } from "@/lib/contributions/record";
+import { generateCertificatesForContribution } from "@/lib/certificates/service";
 import { stripe, getStripeWebhookSecret } from "@/lib/payments/stripe";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -1876,7 +1924,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = createSupabaseAdminClient();
-    const record = buildDonationRecord({
+    const record = buildContributionRecord({
       userId,
       tierCode,
       amount,
@@ -1884,17 +1932,17 @@ export async function POST(request: Request) {
       provider: "stripe",
       providerTransactionId: paymentIntent,
     });
-    const { data: donation, error } = await (supabase as any)
-      .from("donations")
+    const { data: contribution, error } = await (supabase as any)
+      .from("contributions")
       .upsert(record, { onConflict: "provider,provider_transaction_id" })
       .select("id")
       .single();
 
-    if (error || !donation) {
-      return NextResponse.json({ error: "Unable to save donation" }, { status: 500 });
+    if (error || !contribution) {
+      return NextResponse.json({ error: "Unable to save contribution" }, { status: 500 });
     }
 
-    await generateCertificatesForDonation(donation.id);
+    await generateCertificatesForContribution(contribution.id);
   }
 
   return NextResponse.json({ received: true });
@@ -1906,7 +1954,7 @@ export async function POST(request: Request) {
 Run:
 
 ```bash
-npm test -- tests/unit/donation-record.test.ts tests/unit/certificate-numbers.test.ts tests/unit/sponsor-levels.test.ts
+npm test -- tests/unit/contribution-record.test.ts tests/unit/certificate-numbers.test.ts tests/unit/sponsor-levels.test.ts
 ```
 
 Expected: PASS.
@@ -1914,8 +1962,8 @@ Expected: PASS.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add supabase/migrations/0002_certificate_functions.sql src/lib/supabase/admin.ts src/lib/donations src/lib/certificates src/app/api/webhooks/stripe tests/unit/donation-record.test.ts
-git commit -m "feat: add donation persistence and certificate service"
+git add supabase/migrations/0002_certificate_functions.sql src/lib/supabase/admin.ts src/lib/contributions src/lib/certificates src/app/api/webhooks/stripe tests/unit/contribution-record.test.ts
+git commit -m "feat: add contribution persistence and certificate service"
 ```
 
 ---
@@ -1926,17 +1974,17 @@ git commit -m "feat: add donation persistence and certificate service"
 - Create: `src/app/[locale]/dashboard/page.tsx`
 - Create: `src/app/[locale]/dashboard/certificates/[id]/page.tsx`
 - Create: `src/lib/certificates/render.tsx`
-- Test: `tests/e2e/donation-auth.spec.ts`
+- Test: `tests/e2e/contribution-auth.spec.ts`
 
 - [ ] **Step 1: Write auth guard E2E test**
 
-Create `tests/e2e/donation-auth.spec.ts`:
+Create `tests/e2e/contribution-auth.spec.ts`:
 
 ```ts
 import { expect, test } from "@playwright/test";
 
-test("anonymous donation page redirects to login", async ({ page }) => {
-  await page.goto("/en/donate");
+test("anonymous support page redirects to login", async ({ page }) => {
+  await page.goto("/en/support");
   await expect(page).toHaveURL(/\/en\/login/);
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
 });
@@ -1947,10 +1995,10 @@ test("anonymous donation page redirects to login", async ({ page }) => {
 Run:
 
 ```bash
-npm run e2e -- tests/e2e/donation-auth.spec.ts
+npm run e2e -- tests/e2e/contribution-auth.spec.ts
 ```
 
-Expected: PASS after Task 5 donation guard is active.
+Expected: PASS after Task 5 contribution guard is active.
 
 - [ ] **Step 3: Add certificate renderer**
 
@@ -1999,7 +2047,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const user = await requireUser(locale, `/${locale}/dashboard`);
   const t = await getTranslations("dashboard");
   const supabase = await createSupabaseServerClient();
-  const { data: donations } = await supabase.from("donations").select("*").eq("user_id", user.id);
+  const { data: contributions } = await supabase.from("contributions").select("*").eq("user_id", user.id);
   const { data: certificates } = await supabase.from("certificates").select("*").eq("user_id", user.id);
 
   return (
@@ -2009,8 +2057,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
         <h1 className="text-3xl font-semibold">{t("title")}</h1>
         <section className="mt-8 grid gap-6 md:grid-cols-2">
           <div className="rounded-lg border border-slate-200 p-6">
-            <h2 className="font-semibold">{t("donations")}</h2>
-            <p className="mt-3 text-sm text-slate-600">{donations?.length ?? 0} donation records</p>
+            <h2 className="font-semibold">{t("contributions")}</h2>
+            <p className="mt-3 text-sm text-slate-600">{contributions?.length ?? 0} contribution records</p>
           </div>
           <div className="rounded-lg border border-slate-200 p-6">
             <h2 className="font-semibold">{t("certificates")}</h2>
@@ -2057,7 +2105,7 @@ export default async function CertificatePage({
       <CertificateView
         certificateNumber={certificate.certificate_number}
         recipientName={user.email ?? "Supporter"}
-        label={certificate.type === "donation" ? "Thank you for supporting development." : "Cumulative supporter recognition."}
+        label={certificate.type === "contribution" ? "Thank you for supporting development." : "Cumulative supporter recognition."}
         issuedAt={new Date(certificate.issued_at).toLocaleDateString("en")}
       />
     </main>
@@ -2070,7 +2118,7 @@ export default async function CertificatePage({
 Run:
 
 ```bash
-npm run e2e -- tests/e2e/donation-auth.spec.ts
+npm run e2e -- tests/e2e/contribution-auth.spec.ts
 npm test
 ```
 
@@ -2079,7 +2127,7 @@ Expected: PASS.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/app/[locale]/dashboard src/lib/certificates/render.tsx tests/e2e/donation-auth.spec.ts
+git add src/app/[locale]/dashboard src/lib/certificates/render.tsx tests/e2e/contribution-auth.spec.ts
 git commit -m "feat: add dashboard and certificates"
 ```
 
@@ -2089,7 +2137,7 @@ git commit -m "feat: add dashboard and certificates"
 
 **Files:**
 - Create: `src/app/[locale]/admin/page.tsx`
-- Create: `src/app/[locale]/admin/donations/page.tsx`
+- Create: `src/app/[locale]/admin/contributions/page.tsx`
 - Create: `src/app/[locale]/admin/certificates/page.tsx`
 
 - [ ] **Step 1: Add admin overview page**
@@ -2110,7 +2158,7 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
       <main className="mx-auto max-w-6xl px-6 py-12">
         <h1 className="text-3xl font-semibold">Admin</h1>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <a className="rounded-lg border border-slate-200 p-6" href={`/${locale}/admin/donations`}>Donations</a>
+          <a className="rounded-lg border border-slate-200 p-6" href={`/${locale}/admin/contributions`}>Contributions</a>
           <a className="rounded-lg border border-slate-200 p-6" href={`/${locale}/admin/certificates`}>Certificates</a>
           <a className="rounded-lg border border-slate-200 p-6" href={`/${locale}/admin/audit-logs`}>Audit Logs</a>
         </div>
@@ -2120,30 +2168,30 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
 }
 ```
 
-- [ ] **Step 2: Add admin donations page**
+- [ ] **Step 2: Add admin contributions page**
 
-Create `src/app/[locale]/admin/donations/page.tsx`:
+Create `src/app/[locale]/admin/contributions/page.tsx`:
 
 ```tsx
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export default async function AdminDonationsPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function AdminContributionsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireAdmin(locale);
   const supabase = await createSupabaseServerClient();
-  const { data: donations } = await supabase.from("donations").select("*").order("created_at", { ascending: false });
+  const { data: contributions } = await supabase.from("contributions").select("*").order("created_at", { ascending: false });
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
-      <h1 className="text-3xl font-semibold">Donations</h1>
+      <h1 className="text-3xl font-semibold">Contributions</h1>
       <div className="mt-6 divide-y divide-slate-200 rounded-lg border border-slate-200">
-        {(donations ?? []).map((donation) => (
-          <div className="grid grid-cols-4 gap-4 p-4 text-sm" key={donation.id}>
-            <span>{donation.provider}</span>
-            <span>{donation.status}</span>
-            <span>{donation.amount / 100} {donation.currency.toUpperCase()}</span>
-            <span>{donation.provider_transaction_id}</span>
+        {(contributions ?? []).map((contribution) => (
+          <div className="grid grid-cols-4 gap-4 p-4 text-sm" key={contribution.id}>
+            <span>{contribution.provider}</span>
+            <span>{contribution.status}</span>
+            <span>{contribution.amount / 100} {contribution.currency.toUpperCase()}</span>
+            <span>{contribution.provider_transaction_id}</span>
           </div>
         ))}
       </div>
@@ -2252,7 +2300,7 @@ Create `docs/deployment.md`:
 5. Create PayPal app credentials and set the webhook URL to `/api/webhooks/paypal`.
 6. Create the Vercel project and add all variables from `.env.example`.
 7. Point the domain DNS to Vercel.
-8. Run a test donation through Stripe sandbox and PayPal sandbox.
+8. Run a test contribution through Stripe sandbox and PayPal sandbox.
 
 ## Security Rules
 
@@ -2268,7 +2316,7 @@ Create or replace `README.md`:
 ```md
 # Three Friends Website
 
-International software download and voluntary donation website.
+International software download and voluntary support website.
 
 ## Development
 
@@ -2292,7 +2340,7 @@ npm run e2e
 - Stripe and PayPal one-time checkout
 - next-intl locale routes: `/en`, `/zh-Hant`, `/ja`, `/ko`
 
-See `docs/superpowers/specs/2026-04-29-software-donation-website-design.md` for the approved design.
+See `docs/superpowers/specs/2026-04-29-software-support-website-design.md` for the approved design.
 ```
 
 - [ ] **Step 4: Run final verification**
@@ -2336,7 +2384,7 @@ import { sanitizeNextPath } from "@/lib/auth/guards";
 
 describe("sanitizeNextPath", () => {
   it("allows local paths", () => {
-    expect(sanitizeNextPath("/en/donate?tier=yearly")).toBe("/en/donate?tier=yearly");
+    expect(sanitizeNextPath("/en/support?tier=yearly")).toBe("/en/support?tier=yearly");
   });
 
   it("blocks external redirects", () => {
@@ -2479,7 +2527,7 @@ export default async function LoginPage({
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6">
       <h1 className="text-3xl font-semibold">{t("signIn")}</h1>
       <p className="mt-3 text-sm text-slate-600">
-        Sign in to donate, view your donation history, and manage certificates.
+        Sign in to support, view your contribution history, and manage certificates.
       </p>
       <LoginForm next={safeNext} />
     </main>
@@ -2784,7 +2832,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
           React.createElement(
             Text,
             { style: styles.label },
-            certificate.type === "donation" ? "Thank you for supporting development." : "Cumulative supporter recognition.",
+            certificate.type === "contribution" ? "Thank you for supporting development." : "Cumulative supporter recognition.",
           ),
           React.createElement(Text, { style: styles.number }, certificate.certificate_number),
         ),
@@ -2858,7 +2906,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       React.createElement(
         "div",
         { style: { marginTop: 36, fontSize: 26, color: "#475569" } },
-        certificate.type === "donation" ? "Thank you for supporting development." : "Cumulative supporter recognition.",
+        certificate.type === "contribution" ? "Thank you for supporting development." : "Cumulative supporter recognition.",
       ),
       React.createElement(
         "div",
@@ -2914,7 +2962,7 @@ git commit -m "feat: add certificate export endpoints"
 **Files:**
 - Create: `src/app/[locale]/admin/actions.ts`
 - Create: `src/app/[locale]/admin/audit-logs/page.tsx`
-- Modify: `src/app/[locale]/admin/donations/page.tsx`
+- Modify: `src/app/[locale]/admin/contributions/page.tsx`
 - Modify: `src/app/[locale]/admin/certificates/page.tsx`
 
 - [ ] **Step 1: Add admin actions**
@@ -2950,16 +2998,16 @@ export async function revokeCertificate(formData: FormData) {
   revalidatePath(`/${locale}/admin/certificates`);
 }
 
-export async function addManualDonation(formData: FormData) {
+export async function addManualContribution(formData: FormData) {
   const locale = String(formData.get("locale") ?? "en");
   const admin = await requireAdmin(locale);
   const supabase = createSupabaseAdminClient() as any;
   const userId = String(formData.get("user_id"));
   const amount = Number(formData.get("amount"));
-  const reason = String(formData.get("reason") ?? "Manual donation entry");
+  const reason = String(formData.get("reason") ?? "Manual contribution entry");
 
-  const { data: donation } = await supabase
-    .from("donations")
+  const { data: contribution } = await supabase
+    .from("contributions")
     .insert({
       user_id: userId,
       amount,
@@ -2975,15 +3023,15 @@ export async function addManualDonation(formData: FormData) {
 
   await supabase.from("admin_audit_logs").insert({
     admin_user_id: admin.id,
-    action: "add_manual_donation",
-    target_type: "donation",
-    target_id: donation.id,
+    action: "add_manual_contribution",
+    target_type: "contribution",
+    target_id: contribution.id,
     before: null,
     after: { user_id: userId, amount },
     reason,
   });
 
-  revalidatePath(`/${locale}/admin/donations`);
+  revalidatePath(`/${locale}/admin/contributions`);
 }
 ```
 
@@ -3019,23 +3067,23 @@ export default async function AuditLogsPage({ params }: { params: Promise<{ loca
 }
 ```
 
-- [ ] **Step 3: Add manual donation form to donations page**
+- [ ] **Step 3: Add manual contribution form to contributions page**
 
-Modify `src/app/[locale]/admin/donations/page.tsx` and import `addManualDonation`:
+Modify `src/app/[locale]/admin/contributions/page.tsx` and import `addManualContribution`:
 
 ```tsx
-import { addManualDonation } from "../actions";
+import { addManualContribution } from "../actions";
 ```
 
 Add this form below the heading:
 
 ```tsx
-<form action={addManualDonation} className="mt-6 grid gap-3 rounded-lg border border-slate-200 p-4 md:grid-cols-4">
+<form action={addManualContribution} className="mt-6 grid gap-3 rounded-lg border border-slate-200 p-4 md:grid-cols-4">
   <input name="locale" type="hidden" value={locale} />
   <input className="rounded-md border border-slate-300 px-3 py-2" name="user_id" placeholder="User ID" required />
   <input className="rounded-md border border-slate-300 px-3 py-2" name="amount" placeholder="Amount in cents" required type="number" />
   <input className="rounded-md border border-slate-300 px-3 py-2" name="reason" placeholder="Reason" required />
-  <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white" type="submit">Add manual donation</button>
+  <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white" type="submit">Add manual contribution</button>
 </form>
 ```
 
@@ -3104,4 +3152,4 @@ Then start the development server:
 npm run dev
 ```
 
-Expected: the site is available at `http://localhost:3000/en`, with public downloads visible and donation requiring login.
+Expected: the site is available at `http://localhost:3000/en`, with public downloads visible and contribution requiring login.
