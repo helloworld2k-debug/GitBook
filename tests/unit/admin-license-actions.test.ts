@@ -18,6 +18,9 @@ const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
   requireAdmin: vi.fn(),
   requireOwner: vi.fn(),
+  redirect: vi.fn((path: string) => {
+    throw new Error(`redirect:${path}`);
+  }),
   revalidatePath: vi.fn(),
 }));
 
@@ -34,20 +37,40 @@ vi.mock("next/cache", () => ({
   revalidatePath: mocks.revalidatePath,
 }));
 
+vi.mock("next/navigation", () => ({
+  redirect: mocks.redirect,
+}));
+
 describe("admin license actions", () => {
   beforeEach(() => {
     process.env.LICENSE_CODE_ENCRYPTION_KEY = Buffer.alloc(32, 3).toString("base64");
     mocks.requireAdmin.mockReset().mockResolvedValue({ id: "admin-1" });
     mocks.requireOwner.mockReset().mockResolvedValue({ id: "owner-1" });
     mocks.createSupabaseAdminClient.mockReset();
+    mocks.redirect.mockClear();
     mocks.revalidatePath.mockClear();
   });
 
   it("creates one auto-generated trial code with a hashed code and never persists the raw code", async () => {
-    const insert = vi.fn<(payload: unknown) => MutationResult>(async () => ({ error: null }));
+    const single = vi.fn(async () => ({
+      data: {
+        code_mask: "ABCD-****-****-WXYZ",
+        id: "trial-1",
+        label: "Spring 2026 launch trial",
+        trial_days: 3,
+      },
+      error: null,
+    }));
+    const select = vi.fn(() => ({ single }));
+    const insert = vi.fn(() => ({ select }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "trial_codes") {
         return { insert };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
       }
 
       throw new Error(`Unexpected table: ${table}`);
@@ -59,7 +82,7 @@ describe("admin license actions", () => {
     formData.set("label", "Spring 2026 launch trial");
     formData.set("trial_days", "3");
 
-    await createTrialCode(formData);
+    await expect(createTrialCode(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=trial-code-created");
 
     const inserted = insert.mock.calls[0]?.[0];
     expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
@@ -83,6 +106,7 @@ describe("admin license actions", () => {
     expect(inserted).not.toHaveProperty("ends_at");
     expect(JSON.stringify(inserted)).not.toContain("ABCD-EFGH-IJKL-MNOP");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/licenses");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "create_trial_code" }));
   });
 
   it("rejects trial code durations over 7 days before writing", async () => {
@@ -97,11 +121,19 @@ describe("admin license actions", () => {
   });
 
   it("toggles trial code active state", async () => {
+    const single = vi.fn(async () => ({ data: { is_active: true }, error: null }));
+    const selectEq = vi.fn(() => ({ single }));
+    const select = vi.fn(() => ({ eq: selectEq }));
     const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
     const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "trial_codes") {
-        return { update };
+        return { select, update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
       }
 
       throw new Error(`Unexpected table: ${table}`);
@@ -113,20 +145,29 @@ describe("admin license actions", () => {
     formData.set("trial_code_id", "trial-1");
     formData.set("is_active", "false");
 
-    await setTrialCodeActive(formData);
+    await expect(setTrialCodeActive(formData)).rejects.toThrow("redirect:/ja/admin/licenses?notice=trial-code-status-updated");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("ja");
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ is_active: false, updated_at: expect.any(String) }));
     expect(eq).toHaveBeenCalledWith("id", "trial-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/licenses");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "set_trial_code_active" }));
   });
 
   it("updates trial code labels and redemption limits without activation windows", async () => {
+    const single = vi.fn(async () => ({ data: { label: "Old", trial_days: 3 }, error: null }));
+    const selectEq = vi.fn(() => ({ single }));
+    const select = vi.fn(() => ({ eq: selectEq }));
     const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
     const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "trial_codes") {
-        return { update };
+        return { select, update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
       }
 
       throw new Error(`Unexpected table: ${table}`);
@@ -139,7 +180,7 @@ describe("admin license actions", () => {
     formData.set("label", "Spring maintenance trial");
     formData.set("trial_days", "7");
 
-    await updateTrialCode(formData);
+    await expect(updateTrialCode(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=trial-code-updated");
 
     expect(update).toHaveBeenCalledWith({
       label: "Spring maintenance trial",
@@ -148,17 +189,23 @@ describe("admin license actions", () => {
     });
     expect(eq).toHaveBeenCalledWith("id", "trial-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/licenses");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "update_trial_code" }));
   });
 
   it("revokes desktop sessions", async () => {
     const rpc = vi.fn<(functionName: string, args: unknown) => MutationResult>(async () => ({ error: null }));
-    mocks.createSupabaseAdminClient.mockReturnValue({ rpc });
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, rpc });
 
     const formData = new FormData();
     formData.set("locale", "ko");
     formData.set("desktop_session_id", "session-1");
 
-    await revokeDesktopSession(formData);
+    await expect(revokeDesktopSession(formData)).rejects.toThrow("redirect:/ko/admin/licenses?notice=desktop-session-revoked");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("ko");
     expect(rpc).toHaveBeenCalledWith("revoke_desktop_session_with_leases", {
@@ -166,14 +213,20 @@ describe("admin license actions", () => {
       input_now: expect.any(String),
     });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ko/admin/licenses");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "revoke_desktop_session" }));
   });
 
   it("revokes cloud sync leases and updates the timestamp", async () => {
     const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
     const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "cloud_sync_leases") {
         return { update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
       }
 
       throw new Error(`Unexpected table: ${table}`);
@@ -184,7 +237,7 @@ describe("admin license actions", () => {
     formData.set("locale", "zh-Hant");
     formData.set("cloud_sync_lease_id", "lease-1");
 
-    await revokeCloudSyncLease(formData);
+    await expect(revokeCloudSyncLease(formData)).rejects.toThrow("redirect:/zh-Hant/admin/licenses?notice=cloud-sync-lease-revoked");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("zh-Hant");
     expect(update).toHaveBeenCalledWith({
@@ -193,14 +246,23 @@ describe("admin license actions", () => {
     });
     expect(eq).toHaveBeenCalledWith("id", "lease-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh-Hant/admin/licenses");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "revoke_cloud_sync_lease" }));
   });
 
   it("lets operators update user account status without reading passwords", async () => {
+    const single = vi.fn(async () => ({ data: { account_status: "active" }, error: null }));
+    const selectEq = vi.fn(() => ({ single }));
+    const select = vi.fn(() => ({ eq: selectEq }));
     const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
     const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
-        return { update };
+        return { select, update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
       }
 
       throw new Error(`Unexpected table: ${table}`);
@@ -212,7 +274,7 @@ describe("admin license actions", () => {
     formData.set("user_id", "user-1");
     formData.set("account_status", "disabled");
 
-    await updateUserAccountStatus(formData);
+    await expect(updateUserAccountStatus(formData)).rejects.toThrow("redirect:/en/admin/users?notice=status-updated");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
     expect(mocks.requireOwner).not.toHaveBeenCalled();
@@ -220,14 +282,23 @@ describe("admin license actions", () => {
     expect(update).toHaveBeenCalledWith({ account_status: "disabled", updated_at: expect.any(String) });
     expect(eq).toHaveBeenCalledWith("id", "user-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/users");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "update_user_account_status" }));
   });
 
   it("requires an owner before changing admin roles", async () => {
+    const single = vi.fn(async () => ({ data: { admin_role: "user", is_admin: false }, error: null }));
+    const selectEq = vi.fn(() => ({ single }));
+    const select = vi.fn(() => ({ eq: selectEq }));
     const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
     const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
-        return { update };
+        return { select, update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
       }
 
       throw new Error(`Unexpected table: ${table}`);
@@ -239,7 +310,7 @@ describe("admin license actions", () => {
     formData.set("user_id", "user-1");
     formData.set("admin_role", "operator");
 
-    await updateUserAdminRole(formData);
+    await expect(updateUserAdminRole(formData)).rejects.toThrow("redirect:/ja/admin/users?notice=role-updated");
 
     expect(mocks.requireOwner).toHaveBeenCalledWith("ja");
     expect(mocks.requireAdmin).not.toHaveBeenCalled();
@@ -250,6 +321,7 @@ describe("admin license actions", () => {
     });
     expect(eq).toHaveBeenCalledWith("id", "user-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/users");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "update_user_admin_role" }));
   });
 
   it("unbinds a trial redemption machine claim for admin support", async () => {
@@ -264,6 +336,7 @@ describe("admin license actions", () => {
     const claimFeatureEq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
     const claimMachineEq = vi.fn(() => ({ eq: claimFeatureEq }));
     const claimDelete = vi.fn(() => ({ eq: claimMachineEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "trial_code_redemptions") {
         return { select: redemptionSelect, update: redemptionUpdate };
@@ -271,6 +344,10 @@ describe("admin license actions", () => {
 
       if (table === "machine_trial_claims") {
         return { delete: claimDelete };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
       }
 
       throw new Error(`Unexpected table: ${table}`);
@@ -281,7 +358,7 @@ describe("admin license actions", () => {
     formData.set("locale", "en");
     formData.set("trial_redemption_id", "redemption-1");
 
-    await unbindTrialMachine(formData);
+    await expect(unbindTrialMachine(formData)).rejects.toThrow("redirect:/en/admin/users?notice=trial-machine-unbound");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
     expect(redemptionSelect).toHaveBeenCalledWith("id,machine_code_hash");
@@ -297,5 +374,6 @@ describe("admin license actions", () => {
     expect(redemptionUpdateEq).toHaveBeenCalledWith("id", "redemption-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/users");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/licenses");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "unbind_trial_machine" }));
   });
 });

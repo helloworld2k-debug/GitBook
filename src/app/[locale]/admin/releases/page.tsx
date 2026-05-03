@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { SOFTWARE_RELEASES_BUCKET, type ReleaseClient, type SoftwareRelease } from "@/lib/releases/software-releases";
@@ -12,6 +13,7 @@ type AdminReleasesPageProps = {
   params: Promise<{
     locale: string;
   }>;
+  searchParams?: Promise<{ error?: string; notice?: string }>;
 };
 
 type AdminReleaseRow = SoftwareRelease & {
@@ -26,8 +28,9 @@ function formatReleaseDate(value: string, locale: string) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-export default async function AdminReleasesPage({ params }: AdminReleasesPageProps) {
+export default async function AdminReleasesPage({ params, searchParams }: AdminReleasesPageProps) {
   const { locale } = await params;
+  const feedback = await searchParams;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -83,10 +86,12 @@ export default async function AdminReleasesPage({ params }: AdminReleasesPagePro
             eyebrow={t("releases.eyebrow")}
             title={t("releases.title")}
           />
+          <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
           <AdminCard className="p-5">
             <h2 className="text-lg font-semibold tracking-normal text-slate-950">{t("releases.createTitle")}</h2>
             <form action={createRelease} className="mt-5 grid gap-4">
               <input name="locale" type="hidden" value={locale} />
+              <input name="return_to" type="hidden" value="/admin/releases" />
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="text-sm font-medium text-slate-950">
                   {t("releases.version")}
@@ -120,9 +125,9 @@ export default async function AdminReleasesPage({ params }: AdminReleasesPagePro
                 <input className="size-4" name="is_published" type="checkbox" />
                 {t("releases.published")}
               </label>
-              <button className="inline-flex min-h-11 w-fit items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white" type="submit">
+              <AdminSubmitButton className="inline-flex min-h-11 w-fit items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white" pendingLabel={t("common.processing")}>
                 {t("releases.create")}
-              </button>
+              </AdminSubmitButton>
             </form>
           </AdminCard>
 
@@ -152,11 +157,12 @@ export default async function AdminReleasesPage({ params }: AdminReleasesPagePro
                       </div>
                       <form action={togglePublished}>
                         <input name="locale" type="hidden" value={locale} />
+                        <input name="return_to" type="hidden" value="/admin/releases" />
                         <input name="release_id" type="hidden" value={release.id} />
                         <input name="is_published" type="hidden" value={release.isPublished ? "false" : "true"} />
-                        <button className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" type="submit">
+                        <AdminSubmitButton className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={t("common.processing")}>
                           {release.isPublished ? t("releases.unpublish") : t("releases.publish")}
-                        </button>
+                        </AdminSubmitButton>
                       </form>
                     </div>
                   </li>

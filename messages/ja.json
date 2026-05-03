@@ -192,6 +192,10 @@
     "memberFallback": "GitBook AI メンバー"
   },
   "admin": {
+    "common": {
+      "processing": "処理中...",
+      "saving": "保存中..."
+    },
     "overview": {
       "eyebrow": "管理ツール",
       "title": "管理画面",

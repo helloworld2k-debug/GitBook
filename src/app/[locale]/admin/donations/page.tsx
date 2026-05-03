@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -12,6 +13,7 @@ type AdminDonationsPageProps = {
   params: Promise<{
     locale: string;
   }>;
+  searchParams?: Promise<{ error?: string; notice?: string }>;
 };
 
 type DonationStatus = "pending" | "paid" | "cancelled" | "failed" | "refunded";
@@ -34,8 +36,9 @@ function getDonationStatusTone(status: DonationStatus) {
   return "neutral";
 }
 
-export default async function AdminDonationsPage({ params }: AdminDonationsPageProps) {
+export default async function AdminDonationsPage({ params, searchParams }: AdminDonationsPageProps) {
   const { locale } = await params;
+  const feedback = await searchParams;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -66,6 +69,7 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
             eyebrow={t("donations.eyebrow")}
             title={t("donations.title")}
           />
+          <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
           <AdminCard className="p-5">
             <div>
               <h2 className="text-base font-semibold text-slate-950">{t("donations.manualEntryTitle")}</h2>
@@ -73,6 +77,7 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
             </div>
             <form action={addManualDonation} className="mt-4 grid gap-3 md:grid-cols-[1fr_11rem_1fr_1fr_auto]">
               <input name="locale" type="hidden" value={locale} />
+              <input name="return_to" type="hidden" value="/admin/donations" />
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("donations.userIdentifier")}
                 <input
@@ -109,12 +114,12 @@ export default async function AdminDonationsPage({ params }: AdminDonationsPageP
                   required
                 />
               </label>
-              <button
+              <AdminSubmitButton
                 className="min-h-11 self-end rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                type="submit"
+                pendingLabel={t("common.processing")}
               >
                 {t("donations.submitManualDonation")}
-              </button>
+              </AdminSubmitButton>
             </form>
           </AdminCard>
           <AdminCard className="mt-6">

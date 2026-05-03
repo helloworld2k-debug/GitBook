@@ -16,6 +16,7 @@ import {
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { siteConfig, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
+import { isAdminFeedbackKey, type AdminFeedbackKey, type AdminFeedbackTone } from "@/lib/admin/feedback";
 
 type AdminShellLabels = {
   auditLogs: string;
@@ -169,6 +170,68 @@ export function AdminPageHeader({ backHref, backLabel, description, eyebrow, tit
         <h1 className="mt-2 text-3xl font-semibold tracking-normal text-slate-950">{title}</h1>
         {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
       </div>
+    </div>
+  );
+}
+
+const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
+  "account-profile-updated": "User profile updated.",
+  "certificate-revoked": "Certificate revoked.",
+  "cloud-sync-lease-revoked": "Cloud sync lease revoked.",
+  "cloud-sync-lease-revoke-failed": "Unable to revoke cloud sync lease.",
+  "desktop-session-revoked": "Desktop session revoked.",
+  "desktop-session-revoke-failed": "Unable to revoke desktop session.",
+  "feedback-replied": "Reply sent to the user.",
+  "feedback-reply-failed": "Unable to send reply.",
+  "feedback-updated": "Feedback status updated.",
+  "feedback-update-failed": "Unable to update feedback.",
+  "manual-donation-added": "Manual donation added.",
+  "manual-donation-failed": "Unable to add manual donation.",
+  "notification-created": "Notification created.",
+  "notification-published": "Notification published.",
+  "notification-unpublished": "Notification unpublished.",
+  "operation-failed": "Unable to complete this operation.",
+  "profile-update-failed": "Unable to update user profile.",
+  "release-created": "Release created.",
+  "release-updated": "Release updated.",
+  "role-updated": "User role updated.",
+  "role-update-failed": "Unable to update user role.",
+  "status-updated": "Account status updated.",
+  "status-update-failed": "Unable to update account status.",
+  "trial-code-created": "Trial code created.",
+  "trial-code-create-failed": "Unable to create trial code.",
+  "trial-code-status-updated": "Trial code status updated.",
+  "trial-code-status-update-failed": "Unable to update trial code status.",
+  "trial-code-updated": "Trial code updated.",
+  "trial-code-update-failed": "Unable to update trial code.",
+  "trial-machine-unbound": "Trial machine unbound.",
+  "trial-machine-unbind-failed": "Unable to unbind trial machine.",
+};
+
+export function AdminFeedbackBanner({
+  error,
+  notice,
+}: {
+  error?: string | string[] | null;
+  notice?: string | string[] | null;
+}) {
+  const rawError = Array.isArray(error) ? error[0] : error;
+  const rawNotice = Array.isArray(notice) ? notice[0] : notice;
+  const tone: AdminFeedbackTone | null = isAdminFeedbackKey(rawError) ? "error" : isAdminFeedbackKey(rawNotice) ? "notice" : null;
+  const key = tone === "error" ? rawError : rawNotice;
+
+  if (!tone || !isAdminFeedbackKey(key)) {
+    return null;
+  }
+
+  const toneClass =
+    tone === "error"
+      ? "border-red-200 bg-red-50 text-red-800"
+      : "border-emerald-200 bg-emerald-50 text-emerald-800";
+
+  return (
+    <div className={`mb-5 rounded-md border px-4 py-3 text-sm font-medium ${toneClass}`} role={tone === "error" ? "alert" : "status"}>
+      {adminFeedbackMessages[key]}
     </div>
   );
 }

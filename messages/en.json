@@ -200,6 +200,10 @@
     "memberFallback": "GitBook AI member"
   },
   "admin": {
+    "common": {
+      "processing": "Processing...",
+      "saving": "Saving..."
+    },
     "overview": {
       "eyebrow": "Admin tools",
       "title": "Admin",

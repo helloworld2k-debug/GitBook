@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
-import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { isOwnerProfile, requireAdmin } from "@/lib/auth/guards";
@@ -21,6 +22,7 @@ type AdminUserDetailPageProps = {
     id: string;
     locale: string;
   }>;
+  searchParams?: Promise<{ error?: string; notice?: string }>;
 };
 
 function formatDateTime(value: string | null, locale: string) {
@@ -62,8 +64,9 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
-export default async function AdminUserDetailPage({ params }: AdminUserDetailPageProps) {
+export default async function AdminUserDetailPage({ params, searchParams }: AdminUserDetailPageProps) {
   const { id, locale } = await params;
+  const feedback = await searchParams;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -165,6 +168,7 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
           eyebrow={t("eyebrow")}
           title={t("detailTitle")}
         />
+        <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
           <AdminCard className="p-5">
@@ -187,6 +191,7 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
 
             <form action={updateAdminUserProfile} className="mt-5 grid gap-4">
               <input name="locale" type="hidden" value={locale} />
+              <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
               <input name="user_id" type="hidden" value={profile.id} />
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
@@ -217,9 +222,9 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
                 />
                 {t("publicSupporter")}
               </label>
-              <button className="inline-flex min-h-10 w-fit items-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" type="submit">
+              <AdminSubmitButton className="inline-flex min-h-10 w-fit items-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" pendingLabel={adminT("common.saving")}>
                 {t("save")}
-              </button>
+              </AdminSubmitButton>
             </form>
           </AdminCard>
 
@@ -227,6 +232,7 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
             <h2 className="text-base font-semibold text-slate-950">{t("addDonation")}</h2>
             <form action={addManualDonation} className="mt-4 grid gap-3">
               <input name="locale" type="hidden" value={locale} />
+              <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
               <input name="user_identifier" type="hidden" value={profile.id} />
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {adminT("donations.amountCents")}
@@ -240,9 +246,9 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
                 {adminT("donations.reason")}
                 <input className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" maxLength={500} name="reason" required />
               </label>
-              <button className="inline-flex min-h-10 w-fit items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" type="submit">
+              <AdminSubmitButton className="inline-flex min-h-10 w-fit items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={adminT("common.processing")}>
                 {t("addDonation")}
-              </button>
+              </AdminSubmitButton>
             </form>
           </AdminCard>
         </div>
@@ -254,29 +260,31 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
               {canManageRoles ? (
                 <form action={updateUserAdminRole} className="flex flex-wrap gap-2">
                   <input name="locale" type="hidden" value={locale} />
+                  <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
                   <input name="user_id" type="hidden" value={profile.id} />
                   <select aria-label={t("role")} className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="admin_role" defaultValue={profile.admin_role ?? (profile.is_admin ? "owner" : "user")}>
                     <option value="user">{t("roles.user")}</option>
                     <option value="operator">{t("roles.operator")}</option>
                     <option value="owner">{t("roles.owner")}</option>
                   </select>
-                  <button aria-label={t("saveRole")} className="rounded-md border border-slate-300 px-3 text-sm font-medium" type="submit">
+                  <AdminSubmitButton aria-label={t("saveRole")} className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
                     {t("save")}
-                  </button>
+                  </AdminSubmitButton>
                 </form>
               ) : (
                 <p className="text-sm text-slate-700">{t(`roles.${profile.admin_role ?? (profile.is_admin ? "owner" : "user")}`)}</p>
               )}
               <form action={updateUserAccountStatus} className="flex flex-wrap gap-2">
                 <input name="locale" type="hidden" value={locale} />
+                <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
                 <input name="user_id" type="hidden" value={profile.id} />
                 <select className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="account_status" defaultValue={profile.account_status ?? "active"}>
                   <option value="active">{t("statuses.active")}</option>
                   <option value="disabled">{t("statuses.disabled")}</option>
                 </select>
-                <button className="rounded-md border border-slate-300 px-3 text-sm font-medium" type="submit">
+                <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
                   {t("save")}
-                </button>
+                </AdminSubmitButton>
               </form>
             </div>
           </AdminCard>
@@ -294,10 +302,11 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
                       {trial.machine_code_hash ? (
                         <form action={unbindTrialMachine}>
                           <input name="locale" type="hidden" value={locale} />
+                          <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
                           <input name="trial_redemption_id" type="hidden" value={trial.id} />
-                          <button className="text-sm font-semibold text-red-700" type="submit">
+                          <AdminSubmitButton className="text-sm font-semibold text-red-700" pendingLabel={adminT("common.processing")}>
                             {t("unbind")}
-                          </button>
+                          </AdminSubmitButton>
                         </form>
                       ) : null}
                     </div>
@@ -386,10 +395,11 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
                     ) : (
                       <form action={revokeDesktopSession} className="mt-2">
                         <input name="locale" type="hidden" value={locale} />
+                        <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
                         <input name="desktop_session_id" type="hidden" value={session.id} />
-                        <button className="text-sm font-semibold text-red-700" type="submit">
+                        <AdminSubmitButton className="text-sm font-semibold text-red-700" pendingLabel={adminT("common.processing")}>
                           {adminT("licenses.revoke")}
-                        </button>
+                        </AdminSubmitButton>
                       </form>
                     )}
                   </div>
@@ -433,10 +443,11 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
                     ) : (
                       <form action={revokeCloudSyncLease} className="mt-2">
                         <input name="locale" type="hidden" value={locale} />
+                        <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
                         <input name="cloud_sync_lease_id" type="hidden" value={lease.id} />
-                        <button className="text-sm font-semibold text-red-700" type="submit">
+                        <AdminSubmitButton className="text-sm font-semibold text-red-700" pendingLabel={adminT("common.processing")}>
                           {adminT("licenses.revoke")}
-                        </button>
+                        </AdminSubmitButton>
                       </form>
                     )}
                   </div>

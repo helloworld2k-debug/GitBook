@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -10,6 +11,7 @@ import { replySupportFeedbackAsAdmin, updateSupportFeedbackStatus } from "../../
 
 type AdminSupportFeedbackDetailPageProps = {
   params: Promise<{ id: string; locale: string }>;
+  searchParams?: Promise<{ error?: string; notice?: string }>;
 };
 
 type FeedbackStatus = "open" | "reviewing" | "closed";
@@ -20,8 +22,9 @@ function statusTone(status: FeedbackStatus) {
   return "neutral";
 }
 
-export default async function AdminSupportFeedbackDetailPage({ params }: AdminSupportFeedbackDetailPageProps) {
+export default async function AdminSupportFeedbackDetailPage({ params, searchParams }: AdminSupportFeedbackDetailPageProps) {
   const { id, locale } = await params;
+  const feedbackState = await searchParams;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -62,6 +65,7 @@ export default async function AdminSupportFeedbackDetailPage({ params }: AdminSu
           eyebrow={t("supportFeedback.eyebrow")}
           title={feedback.subject}
         />
+        <AdminFeedbackBanner error={feedbackState?.error} notice={feedbackState?.notice} />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <AdminCard className="p-5">
             <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
@@ -99,29 +103,31 @@ export default async function AdminSupportFeedbackDetailPage({ params }: AdminSu
             </div>
             <form action={replySupportFeedbackAsAdmin} className="mt-6 grid gap-3">
               <input name="locale" type="hidden" value={locale} />
+              <input name="return_to" type="hidden" value={`/admin/support-feedback/${feedback.id}`} />
               <input name="feedback_id" type="hidden" value={feedback.id} />
               <label className="grid gap-2 text-sm font-medium text-slate-700">
                 {t("supportFeedback.reply")}
                 <textarea className="min-h-32 rounded-md border border-slate-300 px-3 py-3 text-sm" maxLength={4000} name="message" placeholder={t("supportFeedback.replyPlaceholder")} required />
               </label>
-              <button className="inline-flex min-h-11 w-fit items-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" type="submit">
+              <AdminSubmitButton className="inline-flex min-h-11 w-fit items-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" pendingLabel={t("common.processing")}>
                 {t("supportFeedback.sendReply")}
-              </button>
+              </AdminSubmitButton>
             </form>
           </AdminCard>
           <AdminCard className="h-fit p-5">
             <h2 className="text-base font-semibold text-slate-950">{t("supportFeedback.status")}</h2>
             <form action={updateSupportFeedbackStatus} className="mt-4 grid gap-3">
               <input name="locale" type="hidden" value={locale} />
+              <input name="return_to" type="hidden" value={`/admin/support-feedback/${feedback.id}`} />
               <input name="feedback_id" type="hidden" value={feedback.id} />
               <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" name="status" defaultValue={feedback.status}>
                 <option value="open">{t("supportFeedback.statuses.open")}</option>
                 <option value="reviewing">{t("supportFeedback.statuses.reviewing")}</option>
                 <option value="closed">{t("supportFeedback.statuses.closed")}</option>
               </select>
-              <button className="min-h-11 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" type="submit">
+              <AdminSubmitButton className="min-h-11 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={t("common.saving")}>
                 {t("supportFeedback.save")}
-              </button>
+              </AdminSubmitButton>
             </form>
           </AdminCard>
         </div>

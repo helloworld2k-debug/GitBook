@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
@@ -11,6 +12,7 @@ import { updateSupportFeedbackStatus } from "../actions";
 
 type AdminSupportFeedbackPageProps = {
   params: Promise<{ locale: string }>;
+  searchParams?: Promise<{ error?: string; notice?: string }>;
 };
 
 type FeedbackStatus = "open" | "reviewing" | "closed";
@@ -21,8 +23,9 @@ function statusTone(status: FeedbackStatus) {
   return "neutral";
 }
 
-export default async function AdminSupportFeedbackPage({ params }: AdminSupportFeedbackPageProps) {
+export default async function AdminSupportFeedbackPage({ params, searchParams }: AdminSupportFeedbackPageProps) {
   const { locale } = await params;
+  const feedbackState = await searchParams;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -52,6 +55,7 @@ export default async function AdminSupportFeedbackPage({ params }: AdminSupportF
           eyebrow={t("supportFeedback.eyebrow")}
           title={t("supportFeedback.title")}
         />
+        <AdminFeedbackBanner error={feedbackState?.error} notice={feedbackState?.notice} />
         <AdminCard>
           {feedback && feedback.length > 0 ? (
             <div className="overflow-x-auto">
@@ -92,15 +96,16 @@ export default async function AdminSupportFeedbackPage({ params }: AdminSupportF
                       <td className="px-5 py-4">
                         <form action={updateSupportFeedbackStatus} className="flex gap-2">
                           <input name="locale" type="hidden" value={locale} />
+                          <input name="return_to" type="hidden" value="/admin/support-feedback" />
                           <input name="feedback_id" type="hidden" value={item.id} />
                           <select className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="status" defaultValue={item.status}>
                             <option value="open">{t("supportFeedback.statuses.open")}</option>
                             <option value="reviewing">{t("supportFeedback.statuses.reviewing")}</option>
                             <option value="closed">{t("supportFeedback.statuses.closed")}</option>
                           </select>
-                          <button className="min-h-10 whitespace-nowrap rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" type="submit">
+                          <AdminSubmitButton className="min-h-10 whitespace-nowrap rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={t("common.saving")}>
                             {t("supportFeedback.save")}
-                          </button>
+                          </AdminSubmitButton>
                         </form>
                         <Link className="mt-2 inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/support-feedback/${item.id}`}>
                           {t("supportFeedback.view")}

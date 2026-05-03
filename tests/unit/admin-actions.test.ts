@@ -1,5 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addManualDonation, createSoftwareRelease, replySupportFeedbackAsAdmin, revokeCertificate, setSoftwareReleasePublished, updateUserAdminRole } from "@/app/[locale]/admin/actions";
+import {
+  addManualDonation,
+  createSoftwareRelease,
+  createTrialCode,
+  replySupportFeedbackAsAdmin,
+  revokeCertificate,
+  setSoftwareReleasePublished,
+  updateTrialCode,
+  updateUserAccountStatus,
+  updateUserAdminRole,
+} from "@/app/[locale]/admin/actions";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
@@ -7,6 +17,9 @@ const mocks = vi.hoisted(() => ({
   generateCertificatesForDonation: vi.fn(),
   requireAdmin: vi.fn(),
   requireOwner: vi.fn(),
+  redirect: vi.fn((path: string) => {
+    throw new Error(`redirect:${path}`);
+  }),
   revalidatePath: vi.fn(),
 }));
 
@@ -31,6 +44,10 @@ vi.mock("next/cache", () => ({
   revalidatePath: mocks.revalidatePath,
 }));
 
+vi.mock("next/navigation", () => ({
+  redirect: mocks.redirect,
+}));
+
 function createProfileLookup(profile: { id: string; email: string } | null) {
   const single = vi.fn(async () => ({ data: profile, error: profile ? null : new Error("not found") }));
   const eq = vi.fn(() => ({ single }));
@@ -50,21 +67,37 @@ describe("admin actions", () => {
       honorCertificateCreated: false,
     });
     mocks.extendCloudSyncEntitlementForDonation.mockReset().mockResolvedValue("2027-05-01T00:00:00.000Z");
+    mocks.redirect.mockClear();
     mocks.revalidatePath.mockClear();
   });
 
-  it("requires owner access before changing a user's admin role", async () => {
-    const eq = vi.fn(async () => ({ error: null }));
-    const update = vi.fn(() => ({ eq }));
-    const from = vi.fn(() => ({ update }));
+  it("requires owner access before changing a user's admin role, audits it, and redirects with a success notice", async () => {
+    const profileSingle = vi.fn(async () => ({ data: { admin_role: "user", is_admin: false }, error: null }));
+    const profileEq = vi.fn(() => ({ single: profileSingle }));
+    const profileSelect = vi.fn(() => ({ eq: profileEq }));
+    const updateEq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq: updateEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return { select: profileSelect, update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
     mocks.createSupabaseAdminClient.mockReturnValue({ from });
 
     const formData = new FormData();
     formData.set("locale", "en");
     formData.set("user_id", "user-1");
     formData.set("admin_role", "operator");
+    formData.set("return_to", "/admin/users");
 
-    await updateUserAdminRole(formData);
+    await expect(updateUserAdminRole(formData)).rejects.toThrow("redirect:/en/admin/users?notice=role-updated");
 
     expect(mocks.requireOwner).toHaveBeenCalledWith("en");
     expect(mocks.requireOwner.mock.invocationCallOrder[0]).toBeLessThan(
@@ -75,9 +108,76 @@ describe("admin actions", () => {
       is_admin: false,
       updated_at: expect.any(String),
     });
-    expect(eq).toHaveBeenCalledWith("id", "user-1");
+    expect(updateEq).toHaveBeenCalledWith("id", "user-1");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "update_user_admin_role",
+      admin_user_id: "owner-1",
+      target_id: "user-1",
+      target_type: "profile",
+    }));
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/users");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/users/user-1");
+  });
+
+  it("redirects with an error when updating a user's admin role fails", async () => {
+    const profileSingle = vi.fn(async () => ({ data: { admin_role: "user", is_admin: false }, error: null }));
+    const profileEq = vi.fn(() => ({ single: profileSingle }));
+    const profileSelect = vi.fn(() => ({ eq: profileEq }));
+    const updateEq = vi.fn(async () => ({ error: new Error("database down") }));
+    const update = vi.fn(() => ({ eq: updateEq }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return { select: profileSelect, update };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("user_id", "user-1");
+    formData.set("admin_role", "operator");
+    formData.set("return_to", "https://evil.example/admin/users");
+
+    await expect(updateUserAdminRole(formData)).rejects.toThrow("redirect:/en/admin/users?error=role-update-failed");
+    expect(mocks.revalidatePath).not.toHaveBeenCalledWith("/en/admin/users");
+  });
+
+  it("audits account status changes and redirects with a success notice", async () => {
+    const profileSingle = vi.fn(async () => ({ data: { account_status: "active" }, error: null }));
+    const profileEq = vi.fn(() => ({ single: profileSingle }));
+    const profileSelect = vi.fn(() => ({ eq: profileEq }));
+    const updateEq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq: updateEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return { select: profileSelect, update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "zh-Hant");
+    formData.set("user_id", "user-1");
+    formData.set("account_status", "disabled");
+    formData.set("return_to", "/admin/users/user-1");
+
+    await expect(updateUserAccountStatus(formData)).rejects.toThrow("redirect:/zh-Hant/admin/users/user-1?notice=status-updated");
+
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "update_user_account_status",
+      admin_user_id: "admin-1",
+      target_id: "user-1",
+      target_type: "profile",
+    }));
   });
 
   it("requires an admin before creating a manual donation through the audited RPC and extends entitlement", async () => {
@@ -99,7 +199,7 @@ describe("admin actions", () => {
     formData.set("reference", "offline receipt #42");
     formData.set("reason", "Offline support received");
 
-    await addManualDonation(formData);
+    await expect(addManualDonation(formData)).rejects.toThrow("redirect:/en/admin/donations?notice=manual-donation-added");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
     expect(mocks.requireAdmin.mock.invocationCallOrder[0]).toBeLessThan(
@@ -180,7 +280,7 @@ describe("admin actions", () => {
     formData.set("feedback_id", "feedback-1");
     formData.set("message", "We checked your account and fixed the issue.");
 
-    await replySupportFeedbackAsAdmin(formData);
+    await expect(replySupportFeedbackAsAdmin(formData)).rejects.toThrow("redirect:/en/admin/support-feedback/feedback-1?notice=feedback-replied");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
     expect(messageInsert).toHaveBeenCalledWith({
@@ -208,7 +308,7 @@ describe("admin actions", () => {
     formData.set("certificate_id", "certificate-1");
     formData.set("reason", "Refund confirmed");
 
-    await revokeCertificate(formData);
+    await expect(revokeCertificate(formData)).rejects.toThrow("redirect:/ko/admin/certificates?notice=certificate-revoked");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("ko");
     expect(rpc).toHaveBeenCalledWith("revoke_certificate_with_audit", {
@@ -259,7 +359,7 @@ describe("admin actions", () => {
     formData.set("macos_file", new File(["mac"], "GitBook AI.dmg"));
     formData.set("windows_file", new File(["win"], "GitBook AI.exe"));
 
-    await createSoftwareRelease(formData);
+    await expect(createSoftwareRelease(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-created");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
     expect(releaseInsert).toHaveBeenCalledWith({
@@ -293,12 +393,97 @@ describe("admin actions", () => {
     formData.set("release_id", "release-1");
     formData.set("is_published", "false");
 
-    await setSoftwareReleasePublished(formData);
+    await expect(setSoftwareReleasePublished(formData)).rejects.toThrow("redirect:/ja/admin/releases?notice=release-updated");
 
     expect(update).toHaveBeenCalledWith({ is_published: false });
     expect(eq).toHaveBeenCalledWith("id", "release-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/versions");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/releases");
+  });
+
+  it("audits trial code creation and redirects back to licenses", async () => {
+    vi.stubEnv("LICENSE_CODE_ENCRYPTION_KEY", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+    vi.stubEnv("LICENSE_HASH_SALT", "test-license-salt");
+    const trialSingle = vi.fn(async () => ({
+      data: {
+        code_mask: "ABCD-****-****-WXYZ",
+        id: "trial-1",
+        label: "May support trial",
+        trial_days: 3,
+      },
+      error: null,
+    }));
+    const trialSelect = vi.fn(() => ({ single: trialSingle }));
+    const trialInsert = vi.fn(() => ({ select: trialSelect }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") {
+        return { insert: trialInsert };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("label", "May support trial");
+    formData.set("trial_days", "3");
+
+    await expect(createTrialCode(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=trial-code-created");
+
+    expect(trialInsert).toHaveBeenCalledWith(expect.objectContaining({
+      duration_kind: "trial_3_day",
+      label: "May support trial",
+      max_redemptions: 1,
+      trial_days: 3,
+    }));
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "create_trial_code",
+      admin_user_id: "admin-1",
+      target_type: "trial_code",
+    }));
+    vi.unstubAllEnvs();
+  });
+
+  it("audits trial code edits and redirects with a success notice", async () => {
+    const trialSingle = vi.fn(async () => ({ data: { label: "Old", trial_days: 3 }, error: null }));
+    const trialSelectEq = vi.fn(() => ({ single: trialSingle }));
+    const trialSelect = vi.fn(() => ({ eq: trialSelectEq }));
+    const updateEq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq: updateEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") {
+        return { select: trialSelect, update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("trial_code_id", "trial-1");
+    formData.set("label", "New");
+    formData.set("trial_days", "7");
+
+    await expect(updateTrialCode(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=trial-code-updated");
+
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "update_trial_code",
+      admin_user_id: "admin-1",
+      target_id: "trial-1",
+      target_type: "trial_code",
+    }));
   });
 });

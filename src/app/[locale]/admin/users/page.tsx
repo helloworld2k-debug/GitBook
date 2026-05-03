@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
@@ -10,6 +11,7 @@ import { unbindTrialMachine, updateUserAccountStatus, updateUserAdminRole } from
 
 type AdminUsersPageProps = {
   params: Promise<{ locale: string }>;
+  searchParams?: Promise<{ error?: string; notice?: string }>;
 };
 
 function shortHash(value: string | null) {
@@ -30,8 +32,9 @@ function formatDate(value: string | null, locale: string) {
   }).format(new Date(value));
 }
 
-export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
+export default async function AdminUsersPage({ params, searchParams }: AdminUsersPageProps) {
   const { locale } = await params;
+  const feedback = await searchParams;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -97,6 +100,7 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
             eyebrow={t("eyebrow")}
             title={t("title")}
           />
+          <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
           <AdminCard>
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
@@ -128,15 +132,16 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
                           {canManageRoles ? (
                             <form action={updateUserAdminRole} className="flex gap-2">
                               <input name="locale" type="hidden" value={locale} />
+                              <input name="return_to" type="hidden" value="/admin/users" />
                               <input name="user_id" type="hidden" value={profile.id} />
                               <select aria-label={t("role")} className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="admin_role" defaultValue={profile.admin_role ?? (profile.is_admin ? "owner" : "user")}>
                                 <option value="user">{t("roles.user")}</option>
                                 <option value="operator">{t("roles.operator")}</option>
                                 <option value="owner">{t("roles.owner")}</option>
                               </select>
-                              <button aria-label={t("saveRole")} className="rounded-md border border-slate-300 px-3 text-sm font-medium" type="submit">
+                              <AdminSubmitButton aria-label={t("saveRole")} className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
                                 {t("save")}
-                              </button>
+                              </AdminSubmitButton>
                             </form>
                           ) : (
                             <span className="text-slate-700">{t(`roles.${profile.admin_role ?? (profile.is_admin ? "owner" : "user")}`)}</span>
@@ -145,14 +150,15 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
                         <td className="px-5 py-4 align-top">
                           <form action={updateUserAccountStatus} className="flex gap-2">
                             <input name="locale" type="hidden" value={locale} />
+                            <input name="return_to" type="hidden" value="/admin/users" />
                             <input name="user_id" type="hidden" value={profile.id} />
                             <select className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="account_status" defaultValue={profile.account_status ?? "active"}>
                               <option value="active">{t("statuses.active")}</option>
                               <option value="disabled">{t("statuses.disabled")}</option>
                             </select>
-                            <button className="rounded-md border border-slate-300 px-3 text-sm font-medium" type="submit">
+                            <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
                               {t("save")}
-                            </button>
+                            </AdminSubmitButton>
                           </form>
                         </td>
                         <td className="min-w-80 px-5 py-4 align-top">
@@ -177,10 +183,11 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
                                   {trial.machine_code_hash ? (
                                     <form action={unbindTrialMachine} className="mt-2">
                                       <input name="locale" type="hidden" value={locale} />
+                                      <input name="return_to" type="hidden" value="/admin/users" />
                                       <input name="trial_redemption_id" type="hidden" value={trial.id} />
-                                      <button className="text-sm font-semibold text-red-700" type="submit">
+                                      <AdminSubmitButton className="text-sm font-semibold text-red-700" pendingLabel={adminT("common.processing")}>
                                         {t("unbind")}
-                                      </button>
+                                      </AdminSubmitButton>
                                     </form>
                                   ) : null}
                                 </div>

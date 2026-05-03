@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirectWithAdminFeedback } from "@/lib/admin/feedback";
 import { supportedLocales, type Locale } from "@/config/site";
 import { requireAdmin, requireOwner } from "@/lib/auth/guards";
 import { generateCertificatesForDonation } from "@/lib/certificates/service";
@@ -191,7 +192,13 @@ export async function addManualDonation(formData: FormData) {
     .single();
 
   if (profileError || !profile) {
-    throw new Error("User not found");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/donations",
+      formData,
+      key: "manual-donation-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   const { data: donationId, error: donationError } = await supabase.rpc("create_manual_paid_donation_with_audit", {
@@ -204,7 +211,13 @@ export async function addManualDonation(formData: FormData) {
   });
 
   if (donationError || !donationId) {
-    throw new Error("Unable to create manual donation");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/donations",
+      formData,
+      key: "manual-donation-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   await generateCertificatesForDonation(donationId);
@@ -219,6 +232,13 @@ export async function addManualDonation(formData: FormData) {
   revalidatePath(`/${locale}/admin/certificates`);
   revalidatePath(`/${locale}/admin/users/${profile.id}`);
   revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/donations",
+    formData,
+    key: "manual-donation-added",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function createNotification(formData: FormData) {
@@ -258,11 +278,24 @@ export async function createNotification(formData: FormData) {
   });
 
   if (error) {
-    throw new Error("Unable to create notification");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/notifications",
+      formData,
+      key: "operation-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   revalidatePath(`/${locale}/admin/notifications`);
   revalidatePath(`/${locale}/notifications`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/notifications",
+    formData,
+    key: "notification-created",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function publishNotification(formData: FormData) {
@@ -275,11 +308,24 @@ export async function publishNotification(formData: FormData) {
     .eq("id", notificationId);
 
   if (error) {
-    throw new Error("Unable to publish notification");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/notifications",
+      formData,
+      key: "operation-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   revalidatePath(`/${locale}/admin/notifications`);
   revalidatePath(`/${locale}/notifications`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/notifications",
+    formData,
+    key: "notification-published",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function unpublishNotification(formData: FormData) {
@@ -292,16 +338,29 @@ export async function unpublishNotification(formData: FormData) {
     .eq("id", notificationId);
 
   if (error) {
-    throw new Error("Unable to unpublish notification");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/notifications",
+      formData,
+      key: "operation-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   revalidatePath(`/${locale}/admin/notifications`);
   revalidatePath(`/${locale}/notifications`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/notifications",
+    formData,
+    key: "notification-unpublished",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function updateSupportFeedbackStatus(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  await requireAdmin(locale);
+  const admin = await requireAdmin(locale);
   const feedbackId = getRequiredString(formData, "feedback_id", "Feedback is required");
   const status = getRequiredString(formData, "status", "Status is required");
 
@@ -309,7 +368,13 @@ export async function updateSupportFeedbackStatus(formData: FormData) {
     throw new Error("Invalid feedback status");
   }
 
-  const { error } = await createSupabaseAdminClient()
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("support_feedback")
+    .select("status")
+    .eq("id", feedbackId)
+    .single();
+  const { error } = await supabase
     .from("support_feedback")
     .update({
       closed_at: status === "closed" ? new Date().toISOString() : null,
@@ -319,12 +384,36 @@ export async function updateSupportFeedbackStatus(formData: FormData) {
     .eq("id", feedbackId);
 
   if (error) {
-    throw new Error("Unable to update feedback");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/support-feedback",
+      formData,
+      key: "feedback-update-failed",
+      locale,
+      tone: "error",
+    });
   }
+
+  await insertAdminAuditLog({
+    action: "update_support_feedback_status",
+    adminUserId: admin.id,
+    after: { status },
+    before: before ?? null,
+    reason: `Updated support feedback status to ${status}`,
+    targetId: feedbackId,
+    targetType: "support_feedback",
+  });
 
   revalidatePath(`/${locale}/admin/support-feedback`);
   revalidatePath(`/${locale}/admin/support-feedback/${feedbackId}`);
   revalidatePath(`/${locale}/support/feedback/${feedbackId}`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/support-feedback",
+    formData,
+    key: "feedback-updated",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function replySupportFeedbackAsAdmin(formData: FormData) {
@@ -341,7 +430,13 @@ export async function replySupportFeedbackAsAdmin(formData: FormData) {
   });
 
   if (error) {
-    throw new Error("Unable to reply to feedback");
+    redirectWithAdminFeedback({
+      fallbackPath: `/admin/support-feedback/${feedbackId}`,
+      formData,
+      key: "feedback-reply-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   const now = new Date().toISOString();
@@ -351,7 +446,13 @@ export async function replySupportFeedbackAsAdmin(formData: FormData) {
     .eq("id", feedbackId);
 
   if (updateError) {
-    throw new Error("Unable to update feedback");
+    redirectWithAdminFeedback({
+      fallbackPath: `/admin/support-feedback/${feedbackId}`,
+      formData,
+      key: "feedback-reply-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   await insertAdminAuditLog({
@@ -364,6 +465,15 @@ export async function replySupportFeedbackAsAdmin(formData: FormData) {
 
   revalidatePath(`/${locale}/admin/support-feedback`);
   revalidatePath(`/${locale}/admin/support-feedback/${feedbackId}`);
+  revalidatePath(`/${locale}/support/feedback/${feedbackId}`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: `/admin/support-feedback/${feedbackId}`,
+    formData,
+    key: "feedback-replied",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function revokeCertificate(formData: FormData) {
@@ -380,11 +490,24 @@ export async function revokeCertificate(formData: FormData) {
   });
 
   if (revokeError) {
-    throw new Error("Unable to revoke certificate");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/certificates",
+      formData,
+      key: "operation-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   revalidatePath(`/${locale}/admin/certificates`);
   revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/certificates",
+    formData,
+    key: "certificate-revoked",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function createSoftwareRelease(formData: FormData) {
@@ -416,7 +539,13 @@ export async function createSoftwareRelease(formData: FormData) {
     .single();
 
   if (releaseError || !release) {
-    throw new Error("Unable to create software release");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/releases",
+      formData,
+      key: "operation-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   const assets = [];
@@ -445,12 +574,25 @@ export async function createSoftwareRelease(formData: FormData) {
   const { error: assetError } = await supabase.from("software_release_assets").insert(assets);
 
   if (assetError) {
-    throw new Error("Unable to save release assets");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/releases",
+      formData,
+      key: "operation-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   revalidatePath(`/${locale}`);
   revalidatePath(`/${locale}/versions`);
   revalidatePath(`/${locale}/admin/releases`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/releases",
+    formData,
+    key: "release-created",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function setSoftwareReleasePublished(formData: FormData) {
@@ -462,12 +604,25 @@ export async function setSoftwareReleasePublished(formData: FormData) {
   const { error } = await supabase.from("software_releases").update({ is_published: isPublished }).eq("id", releaseId);
 
   if (error) {
-    throw new Error("Unable to update release status");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/releases",
+      formData,
+      key: "operation-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   revalidatePath(`/${locale}`);
   revalidatePath(`/${locale}/versions`);
   revalidatePath(`/${locale}/admin/releases`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/releases",
+    formData,
+    key: "release-updated",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function createTrialCode(formData: FormData) {
@@ -483,7 +638,7 @@ export async function createTrialCode(formData: FormData) {
   const code = generateLicenseCode();
   const supabase = createSupabaseAdminClient();
   const encryptedCode = encryptLicenseCode(code, getLicenseCodeEncryptionKey());
-  const { error } = await supabase.from("trial_codes").insert({
+  const { data: trialCode, error } = await supabase.from("trial_codes").insert({
     code_hash: await hashDesktopSecret(code, "trial_code"),
     code_mask: maskLicenseCode(code),
     created_by: admin.id,
@@ -497,13 +652,40 @@ export async function createTrialCode(formData: FormData) {
     label,
     max_redemptions: 1,
     trial_days: trialDays,
-  });
+  }).select("id,code_mask,label,trial_days").single();
 
-  if (error) {
-    throw new Error("Unable to create trial code");
+  if (error || !trialCode) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/licenses",
+      formData,
+      key: "trial-code-create-failed",
+      locale,
+      tone: "error",
+    });
   }
 
+  await insertAdminAuditLog({
+    action: "create_trial_code",
+    adminUserId: admin.id,
+    after: {
+      code_mask: trialCode.code_mask,
+      label: trialCode.label,
+      trial_days: trialCode.trial_days,
+    },
+    reason: "Created trial code",
+    targetId: trialCode.id,
+    targetType: "trial_code",
+  });
+
   revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/licenses",
+    formData,
+    key: "trial-code-created",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function generateLicenseCodeBatch(formData: FormData) {
@@ -559,24 +741,54 @@ export async function bulkAdjustLicenseDuration(formData: FormData) {
 
 export async function setTrialCodeActive(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  await requireAdmin(locale);
+  const admin = await requireAdmin(locale);
   const trialCodeId = getRequiredString(formData, "trial_code_id", "Trial code is required");
   const isActive = String(formData.get("is_active") ?? "false") === "true";
-  const { error } = await createSupabaseAdminClient()
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("trial_codes")
+    .select("is_active")
+    .eq("id", trialCodeId)
+    .single();
+  const { error } = await supabase
     .from("trial_codes")
     .update({ is_active: isActive, updated_at: new Date().toISOString() })
     .eq("id", trialCodeId);
 
   if (error) {
-    throw new Error("Unable to update trial code");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/licenses",
+      formData,
+      key: "trial-code-status-update-failed",
+      locale,
+      tone: "error",
+    });
   }
 
+  await insertAdminAuditLog({
+    action: "set_trial_code_active",
+    adminUserId: admin.id,
+    after: { is_active: isActive },
+    before: before ?? null,
+    reason: isActive ? "Activated trial code" : "Deactivated trial code",
+    targetId: trialCodeId,
+    targetType: "trial_code",
+  });
+
   revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/licenses",
+    formData,
+    key: "trial-code-status-updated",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function updateTrialCode(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  await requireAdmin(locale);
+  const admin = await requireAdmin(locale);
   const trialCodeId = getRequiredString(formData, "trial_code_id", "Trial code is required");
   const label = getRequiredString(formData, "label", "Label is required");
 
@@ -585,7 +797,13 @@ export async function updateTrialCode(formData: FormData) {
   }
 
   const trialDays = getTrialDays(formData);
-  const { error } = await createSupabaseAdminClient()
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("trial_codes")
+    .select("label,trial_days")
+    .eq("id", trialCodeId)
+    .single();
+  const { error } = await supabase
     .from("trial_codes")
     .update({
       label,
@@ -595,21 +813,51 @@ export async function updateTrialCode(formData: FormData) {
     .eq("id", trialCodeId);
 
   if (error) {
-    throw new Error("Unable to update trial code");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/licenses",
+      formData,
+      key: "trial-code-update-failed",
+      locale,
+      tone: "error",
+    });
   }
 
+  await insertAdminAuditLog({
+    action: "update_trial_code",
+    adminUserId: admin.id,
+    after: { label, trial_days: trialDays },
+    before: before ?? null,
+    reason: "Updated trial code",
+    targetId: trialCodeId,
+    targetType: "trial_code",
+  });
+
   revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/licenses",
+    formData,
+    key: "trial-code-updated",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function updateAdminUserProfile(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  await requireAdmin(locale);
+  const admin = await requireAdmin(locale);
   const userId = getRequiredString(formData, "user_id", "User is required");
   const displayName = String(formData.get("display_name") ?? "").trim() || null;
   const publicDisplayName = String(formData.get("public_display_name") ?? "").trim() || null;
   const publicSupporterEnabled = formData.get("public_supporter_enabled") === "on";
 
-  const { error } = await createSupabaseAdminClient()
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("profiles")
+    .select("display_name,public_display_name,public_supporter_enabled")
+    .eq("id", userId)
+    .single();
+  const { error } = await supabase
     .from("profiles")
     .update({
       display_name: displayName,
@@ -620,16 +868,44 @@ export async function updateAdminUserProfile(formData: FormData) {
     .eq("id", userId);
 
   if (error) {
-    throw new Error("Unable to update user profile");
+    redirectWithAdminFeedback({
+      fallbackPath: `/admin/users/${userId}`,
+      formData,
+      key: "profile-update-failed",
+      locale,
+      tone: "error",
+    });
   }
+
+  await insertAdminAuditLog({
+    action: "update_user_profile",
+    adminUserId: admin.id,
+    after: {
+      display_name: displayName,
+      public_display_name: publicDisplayName,
+      public_supporter_enabled: publicSupporterEnabled,
+    },
+    before: before ?? null,
+    reason: "Updated user profile from admin console",
+    targetId: userId,
+    targetType: "profile",
+  });
 
   revalidatePath(`/${locale}/admin/users`);
   revalidatePath(`/${locale}/admin/users/${userId}`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: `/admin/users/${userId}`,
+    formData,
+    key: "account-profile-updated",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function revokeDesktopSession(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  await requireAdmin(locale);
+  const admin = await requireAdmin(locale);
   const desktopSessionId = getRequiredString(formData, "desktop_session_id", "Desktop session is required");
   const { error } = await createSupabaseAdminClient().rpc("revoke_desktop_session_with_leases", {
     input_desktop_session_id: desktopSessionId,
@@ -637,15 +913,37 @@ export async function revokeDesktopSession(formData: FormData) {
   });
 
   if (error) {
-    throw new Error("Unable to revoke desktop session");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/licenses",
+      formData,
+      key: "desktop-session-revoke-failed",
+      locale,
+      tone: "error",
+    });
   }
 
+  await insertAdminAuditLog({
+    action: "revoke_desktop_session",
+    adminUserId: admin.id,
+    reason: "Revoked desktop session from admin console",
+    targetId: desktopSessionId,
+    targetType: "desktop_session",
+  });
+
   revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/licenses",
+    formData,
+    key: "desktop-session-revoked",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function revokeCloudSyncLease(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  await requireAdmin(locale);
+  const admin = await requireAdmin(locale);
   const cloudSyncLeaseId = getRequiredString(formData, "cloud_sync_lease_id", "Cloud sync lease is required");
   const now = new Date().toISOString();
   const { error } = await createSupabaseAdminClient()
@@ -654,15 +952,38 @@ export async function revokeCloudSyncLease(formData: FormData) {
     .eq("id", cloudSyncLeaseId);
 
   if (error) {
-    throw new Error("Unable to revoke cloud sync lease");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/licenses",
+      formData,
+      key: "cloud-sync-lease-revoke-failed",
+      locale,
+      tone: "error",
+    });
   }
 
+  await insertAdminAuditLog({
+    action: "revoke_cloud_sync_lease",
+    adminUserId: admin.id,
+    after: { revoked_at: now },
+    reason: "Revoked cloud sync lease from admin console",
+    targetId: cloudSyncLeaseId,
+    targetType: "cloud_sync_lease",
+  });
+
   revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/licenses",
+    formData,
+    key: "cloud-sync-lease-revoked",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function updateUserAccountStatus(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  await requireAdmin(locale);
+  const admin = await requireAdmin(locale);
   const userId = getRequiredString(formData, "user_id", "User is required");
   const accountStatus = getRequiredString(formData, "account_status", "Account status is required");
 
@@ -670,22 +991,52 @@ export async function updateUserAccountStatus(formData: FormData) {
     throw new Error("Invalid account status");
   }
 
-  const { error } = await createSupabaseAdminClient()
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("profiles")
+    .select("account_status")
+    .eq("id", userId)
+    .single();
+  const { error } = await supabase
     .from("profiles")
     .update({ account_status: accountStatus, updated_at: new Date().toISOString() })
     .eq("id", userId);
 
   if (error) {
-    throw new Error("Unable to update account status");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "status-update-failed",
+      locale,
+      tone: "error",
+    });
   }
+
+  await insertAdminAuditLog({
+    action: "update_user_account_status",
+    adminUserId: admin.id,
+    after: { account_status: accountStatus },
+    before: before ?? null,
+    reason: `Updated account status to ${accountStatus}`,
+    targetId: userId,
+    targetType: "profile",
+  });
 
   revalidatePath(`/${locale}/admin/users`);
   revalidatePath(`/${locale}/admin/users/${userId}`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/users",
+    formData,
+    key: "status-updated",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function updateUserAdminRole(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  await requireOwner(locale);
+  const admin = await requireOwner(locale);
   const userId = getRequiredString(formData, "user_id", "User is required");
   const adminRole = getRequiredString(formData, "admin_role", "Admin role is required");
 
@@ -693,7 +1044,13 @@ export async function updateUserAdminRole(formData: FormData) {
     throw new Error("Invalid admin role");
   }
 
-  const { error } = await createSupabaseAdminClient()
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("profiles")
+    .select("admin_role,is_admin")
+    .eq("id", userId)
+    .single();
+  const { error } = await supabase
     .from("profiles")
     .update({
       admin_role: adminRole,
@@ -703,16 +1060,43 @@ export async function updateUserAdminRole(formData: FormData) {
     .eq("id", userId);
 
   if (error) {
-    throw new Error("Unable to update admin role");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "role-update-failed",
+      locale,
+      tone: "error",
+    });
   }
+
+  await insertAdminAuditLog({
+    action: "update_user_admin_role",
+    adminUserId: admin.id,
+    after: {
+      admin_role: adminRole,
+      is_admin: adminRole === "owner",
+    },
+    before: before ?? null,
+    reason: `Updated user admin role to ${adminRole}`,
+    targetId: userId,
+    targetType: "profile",
+  });
 
   revalidatePath(`/${locale}/admin/users`);
   revalidatePath(`/${locale}/admin/users/${userId}`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/users",
+    formData,
+    key: "role-updated",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function unbindTrialMachine(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  await requireAdmin(locale);
+  const admin = await requireAdmin(locale);
   const redemptionId = getRequiredString(formData, "trial_redemption_id", "Trial redemption is required");
   const supabase = createSupabaseAdminClient();
   const { data: redemption, error: readError } = await supabase
@@ -722,7 +1106,13 @@ export async function unbindTrialMachine(formData: FormData) {
     .single();
 
   if (readError || !redemption) {
-    throw new Error("Trial redemption not found");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "trial-machine-unbind-failed",
+      locale,
+      tone: "error",
+    });
   }
 
   if (redemption.machine_code_hash) {
@@ -733,7 +1123,13 @@ export async function unbindTrialMachine(formData: FormData) {
       .eq("feature_code", CLOUD_SYNC_FEATURE);
 
     if (claimError) {
-      throw new Error("Unable to remove machine trial claim");
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/users",
+        formData,
+        key: "trial-machine-unbind-failed",
+        locale,
+        tone: "error",
+      });
     }
   }
 
@@ -748,9 +1144,34 @@ export async function unbindTrialMachine(formData: FormData) {
     .eq("id", redemptionId);
 
   if (error) {
-    throw new Error("Unable to unbind trial machine");
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "trial-machine-unbind-failed",
+      locale,
+      tone: "error",
+    });
   }
+
+  await insertAdminAuditLog({
+    action: "unbind_trial_machine",
+    adminUserId: admin.id,
+    before: {
+      machine_code_hash: redemption.machine_code_hash,
+    },
+    reason: "Unbound trial machine from admin console",
+    targetId: redemptionId,
+    targetType: "trial_code_redemption",
+  });
 
   revalidatePath(`/${locale}/admin/users`);
   revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/users",
+    formData,
+    key: "trial-machine-unbound",
+    locale,
+    tone: "notice",
+  });
 }

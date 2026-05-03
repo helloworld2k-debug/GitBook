@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -11,6 +12,7 @@ type AdminCertificatesPageProps = {
   params: Promise<{
     locale: string;
   }>;
+  searchParams?: Promise<{ error?: string; notice?: string }>;
 };
 
 type CertificateType = "donation" | "honor";
@@ -34,8 +36,9 @@ function getCertificateStatusTone(status: CertificateStatus) {
   return "warning";
 }
 
-export default async function AdminCertificatesPage({ params }: AdminCertificatesPageProps) {
+export default async function AdminCertificatesPage({ params, searchParams }: AdminCertificatesPageProps) {
   const { locale } = await params;
+  const feedback = await searchParams;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -66,6 +69,7 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
             eyebrow={t("certificates.eyebrow")}
             title={t("certificates.title")}
           />
+          <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
           <AdminCard>
             {certificates && certificates.length > 0 ? (
               <div className="overflow-x-auto">
@@ -100,6 +104,7 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
                           {certificate.status === "active" ? (
                             <form action={revokeCertificate} className="flex min-w-72 gap-2">
                               <input name="locale" type="hidden" value={locale} />
+                              <input name="return_to" type="hidden" value="/admin/certificates" />
                               <input name="certificate_id" type="hidden" value={certificate.id} />
                               <label className="sr-only" htmlFor={`revoke-reason-${certificate.id}`}>
                                 {t("certificates.revokeReason")}
@@ -112,15 +117,15 @@ export default async function AdminCertificatesPage({ params }: AdminCertificate
                                 placeholder={t("certificates.revokeReason")}
                                 required
                               />
-                              <button
+                              <AdminSubmitButton
                                 aria-label={t("certificates.revokeAriaLabel", {
                                   certificateNumber: certificate.certificate_number,
                                 })}
                                 className="min-h-10 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                                type="submit"
+                                pendingLabel={t("common.processing")}
                               >
                                 {t("certificates.revoke")}
-                              </button>
+                              </AdminSubmitButton>
                             </form>
                           ) : null}
                         </td>

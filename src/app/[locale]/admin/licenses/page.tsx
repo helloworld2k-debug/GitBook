@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -17,6 +18,7 @@ type AdminLicensesPageProps = {
   params: Promise<{
     locale: string;
   }>;
+  searchParams?: Promise<{ error?: string; notice?: string }>;
 };
 
 function formatDateTime(value: string, locale: string) {
@@ -42,8 +44,9 @@ function shortHash(value: string | null | undefined) {
   return value ? `${value.slice(0, 10)}...${value.slice(-6)}` : "-";
 }
 
-export default async function AdminLicensesPage({ params }: AdminLicensesPageProps) {
+export default async function AdminLicensesPage({ params, searchParams }: AdminLicensesPageProps) {
   const { locale } = await params;
+  const feedback = await searchParams;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -121,6 +124,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             eyebrow={t("licenses.eyebrow")}
             title={t("licenses.title")}
           />
+          <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
 
           <AdminCard className="p-5">
             <div>
@@ -129,6 +133,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
             </div>
             <form action={createTrialCode} className="mt-4 grid gap-4">
               <input name="locale" type="hidden" value={locale} />
+              <input name="return_to" type="hidden" value="/admin/licenses" />
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("licenses.label")}
@@ -152,12 +157,12 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                   />
                 </label>
               </div>
-              <button
+              <AdminSubmitButton
                 className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 sm:w-fit"
-                type="submit"
+                pendingLabel={t("common.processing")}
               >
                 {t("licenses.createTrial")}
-              </button>
+              </AdminSubmitButton>
             </form>
           </AdminCard>
 
@@ -185,6 +190,7 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                         <td className="min-w-72 px-5 py-4 align-top">
                           <form action={updateTrialCode} className="grid gap-3">
                             <input name="locale" type="hidden" value={locale} />
+                            <input name="return_to" type="hidden" value="/admin/licenses" />
                             <input name="trial_code_id" type="hidden" value={trialCode.id} />
                             <label className="grid gap-1 text-xs font-medium text-slate-600">
                               {t("licenses.label")}
@@ -208,12 +214,12 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                                 type="number"
                               />
                             </label>
-                            <button
+                            <AdminSubmitButton
                               className="inline-flex min-h-10 w-fit items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                              type="submit"
+                              pendingLabel={t("common.saving")}
                             >
                               {t("licenses.save")}
-                            </button>
+                            </AdminSubmitButton>
                           </form>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
@@ -236,14 +242,15 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                         <td className="px-5 py-4">
                           <form action={setTrialCodeActive}>
                             <input name="locale" type="hidden" value={locale} />
+                            <input name="return_to" type="hidden" value="/admin/licenses" />
                             <input name="trial_code_id" type="hidden" value={trialCode.id} />
                             <input name="is_active" type="hidden" value={trialCode.is_active ? "false" : "true"} />
-                            <button
+                            <AdminSubmitButton
                               className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                              type="submit"
+                              pendingLabel={t("common.processing")}
                             >
                               {trialCode.is_active ? t("licenses.deactivate") : t("licenses.activate")}
-                            </button>
+                            </AdminSubmitButton>
                           </form>
                         </td>
                       </tr>
@@ -390,13 +397,14 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                           {session.revoked_at ? null : (
                             <form action={revokeDesktopSession}>
                               <input name="locale" type="hidden" value={locale} />
+                              <input name="return_to" type="hidden" value="/admin/licenses" />
                               <input name="desktop_session_id" type="hidden" value={session.id} />
-                              <button
+                              <AdminSubmitButton
                                 className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                                type="submit"
+                                pendingLabel={t("common.processing")}
                               >
                                 {t("licenses.revoke")}
-                              </button>
+                              </AdminSubmitButton>
                             </form>
                           )}
                         </td>
@@ -451,13 +459,14 @@ export default async function AdminLicensesPage({ params }: AdminLicensesPagePro
                           {lease.revoked_at ? null : (
                             <form action={revokeCloudSyncLease}>
                               <input name="locale" type="hidden" value={locale} />
+                              <input name="return_to" type="hidden" value="/admin/licenses" />
                               <input name="cloud_sync_lease_id" type="hidden" value={lease.id} />
-                              <button
+                              <AdminSubmitButton
                                 className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                                type="submit"
+                                pendingLabel={t("common.processing")}
                               >
                                 {t("licenses.revoke")}
-                              </button>
+                              </AdminSubmitButton>
                             </form>
                           )}
                         </td>

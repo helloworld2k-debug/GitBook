@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -10,10 +11,12 @@ import { createNotification, publishNotification, unpublishNotification } from "
 
 type AdminNotificationsPageProps = {
   params: Promise<{ locale: string }>;
+  searchParams?: Promise<{ error?: string; notice?: string }>;
 };
 
-export default async function AdminNotificationsPage({ params }: AdminNotificationsPageProps) {
+export default async function AdminNotificationsPage({ params, searchParams }: AdminNotificationsPageProps) {
   const { locale } = await params;
+  const feedback = await searchParams;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -42,11 +45,13 @@ export default async function AdminNotificationsPage({ params }: AdminNotificati
           eyebrow={t("notifications.eyebrow")}
           title={t("notifications.title")}
         />
+        <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
 
         <AdminCard className="p-5">
           <h2 className="text-base font-semibold text-slate-950">{t("notifications.createTitle")}</h2>
           <form action={createNotification} className="mt-4 grid gap-4">
             <input name="locale" type="hidden" value={locale} />
+            <input name="return_to" type="hidden" value="/admin/notifications" />
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("notifications.titleLabel")}
@@ -91,9 +96,9 @@ export default async function AdminNotificationsPage({ params }: AdminNotificati
                 {t("notifications.publish")}
               </label>
             </div>
-            <button className="min-h-11 w-fit rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" type="submit">
+            <AdminSubmitButton className="min-h-11 w-fit rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" pendingLabel={t("common.processing")}>
               {t("notifications.create")}
-            </button>
+            </AdminSubmitButton>
           </form>
         </AdminCard>
 
@@ -129,10 +134,11 @@ export default async function AdminNotificationsPage({ params }: AdminNotificati
                       <td className="px-5 py-4">
                         <form action={notification.published_at ? unpublishNotification : publishNotification}>
                           <input name="locale" type="hidden" value={locale} />
+                          <input name="return_to" type="hidden" value="/admin/notifications" />
                           <input name="notification_id" type="hidden" value={notification.id} />
-                          <button className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" type="submit">
+                          <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={t("common.processing")}>
                             {notification.published_at ? t("notifications.unpublish") : t("notifications.publish")}
-                          </button>
+                          </AdminSubmitButton>
                         </form>
                       </td>
                     </tr>

@@ -102,6 +102,10 @@ function createAdminListQuery(data: unknown, error: Error | null = null) {
 const testMessages = {
   en: {
     admin: {
+      common: {
+        processing: "Processing...",
+        saving: "Saving...",
+      },
       overview: {
         eyebrow: "Admin tools",
         title: "Admin",
@@ -310,6 +314,10 @@ const testMessages = {
   },
   "zh-Hant": {
     admin: {
+      common: {
+        processing: "處理中...",
+        saving: "儲存中...",
+      },
       overview: {
         eyebrow: "管理工具",
         title: "管理後台",
@@ -415,6 +423,10 @@ const testMessages = {
   },
   ja: {
     admin: {
+      common: {
+        processing: "Processing...",
+        saving: "Saving...",
+      },
       overview: {
         eyebrow: "管理ツール",
         title: "管理画面",
@@ -520,6 +532,10 @@ const testMessages = {
   },
   ko: {
     admin: {
+      common: {
+        processing: "Processing...",
+        saving: "Saving...",
+      },
       overview: {
         eyebrow: "관리 도구",
         title: "관리",
