@@ -10,6 +10,7 @@ describe("site config", () => {
   it("brands the public download site as GitBook AI", () => {
     expect(siteConfig.name).toBe("GitBook AI");
     expect(siteConfig.description).toContain("AI coding book");
+    expect(siteConfig.description).toContain("voluntary contributions");
   });
 
   it("defines one-time USD donation tiers", () => {

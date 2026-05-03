@@ -6,7 +6,7 @@ export const defaultLocale: Locale = "en";
 
 export const siteConfig = {
   name: "GitBook AI",
-  description: "AI coding book software downloads supported by voluntary donations.",
+  description: "AI coding book software downloads supported by voluntary contributions.",
   githubReleasesUrl: "https://github.com/threefriends/app/releases/latest",
   downloadLinks: {
     macos: "https://github.com/threefriends/app/releases/latest",

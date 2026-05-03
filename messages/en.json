@@ -1,7 +1,7 @@
 {
   "nav": {
     "download": "Download",
-    "donate": "Donate",
+    "donate": "Contributions",
     "dashboard": "Dashboard",
     "notifications": "Notifications",
     "support": "Support",
@@ -14,8 +14,8 @@
   "login": {
     "eyebrow": "Secure access",
     "title": "Sign in to your AI workspace",
-    "subtitle": "Use email and password, or a trusted OAuth provider, to continue to downloads, donations, certificates, and your dashboard.",
-    "privacyNote": "Your account keeps donation records, certificates, and dashboard settings tied to you.",
+    "subtitle": "Use email and password, or a trusted OAuth provider, to continue to downloads, support contributions, certificates, and your dashboard.",
+    "privacyNote": "Your account keeps contribution records, certificates, and dashboard settings tied to you.",
     "formTitle": "Email and password",
     "signInTab": "Sign in",
     "registerTab": "Register",
@@ -57,13 +57,13 @@
     "latestVersion": "Latest version {version} · {date}",
     "latestVersionPending": "Latest version is being prepared",
     "olderVersions": "Older versions",
-    "supportPrompt": "Downloads stay free. Donations keep the AI knowledge engine improving.",
+    "supportPrompt": "Downloads stay free. Voluntary support keeps the AI knowledge engine improving.",
     "featureOneTitle": "AI-ready reading flow",
     "featureOneText": "Navigate code concepts, notes, and book-like knowledge with a focused software interface.",
     "featureTwoTitle": "Built for developers",
     "featureTwoText": "Fast downloads, predictable releases, and a dashboard for certificates and supporter history.",
     "featureThreeTitle": "Global access",
-    "featureThreeText": "English-first with Traditional Chinese, Japanese, and Korean routes for international users.",
+    "featureThreeText": "English-first with Chinese, Japanese, and Korean routes for international users.",
     "mockTitle": "Knowledge engine",
     "mockStatus": "Online",
     "mockLineOne": "Indexing coding chapters",
@@ -89,9 +89,9 @@
     "checkoutDodo": "Pay with Dodo Payments",
     "checkoutStripe": "Pay with Stripe",
     "checkoutPayPal": "Pay with PayPal",
-    "oneTimeNote": "One-time donation. No automatic renewal.",
+    "oneTimeNote": "One-time voluntary contribution. No automatic renewal.",
     "paymentNote": "Dodo is the recommended checkout for cards and supported local payment methods.",
-    "payPalUnavailable": "PayPal is not enabled yet because PayPal donation records and certificates are still being integrated."
+    "payPalUnavailable": "PayPal is not enabled yet because PayPal contribution records and certificates are still being integrated."
   },
   "notifications": {
     "eyebrow": "Notification center",
@@ -140,7 +140,7 @@
   },
   "dashboard": {
     "title": "Personal center",
-    "donations": "Paid donations",
+    "donations": "Contributions",
     "certificates": "Active certificates",
     "accountTitle": "Account profile",
     "email": "Email",
@@ -156,7 +156,7 @@
     "passwordSaved": "Password updated.",
     "passwordMismatch": "Passwords do not match.",
     "passwordError": "Could not update password.",
-    "recentDonations": "Donation history",
+    "recentDonations": "Contribution history",
     "recentCertificates": "Certificates",
     "amount": "Amount",
     "status": "Status",
@@ -164,7 +164,7 @@
     "certificateNumber": "Certificate number",
     "type": "Type",
     "viewCertificate": "View certificate",
-    "noDonations": "No donation records yet.",
+    "noDonations": "No contribution records yet.",
     "noCertificates": "No active certificates yet.",
     "trial": {
       "title": "Trial code",
@@ -188,7 +188,7 @@
       "refunded": "Refunded"
     },
     "eyebrow": "AI account workspace",
-    "subtitle": "Manage cloud sync access, trial codes, donation history, certificates, and account security in one place.",
+    "subtitle": "Manage cloud sync access, trial codes, contribution history, certificates, and account security in one place.",
     "cloudSync": "Cloud sync",
     "cloudSyncActive": "Active",
     "cloudSyncInactive": "Not active",
@@ -207,7 +207,7 @@
     "overview": {
       "eyebrow": "Admin tools",
       "title": "Admin",
-      "donationsTitle": "Donations",
+      "donationsTitle": "Contributions",
       "donationsDescription": "Review payment provider records, statuses, and transaction IDs.",
       "certificatesTitle": "Certificates",
       "certificatesDescription": "Review issued certificate numbers, types, statuses, and issue dates.",
@@ -223,7 +223,7 @@
       "usersDescription": "Review user status, trial bindings, desktop devices, and operator roles.",
       "auditLogsTitle": "Audit logs",
       "auditLogsDescription": "Review admin corrections, revocations, and reasons.",
-      "description": "Manage donations, certificates, releases, licenses, users, and audit activity."
+      "description": "Manage contributions, certificates, releases, licenses, users, and audit activity."
     },
     "releases": {
       "eyebrow": "Admin",
@@ -244,20 +244,20 @@
     },
     "donations": {
       "eyebrow": "Admin",
-      "title": "Admin donations",
+      "title": "Admin contributions",
       "provider": "Provider",
       "status": "Status",
       "amount": "Amount",
       "paidAt": "Paid at (UTC)",
       "transactionId": "Transaction ID",
-      "manualEntryTitle": "Manual paid donation",
+      "manualEntryTitle": "Manual paid contribution",
       "manualEntryDescription": "Create one paid manual record for an existing user by email or user ID.",
       "userIdentifier": "Email or user ID",
       "amountCents": "Amount (cents)",
       "reference": "Reference",
       "reason": "Reason",
-      "submitManualDonation": "Add manual donation",
-      "empty": "No donations found.",
+      "submitManualDonation": "Add manual contribution",
+      "empty": "No contributions found.",
       "providers": {
         "stripe": "Stripe",
         "paypal": "PayPal",
@@ -271,7 +271,7 @@
         "failed": "Failed",
         "refunded": "Refunded"
       },
-      "description": "Review payment records and add verified manual donations."
+      "description": "Review payment records and add verified manual contributions."
     },
     "notifications": {
       "eyebrow": "Admin",
@@ -335,7 +335,7 @@
       "notIssued": "Not issued",
       "empty": "No certificates found.",
       "types": {
-        "donation": "Donation Certificate",
+        "donation": "Contribution Certificate",
         "honor": "Honor Certificate"
       },
       "statuses": {
@@ -401,7 +401,7 @@
       "user": "User",
       "feature": "Feature",
       "validUntil": "Valid until",
-      "sourceDonation": "Source donation",
+      "sourceDonation": "Source contribution",
       "none": "None",
       "device": "Device",
       "platform": "Platform",
@@ -433,14 +433,14 @@
       "eyebrow": "Admin",
       "title": "User management",
       "detailTitle": "User operations",
-      "detailDescription": "Review and maintain one user's profile, donations, certificates, trials, devices, and entitlements.",
+      "detailDescription": "Review and maintain one user's profile, contributions, certificates, trials, devices, and entitlements.",
       "user": "User",
       "details": "Details",
       "role": "Role",
       "status": "Status",
       "trials": "Trials",
       "devices": "Devices",
-      "donations": "Donations",
+      "donations": "Contributions",
       "certificates": "Certificates",
       "entitlements": "Entitlements",
       "leases": "Leases",
@@ -458,10 +458,10 @@
       "machine": "Machine",
       "lastSeen": "Last seen",
       "unbind": "Unbind machine",
-      "addDonation": "Add manual donation",
+      "addDonation": "Add manual contribution",
       "emptyTrials": "No trials",
       "emptyDevices": "No desktop devices",
-      "emptyDonations": "No donations",
+      "emptyContributions": "No contributions",
       "emptyCertificates": "No certificates",
       "emptyEntitlements": "No entitlements",
       "emptyLeases": "No leases",
@@ -481,7 +481,7 @@
       "backToAdmin": "Back to admin",
       "certificates": "Certificates",
       "dashboard": "Overview",
-      "donations": "Donations",
+      "donations": "Contributions",
       "language": "Language",
       "licenses": "Licenses",
       "menu": "Menu",
@@ -496,7 +496,7 @@
     "brand": "GitBook AI",
     "title": "Certificate of Support",
     "description": "This certificate is presented with gratitude for meaningful support of independent software development.",
-    "amount": "Donation amount",
+    "amount": "Contribution amount",
     "presentedTo": "Presented to",
     "certificateNumber": "Certificate No.",
     "issued": "Issued",
@@ -513,7 +513,7 @@
       "dashboard": "Back to dashboard"
     },
     "types": {
-      "donation": "Donation Certificate",
+      "donation": "Contribution Certificate",
       "honor": "Honor Certificate"
     }
   },

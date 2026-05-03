@@ -1,7 +1,7 @@
 {
   "nav": {
     "download": "下載",
-    "donate": "贊助",
+    "donate": "支持",
     "dashboard": "儀表板",
     "notifications": "通知",
     "support": "支援",
@@ -14,8 +14,8 @@
   "login": {
     "eyebrow": "安全存取",
     "title": "登入你的 AI 工作區",
-    "subtitle": "使用電子郵件與密碼，或透過可信任的 OAuth 服務商繼續下載、捐贈、證書與儀表板流程。",
-    "privacyNote": "你的帳戶用於保存捐贈記錄、證書與儀表板設定。",
+    "subtitle": "使用電子郵件與密碼，或透過可信任的 OAuth 服務商繼續下載、自願支持、證書與儀表板流程。",
+    "privacyNote": "你的帳戶用於保存支持記錄、證書與儀表板設定。",
     "formTitle": "電子郵件與密碼",
     "signInTab": "登入",
     "registerTab": "註冊",
@@ -54,13 +54,13 @@
     "subtitle": "下載 AI 驅動的編程書籍伴侶，用於結構化程式知識、版本資訊與開發者學習流程。",
     "downloadMac": "下載 macOS 版",
     "downloadWindows": "下載 Windows 版",
-    "supportPrompt": "下載保持免費。捐贈將持續支持 AI 知識引擎改進。",
+    "supportPrompt": "下載保持免費。你的自願支持將持續幫助 AI 知識引擎改進。",
     "featureOneTitle": "AI 就緒閱讀流程",
     "featureOneText": "以專注的軟體介面瀏覽程式概念、筆記與書籍式知識。",
     "featureTwoTitle": "為開發者打造",
     "featureTwoText": "快速下載、可預期的版本發布，以及證書和支持記錄儀表板。",
     "featureThreeTitle": "全球可用",
-    "featureThreeText": "英文優先，並提供繁體中文、日文與韓文路由給國際使用者。",
+    "featureThreeText": "英文優先，並提供中文、日文與韓文路由給國際使用者。",
     "mockTitle": "知識引擎",
     "mockStatus": "在線",
     "mockLineOne": "索引編程章節",
@@ -81,9 +81,9 @@
     "checkoutDodo": "使用 Dodo Payments 支付",
     "checkoutStripe": "使用 Stripe 支付",
     "checkoutPayPal": "使用 PayPal 支付",
-    "oneTimeNote": "一次性捐贈。不會自動續費。",
+    "oneTimeNote": "一次性自願支持。不會自動續費。",
     "paymentNote": "建議使用 Dodo 結帳，支援銀行卡與可用的本地支付方式。",
-    "payPalUnavailable": "PayPal 尚未啟用，因為 PayPal 捐贈記錄與證書仍在整合中。"
+    "payPalUnavailable": "PayPal 尚未啟用，因為 PayPal 支持記錄與證書仍在整合中。"
   },
   "notifications": {
     "eyebrow": "通知中心",
@@ -132,9 +132,9 @@
   },
   "dashboard": {
     "title": "個人中心",
-    "donations": "已付款捐贈",
+    "donations": "支持記錄",
     "certificates": "有效證書",
-    "recentDonations": "捐贈記錄",
+    "recentDonations": "支持記錄",
     "recentCertificates": "證書",
     "amount": "金額",
     "status": "狀態",
@@ -142,7 +142,7 @@
     "certificateNumber": "證書編號",
     "type": "類型",
     "viewCertificate": "查看證書",
-    "noDonations": "尚無捐贈記錄。",
+    "noDonations": "尚無支持記錄。",
     "noCertificates": "尚無有效證書。",
     "trial": {
       "title": "試用碼",
@@ -180,7 +180,7 @@
     "passwordMismatch": "兩次密碼不一致。",
     "passwordError": "無法更新密碼。",
     "eyebrow": "AI 帳戶工作區",
-    "subtitle": "集中管理雲端同步權限、試用兌換碼、捐贈記錄、證書與帳戶安全。",
+    "subtitle": "集中管理雲端同步權限、試用兌換碼、支持記錄、證書與帳戶安全。",
     "cloudSync": "雲端同步",
     "cloudSyncActive": "有效中",
     "cloudSyncInactive": "未啟用",
@@ -199,7 +199,7 @@
     "overview": {
       "eyebrow": "管理工具",
       "title": "管理後台",
-      "donationsTitle": "捐贈",
+      "donationsTitle": "支持",
       "donationsDescription": "檢視付款服務商記錄、狀態與交易 ID。",
       "certificatesTitle": "證書",
       "certificatesDescription": "檢視已頒發的證書編號、類型、狀態與頒發日期。",
@@ -215,24 +215,24 @@
       "licensesDescription": "建立試用兌換碼、檢視權益，並撤銷桌面雲端同步存取。",
       "usersTitle": "使用者",
       "usersDescription": "檢視使用者狀態、試用綁定、桌面裝置與營運人員角色。",
-      "description": "管理捐贈、證書、版本、授權、使用者與稽核活動。"
+      "description": "管理支持記錄、證書、版本、授權、使用者與稽核活動。"
     },
     "donations": {
       "eyebrow": "管理後台",
-      "title": "管理捐贈",
+      "title": "管理支持記錄",
       "provider": "服務商",
       "status": "狀態",
       "amount": "金額",
       "paidAt": "付款時間（UTC）",
       "transactionId": "交易 ID",
-      "manualEntryTitle": "人工已付款捐贈",
+      "manualEntryTitle": "人工已付款支持記錄",
       "manualEntryDescription": "為既有使用者以電子郵件或使用者 ID 建立一筆已付款人工記錄。",
       "userIdentifier": "電子郵件或使用者 ID",
       "amountCents": "金額（美分）",
       "reference": "參考編號",
       "reason": "原因",
-      "submitManualDonation": "新增人工捐贈",
-      "empty": "尚無捐贈。",
+      "submitManualDonation": "新增人工支持記錄",
+      "empty": "尚無支持記錄。",
       "providers": {
         "stripe": "Stripe",
         "paypal": "PayPal",
@@ -246,7 +246,7 @@
         "failed": "失敗",
         "refunded": "已退款"
       },
-      "description": "檢視付款記錄，並新增已驗證的人工捐贈。"
+      "description": "檢視付款記錄，並新增已驗證的人工支持。"
     },
     "certificates": {
       "eyebrow": "管理後台",
@@ -262,7 +262,7 @@
       "notIssued": "尚未頒發",
       "empty": "尚無證書。",
       "types": {
-        "donation": "捐贈證書",
+        "donation": "支持證書",
         "honor": "榮譽證書"
       },
       "statuses": {
@@ -393,7 +393,7 @@
       "user": "使用者",
       "feature": "功能",
       "validUntil": "有效至",
-      "sourceDonation": "來源捐贈",
+      "sourceDonation": "來源支持",
       "none": "無",
       "device": "裝置",
       "platform": "平台",
@@ -425,14 +425,14 @@
       "eyebrow": "管理後台",
       "title": "使用者管理",
       "detailTitle": "使用者營運維護",
-      "detailDescription": "集中檢視並維護單一使用者的資料、捐贈、證書、試用、裝置與權益。",
+      "detailDescription": "集中檢視並維護單一使用者的資料、支持、證書、試用、裝置與權益。",
       "user": "使用者",
       "details": "詳細資料",
       "role": "角色",
       "status": "狀態",
       "trials": "試用",
       "devices": "裝置",
-      "donations": "捐贈",
+      "donations": "支持",
       "certificates": "證書",
       "entitlements": "權益",
       "leases": "租約",
@@ -450,10 +450,10 @@
       "machine": "機器",
       "lastSeen": "最後使用",
       "unbind": "解除機器綁定",
-      "addDonation": "新增人工捐贈",
+      "addDonation": "新增人工支持記錄",
       "emptyTrials": "尚無試用",
       "emptyDevices": "尚無桌面裝置",
-      "emptyDonations": "尚無捐贈",
+      "emptyContributions": "尚無支持記錄",
       "emptyCertificates": "尚無證書",
       "emptyEntitlements": "尚無權益",
       "emptyLeases": "尚無租約",
@@ -473,7 +473,7 @@
       "backToAdmin": "返回管理首頁",
       "certificates": "證書",
       "dashboard": "總覽",
-      "donations": "捐贈",
+      "donations": "支持",
       "language": "語言",
       "licenses": "授權",
       "menu": "選單",
@@ -488,7 +488,7 @@
     "brand": "GitBook AI",
     "title": "支持證書",
     "description": "謹以此證書感謝你對獨立軟體開發的珍貴支持。",
-    "amount": "捐贈金額",
+    "amount": "支持金額",
     "presentedTo": "頒發給",
     "certificateNumber": "證書編號",
     "issued": "頒發日期",
@@ -505,7 +505,7 @@
       "dashboard": "返回個人中心"
     },
     "types": {
-      "donation": "捐贈證書",
+      "donation": "支持證書",
       "honor": "榮譽證書"
     }
   },

@@ -4,9 +4,9 @@ import { useId } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { supportedLocales, type Locale } from "@/config/site";
 
-const languageLabels: Record<Locale, { short: string; label: string; countryCode: "US" | "TW" | "JP" | "KR" }> = {
+const languageLabels: Record<Locale, { short: string; label: string; countryCode: "US" | "HK" | "JP" | "KR" }> = {
   en: { short: "EN", label: "English", countryCode: "US" },
-  "zh-Hant": { short: "繁", label: "繁體中文", countryCode: "TW" },
+  "zh-Hant": { short: "中文", label: "中文", countryCode: "HK" },
   ja: { short: "日", label: "日本語", countryCode: "JP" },
   ko: { short: "한", label: "한국어", countryCode: "KR" },
 };
@@ -31,15 +31,24 @@ function FlagIcon({ countryCode }: { countryCode: (typeof languageLabels)[Locale
     );
   }
 
-  if (countryCode === "TW") {
+  if (countryCode === "HK") {
     return (
       <svg aria-label={label} className="size-5 shrink-0 rounded-full" viewBox="0 0 32 32" role="img">
         <clipPath id={clipId}><circle cx="16" cy="16" r="16" /></clipPath>
         <g clipPath={`url(#${clipId})`}>
-          <path fill="#fe0000" d="M0 0h32v32H0z" />
-          <path fill="#000095" d="M0 0h16v16H0z" />
-          <circle cx="8" cy="8" r="4.2" fill="#fff" />
-          <circle cx="8" cy="8" r="2.4" fill="#000095" />
+          <path fill="#de2910" d="M0 0h32v32H0z" />
+          <g fill="#fff" transform="translate(16 16)">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <ellipse
+                cx="0"
+                cy="-5.2"
+                key={index}
+                rx="1.8"
+                ry="5.4"
+                transform={`rotate(${index * 72})`}
+              />
+            ))}
+          </g>
         </g>
       </svg>
     );

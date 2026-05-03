@@ -1,7 +1,7 @@
 {
   "nav": {
     "download": "ダウンロード",
-    "donate": "寄付",
+    "donate": "応援",
     "dashboard": "ダッシュボード",
     "notifications": "通知",
     "support": "サポート",
@@ -14,8 +14,8 @@
   "login": {
     "eyebrow": "安全なアクセス",
     "title": "AI ワークスペースにサインイン",
-    "subtitle": "メールアドレスとパスワード、または信頼できる OAuth プロバイダーで、ダウンロード、寄付、証明書、ダッシュボードに進めます。",
-    "privacyNote": "アカウントは寄付記録、証明書、ダッシュボード設定をあなたに紐づけます。",
+    "subtitle": "メールアドレスとパスワード、または信頼できる OAuth プロバイダーで、ダウンロード、応援、証明書、ダッシュボードに進めます。",
+    "privacyNote": "アカウントは応援履歴、証明書、ダッシュボード設定をあなたに紐づけます。",
     "formTitle": "メールとパスワード",
     "signInTab": "サインイン",
     "registerTab": "登録",
@@ -54,13 +54,13 @@
     "subtitle": "構造化されたプログラミング知識、リリースノート、開発者学習フローのための AI 搭載コーディングブック companion をダウンロードできます。",
     "downloadMac": "macOS 版をダウンロード",
     "downloadWindows": "Windows 版をダウンロード",
-    "supportPrompt": "ダウンロードは無料のままです。寄付は AI ナレッジエンジンの改善を支えます。",
+    "supportPrompt": "ダウンロードは無料のままです。応援は AI ナレッジエンジンの改善を支えます。",
     "featureOneTitle": "AI 対応の読書フロー",
     "featureOneText": "コード概念、ノート、書籍のような知識を集中できるソフトウェア画面でたどれます。",
     "featureTwoTitle": "開発者のために設計",
     "featureTwoText": "高速ダウンロード、予測しやすいリリース、証明書と支援履歴のダッシュボードを備えます。",
     "featureThreeTitle": "グローバル対応",
-    "featureThreeText": "英語を中心に、繁体字中国語、日本語、韓国語ルートを国際ユーザー向けに提供します。",
+    "featureThreeText": "英語を中心に、中国語、日本語、韓国語ルートを国際ユーザー向けに提供します。",
     "mockTitle": "ナレッジエンジン",
     "mockStatus": "オンライン",
     "mockLineOne": "コーディング章をインデックス中",
@@ -81,9 +81,9 @@
     "checkoutDodo": "Dodo Payments で支払う",
     "checkoutStripe": "Stripe で支払う",
     "checkoutPayPal": "PayPal で支払う",
-    "oneTimeNote": "一回限りの寄付です。自動更新はありません。",
+    "oneTimeNote": "一回限りの応援です。自動更新はありません。",
     "paymentNote": "Dodo はカードと利用可能なローカル決済方法に対応した推奨チェックアウトです。",
-    "payPalUnavailable": "PayPal はまだ有効ではありません。PayPal の寄付記録と証明書発行は現在統合中です。"
+    "payPalUnavailable": "PayPal はまだ有効ではありません。PayPal の応援履歴と証明書発行は現在統合中です。"
   },
   "notifications": {
     "eyebrow": "通知センター",
@@ -132,9 +132,9 @@
   },
   "dashboard": {
     "title": "個人センター",
-    "donations": "支払い済み寄付",
+    "donations": "支払い済み応援",
     "certificates": "有効な証明書",
-    "recentDonations": "寄付履歴",
+    "recentDonations": "応援履歴",
     "recentCertificates": "証明書",
     "amount": "金額",
     "status": "ステータス",
@@ -142,7 +142,7 @@
     "certificateNumber": "証明書番号",
     "type": "種類",
     "viewCertificate": "証明書を見る",
-    "noDonations": "寄付記録はまだありません。",
+    "noDonations": "応援履歴はまだありません。",
     "noCertificates": "有効な証明書はまだありません。",
     "trial": {
       "title": "トライアルコード",
@@ -180,7 +180,7 @@
     "passwordMismatch": "パスワードが一致しません。",
     "passwordError": "パスワードを更新できませんでした。",
     "eyebrow": "AI アカウントワークスペース",
-    "subtitle": "クラウド同期アクセス、トライアルコード、寄付履歴、証明書、アカウントの安全性をまとめて管理します。",
+    "subtitle": "クラウド同期アクセス、トライアルコード、応援履歴、証明書、アカウントの安全性をまとめて管理します。",
     "cloudSync": "クラウド同期",
     "cloudSyncActive": "有効",
     "cloudSyncInactive": "未有効",
@@ -199,7 +199,7 @@
     "overview": {
       "eyebrow": "管理ツール",
       "title": "管理画面",
-      "donationsTitle": "寄付",
+      "donationsTitle": "応援",
       "donationsDescription": "決済プロバイダーの記録、ステータス、取引 ID を確認します。",
       "certificatesTitle": "証明書",
       "certificatesDescription": "発行済み証明書の番号、種類、ステータス、発行日を確認します。",
@@ -215,24 +215,24 @@
       "licensesDescription": "試用コード、権限、デスクトップのクラウド同期アクセスを管理します。",
       "usersTitle": "ユーザー",
       "usersDescription": "ユーザー状態、トライアル紐づけ、デスクトップデバイス、運用担当ロールを確認します。",
-      "description": "寄付、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。"
+      "description": "応援、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。"
     },
     "donations": {
       "eyebrow": "管理画面",
-      "title": "管理者向け寄付",
+      "title": "管理者向け応援履歴",
       "provider": "プロバイダー",
       "status": "ステータス",
       "amount": "金額",
       "paidAt": "支払い日時（UTC）",
       "transactionId": "取引 ID",
-      "manualEntryTitle": "手動支払い済み寄付",
+      "manualEntryTitle": "手動支払い済み応援",
       "manualEntryDescription": "既存ユーザーのメールまたはユーザー ID で支払い済み手動記録を 1 件作成します。",
       "userIdentifier": "メールまたはユーザー ID",
       "amountCents": "金額（セント）",
       "reference": "参照番号",
       "reason": "理由",
-      "submitManualDonation": "手動寄付を追加",
-      "empty": "寄付はまだありません。",
+      "submitManualDonation": "手動応援を追加",
+      "empty": "応援履歴はまだありません。",
       "providers": {
         "stripe": "Stripe",
         "paypal": "PayPal",
@@ -246,7 +246,7 @@
         "failed": "失敗",
         "refunded": "返金済み"
       },
-      "description": "決済記録を確認し、検証済みの手動寄付を追加します。"
+      "description": "決済記録を確認し、検証済みの手動応援を追加します。"
     },
     "certificates": {
       "eyebrow": "管理画面",
@@ -262,7 +262,7 @@
       "notIssued": "未発行",
       "empty": "証明書はまだありません。",
       "types": {
-        "donation": "寄付証明書",
+        "donation": "応援証明書",
         "honor": "表彰証明書"
       },
       "statuses": {
@@ -393,7 +393,7 @@
       "user": "ユーザー",
       "feature": "機能",
       "validUntil": "有効期限",
-      "sourceDonation": "元の寄付",
+      "sourceDonation": "元の応援",
       "none": "なし",
       "device": "デバイス",
       "platform": "プラットフォーム",
@@ -425,14 +425,14 @@
       "eyebrow": "管理",
       "title": "ユーザー管理",
       "detailTitle": "ユーザー運用",
-      "detailDescription": "1 人のユーザーのプロフィール、寄付、証明書、トライアル、端末、権限をまとめて確認・保守します。",
+      "detailDescription": "1 人のユーザーのプロフィール、応援、証明書、トライアル、端末、権限をまとめて確認・保守します。",
       "user": "ユーザー",
       "details": "詳細",
       "role": "ロール",
       "status": "状態",
       "trials": "トライアル",
       "devices": "デバイス",
-      "donations": "寄付",
+      "donations": "応援",
       "certificates": "証明書",
       "entitlements": "権限",
       "leases": "リース",
@@ -450,10 +450,10 @@
       "machine": "マシン",
       "lastSeen": "最終確認",
       "unbind": "マシン紐づけ解除",
-      "addDonation": "手動寄付を追加",
+      "addDonation": "手動応援を追加",
       "emptyTrials": "トライアルなし",
       "emptyDevices": "デスクトップデバイスなし",
-      "emptyDonations": "寄付はありません",
+      "emptyContributions": "応援はありません",
       "emptyCertificates": "証明書はありません",
       "emptyEntitlements": "権限はありません",
       "emptyLeases": "リースはありません",
@@ -473,7 +473,7 @@
       "backToAdmin": "管理画面へ戻る",
       "certificates": "証明書",
       "dashboard": "概要",
-      "donations": "寄付",
+      "donations": "応援",
       "language": "言語",
       "licenses": "ライセンス",
       "menu": "メニュー",
@@ -488,7 +488,7 @@
     "brand": "GitBook AI",
     "title": "支援証明書",
     "description": "独立したソフトウェア開発への大切なご支援に、感謝を込めてこの証明書を贈ります。",
-    "amount": "寄付金額",
+    "amount": "応援金額",
     "presentedTo": "贈呈先",
     "certificateNumber": "証明書番号",
     "issued": "発行日",
@@ -505,7 +505,7 @@
       "dashboard": "ダッシュボードへ戻る"
     },
     "types": {
-      "donation": "寄付証明書",
+      "donation": "応援証明書",
       "honor": "表彰証明書"
     }
   },

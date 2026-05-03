@@ -15,7 +15,7 @@ describe("language switcher URL generation", () => {
   it("defines flag metadata for every supported language", () => {
     expect(getLanguageLabels()).toEqual({
       en: expect.objectContaining({ countryCode: "US", short: "EN" }),
-      "zh-Hant": expect.objectContaining({ countryCode: "TW", short: "繁" }),
+      "zh-Hant": expect.objectContaining({ countryCode: "HK", short: "中文", label: "中文" }),
       ja: expect.objectContaining({ countryCode: "JP", short: "日" }),
       ko: expect.objectContaining({ countryCode: "KR", short: "한" }),
     });
