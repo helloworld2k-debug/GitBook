@@ -6,6 +6,7 @@ import AdminCertificatesPage from "@/app/[locale]/admin/certificates/page";
 import AdminDonationsPage from "@/app/[locale]/admin/donations/page";
 import AdminLicensesPage from "@/app/[locale]/admin/licenses/page";
 import AdminUserDetailPage from "@/app/[locale]/admin/users/[id]/page";
+import AdminUsersPage from "@/app/[locale]/admin/users/page";
 
 const requireAdminMock = vi.hoisted(() => vi.fn());
 const createSupabaseServerClientMock = vi.hoisted(() => vi.fn());
@@ -65,6 +66,8 @@ vi.mock("next-intl/server", () => ({
 }));
 
 vi.mock("@/lib/auth/guards", () => ({
+  isOwnerProfile: (profile: { account_status?: string | null; admin_role?: string | null; is_admin?: boolean } | null) =>
+    profile?.account_status !== "disabled" && (profile?.is_admin === true || profile?.admin_role === "owner"),
   requireAdmin: requireAdminMock,
 }));
 
@@ -258,6 +261,7 @@ const testMessages = {
         leases: "Leases",
         sessions: "Desktop sessions",
         save: "Save",
+        saveRole: "Save role",
         viewDetails: "View details",
         displayName: "Display name",
         publicDisplayName: "Public display name",
@@ -856,6 +860,77 @@ describe("admin pages", () => {
     expect(screen.queryByText("Bulk license code actions")).not.toBeInTheDocument();
     expect(screen.queryByText("1 month")).not.toBeInTheDocument();
     expect(screen.getByText("ABCD-****-****-MNOP")).toBeInTheDocument();
+  });
+
+  it("shows role editing controls on the users page only to owner admins", async () => {
+    const profilesQuery = createAdminListQuery([
+      {
+        id: "user-1",
+        email: "ada@example.com",
+        display_name: "Ada Lovelace",
+        admin_role: "user",
+        account_status: "active",
+        is_admin: false,
+        created_at: "2026-04-29T00:00:00.000Z",
+      },
+    ]);
+    const emptyQuery = createAdminListQuery([]);
+    const ownerQuery = createAdminListQuery({
+      admin_role: "owner",
+      is_admin: true,
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profilesQuery : ownerQuery;
+      }
+
+      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+    requireAdminMock.mockResolvedValue({ id: "admin-owner" });
+
+    render(await AdminUsersPage({ params: Promise.resolve({ locale: "en" }) }));
+
+    expect(screen.getByRole("combobox", { name: "Role" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save role" })).toBeInTheDocument();
+  });
+
+  it("renders user roles as read-only on the users page for operator admins", async () => {
+    const profilesQuery = createAdminListQuery([
+      {
+        id: "user-1",
+        email: "ada@example.com",
+        display_name: "Ada Lovelace",
+        admin_role: "owner",
+        account_status: "active",
+        is_admin: true,
+        created_at: "2026-04-29T00:00:00.000Z",
+      },
+    ]);
+    const emptyQuery = createAdminListQuery([]);
+    const operatorQuery = createAdminListQuery({
+      admin_role: "operator",
+      is_admin: false,
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profilesQuery : operatorQuery;
+      }
+
+      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+    requireAdminMock.mockResolvedValue({ id: "admin-operator" });
+
+    render(await AdminUsersPage({ params: Promise.resolve({ locale: "en" }) }));
+
+    expect(screen.getByText("Owner")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Role" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save role" })).not.toBeInTheDocument();
   });
 
   it("renders a user operations detail page with profile, donations, certificates, trials, devices, and entitlements", async () => {

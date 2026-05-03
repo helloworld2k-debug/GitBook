@@ -1,16 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addManualDonation, createSoftwareRelease, replySupportFeedbackAsAdmin, revokeCertificate, setSoftwareReleasePublished } from "@/app/[locale]/admin/actions";
+import { addManualDonation, createSoftwareRelease, replySupportFeedbackAsAdmin, revokeCertificate, setSoftwareReleasePublished, updateUserAdminRole } from "@/app/[locale]/admin/actions";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
   extendCloudSyncEntitlementForDonation: vi.fn(),
   generateCertificatesForDonation: vi.fn(),
   requireAdmin: vi.fn(),
+  requireOwner: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/guards", () => ({
   requireAdmin: mocks.requireAdmin,
+  requireOwner: mocks.requireOwner,
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -40,6 +42,7 @@ function createProfileLookup(profile: { id: string; email: string } | null) {
 describe("admin actions", () => {
   beforeEach(() => {
     mocks.requireAdmin.mockReset().mockResolvedValue({ id: "admin-1" });
+    mocks.requireOwner.mockReset().mockResolvedValue({ id: "owner-1" });
     mocks.createSupabaseAdminClient.mockReset();
     mocks.generateCertificatesForDonation.mockReset().mockResolvedValue({
       donationId: "donation-1",
@@ -48,6 +51,33 @@ describe("admin actions", () => {
     });
     mocks.extendCloudSyncEntitlementForDonation.mockReset().mockResolvedValue("2027-05-01T00:00:00.000Z");
     mocks.revalidatePath.mockClear();
+  });
+
+  it("requires owner access before changing a user's admin role", async () => {
+    const eq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ update }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("user_id", "user-1");
+    formData.set("admin_role", "operator");
+
+    await updateUserAdminRole(formData);
+
+    expect(mocks.requireOwner).toHaveBeenCalledWith("en");
+    expect(mocks.requireOwner.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.createSupabaseAdminClient.mock.invocationCallOrder[0],
+    );
+    expect(update).toHaveBeenCalledWith({
+      admin_role: "operator",
+      is_admin: false,
+      updated_at: expect.any(String),
+    });
+    expect(eq).toHaveBeenCalledWith("id", "user-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/users");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/users/user-1");
   });
 
   it("requires an admin before creating a manual donation through the audited RPC and extends entitlement", async () => {

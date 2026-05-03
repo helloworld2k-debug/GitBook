@@ -4,7 +4,7 @@ import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/comp
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { requireAdmin } from "@/lib/auth/guards";
+import { isOwnerProfile, requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { unbindTrialMachine, updateUserAccountStatus, updateUserAdminRole } from "../actions";
 
@@ -38,12 +38,12 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  const admin = await requireAdmin(locale);
   const t = await getTranslations("admin.users");
   const adminT = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/users");
   const supabase = createSupabaseAdminClient();
-  const [profilesResult, trialsResult, sessionsResult] = await Promise.all([
+  const [profilesResult, trialsResult, sessionsResult, adminProfileResult] = await Promise.all([
     supabase
       .from("profiles")
       .select("id,email,display_name,admin_role,account_status,is_admin,created_at")
@@ -59,11 +59,19 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
       .select("id,user_id,device_id,machine_code_hash,platform,app_version,last_seen_at,revoked_at")
       .order("last_seen_at", { ascending: false })
       .limit(200),
+    supabase
+      .from("profiles")
+      .select("is_admin,admin_role,account_status")
+      .eq("id", admin.id)
+      .single(),
   ]);
 
   if (profilesResult.error) throw profilesResult.error;
   if (trialsResult.error) throw trialsResult.error;
   if (sessionsResult.error) throw sessionsResult.error;
+  if (adminProfileResult.error) throw adminProfileResult.error;
+
+  const canManageRoles = isOwnerProfile(adminProfileResult.data);
 
   const trialsByUser = new Map<string, NonNullable<typeof trialsResult.data>>();
   for (const trial of trialsResult.data ?? []) {
@@ -117,18 +125,22 @@ export default async function AdminUsersPage({ params }: AdminUsersPageProps) {
                           </Link>
                         </td>
                         <td className="px-5 py-4 align-top">
-                          <form action={updateUserAdminRole} className="flex gap-2">
-                            <input name="locale" type="hidden" value={locale} />
-                            <input name="user_id" type="hidden" value={profile.id} />
-                            <select className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="admin_role" defaultValue={profile.admin_role ?? (profile.is_admin ? "owner" : "user")}>
-                              <option value="user">{t("roles.user")}</option>
-                              <option value="operator">{t("roles.operator")}</option>
-                              <option value="owner">{t("roles.owner")}</option>
-                            </select>
-                            <button className="rounded-md border border-slate-300 px-3 text-sm font-medium" type="submit">
-                              {t("save")}
-                            </button>
-                          </form>
+                          {canManageRoles ? (
+                            <form action={updateUserAdminRole} className="flex gap-2">
+                              <input name="locale" type="hidden" value={locale} />
+                              <input name="user_id" type="hidden" value={profile.id} />
+                              <select aria-label={t("role")} className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="admin_role" defaultValue={profile.admin_role ?? (profile.is_admin ? "owner" : "user")}>
+                                <option value="user">{t("roles.user")}</option>
+                                <option value="operator">{t("roles.operator")}</option>
+                                <option value="owner">{t("roles.owner")}</option>
+                              </select>
+                              <button aria-label={t("saveRole")} className="rounded-md border border-slate-300 px-3 text-sm font-medium" type="submit">
+                                {t("save")}
+                              </button>
+                            </form>
+                          ) : (
+                            <span className="text-slate-700">{t(`roles.${profile.admin_role ?? (profile.is_admin ? "owner" : "user")}`)}</span>
+                          )}
                         </td>
                         <td className="px-5 py-4 align-top">
                           <form action={updateUserAccountStatus} className="flex gap-2">

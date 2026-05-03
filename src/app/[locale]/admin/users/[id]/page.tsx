@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { requireAdmin } from "@/lib/auth/guards";
+import { isOwnerProfile, requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   addManualDonation,
@@ -70,7 +70,7 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  const admin = await requireAdmin(locale);
   const t = await getTranslations("admin.users");
   const adminT = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/users");
@@ -84,6 +84,7 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
     sessionsResult,
     entitlementsResult,
     leasesResult,
+    adminProfileResult,
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -126,6 +127,11 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
       .eq("user_id", id)
       .order("updated_at", { ascending: false })
       .limit(50),
+    supabase
+      .from("profiles")
+      .select("is_admin,admin_role,account_status")
+      .eq("id", admin.id)
+      .single(),
   ]);
 
   if (profileResult.error || !profileResult.data) {
@@ -138,6 +144,7 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
   if (sessionsResult.error) throw sessionsResult.error;
   if (entitlementsResult.error) throw entitlementsResult.error;
   if (leasesResult.error) throw leasesResult.error;
+  if (adminProfileResult.error) throw adminProfileResult.error;
 
   const profile = profileResult.data;
   const donations = donationsResult.data ?? [];
@@ -146,6 +153,7 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
   const sessions = sessionsResult.data ?? [];
   const entitlements = entitlementsResult.data ?? [];
   const leases = leasesResult.data ?? [];
+  const canManageRoles = isOwnerProfile(adminProfileResult.data);
 
   return (
     <AdminShell {...shellProps}>
@@ -243,18 +251,22 @@ export default async function AdminUserDetailPage({ params }: AdminUserDetailPag
           <AdminCard className="p-5">
             <h2 className="text-base font-semibold text-slate-950">{t("role")}</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <form action={updateUserAdminRole} className="flex flex-wrap gap-2">
-                <input name="locale" type="hidden" value={locale} />
-                <input name="user_id" type="hidden" value={profile.id} />
-                <select className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="admin_role" defaultValue={profile.admin_role ?? (profile.is_admin ? "owner" : "user")}>
-                  <option value="user">{t("roles.user")}</option>
-                  <option value="operator">{t("roles.operator")}</option>
-                  <option value="owner">{t("roles.owner")}</option>
-                </select>
-                <button className="rounded-md border border-slate-300 px-3 text-sm font-medium" type="submit">
-                  {t("save")}
-                </button>
-              </form>
+              {canManageRoles ? (
+                <form action={updateUserAdminRole} className="flex flex-wrap gap-2">
+                  <input name="locale" type="hidden" value={locale} />
+                  <input name="user_id" type="hidden" value={profile.id} />
+                  <select aria-label={t("role")} className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="admin_role" defaultValue={profile.admin_role ?? (profile.is_admin ? "owner" : "user")}>
+                    <option value="user">{t("roles.user")}</option>
+                    <option value="operator">{t("roles.operator")}</option>
+                    <option value="owner">{t("roles.owner")}</option>
+                  </select>
+                  <button aria-label={t("saveRole")} className="rounded-md border border-slate-300 px-3 text-sm font-medium" type="submit">
+                    {t("save")}
+                  </button>
+                </form>
+              ) : (
+                <p className="text-sm text-slate-700">{t(`roles.${profile.admin_role ?? (profile.is_admin ? "owner" : "user")}`)}</p>
+              )}
               <form action={updateUserAccountStatus} className="flex flex-wrap gap-2">
                 <input name="locale" type="hidden" value={locale} />
                 <input name="user_id" type="hidden" value={profile.id} />
