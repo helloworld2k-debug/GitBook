@@ -36,12 +36,13 @@ export default async function DonatePage({ params }: DonatePageProps) {
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {donationTiers.map((tier) => (
               <DonationTierCard
+                checkoutDodoLabel={t("checkoutDodo")}
                 checkoutStripeLabel={t("checkoutStripe")}
                 key={tier.code}
                 label={t(`tiers.${tier.code}`)}
                 locale={locale}
                 oneTimeNote={t("oneTimeNote")}
-                payPalUnavailableNote={t("payPalUnavailable")}
+                paymentNote={t("paymentNote")}
                 tier={tier}
               />
             ))}

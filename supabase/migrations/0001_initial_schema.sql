@@ -1,4 +1,4 @@
-create type donation_provider as enum ('stripe', 'paypal', 'manual');
+create type donation_provider as enum ('stripe', 'paypal', 'manual', 'dodo');
 create type donation_status as enum ('pending', 'paid', 'cancelled', 'failed', 'refunded');
 create type certificate_type as enum ('donation', 'honor');
 create type certificate_status as enum ('active', 'revoked', 'generation_failed');

@@ -86,9 +86,11 @@
       "quarterly": "Quarterly Support",
       "yearly": "Yearly Support"
     },
+    "checkoutDodo": "Pay with Dodo Payments",
     "checkoutStripe": "Pay with Stripe",
     "checkoutPayPal": "Pay with PayPal",
     "oneTimeNote": "One-time donation. No automatic renewal.",
+    "paymentNote": "Dodo is the recommended checkout for cards and supported local payment methods.",
     "payPalUnavailable": "PayPal is not enabled yet because PayPal donation records and certificates are still being integrated."
   },
   "notifications": {
@@ -255,7 +257,8 @@
       "providers": {
         "stripe": "Stripe",
         "paypal": "PayPal",
-        "manual": "Manual"
+        "manual": "Manual",
+        "dodo": "Dodo Payments"
       },
       "statuses": {
         "pending": "Pending",

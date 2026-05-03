@@ -5,7 +5,7 @@ export type Database = {
     Enums: {
       certificate_status: "active" | "revoked" | "generation_failed";
       certificate_type: "donation" | "honor";
-      donation_provider: "stripe" | "paypal" | "manual";
+      donation_provider: "stripe" | "paypal" | "manual" | "dodo";
       donation_status: "pending" | "paid" | "cancelled" | "failed" | "refunded";
       license_code_duration_kind: "trial_3_day" | "month_1" | "month_3" | "year_1";
       license_entitlement_status: "active" | "expired" | "revoked";

@@ -15,7 +15,7 @@ type AdminDonationsPageProps = {
 };
 
 type DonationStatus = "pending" | "paid" | "cancelled" | "failed" | "refunded";
-type DonationProvider = "stripe" | "paypal" | "manual";
+type DonationProvider = "stripe" | "paypal" | "manual" | "dodo";
 
 function formatAmount(amount: number, currency: string, locale: string) {
   const currencyCode = currency.toUpperCase();

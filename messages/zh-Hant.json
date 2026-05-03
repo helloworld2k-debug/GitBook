@@ -78,9 +78,11 @@
       "quarterly": "季度支持",
       "yearly": "年度支持"
     },
+    "checkoutDodo": "使用 Dodo Payments 支付",
     "checkoutStripe": "使用 Stripe 支付",
     "checkoutPayPal": "使用 PayPal 支付",
     "oneTimeNote": "一次性捐贈。不會自動續費。",
+    "paymentNote": "建議使用 Dodo 結帳，支援銀行卡與可用的本地支付方式。",
     "payPalUnavailable": "PayPal 尚未啟用，因為 PayPal 捐贈記錄與證書仍在整合中。"
   },
   "notifications": {
@@ -230,7 +232,8 @@
       "providers": {
         "stripe": "Stripe",
         "paypal": "PayPal",
-        "manual": "人工登錄"
+        "manual": "人工登錄",
+        "dodo": "Dodo Payments"
       },
       "statuses": {
         "pending": "待處理",

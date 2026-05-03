@@ -1,4 +1,4 @@
-type Provider = "stripe" | "paypal" | "manual";
+type Provider = "stripe" | "paypal" | "manual" | "dodo";
 
 export type ProviderDonationInput = {
   userId: string;

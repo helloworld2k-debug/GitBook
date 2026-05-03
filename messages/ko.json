@@ -78,9 +78,11 @@
       "quarterly": "분기 후원",
       "yearly": "연간 후원"
     },
+    "checkoutDodo": "Dodo Payments로 결제",
     "checkoutStripe": "Stripe로 결제",
     "checkoutPayPal": "PayPal로 결제",
     "oneTimeNote": "일회성 기부입니다. 자동 갱신되지 않습니다.",
+    "paymentNote": "Dodo는 카드와 지원되는 현지 결제 수단을 위한 권장 결제 방식입니다.",
     "payPalUnavailable": "PayPal은 아직 활성화되지 않았습니다. PayPal 후원 기록과 인증서 발급을 통합하는 중입니다."
   },
   "notifications": {
@@ -230,7 +232,8 @@
       "providers": {
         "stripe": "Stripe",
         "paypal": "PayPal",
-        "manual": "수동"
+        "manual": "수동",
+        "dodo": "Dodo Payments"
       },
       "statuses": {
         "pending": "대기 중",
