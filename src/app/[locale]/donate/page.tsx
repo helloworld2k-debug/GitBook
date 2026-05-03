@@ -37,7 +37,6 @@ export default async function DonatePage({ params }: DonatePageProps) {
             {donationTiers.map((tier) => (
               <DonationTierCard
                 checkoutDodoLabel={t("checkoutDodo")}
-                checkoutStripeLabel={t("checkoutStripe")}
                 key={tier.code}
                 label={t(`tiers.${tier.code}`)}
                 locale={locale}
