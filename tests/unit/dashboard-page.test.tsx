@@ -210,4 +210,45 @@ describe("dashboard page", () => {
     );
     expect(within(donationHistory as HTMLElement).getByText("GBAI-2026-D-000001")).toBeInTheDocument();
   });
+
+  it("shows a contribution success banner after Dodo returns", async () => {
+    mocks.requireUser.mockResolvedValue({
+      email: "ada@example.com",
+      id: "user-1",
+      user_metadata: { name: "Ada Lovelace" },
+    });
+
+    const emptyQuery = createThenableQuery({ data: [], error: null });
+    const countQuery = createThenableQuery({ count: 0, error: null });
+    const profileQuery = createThenableQuery({
+      data: {
+        display_name: "Ada Lovelace",
+        email: "ada@example.com",
+      },
+      error: null,
+    });
+    const entitlementQuery = createThenableQuery({ data: null, error: null });
+    const trialQuery = createThenableQuery({ data: null, error: null });
+    const tableQueues = {
+      certificates: [countQuery],
+      donations: [countQuery, emptyQuery],
+      license_entitlements: [entitlementQuery],
+      profiles: [profileQuery],
+      trial_code_redemptions: [trialQuery],
+    };
+    const from = vi.fn((table: keyof typeof tableQueues) => tableQueues[table].shift());
+
+    mocks.createSupabaseServerClient.mockResolvedValue({ from });
+
+    render(
+      await DashboardPage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({ payment: "dodo-success" }),
+      }),
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Your contribution was received. We are preparing your certificate and access updates.",
+    );
+  });
 });

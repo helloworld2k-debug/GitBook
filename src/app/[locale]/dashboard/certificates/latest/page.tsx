@@ -35,8 +35,8 @@ export default async function LatestCertificatePage({ params }: LatestCertificat
   }
 
   if (!certificate) {
-    redirect(`/${locale}/dashboard?payment=stripe-success`);
+    redirect(`/${locale}/dashboard?payment=dodo-success`);
   }
 
-  redirect(`/${locale}/dashboard/certificates/${certificate.id}?payment=stripe-success`);
+  redirect(`/${locale}/dashboard/certificates/${certificate.id}?payment=dodo-success`);
 }

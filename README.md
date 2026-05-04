@@ -1,15 +1,15 @@
-# Three Friends Website
+# GitBook AI Website
 
-Three Friends is a Next.js website for public software downloads supported by voluntary donations. Visitors can download releases for free, view localized donation tiers, and use protected donation/dashboard surfaces through Supabase Auth. Admin users can review persisted donations and certificates.
+GitBook AI is a Next.js website for public software downloads supported by voluntary contributions. Visitors can download releases for free, view localized support tiers, and use protected contribution/dashboard surfaces through Supabase Auth. Admin users can review persisted contribution records and certificates.
 
-The project is still an implementation baseline. Treat PayPal donation persistence, payment credentials, Auth provider configuration, production domains, and operational runbooks as deployment tasks, not finished production guarantees.
+The project is still an implementation baseline. Treat Dodo Payments configuration, Auth provider configuration, production domains, and operational runbooks as deployment tasks, not finished production guarantees.
 
 ## Architecture
 
 - **App framework:** Next.js App Router with React 19 and TypeScript.
 - **Internationalization:** `next-intl` with English, Traditional Chinese, Japanese, and Korean locale routes.
 - **Data and Auth:** Supabase Auth and Postgres with row-level security.
-- **Payments:** Stripe Checkout with webhook persistence; PayPal Checkout/webhook scaffolding is present, but PayPal donation persistence and certificate issuance still need to be completed before production use.
+- **Payments:** Dodo Payments checkout with webhook persistence for contribution records, certificate issuance, and entitlement updates.
 - **Certificates:** Server-side certificate generation backed by Supabase functions and tables, with protected SVG downloads. Native PNG/PDF export is a later enhancement.
 - **Hosting target:** Vercel for the app and API routes.
 
@@ -17,8 +17,8 @@ Key directories:
 
 - `src/app` - localized pages and API routes.
 - `src/components` - shared UI components.
-- `src/config/site.ts` - public site copy, download links, donation tiers, and sponsor levels.
-- `src/lib` - Supabase clients, auth guards, payment helpers, donation records, and certificates.
+- `src/config/site.ts` - public site copy, download links, support tiers, and sponsor levels.
+- `src/lib` - Supabase clients, auth guards, payment helpers, contribution records, and certificates.
 - `supabase/migrations` - database schema, seed data, RLS policies, and certificate functions.
 - `tests` - unit, smoke, and Playwright e2e tests.
 
@@ -36,19 +36,19 @@ Create local environment variables:
 cp .env.example .env.local
 ```
 
-Fill in Supabase, Stripe, and PayPal values. The minimum local template is:
+Fill in Supabase and Dodo Payments values. The minimum local template is:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-PAYPAL_CLIENT_ID=
-PAYPAL_CLIENT_SECRET=
-PAYPAL_WEBHOOK_ID=
-PAYPAL_BASE_URL=https://api-m.sandbox.paypal.com
+DODO_PAYMENTS_API_KEY=
+DODO_PAYMENTS_WEBHOOK_KEY=
+DODO_PAYMENTS_ENV=test
+DODO_PRODUCT_MONTHLY=
+DODO_PRODUCT_QUARTERLY=
+DODO_PRODUCT_YEARLY=
 ```
 
 Run the development server:
@@ -61,7 +61,7 @@ Open `http://localhost:3000`. The root route redirects to `/en`.
 
 ## Database
 
-Apply Supabase migrations in order before testing authenticated, donation, certificate, or admin flows:
+Apply Supabase migrations in order before testing authenticated, contribution, certificate, or admin flows:
 
 ```bash
 supabase db push
@@ -97,20 +97,20 @@ npm run e2e
 
 ## Deployment
 
-See [docs/deployment.md](docs/deployment.md) for the practical Vercel deployment flow, including Supabase setup, payment provider webhooks, admin bootstrap, DNS, security notes, and the production checklist.
+See [docs/deployment.md](docs/deployment.md) for the practical Vercel deployment flow, including Supabase setup, Dodo Payments webhooks, admin bootstrap, DNS, security notes, and the production checklist.
 
 Current deployment caveats:
 
 - Supabase Auth providers and allowed callback URLs must be configured for the interactive login flow before production use.
-- Stripe paid checkout sessions are persisted and generate certificates through the Stripe webhook.
-- PayPal routes can create/capture/verify orders, but PayPal payments are not yet persisted to the `donations` table and do not yet generate certificates.
+- Dodo Payments checkout sessions are persisted and generate certificates through the Dodo webhook.
+- Dodo Payments is the only supported production checkout path in this repository.
 
 ## Security Notes
 
 - Do not commit `.env.local` or real secrets.
-- Keep `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYPAL_CLIENT_SECRET`, and `PAYPAL_WEBHOOK_ID` server-only.
+- Keep `SUPABASE_SERVICE_ROLE_KEY`, `DODO_PAYMENTS_API_KEY`, and `DODO_PAYMENTS_WEBHOOK_KEY` server-only.
 - Only `NEXT_PUBLIC_*` values should be used in browser code.
 - Keep Supabase RLS enabled and review policies before adding new tables or admin actions.
 - Use sandbox/test payment credentials outside production.
-- Verify each payment provider writes a paid donation and certificate before enabling that provider for real users.
+- Verify the Dodo Payments flow writes a paid contribution record and certificate before enabling production checkout.
 - Rotate provider and database secrets after exposure or access changes.

@@ -7,11 +7,11 @@ export const defaultLocale: Locale = "en";
 export const siteConfig = {
   name: "GitBook AI",
   description: "AI coding book software downloads supported by voluntary contributions.",
-  githubReleasesUrl: "https://github.com/threefriends/app/releases/latest",
+  githubReleasesUrl: "https://github.com/helloworld2k-debug/GitBook/releases/latest",
   downloadLinks: {
-    macos: "https://github.com/threefriends/app/releases/latest",
-    windows: "https://github.com/threefriends/app/releases/latest",
-    linux: "https://github.com/threefriends/app/releases/latest",
+    macos: "https://github.com/helloworld2k-debug/GitBook/releases/latest",
+    windows: "https://github.com/helloworld2k-debug/GitBook/releases/latest",
+    linux: "https://github.com/helloworld2k-debug/GitBook/releases/latest",
   },
 };
 

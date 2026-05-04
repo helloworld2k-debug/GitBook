@@ -56,7 +56,7 @@ describe("latest certificate redirect page", () => {
 
     await expect(
       LatestCertificatePage({ params: Promise.resolve({ locale: "en" }) }),
-    ).rejects.toThrow("redirect:/en/dashboard/certificates/cert-1?payment=stripe-success");
+    ).rejects.toThrow("redirect:/en/dashboard/certificates/cert-1?payment=dodo-success");
 
     expect(client.from).toHaveBeenCalledWith("certificates");
     expect(client.query.select).toHaveBeenCalledWith("id");
@@ -74,6 +74,6 @@ describe("latest certificate redirect page", () => {
 
     await expect(
       LatestCertificatePage({ params: Promise.resolve({ locale: "zh-Hant" }) }),
-    ).rejects.toThrow("redirect:/zh-Hant/dashboard?payment=stripe-success");
+    ).rejects.toThrow("redirect:/zh-Hant/dashboard?payment=dodo-success");
   });
 });

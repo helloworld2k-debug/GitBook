@@ -79,11 +79,8 @@
       "yearly": "연간 지원"
     },
     "checkoutDodo": "지금 지원하기",
-    "checkoutStripe": "Stripe로 결제",
-    "checkoutPayPal": "PayPal로 결제",
     "oneTimeNote": "다운로드 제공과 지속적인 개발을 돕는 일회성 지원입니다.",
-    "paymentNote": "카드와 지원되는 현지 결제 수단을 위한 안전한 결제입니다. 결제 완료 후 인증서가 발급됩니다.",
-    "payPalUnavailable": "PayPal은 아직 활성화되지 않았습니다. PayPal 지원 내역과 인증서 발급을 통합하는 중입니다."
+    "paymentNote": "Dodo Payments를 통한 안전한 결제로 카드와 지원되는 현지 결제 수단을 사용할 수 있습니다. 결제 완료 후 인증서가 발급됩니다."
   },
   "notifications": {
     "eyebrow": "알림 센터",
@@ -200,7 +197,7 @@
       "eyebrow": "관리 도구",
       "title": "관리",
       "donationsTitle": "지원",
-      "donationsDescription": "결제 제공업체 기록, 상태, 거래 ID를 확인합니다.",
+      "donationsDescription": "후원 기록, 상태, 거래 ID를 확인합니다.",
       "certificatesTitle": "인증서",
       "certificatesDescription": "발급된 인증서 번호, 유형, 상태, 발급일을 확인합니다.",
       "auditLogsTitle": "감사 로그",
@@ -233,12 +230,12 @@
       "reason": "사유",
       "submitManualDonation": "수동 지원 추가",
       "empty": "지원 내역이 없습니다.",
-      "providers": {
-        "stripe": "Stripe",
-        "paypal": "PayPal",
-        "manual": "수동",
-        "dodo": "Dodo Payments"
-      },
+        "providers": {
+          "stripe": "Stripe",
+          "paypal": "PayPal",
+          "manual": "수동",
+          "dodo": "Dodo Payments"
+        },
       "statuses": {
         "pending": "대기 중",
         "paid": "결제 완료",

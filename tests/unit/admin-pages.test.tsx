@@ -110,9 +110,9 @@ const testMessages = {
       overview: {
         eyebrow: "Admin tools",
         title: "Admin",
-        description: "Manage donations, certificates, releases, licenses, users, and audit activity.",
-        donationsTitle: "Donations",
-        donationsDescription: "Review payment provider records, statuses, and transaction IDs.",
+        description: "Manage contributions, certificates, releases, licenses, users, and audit activity.",
+        donationsTitle: "Contributions",
+        donationsDescription: "Review contribution records, statuses, and transaction IDs.",
         certificatesTitle: "Certificates",
         certificatesDescription: "Review issued certificate numbers, types, statuses, and issue dates.",
         releasesTitle: "Releases",
@@ -130,25 +130,26 @@ const testMessages = {
       },
       donations: {
         eyebrow: "Admin",
-        title: "Admin donations",
-        description: "Review payment records and add verified manual donations.",
+        title: "Admin contributions",
+        description: "Review payment records and add verified manual contributions.",
         provider: "Provider",
         status: "Status",
         amount: "Amount",
         paidAt: "Paid at (UTC)",
         transactionId: "Transaction ID",
-        manualEntryTitle: "Manual paid donation",
+        manualEntryTitle: "Manual paid contribution",
         manualEntryDescription: "Create one paid manual record for an existing user by email or user ID.",
         userIdentifier: "Email or user ID",
         amountCents: "Amount (cents)",
         reference: "Reference",
         reason: "Reason",
-        submitManualDonation: "Add manual donation",
-        empty: "No donations found.",
+        submitManualDonation: "Add manual contribution",
+        empty: "No contributions found.",
         providers: {
           stripe: "Stripe",
           paypal: "PayPal",
           manual: "Manual",
+          dodo: "Dodo Payments",
         },
         statuses: {
           pending: "Pending",
@@ -331,9 +332,9 @@ const testMessages = {
       overview: {
         eyebrow: "管理工具",
         title: "管理後台",
-        description: "管理捐贈、證書、版本、授權、使用者與稽核活動。",
-        donationsTitle: "捐贈",
-        donationsDescription: "檢視付款服務商記錄、狀態與交易 ID。",
+        description: "管理支持記錄、證書、版本、授權、使用者與稽核活動。",
+        donationsTitle: "支持",
+        donationsDescription: "檢視支持記錄、狀態與交易 ID。",
         certificatesTitle: "證書",
         certificatesDescription: "檢視已頒發的證書編號、類型、狀態與頒發日期。",
         releasesTitle: "版本發布",
@@ -351,25 +352,26 @@ const testMessages = {
       },
       donations: {
         eyebrow: "管理後台",
-        title: "管理捐贈",
-        description: "檢視付款記錄，並新增已驗證的人工捐贈。",
+        title: "管理支持記錄",
+        description: "檢視付款記錄，並新增已驗證的人工支持。",
         provider: "服務商",
         status: "狀態",
         amount: "金額",
         paidAt: "付款時間（UTC）",
         transactionId: "交易 ID",
-        manualEntryTitle: "人工已付款捐贈",
+        manualEntryTitle: "人工已付款支持記錄",
         manualEntryDescription: "為既有使用者以電子郵件或使用者 ID 建立一筆已付款人工記錄。",
         userIdentifier: "電子郵件或使用者 ID",
         amountCents: "金額（美分）",
         reference: "參考編號",
         reason: "原因",
-        submitManualDonation: "新增人工捐贈",
-        empty: "尚無捐贈。",
+        submitManualDonation: "新增人工支持記錄",
+        empty: "尚無支持記錄。",
         providers: {
           stripe: "Stripe",
           paypal: "PayPal",
           manual: "人工登錄",
+          dodo: "Dodo Payments",
         },
         statuses: {
           pending: "待處理",
@@ -419,7 +421,7 @@ const testMessages = {
         backToAdmin: "返回管理首頁",
         certificates: "證書",
         dashboard: "總覽",
-        donations: "捐贈",
+        donations: "支持",
         language: "語言",
         licenses: "授權",
         menu: "選單",
@@ -440,9 +442,9 @@ const testMessages = {
       overview: {
         eyebrow: "管理ツール",
         title: "管理画面",
-        description: "寄付、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。",
-        donationsTitle: "寄付",
-        donationsDescription: "決済プロバイダーの記録、ステータス、取引 ID を確認します。",
+        description: "応援記録、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。",
+        donationsTitle: "応援",
+        donationsDescription: "応援記録、ステータス、取引 ID を確認します。",
         certificatesTitle: "証明書",
         certificatesDescription: "発行済み証明書の番号、種類、ステータス、発行日を確認します。",
         releasesTitle: "リリース",
@@ -460,25 +462,26 @@ const testMessages = {
       },
       donations: {
         eyebrow: "管理画面",
-        title: "管理者向け寄付",
-        description: "決済記録を確認し、検証済みの手動寄付を追加します。",
+        title: "管理者向け応援記録",
+        description: "決済記録を確認し、検証済みの手動応援記録を追加します。",
         provider: "プロバイダー",
         status: "ステータス",
         amount: "金額",
         paidAt: "支払い日時（UTC）",
         transactionId: "取引 ID",
-        manualEntryTitle: "手動支払い済み寄付",
+        manualEntryTitle: "手動支払い済み応援記録",
         manualEntryDescription: "既存ユーザーのメールまたはユーザー ID で支払い済み手動記録を 1 件作成します。",
         userIdentifier: "メールまたはユーザー ID",
         amountCents: "金額（セント）",
         reference: "参照番号",
         reason: "理由",
-        submitManualDonation: "手動寄付を追加",
-        empty: "寄付はまだありません。",
+        submitManualDonation: "手動応援記録を追加",
+        empty: "応援記録はまだありません。",
         providers: {
           stripe: "Stripe",
           paypal: "PayPal",
           manual: "手動",
+          dodo: "Dodo Payments",
         },
         statuses: {
           pending: "保留中",
@@ -528,7 +531,7 @@ const testMessages = {
         backToAdmin: "管理画面へ戻る",
         certificates: "証明書",
         dashboard: "概要",
-        donations: "寄付",
+        donations: "応援",
         language: "言語",
         licenses: "ライセンス",
         menu: "メニュー",
@@ -549,9 +552,9 @@ const testMessages = {
       overview: {
         eyebrow: "관리 도구",
         title: "관리",
-        description: "후원, 인증서, 릴리스, 라이선스, 사용자, 감사 활동을 관리합니다.",
-        donationsTitle: "후원",
-        donationsDescription: "결제 제공업체 기록, 상태, 거래 ID를 확인합니다.",
+        description: "후원 기록, 인증서, 릴리스, 라이선스, 사용자, 감사 활동을 관리합니다.",
+        donationsTitle: "지원",
+        donationsDescription: "후원 기록, 상태, 거래 ID를 확인합니다.",
         certificatesTitle: "인증서",
         certificatesDescription: "발급된 인증서 번호, 유형, 상태, 발급일을 확인합니다.",
         releasesTitle: "릴리스",
@@ -569,14 +572,14 @@ const testMessages = {
       },
       donations: {
         eyebrow: "관리",
-        title: "관리자 후원",
-        description: "결제 기록을 확인하고 검증된 수동 후원을 추가합니다.",
+        title: "관리자 후원 기록",
+        description: "결제 기록을 확인하고 검증된 수동 후원 기록을 추가합니다.",
         provider: "제공업체",
         status: "상태",
         amount: "금액",
         paidAt: "결제 시간(UTC)",
         transactionId: "거래 ID",
-        manualEntryTitle: "수동 결제 완료 후원",
+        manualEntryTitle: "수동 결제 완료 후원 기록",
         manualEntryDescription: "기존 사용자의 이메일 또는 사용자 ID로 결제 완료 수동 기록을 하나 만듭니다.",
         userIdentifier: "이메일 또는 사용자 ID",
         amountCents: "금액(센트)",
@@ -588,6 +591,7 @@ const testMessages = {
           stripe: "Stripe",
           paypal: "PayPal",
           manual: "수동",
+          dodo: "Dodo Payments",
         },
         statuses: {
           pending: "대기 중",
@@ -681,10 +685,10 @@ describe("admin pages", () => {
     expect(requireAdminMock).toHaveBeenCalledWith("zh-Hant");
     expect(screen.getByText("管理工具")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "管理後台" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /捐贈/ }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /支持/ }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
     expect(screen.getAllByRole("link", { name: /版本發布/ }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
     expect(screen.getAllByRole("link", { name: /稽核紀錄/ }).some((link) => link.getAttribute("href") === "/admin/audit-logs")).toBe(true);
-    expect(screen.getByText("檢視付款服務商記錄、狀態與交易 ID。")).toBeInTheDocument();
+    expect(screen.getByText("檢視支持記錄、狀態與交易 ID。")).toBeInTheDocument();
   });
 
   it("queries and renders donations for admins", async () => {
@@ -721,11 +725,11 @@ describe("admin pages", () => {
     expect(from).toHaveBeenCalledWith("donations");
     expect(donationsQuery.select).toHaveBeenCalledWith("id,provider,status,amount,currency,provider_transaction_id,paid_at,created_at");
     expect(donationsQuery.order).toHaveBeenCalledWith("created_at", { ascending: false });
-    expect(screen.getByRole("heading", { name: "管理捐贈" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "人工已付款捐贈" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "管理支持記錄" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "人工已付款支持記錄" })).toBeInTheDocument();
     expect(screen.getByLabelText("電子郵件或使用者 ID")).toBeRequired();
     expect(screen.getByLabelText("原因")).toBeRequired();
-    expect(screen.getByRole("button", { name: "新增人工捐贈" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新增人工支持記錄" })).toBeInTheDocument();
     expect(screen.getByText("Stripe")).toBeInTheDocument();
     expect(screen.getByText("人工登錄")).toBeInTheDocument();
     expect(screen.queryByText("stripe")).not.toBeInTheDocument();
@@ -757,7 +761,7 @@ describe("admin pages", () => {
     render(element);
 
     expect(requireAdminMock).toHaveBeenCalledWith("ja");
-    expect(screen.getByRole("heading", { name: "管理者向け寄付" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "管理者向け応援記録" })).toBeInTheDocument();
     expect(screen.getByText("PayPal")).toBeInTheDocument();
     expect(screen.getByText("キャンセル済み")).toBeInTheDocument();
     expect(screen.queryByText("paypal")).not.toBeInTheDocument();
@@ -810,7 +814,7 @@ describe("admin pages", () => {
     expect(screen.queryByText("active")).not.toBeInTheDocument();
     expect(screen.getByText("2026년 4월 29일")).toBeInTheDocument();
     expect(screen.getByLabelText("사유")).toBeRequired();
-    expect(screen.getByRole("button", { name: "인증서 DON-2026-000001 폐기" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "폐기" })).toBeInTheDocument();
   });
 
   it("renders Japanese admin certificate enum labels", async () => {

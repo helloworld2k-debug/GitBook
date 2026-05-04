@@ -79,11 +79,8 @@
       "yearly": "年額相当の支援"
     },
     "checkoutDodo": "今すぐ支援する",
-    "checkoutStripe": "Stripe で支払う",
-    "checkoutPayPal": "PayPal で支払う",
     "oneTimeNote": "ダウンロード提供と継続開発を支える一回限りの支援です。",
-    "paymentNote": "カードと利用可能なローカル決済方法に対応した安全なチェックアウトです。支払い完了後に証明書が発行されます。",
-    "payPalUnavailable": "PayPal はまだ有効ではありません。PayPal の応援履歴と証明書発行は現在統合中です。"
+    "paymentNote": "Dodo Payments による安全なチェックアウトで、カードと利用可能なローカル決済方法に対応しています。支払い完了後に証明書が発行されます。"
   },
   "notifications": {
     "eyebrow": "通知センター",
@@ -200,7 +197,7 @@
       "eyebrow": "管理ツール",
       "title": "管理画面",
       "donationsTitle": "応援",
-      "donationsDescription": "決済プロバイダーの記録、ステータス、取引 ID を確認します。",
+      "donationsDescription": "応援記録、ステータス、取引 ID を確認します。",
       "certificatesTitle": "証明書",
       "certificatesDescription": "発行済み証明書の番号、種類、ステータス、発行日を確認します。",
       "auditLogsTitle": "監査ログ",
@@ -233,12 +230,12 @@
       "reason": "理由",
       "submitManualDonation": "手動応援を追加",
       "empty": "応援履歴はまだありません。",
-      "providers": {
-        "stripe": "Stripe",
-        "paypal": "PayPal",
-        "manual": "手動",
-        "dodo": "Dodo Payments"
-      },
+        "providers": {
+          "stripe": "Stripe",
+          "paypal": "PayPal",
+          "manual": "手動",
+          "dodo": "Dodo Payments"
+        },
       "statuses": {
         "pending": "保留中",
         "paid": "支払い済み",

@@ -79,11 +79,8 @@
       "yearly": "年度支持"
     },
     "checkoutDodo": "立即支持",
-    "checkoutStripe": "使用 Stripe 支付",
-    "checkoutPayPal": "使用 PayPal 支付",
     "oneTimeNote": "一次性支持，協助下載服務維持可用，也讓開發能持續推進。",
-    "paymentNote": "安全結帳，支援銀行卡與可用的本地支付方式。付款成功後會產生支持證書。",
-    "payPalUnavailable": "PayPal 尚未啟用，因為 PayPal 支持記錄與證書仍在整合中。"
+    "paymentNote": "透過 Dodo Payments 安全結帳，支援銀行卡與可用的本地支付方式。付款成功後會產生支持證書。"
   },
   "notifications": {
     "eyebrow": "通知中心",
@@ -200,7 +197,7 @@
       "eyebrow": "管理工具",
       "title": "管理後台",
       "donationsTitle": "支持",
-      "donationsDescription": "檢視付款服務商記錄、狀態與交易 ID。",
+      "donationsDescription": "檢視支持記錄、狀態與交易 ID。",
       "certificatesTitle": "證書",
       "certificatesDescription": "檢視已頒發的證書編號、類型、狀態與頒發日期。",
       "auditLogsTitle": "稽核紀錄",
@@ -233,12 +230,12 @@
       "reason": "原因",
       "submitManualDonation": "新增人工支持記錄",
       "empty": "尚無支持記錄。",
-      "providers": {
-        "stripe": "Stripe",
-        "paypal": "PayPal",
-        "manual": "人工登錄",
-        "dodo": "Dodo Payments"
-      },
+        "providers": {
+          "stripe": "Stripe",
+          "paypal": "PayPal",
+          "manual": "人工登錄",
+          "dodo": "Dodo Payments"
+        },
       "statuses": {
         "pending": "待處理",
         "paid": "已付款",

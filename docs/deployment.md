@@ -1,18 +1,17 @@
 # Deployment
 
-This guide covers a low-cost deployment path for the GitBook AI software donation site. It assumes Vercel for the Next.js app, Supabase for Auth and Postgres, Stripe for card checkout, and PayPal for PayPal checkout scaffolding.
+This guide covers a low-cost deployment path for the GitBook AI website. It assumes Vercel for the Next.js app, Supabase for Auth and Postgres, and Dodo Payments for hosted checkout and webhook processing.
 
-The current codebase is a deployable baseline, not a finished production launch. Stripe payment persistence and certificate generation are wired through the Stripe webhook. Supabase login UI and callback handling are implemented, but Auth providers and redirect allowlists still need deployment configuration. PayPal payments are not yet persisted to the `donations` table or used to generate certificates.
+The current codebase is a deployable baseline, not a finished production launch. Dodo Payments persistence and certificate generation are wired through the Dodo webhook. Supabase login UI and callback handling are implemented, but Auth providers and redirect allowlists still need deployment configuration.
 
 ## Services
 
 - **Vercel:** hosts the Next.js application and API routes.
 - **Supabase:** provides Postgres, row-level security, Auth, and server-side admin access.
-- **Stripe:** creates hosted checkout sessions and sends payment webhooks.
-- **PayPal:** creates hosted checkout orders, verifies webhooks, and captures approved orders. Donation persistence and certificate issuance still need to be completed before PayPal is enabled for real users.
+- **Dodo Payments:** creates hosted checkout sessions and sends payment webhooks for contribution records and certificate issuance.
 - **GitHub Releases or object storage:** hosts public software downloads. The current app points download links at release URLs in `src/config/site.ts`.
 
-This stack keeps fixed costs low: Vercel and Supabase can start on their free or low-cost tiers, while Stripe and PayPal charge transaction fees. For domestic and overseas users, use a custom domain, keep the app globally hosted on Vercel, and offer provider choices only after each provider has passed end-to-end persistence and certificate checks.
+This stack keeps fixed costs low: Vercel and Supabase can start on their free or low-cost tiers, while Dodo Payments charges transaction fees. For domestic and overseas users, use a custom domain, keep the app globally hosted on Vercel, and verify the full Dodo checkout and webhook flow end to end before launch.
 
 ## Environment Variables
 
@@ -24,24 +23,24 @@ Copy `.env.example` to `.env.local` for local development and set the same names
 | `NEXT_PUBLIC_SUPABASE_URL` | Public | Supabase project URL. Safe for browser use. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public | Supabase anon public key. Safe for browser use with RLS enabled. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only | Supabase service role key for webhooks and certificate generation. Never expose it to client code. |
-| `STRIPE_SECRET_KEY` | Server only | Stripe secret key. Use test mode locally and live mode in production. |
-| `STRIPE_WEBHOOK_SECRET` | Server only | Signing secret for the Stripe webhook endpoint. |
-| `PAYPAL_CLIENT_ID` | Server only | PayPal REST app client ID. |
-| `PAYPAL_CLIENT_SECRET` | Server only | PayPal REST app client secret. |
-| `PAYPAL_WEBHOOK_ID` | Server only | PayPal webhook ID used during signature verification. |
-| `PAYPAL_BASE_URL` | Server only | Use `https://api-m.sandbox.paypal.com` for sandbox and `https://api-m.paypal.com` for live. |
+| `DODO_PAYMENTS_API_KEY` | Server only | Dodo Payments API key for creating checkout sessions. |
+| `DODO_PAYMENTS_WEBHOOK_KEY` | Server only | Signing key for validating Dodo webhook events. |
+| `DODO_PAYMENTS_ENV` | Server only | Use `test` locally and switch to the production value for live checkout. |
+| `DODO_PRODUCT_MONTHLY` | Server only | Dodo product ID for the monthly support tier. |
+| `DODO_PRODUCT_QUARTERLY` | Server only | Dodo product ID for the quarterly support tier. |
+| `DODO_PRODUCT_YEARLY` | Server only | Dodo product ID for the yearly support tier. |
 
 ## Setup Order
 
 1. Create the Supabase project.
 2. Apply database migrations in order from `supabase/migrations`.
 3. Configure Supabase Auth and allowed redirect URLs.
-4. Create Stripe and PayPal sandbox apps and webhooks.
+4. Create Dodo Payments test products and webhook configuration.
 5. Create the Vercel project and add all environment variables.
-6. Deploy to Vercel preview and run sandbox checkout verification for each provider that is enabled.
+6. Deploy to Vercel preview and run Dodo test checkout verification.
 7. Bootstrap the first admin user in Supabase.
-8. Attach the production domain and update provider callback/webhook allowlists.
-9. Switch Stripe, and PayPal only after its persistence work is complete, from sandbox/test credentials to live credentials.
+8. Attach the production domain and update callback and webhook allowlists.
+9. Switch Dodo Payments from test credentials to live credentials.
 10. Run the production checklist before announcing the site.
 
 ## Supabase
@@ -62,12 +61,12 @@ If you are not using the Supabase CLI, open the SQL editor and run:
 4. `supabase/migrations/0004_public_display_name_limit.sql`
 5. `supabase/migrations/0005_admin_audit_rpcs.sql`
 
-The migrations create profiles, donation tiers, sponsor levels, donations, certificates, admin audit logs, row-level security policies, and certificate number functions.
+The migrations create profiles, support tiers, sponsor levels, payment records, certificates, admin audit logs, row-level security policies, and certificate number functions.
 
 Configure Auth:
 
 - Enable the sign-in methods the handoff team wants to support: email/password, Google, and GitHub.
-- Verify the interactive login UI and `/auth/callback` route against the deployed Supabase project before relying on donation or admin flows through the browser.
+- Verify the interactive login UI and `/auth/callback` route against the deployed Supabase project before relying on contribution or admin flows through the browser.
 - Add local and deployed URLs to Supabase Auth redirect allowlists:
   - `http://localhost:3000/**`
   - `https://your-vercel-preview-domain.vercel.app/**`
@@ -92,40 +91,22 @@ set is_admin = false
 where email = 'admin@example.com';
 ```
 
-## Stripe
+## Dodo Payments
 
-Use Stripe test mode until the full flow has been verified.
+Use the Dodo Payments test environment until the full flow has been verified.
 
-1. Create or open a Stripe account.
-2. Copy the test secret key to `STRIPE_SECRET_KEY`.
-3. Add a webhook endpoint:
-   - Local with Stripe CLI: `http://localhost:3000/api/webhooks/stripe`
-   - Production: `https://your-domain.com/api/webhooks/stripe`
-4. Subscribe at minimum to `checkout.session.completed`.
-5. Copy the endpoint signing secret to `STRIPE_WEBHOOK_SECRET`.
-6. Create a donation from `/en/donate` and confirm the webhook inserts a paid donation and generates certificates.
+1. Create or open a Dodo Payments account.
+2. Create the three support products used by the site.
+3. Copy the test API key to `DODO_PAYMENTS_API_KEY`.
+4. Set `DODO_PAYMENTS_ENV=test`.
+5. Copy each product ID into `DODO_PRODUCT_MONTHLY`, `DODO_PRODUCT_QUARTERLY`, and `DODO_PRODUCT_YEARLY`.
+6. Add a webhook endpoint:
+   - Local through a tunnel: `https://your-tunnel.example/api/webhooks/dodo`
+   - Production: `https://your-domain.com/api/webhooks/dodo`
+7. Copy the webhook signing key to `DODO_PAYMENTS_WEBHOOK_KEY`.
+8. Create a contribution from `/en/contributions` and confirm the webhook inserts a paid record, generates certificates, and updates the cloud sync entitlement.
 
-The app creates Stripe Checkout Sessions dynamically from `src/config/site.ts` donation tiers. Keep the code tiers and database seed tiers aligned when changing amounts.
-
-## PayPal
-
-Use PayPal sandbox until the full flow has been verified.
-
-1. Create a PayPal REST app in the developer dashboard.
-2. Copy the sandbox client ID and secret to `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET`.
-3. Set `PAYPAL_BASE_URL=https://api-m.sandbox.paypal.com`.
-4. Add a webhook endpoint:
-   - Local through a tunnel: `https://your-tunnel.example/api/webhooks/paypal`
-   - Production: `https://your-domain.com/api/webhooks/paypal`
-5. Subscribe to:
-   - `CHECKOUT.ORDER.APPROVED`
-   - `PAYMENT.CAPTURE.COMPLETED`
-6. Copy the webhook ID to `PAYPAL_WEBHOOK_ID`.
-7. Run a sandbox checkout and confirm PayPal approval redirects back to the dashboard.
-
-Before enabling PayPal for real users, complete PayPal donation persistence so a captured PayPal payment inserts a paid `donations` row and generates certificates just like Stripe. Until then, treat PayPal as checkout/webhook scaffolding only.
-
-For live mode, replace credentials with live app credentials and set `PAYPAL_BASE_URL=https://api-m.paypal.com`.
+The app creates Dodo checkout sessions dynamically from `src/config/site.ts` support tiers. Keep the code tiers, Dodo product mapping, and database seed tiers aligned when changing amounts.
 
 ## Vercel
 
@@ -153,7 +134,7 @@ Use a custom domain for user trust and payment provider configuration.
 3. Wait for HTTPS certificate provisioning.
 4. Set `NEXT_PUBLIC_SITE_URL=https://your-domain.com` in Vercel production variables.
 5. Update Supabase Auth redirect allowlists.
-6. Update Stripe and PayPal webhook URLs to the custom domain.
+6. Update the Dodo webhook URL to the custom domain.
 7. Keep one canonical domain and redirect alternates to it.
 
 For domestic and overseas access, verify the domain resolves reliably from expected user regions before launch. If domestic access is a hard requirement in a restricted network environment, validate Vercel reachability early and consider a region-specific mirror or alternate hosting path before production launch.
@@ -164,11 +145,11 @@ For domestic and overseas access, verify the domain resolves reliably from expec
 - Only variables prefixed with `NEXT_PUBLIC_` may be read by browser code.
 - Keep `SUPABASE_SERVICE_ROLE_KEY` limited to server routes and server utilities.
 - Keep Supabase RLS enabled. The anon key relies on RLS policies for data protection.
-- Rotate Stripe, PayPal, and Supabase service role secrets after accidental exposure or staff changes.
+- Rotate Dodo Payments and Supabase service role secrets after accidental exposure or staff changes.
 - Use separate test/sandbox and live credentials.
-- Verify webhook signatures before trusting provider events. The current Stripe and PayPal webhook routes perform signature verification.
+- Verify webhook signatures before trusting provider events. The current Dodo webhook route performs signature verification.
 - Restrict admin access to named users and audit admin changes manually until a fuller admin workflow exists.
-- Do not treat public download URLs as proof of payment. Donations are voluntary and downloads are public.
+- Do not treat public download URLs as proof of payment. Contributions are voluntary and downloads are public.
 
 ## Production Checklist
 
@@ -178,10 +159,8 @@ For domestic and overseas access, verify the domain resolves reliably from expec
 - [ ] First admin user exists in Supabase Auth and `profiles.is_admin` set to `true`.
 - [ ] Vercel production environment variables are complete and use live credentials.
 - [ ] `NEXT_PUBLIC_SITE_URL` matches the production custom domain.
-- [ ] Stripe live webhook points to `/api/webhooks/stripe` and has the live signing secret configured.
-- [ ] Stripe test donation creates a paid donation and certificate in a non-production environment.
-- [ ] PayPal persistence is implemented before PayPal is shown to real users.
-- [ ] PayPal sandbox donation creates a paid donation and certificate in a non-production environment before live PayPal credentials are enabled.
+- [ ] Dodo live webhook points to `/api/webhooks/dodo` and has the live signing key configured.
+- [ ] Dodo test contribution creates a paid record and certificate in a non-production environment.
 - [ ] Public download links point to the intended release assets.
 - [ ] DNS, HTTPS, apex, and `www` behavior are verified.
 - [ ] `npm run lint`, `npm test`, and `npm run build` pass on the deployment branch.

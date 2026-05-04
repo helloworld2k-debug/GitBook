@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -114,12 +115,13 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
                   required
                 />
               </label>
-              <AdminSubmitButton
+              <ConfirmActionButton
                 className="min-h-11 self-end rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                confirmLabel={t("donations.submitManualDonation")}
                 pendingLabel={t("common.processing")}
               >
                 {t("donations.submitManualDonation")}
-              </AdminSubmitButton>
+              </ConfirmActionButton>
             </form>
           </AdminCard>
           <AdminCard className="mt-6">

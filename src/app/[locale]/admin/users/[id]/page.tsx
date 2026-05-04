@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { isOwnerProfile, requireAdmin } from "@/lib/auth/guards";
@@ -304,9 +305,9 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                           <input name="locale" type="hidden" value={locale} />
                           <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
                           <input name="trial_redemption_id" type="hidden" value={trial.id} />
-                          <AdminSubmitButton className="text-sm font-semibold text-red-700" pendingLabel={adminT("common.processing")}>
+                          <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("unbind")} pendingLabel={adminT("common.processing")}>
                             {t("unbind")}
-                          </AdminSubmitButton>
+                          </ConfirmActionButton>
                         </form>
                       ) : null}
                     </div>
@@ -397,9 +398,9 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                         <input name="locale" type="hidden" value={locale} />
                         <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
                         <input name="desktop_session_id" type="hidden" value={session.id} />
-                        <AdminSubmitButton className="text-sm font-semibold text-red-700" pendingLabel={adminT("common.processing")}>
+                        <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={adminT("licenses.revoke")} pendingLabel={adminT("common.processing")}>
                           {adminT("licenses.revoke")}
-                        </AdminSubmitButton>
+                        </ConfirmActionButton>
                       </form>
                     )}
                   </div>
@@ -445,9 +446,9 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                         <input name="locale" type="hidden" value={locale} />
                         <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
                         <input name="cloud_sync_lease_id" type="hidden" value={lease.id} />
-                        <AdminSubmitButton className="text-sm font-semibold text-red-700" pendingLabel={adminT("common.processing")}>
+                        <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={adminT("licenses.revoke")} pendingLabel={adminT("common.processing")}>
                           {adminT("licenses.revoke")}
-                        </AdminSubmitButton>
+                        </ConfirmActionButton>
                       </form>
                     )}
                   </div>

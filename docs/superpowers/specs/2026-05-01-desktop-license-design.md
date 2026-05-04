@@ -11,7 +11,7 @@ The desktop app will not read Supabase tables directly and will not collect pass
 - Basic software usage is free.
 - Basic resource downloads are free.
 - Cloud sync is the only advanced feature in the first version.
-- Cloud sync requires the user to be registered, logged in, online, and inside either a valid donation entitlement period or a valid redeemed trial period.
+- Cloud sync requires the user to be registered, logged in, online, and inside either a valid paid contribution entitlement period or a valid redeemed trial period.
 - New registered users do not automatically receive a trial. They must redeem a trial code on the website to receive 3 days of cloud sync access.
 - Trial codes are created and maintained in the admin system, with editable active periods for future maintenance.
 - Trial eligibility is also bound to the computer machine code. One machine code can receive the 3-day trial only once, even if a different account or different trial code is used later on the same computer.
@@ -519,7 +519,7 @@ The first implementation should include:
 3. Admin trial code management.
 4. Website trial code redemption flow.
 5. Machine-code trial claim service.
-6. Stripe/manual donation success integration that extends `cloud_sync`.
+6. Dodo/manual paid contribution success integration that extends `cloud_sync`.
 7. Desktop login callback and auth-code exchange API.
 8. License status API.
 9. Cloud sync activate, heartbeat, and release APIs.

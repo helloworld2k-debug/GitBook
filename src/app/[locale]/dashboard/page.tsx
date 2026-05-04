@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BadgeCheck, Cloud, CreditCard, KeyRound, ShieldCheck, Sparkles, UserCircle } from "lucide-react";
+import { FormStatusBanner } from "@/components/form-status-banner";
+import { FormSubmitButton } from "@/components/form-submit-button";
 import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
@@ -18,6 +20,7 @@ type DashboardPageProps = {
     locale: string;
   }>;
   searchParams?: Promise<{
+    payment?: string;
     profile?: string;
     password?: string;
     trial?: string;
@@ -70,6 +73,7 @@ function DashboardCard({ children, className = "" }: { children: React.ReactNode
 export default async function DashboardPage({ params, searchParams }: DashboardPageProps) {
   const { locale } = await params;
   const statusParams = await searchParams;
+  const paymentStatus = statusParams?.payment;
   const profileStatus = statusParams?.profile;
   const passwordStatus = statusParams?.password;
   const trialStatus = statusParams?.trial;
@@ -204,6 +208,14 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                     </p>
                     <h1 className="mt-5 text-4xl font-semibold tracking-normal text-white sm:text-5xl">{t("title")}</h1>
                     <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300">{t("subtitle")}</p>
+                    <div className="mt-5 grid gap-3">
+                      {paymentStatus === "dodo-success" ? (
+                        <FormStatusBanner message="Your contribution was received. We are preparing your certificate and access updates." />
+                      ) : null}
+                      {paymentStatus === "cancelled" ? (
+                        <FormStatusBanner message="Checkout was cancelled. You can review the support tiers and try again when ready." tone="warning" />
+                      ) : null}
+                    </div>
                   </div>
                   <div className="rounded-lg border border-cyan-300/15 bg-slate-950/70 p-4">
                     <div className="flex items-center gap-3">
@@ -256,16 +268,8 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                 </div>
                 <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.55fr)]">
                   <form action={redeemTrial} className="space-y-4">
-                    {trialMessage && trialStatus === "saved" ? (
-                      <p className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100">
-                        {trialMessage}
-                      </p>
-                    ) : null}
-                    {trialMessage && trialStatus !== "saved" ? (
-                      <p className="rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">
-                        {trialMessage}
-                      </p>
-                    ) : null}
+                    {trialMessage && trialStatus === "saved" ? <FormStatusBanner message={trialMessage} /> : null}
+                    {trialMessage && trialStatus !== "saved" ? <FormStatusBanner message={trialMessage} tone="error" /> : null}
                     <p className="rounded-md border border-cyan-300/15 bg-cyan-300/10 px-3 py-3 text-sm leading-6 text-cyan-50">
                       {t("trial.bindingHelp")}
                     </p>
@@ -277,12 +281,12 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                         required
                       />
                     </label>
-                    <button
-                      type="submit"
+                    <FormSubmitButton
                       className="neon-button inline-flex min-h-11 items-center justify-center rounded-md px-4 text-sm font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                      pendingLabel={t("trial.submit")}
                     >
                       {t("trial.submit")}
-                    </button>
+                    </FormSubmitButton>
                   </form>
                   <div className="rounded-md border border-cyan-300/15 bg-slate-950/70 p-4">
                     <p className="flex items-center gap-2 text-sm font-semibold text-white">
@@ -372,12 +376,8 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                   </h2>
                 </div>
                 <form action={updateProfile} className="space-y-4 px-5 py-5">
-                  {profileStatus === "saved" ? (
-                    <p className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100">{t("profileSaved")}</p>
-                  ) : null}
-                  {profileStatus === "error" ? (
-                    <p className="rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">{t("profileError")}</p>
-                  ) : null}
+                  {profileStatus === "saved" ? <FormStatusBanner message={t("profileSaved")} /> : null}
+                  {profileStatus === "error" ? <FormStatusBanner message={t("profileError")} tone="error" /> : null}
                   <div>
                     <p className="text-sm font-medium text-slate-100">{t("email")}</p>
                     <p className="mt-2 rounded-md border border-cyan-300/15 bg-slate-950/70 px-3 py-3 text-sm text-slate-300">
@@ -394,12 +394,12 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                       placeholder={t("displayNamePlaceholder")}
                     />
                   </label>
-                  <button
-                    type="submit"
+                  <FormSubmitButton
                     className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/50 hover:bg-cyan-300/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                    pendingLabel={t("saveProfile")}
                   >
                     {t("saveProfile")}
-                  </button>
+                  </FormSubmitButton>
                 </form>
               </DashboardCard>
 
@@ -411,15 +411,9 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                   </h2>
                 </div>
                 <form action={updatePassword} className="space-y-4 px-5 py-5">
-                  {passwordStatus === "saved" ? (
-                    <p className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100">{t("passwordSaved")}</p>
-                  ) : null}
-                  {passwordStatus === "mismatch" ? (
-                    <p className="rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">{t("passwordMismatch")}</p>
-                  ) : null}
-                  {passwordStatus === "error" ? (
-                    <p className="rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">{t("passwordError")}</p>
-                  ) : null}
+                  {passwordStatus === "saved" ? <FormStatusBanner message={t("passwordSaved")} /> : null}
+                  {passwordStatus === "mismatch" ? <FormStatusBanner message={t("passwordMismatch")} tone="error" /> : null}
+                  {passwordStatus === "error" ? <FormStatusBanner message={t("passwordError")} tone="error" /> : null}
                   <label className="block text-sm font-medium text-slate-100">
                     {t("newPassword")}
                     <input className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-sm text-white outline-none transition-colors focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20" minLength={8} name="password" required type="password" />
@@ -428,12 +422,12 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                     {t("confirmPassword")}
                     <input className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-sm text-white outline-none transition-colors focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20" minLength={8} name="confirm_password" required type="password" />
                   </label>
-                  <button
-                    type="submit"
+                  <FormSubmitButton
                     className="inline-flex min-h-11 items-center justify-center rounded-md border border-violet-300/20 bg-violet-300/10 px-4 text-sm font-semibold text-violet-100 transition-colors hover:border-violet-300/50 hover:bg-violet-300/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+                    pendingLabel={t("savePassword")}
                   >
                     {t("savePassword")}
-                  </button>
+                  </FormSubmitButton>
                 </form>
               </DashboardCard>
             </aside>

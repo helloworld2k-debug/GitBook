@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { KeyRound } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
+import { FormStatusBanner } from "@/components/form-status-banner";
+import { FormSubmitButton } from "@/components/form-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { updateResetPassword } from "./actions";
 
@@ -39,16 +41,8 @@ export default async function ResetPasswordPage({ params, searchParams }: ResetP
             <h1 className="mt-5 text-3xl font-semibold tracking-normal text-white">{t("title")}</h1>
             <p className="mt-3 text-sm leading-6 text-slate-300">{t("subtitle")}</p>
             <form action={updatePassword} className="mt-6 space-y-4">
-              {query?.status === "mismatch" ? (
-                <p className="rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">
-                  {t("mismatch")}
-                </p>
-              ) : null}
-              {query?.status === "error" ? (
-                <p className="rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">
-                  {t("error")}
-                </p>
-              ) : null}
+              {query?.status === "mismatch" ? <FormStatusBanner message={t("mismatch")} tone="error" /> : null}
+              {query?.status === "error" ? <FormStatusBanner message={t("error")} tone="error" /> : null}
               <label className="block text-sm font-medium text-slate-200" htmlFor="reset-password">
                 {t("newPassword")}
               </label>
@@ -73,12 +67,12 @@ export default async function ResetPasswordPage({ params, searchParams }: ResetP
                 required
                 type="password"
               />
-              <button
+              <FormSubmitButton
                 className="neon-button inline-flex min-h-11 w-full items-center justify-center rounded-md px-4 text-sm font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
-                type="submit"
+                pendingLabel={t("submit")}
               >
                 {t("submit")}
-              </button>
+              </FormSubmitButton>
             </form>
           </div>
         </section>

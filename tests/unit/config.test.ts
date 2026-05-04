@@ -13,6 +13,13 @@ describe("site config", () => {
     expect(siteConfig.description).toContain("voluntary contributions");
   });
 
+  it("keeps public download links defined", () => {
+    expect(siteConfig.githubReleasesUrl).toMatch(/^https:\/\//);
+    expect(siteConfig.downloadLinks.macos).toMatch(/^https:\/\//);
+    expect(siteConfig.downloadLinks.windows).toMatch(/^https:\/\//);
+    expect(siteConfig.downloadLinks.linux).toMatch(/^https:\/\//);
+  });
+
   it("defines one-time USD donation tiers", () => {
     expect(donationTiers).toEqual([
       { code: "monthly", labelKey: "donate.tiers.monthly", amount: 500, currency: "usd" },

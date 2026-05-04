@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -136,9 +137,13 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
                           <input name="locale" type="hidden" value={locale} />
                           <input name="return_to" type="hidden" value="/admin/notifications" />
                           <input name="notification_id" type="hidden" value={notification.id} />
-                          <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={t("common.processing")}>
+                          <ConfirmActionButton
+                            className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700"
+                            confirmLabel={notification.published_at ? t("notifications.unpublish") : t("notifications.publish")}
+                            pendingLabel={t("common.processing")}
+                          >
                             {notification.published_at ? t("notifications.unpublish") : t("notifications.publish")}
-                          </AdminSubmitButton>
+                          </ConfirmActionButton>
                         </form>
                       </td>
                     </tr>

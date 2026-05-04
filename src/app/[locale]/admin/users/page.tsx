@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
@@ -185,9 +186,9 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                                       <input name="locale" type="hidden" value={locale} />
                                       <input name="return_to" type="hidden" value="/admin/users" />
                                       <input name="trial_redemption_id" type="hidden" value={trial.id} />
-                                      <AdminSubmitButton className="text-sm font-semibold text-red-700" pendingLabel={adminT("common.processing")}>
+                                      <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("unbind")} pendingLabel={adminT("common.processing")}>
                                         {t("unbind")}
-                                      </AdminSubmitButton>
+                                      </ConfirmActionButton>
                                     </form>
                                   ) : null}
                                 </div>

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/site-header";
+import { FormStatusBanner } from "@/components/form-status-banner";
+import { FormSubmitButton } from "@/components/form-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getVisibleSupportChannels } from "@/config/support";
 import { Link } from "@/i18n/routing";
@@ -102,16 +104,8 @@ export default async function SupportPage({ params, searchParams }: SupportPageP
 
           <section className="glass-panel rounded-lg p-5">
             <h2 className="text-lg font-semibold text-white">{t("formTitle")}</h2>
-            {status?.feedback === "saved" ? (
-              <p className="mt-4 rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100">
-                {t("success")}
-              </p>
-            ) : null}
-            {status?.feedback === "error" ? (
-              <p className="mt-4 rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100">
-                {t("error")}
-              </p>
-            ) : null}
+            {status?.feedback === "saved" ? <div className="mt-4"><FormStatusBanner message={t("success")} /></div> : null}
+            {status?.feedback === "error" ? <div className="mt-4"><FormStatusBanner message={t("error")} tone="error" /></div> : null}
             {user ? (
               <form action={submitFeedback} className="mt-4 grid gap-4">
                 <label className="grid gap-2 text-sm font-medium text-slate-100">
@@ -126,9 +120,9 @@ export default async function SupportPage({ params, searchParams }: SupportPageP
                   {t("message")}
                   <textarea className="min-h-36 rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 py-3 text-white" maxLength={4000} name="message" required />
                 </label>
-                <button className="neon-button min-h-11 rounded-md px-4 text-sm font-semibold text-white" type="submit">
+                <FormSubmitButton className="neon-button min-h-11 rounded-md px-4 text-sm font-semibold text-white" pendingLabel={t("submit")}>
                   {t("submit")}
-                </button>
+                </FormSubmitButton>
               </form>
             ) : (
               <div className="mt-4 rounded-md border border-cyan-300/20 bg-slate-950/60 p-4">

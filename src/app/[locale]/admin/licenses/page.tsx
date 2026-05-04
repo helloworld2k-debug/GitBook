@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
@@ -281,12 +282,13 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                               <input name="locale" type="hidden" value={locale} />
                               <input name="return_to" type="hidden" value="/admin/licenses" />
                               <input name="trial_code_id" type="hidden" value={trialCode.id} />
-                              <AdminSubmitButton
+                              <ConfirmActionButton
                                 className="inline-flex min-h-10 items-center rounded-md border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-700 transition-colors hover:border-red-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+                                confirmLabel={t("licenses.delete")}
                                 pendingLabel={t("common.processing")}
                               >
                                 {t("licenses.delete")}
-                              </AdminSubmitButton>
+                              </ConfirmActionButton>
                             </form>
                           </div>
                         </td>
@@ -480,12 +482,13 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                               <input name="locale" type="hidden" value={locale} />
                               <input name="return_to" type="hidden" value="/admin/licenses" />
                               <input name="desktop_session_id" type="hidden" value={session.id} />
-                              <AdminSubmitButton
+                              <ConfirmActionButton
                                 className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                                confirmLabel={t("licenses.revoke")}
                                 pendingLabel={t("common.processing")}
                               >
                                 {t("licenses.revoke")}
-                              </AdminSubmitButton>
+                              </ConfirmActionButton>
                             </form>
                           )}
                         </td>
@@ -542,12 +545,13 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                               <input name="locale" type="hidden" value={locale} />
                               <input name="return_to" type="hidden" value="/admin/licenses" />
                               <input name="cloud_sync_lease_id" type="hidden" value={lease.id} />
-                              <AdminSubmitButton
+                              <ConfirmActionButton
                                 className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                                confirmLabel={t("licenses.revoke")}
                                 pendingLabel={t("common.processing")}
                               >
                                 {t("licenses.revoke")}
-                              </AdminSubmitButton>
+                              </ConfirmActionButton>
                             </form>
                           )}
                         </td>

@@ -87,11 +87,8 @@
       "yearly": "Yearly Support"
     },
     "checkoutDodo": "Contribute now",
-    "checkoutStripe": "Pay with Stripe",
-    "checkoutPayPal": "Pay with PayPal",
     "oneTimeNote": "A one-time contribution that helps keep downloads available and development moving.",
-    "paymentNote": "Secure checkout for cards and supported local payment methods. A certificate is issued after successful payment.",
-    "payPalUnavailable": "PayPal is not enabled yet because PayPal contribution records and certificates are still being integrated."
+    "paymentNote": "Secure checkout with Dodo Payments for cards and supported local payment methods. A certificate is issued after successful payment."
   },
   "notifications": {
     "eyebrow": "Notification center",
@@ -208,7 +205,7 @@
       "eyebrow": "Admin tools",
       "title": "Admin",
       "donationsTitle": "Contributions",
-      "donationsDescription": "Review payment provider records, statuses, and transaction IDs.",
+      "donationsDescription": "Review contribution records, statuses, and transaction IDs.",
       "certificatesTitle": "Certificates",
       "certificatesDescription": "Review issued certificate numbers, types, statuses, and issue dates.",
       "releasesTitle": "Releases",
@@ -258,12 +255,12 @@
       "reason": "Reason",
       "submitManualDonation": "Add manual contribution",
       "empty": "No contributions found.",
-      "providers": {
-        "stripe": "Stripe",
-        "paypal": "PayPal",
-        "manual": "Manual",
-        "dodo": "Dodo Payments"
-      },
+        "providers": {
+          "stripe": "Stripe",
+          "paypal": "PayPal",
+          "manual": "Manual",
+          "dodo": "Dodo Payments"
+        },
       "statuses": {
         "pending": "Pending",
         "paid": "Paid",

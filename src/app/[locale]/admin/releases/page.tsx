@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { SOFTWARE_RELEASES_BUCKET, type ReleaseClient, type SoftwareRelease } from "@/lib/releases/software-releases";
@@ -160,9 +161,13 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                         <input name="return_to" type="hidden" value="/admin/releases" />
                         <input name="release_id" type="hidden" value={release.id} />
                         <input name="is_published" type="hidden" value={release.isPublished ? "false" : "true"} />
-                        <AdminSubmitButton className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={t("common.processing")}>
+                        <ConfirmActionButton
+                          className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700"
+                          confirmLabel={release.isPublished ? t("releases.unpublish") : t("releases.publish")}
+                          pendingLabel={t("common.processing")}
+                        >
                           {release.isPublished ? t("releases.unpublish") : t("releases.publish")}
-                        </AdminSubmitButton>
+                        </ConfirmActionButton>
                       </form>
                     </div>
                   </li>

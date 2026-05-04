@@ -111,6 +111,28 @@ describe("LoginForm", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not sign in. Check your email and password.");
   });
 
+  it("disables the password submit button while a sign-in request is pending", async () => {
+    let resolveSignIn: ((value: { error: null }) => void) | null = null;
+    signInWithPasswordMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSignIn = resolve;
+      }),
+    );
+
+    renderLoginForm();
+
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "friend@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "correct-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in with email" }));
+
+    expect(screen.getByRole("button", { name: "Signing in..." })).toBeDisabled();
+
+    resolveSignIn?.({ error: null });
+    await waitFor(() => {
+      expect(locationAssign).toHaveBeenCalledWith("/en/contributions");
+    });
+  });
+
   it("registers with email and password and requests email verification", async () => {
     renderLoginForm();
 

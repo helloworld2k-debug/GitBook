@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -117,15 +118,16 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
                                 placeholder={t("certificates.revokeReason")}
                                 required
                               />
-                              <AdminSubmitButton
+                              <ConfirmActionButton
                                 aria-label={t("certificates.revokeAriaLabel", {
                                   certificateNumber: certificate.certificate_number,
                                 })}
                                 className="min-h-10 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                                confirmLabel={t("certificates.revoke")}
                                 pendingLabel={t("common.processing")}
                               >
                                 {t("certificates.revoke")}
-                              </AdminSubmitButton>
+                              </ConfirmActionButton>
                             </form>
                           ) : null}
                         </td>

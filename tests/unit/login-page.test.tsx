@@ -40,7 +40,7 @@ vi.mock("next-intl/server", () => ({
       passwordResetSent: "Check your email for a password reset link.",
       passwordResetSubmit: "Send reset email",
       passwordResetTitle: "Reset password",
-      privacyNote: "We only use your account for donations and certificates.",
+      privacyNote: "We only use your account for contribution records and certificates.",
       providersLabel: "Other sign-in options",
       registerTab: "Register",
       registrationSuccess: "Check your email to verify your account before signing in.",
