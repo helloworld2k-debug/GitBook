@@ -4,6 +4,7 @@ import { sanitizeNextPath } from "@/lib/auth/guards";
 
 const createSupabaseServerClientMock = vi.hoisted(() => vi.fn());
 const exchangeCodeForSessionMock = vi.hoisted(() => vi.fn());
+const verifyOtpMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: createSupabaseServerClientMock,
@@ -46,9 +47,11 @@ describe("auth callback route", () => {
     createSupabaseServerClientMock.mockResolvedValue({
       auth: {
         exchangeCodeForSession: exchangeCodeForSessionMock,
+        verifyOtp: verifyOtpMock,
       },
     });
     exchangeCodeForSessionMock.mockResolvedValue({ data: { session: { access_token: "token" } }, error: null });
+    verifyOtpMock.mockResolvedValue({ data: { session: { access_token: "token" } }, error: null });
   });
 
   it("exchanges the code and redirects to a safe next path", async () => {
@@ -84,6 +87,15 @@ describe("auth callback route", () => {
 
     expect(exchangeCodeForSessionMock).toHaveBeenCalledWith("abc123");
     expect(response.headers.get("location")).toBe("https://gitbookai.example/ja/reset-password");
+  });
+
+  it("verifies signup email links that use token_hash and redirects to the requested page", async () => {
+    const response = await GET(
+      new Request("https://gitbookai.example/auth/callback?token_hash=hash123&type=signup&next=%2Fen%2Fcontributions"),
+    );
+
+    expect(verifyOtpMock).toHaveBeenCalledWith({ token_hash: "hash123", type: "signup" });
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/en/dashboard?welcome=verified");
   });
 
   it("redirects to login with an error when the code is missing", async () => {

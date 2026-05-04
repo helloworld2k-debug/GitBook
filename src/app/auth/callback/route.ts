@@ -16,12 +16,26 @@ export async function GET(request: Request) {
   const requestedNext = requestUrl.searchParams.get("next");
   const nextPath = sanitizeNextPath(requestedNext, getLocaleDashboardPath(getLocaleFromPath(requestedNext)));
   const code = requestUrl.searchParams.get("code");
+  const tokenHash = requestUrl.searchParams.get("token_hash");
+  const type = requestUrl.searchParams.get("type");
+
+  const supabase = await createSupabaseServerClient();
+
+  if (tokenHash && type === "signup") {
+    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "signup" });
+
+    if (error) {
+      return buildLoginRedirect(requestUrl, "callback", nextPath);
+    }
+
+    const locale = getLocaleFromPath(nextPath);
+    return NextResponse.redirect(new URL(`/${locale}/dashboard?welcome=verified`, requestUrl.origin));
+  }
 
   if (!code) {
     return buildLoginRedirect(requestUrl, "missing-code", nextPath);
   }
 
-  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {

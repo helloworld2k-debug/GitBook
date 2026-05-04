@@ -251,4 +251,48 @@ describe("dashboard page", () => {
       "Your contribution was received. We are preparing your certificate and access updates.",
     );
   });
+
+  it("shows a welcome banner after email verification succeeds", async () => {
+    mocks.requireUser.mockResolvedValue({
+      email: "ada@example.com",
+      id: "user-1",
+      user_metadata: { name: "Ada Lovelace" },
+    });
+
+    const emptyQuery = createThenableQuery({ data: [], error: null });
+    const countQuery = createThenableQuery({ count: 0, error: null });
+    const profileQuery = createThenableQuery({
+      data: {
+        display_name: "Ada Lovelace",
+        email: "ada@example.com",
+      },
+      error: null,
+    });
+    const entitlementQuery = createThenableQuery({ data: null, error: null });
+    const trialQuery = createThenableQuery({ data: null, error: null });
+    const tableQueues = {
+      certificates: [countQuery],
+      donations: [countQuery, emptyQuery],
+      license_entitlements: [entitlementQuery],
+      profiles: [profileQuery],
+      trial_code_redemptions: [trialQuery],
+    };
+    const from = vi.fn((table: keyof typeof tableQueues) => tableQueues[table].shift());
+
+    mocks.createSupabaseServerClient.mockResolvedValue({ from });
+
+    render(
+      await DashboardPage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({ welcome: "verified" }),
+      } as {
+        params: Promise<{ locale: string }>;
+        searchParams: Promise<{ welcome: string }>;
+      }),
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Your email has been verified and your account is ready.",
+    );
+  });
 });

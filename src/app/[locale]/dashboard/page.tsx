@@ -24,6 +24,7 @@ type DashboardPageProps = {
     profile?: string;
     password?: string;
     trial?: string;
+    welcome?: string;
   }>;
 };
 
@@ -77,6 +78,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
   const profileStatus = statusParams?.profile;
   const passwordStatus = statusParams?.password;
   const trialStatus = statusParams?.trial;
+  const welcomeStatus = statusParams?.welcome;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -209,6 +211,9 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                     <h1 className="mt-5 text-4xl font-semibold tracking-normal text-white sm:text-5xl">{t("title")}</h1>
                     <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300">{t("subtitle")}</p>
                     <div className="mt-5 grid gap-3">
+                      {welcomeStatus === "verified" ? (
+                        <FormStatusBanner message="Your email has been verified and your account is ready." />
+                      ) : null}
                       {paymentStatus === "dodo-success" ? (
                         <FormStatusBanner message="Your contribution was received. We are preparing your certificate and access updates." />
                       ) : null}
