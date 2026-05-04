@@ -34,7 +34,7 @@ vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async (namespace: "certificate") => {
     const messages = {
       brand: "GitBook AI",
-      title: "후원 인증서",
+      title: "감사장",
       description: "독립 소프트웨어 개발을 위한 의미 있는 후원에 감사드리며 이 인증서를 드립니다.",
       amount: "후원 금액",
       presentedTo: "수여 대상",
@@ -139,7 +139,7 @@ describe("certificate detail page", () => {
 
     render(await CertificatePage({ params: Promise.resolve({ id: "cert-1", locale: "ko" }) }));
 
-    expect(screen.getByRole("heading", { name: "후원 인증서" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "감사장" })).toBeInTheDocument();
     expect(screen.getByLabelText("후원 인증서")).toHaveClass("overflow-hidden", "rounded-lg");
     expect(screen.getByLabelText("후원 인증서")).toHaveAttribute("data-certificate-template", "yearly");
     expect(screen.getByTestId("certificate-background")).toHaveStyle({

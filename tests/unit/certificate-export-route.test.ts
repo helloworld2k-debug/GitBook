@@ -34,7 +34,7 @@ vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async (namespace: "certificate") => {
     const messages = {
       brand: "GitBook AI",
-      title: "支援証明書",
+      title: "感謝状",
       description: "独立したソフトウェア開発への大切なご支援に、感謝を込めてこの証明書を贈ります。",
       amount: "寄付金額",
       presentedTo: "贈呈先",
@@ -200,7 +200,7 @@ describe("certificate export route", () => {
     expect(body).toContain('data-certificate-template="quarterly"');
     expect(body).toContain("data:image/webp;base64,");
     expect(body).toContain("GitBook AI");
-    expect(body).toContain("支援証明書");
+    expect(body).toContain("感謝状");
     expect(body).toContain("Ada Lovelace");
     expect(body).toContain("GBAI-2026-D-000001");
     expect(body).toContain("寄付証明書");
