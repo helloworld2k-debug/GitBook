@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { generateCertificatesForDonation } from "@/lib/certificates/service";
 import { buildDonationRecord } from "@/lib/donations/record";
+import type { Json } from "@/lib/database.types";
 import { extendCloudSyncEntitlementForDonation } from "@/lib/license/entitlements";
-import { verifyDodoWebhook } from "@/lib/payments/dodo";
+import { getDodoProductId, verifyDodoWebhook } from "@/lib/payments/dodo";
 import { findDonationTier } from "@/lib/payments/tier";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -18,6 +19,21 @@ function getString(value: unknown) {
 
 function getNumber(value: unknown) {
   return typeof value === "number" ? value : null;
+}
+
+function getPositiveIntegerString(value: unknown) {
+  if (typeof value !== "string" || !/^\d+$/.test(value)) {
+    return null;
+  }
+
+  return Number(value);
+}
+
+function getProductId(data: Record<string, unknown>) {
+  const cart = Array.isArray(data.product_cart) ? data.product_cart : [];
+  const firstItem = getObject(cart[0]);
+
+  return getString(firstItem.product_id);
 }
 
 function getPaidAt(data: Record<string, unknown>) {
@@ -43,13 +59,19 @@ export async function POST(request: Request) {
     const paymentId = getString(data.payment_id) ?? getString(data.id);
     const amount = getNumber(data.total_amount) ?? getNumber(data.amount);
     const currency = getString(data.currency)?.toLowerCase() ?? null;
+    const productId = getProductId(data);
+    const expectedProductId = donationTier ? getDodoProductId(donationTier.code) : null;
+    const expectedAmount = getPositiveIntegerString(metadata.amount) ?? donationTier?.amount ?? null;
 
     if (
       !userId ||
       !donationTier ||
       !paymentId ||
-      amount !== donationTier.amount ||
-      currency !== donationTier.currency
+      !amount ||
+      amount <= 0 ||
+      !currency ||
+      (productId && productId !== expectedProductId) ||
+      (!productId && expectedAmount !== null && amount !== expectedAmount)
     ) {
       return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
     }
@@ -59,12 +81,18 @@ export async function POST(request: Request) {
     const record = buildDonationRecord({
       userId,
       tierCode: donationTier.code,
-      amount: donationTier.amount,
-      currency: donationTier.currency,
+      amount,
+      currency,
       provider: "dodo",
       providerTransactionId: paymentId,
       paidAt,
     });
+    record.metadata = {
+      expected_amount: expectedAmount,
+      paid_amount: amount,
+      product_id: productId,
+      tier: donationTier.code,
+    } satisfies Json;
     const { data: donation, error } = await supabase
       .from("donations")
       .upsert(record, { onConflict: "provider,provider_transaction_id" })

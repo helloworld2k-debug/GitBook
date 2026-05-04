@@ -12,6 +12,16 @@ export type CertificateDonationDetails = {
   tierCode: string | null;
 };
 
+function getMetadataTierCode(metadata: unknown) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const tier = (metadata as Record<string, unknown>).tier;
+
+  return tier === "monthly" || tier === "quarterly" || tier === "yearly" ? tier : null;
+}
+
 export function inferDonationTierCodeFromAmount(amount: number, currency: string) {
   if (currency.toLowerCase() !== "usd") {
     return null;
@@ -39,7 +49,7 @@ export async function getDonationDetailsForCertificate(
 
   const { data: donation, error: donationError } = await supabase
     .from("donations")
-    .select("amount,currency,tier_id")
+    .select("amount,currency,tier_id,metadata")
     .eq("id", certificate.donation_id)
     .eq("user_id", userId)
     .maybeSingle();
@@ -56,7 +66,7 @@ export async function getDonationDetailsForCertificate(
     return {
       amount: donation.amount,
       currency: donation.currency,
-      tierCode: inferDonationTierCodeFromAmount(donation.amount, donation.currency),
+      tierCode: getMetadataTierCode(donation.metadata) ?? inferDonationTierCodeFromAmount(donation.amount, donation.currency),
     };
   }
 
@@ -73,6 +83,6 @@ export async function getDonationDetailsForCertificate(
   return {
     amount: donation.amount,
     currency: donation.currency,
-    tierCode: tier?.code ?? inferDonationTierCodeFromAmount(donation.amount, donation.currency),
+    tierCode: tier?.code ?? getMetadataTierCode(donation.metadata) ?? inferDonationTierCodeFromAmount(donation.amount, donation.currency),
   };
 }

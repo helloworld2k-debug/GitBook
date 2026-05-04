@@ -153,4 +153,36 @@ describe("certificate detail page", () => {
     expect(screen.getByRole("link", { name: "홈으로 돌아가기" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "대시보드로 돌아가기" })).toHaveAttribute("href", "/dashboard");
   });
+
+  it("uses donation metadata tier for the certificate template while showing the actual paid amount", async () => {
+    mocks.requireUser.mockResolvedValue({
+      id: "user-1",
+      email: "ada@example.com",
+      user_metadata: { name: "Ada Lovelace" },
+    });
+    mocks.createSupabaseServerClient.mockResolvedValue(createCertificateClient());
+    mocks.maybeSingle.mockResolvedValue({
+      data: {
+        certificate_number: "GBAI-2026-D-000002",
+        donation_id: "donation-2",
+        issued_at: "2026-04-30T00:00:00.000Z",
+        type: "donation",
+      },
+      error: null,
+    });
+    mocks.donationMaybeSingle.mockResolvedValue({
+      data: {
+        amount: 1200,
+        currency: "usd",
+        metadata: { tier: "yearly" },
+        tier_id: null,
+      },
+      error: null,
+    });
+
+    render(await CertificatePage({ params: Promise.resolve({ id: "cert-2", locale: "ko" }) }));
+
+    expect(screen.getByLabelText("후원 인증서")).toHaveAttribute("data-certificate-template", "yearly");
+    expect(screen.getByText("US$12.00")).toBeInTheDocument();
+  });
 });

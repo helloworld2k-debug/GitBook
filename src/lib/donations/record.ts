@@ -1,4 +1,7 @@
+import type { Database, Json } from "@/lib/database.types";
+
 type Provider = "stripe" | "paypal" | "manual" | "dodo";
+type DonationInsert = Database["public"]["Tables"]["donations"]["Insert"];
 
 export type ProviderDonationInput = {
   userId: string;
@@ -13,6 +16,8 @@ export type ProviderDonationInput = {
 export function buildDonationRecord(input: ProviderDonationInput) {
   const paidAt = input.paidAt instanceof Date ? input.paidAt.toISOString() : (input.paidAt ?? new Date().toISOString());
 
+  const metadata: Json = { tier: input.tierCode };
+
   return {
     user_id: input.userId,
     amount: input.amount,
@@ -21,6 +26,6 @@ export function buildDonationRecord(input: ProviderDonationInput) {
     provider_transaction_id: input.providerTransactionId,
     status: "paid" as const,
     paid_at: paidAt,
-    metadata: { tier: input.tierCode },
-  };
+    metadata,
+  } satisfies DonationInsert;
 }
