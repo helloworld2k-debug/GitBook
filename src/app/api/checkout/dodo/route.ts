@@ -27,6 +27,7 @@ export async function POST(request: Request) {
   const tier = findDonationTier(formData.get("tier"));
   const origin = getSiteOrigin();
   const locale = getSafeLocale(formData.get("locale"));
+  const checkoutStartedAt = new Date().toISOString();
 
   if (!tier) {
     return NextResponse.json({ error: "Invalid donation tier" }, { status: 400 });
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
   }
 
   const session = await createDodoCheckoutSession({
-    cancel_url: `${origin}/${locale}/contributions?payment=cancelled`,
+    cancel_url: `${origin}/${locale}/contributions?payment=cancelled&checkout_started_at=${encodeURIComponent(checkoutStartedAt)}`,
     customer: {
       email: data.user.email,
     },
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
         quantity: 1,
       },
     ],
-    return_url: `${origin}/${locale}/dashboard/certificates/latest?payment=dodo-success`,
+    return_url: `${origin}/${locale}/dashboard/certificates/latest?payment=dodo-success&checkout_started_at=${encodeURIComponent(checkoutStartedAt)}`,
   });
 
   if (!session.checkout_url) {

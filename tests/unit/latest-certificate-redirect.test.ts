@@ -3,6 +3,7 @@ import LatestCertificatePage from "@/app/[locale]/dashboard/certificates/latest/
 
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
+  donationMaybeSingle: vi.fn(),
   maybeSingle: vi.fn(),
   redirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`);
@@ -30,7 +31,7 @@ vi.mock("next-intl/server", () => ({
 }));
 
 function createCertificateClient() {
-  const query = {
+  const certificateQuery = {
     eq: vi.fn(() => query),
     limit: vi.fn(() => query),
     maybeSingle: mocks.maybeSingle,
@@ -38,12 +39,33 @@ function createCertificateClient() {
     select: vi.fn(() => query),
   };
 
-  return { from: vi.fn(() => query), query };
+  const donationQuery = {
+    eq: vi.fn(() => donationQuery),
+    gte: vi.fn(() => donationQuery),
+    limit: vi.fn(() => donationQuery),
+    maybeSingle: mocks.donationMaybeSingle,
+    order: vi.fn(() => donationQuery),
+    select: vi.fn(() => donationQuery),
+  };
+
+  const query = certificateQuery;
+
+  return {
+    from: vi.fn((table: string) => {
+      if (table === "certificates") return certificateQuery;
+      if (table === "donations") return donationQuery;
+      throw new Error(`Unexpected table ${table}`);
+    }),
+    certificateQuery,
+    donationQuery,
+  };
 }
 
 describe("latest certificate redirect page", () => {
   beforeEach(() => {
     mocks.createSupabaseServerClient.mockReset();
+    mocks.donationMaybeSingle.mockReset();
+    mocks.donationMaybeSingle.mockResolvedValue({ data: null, error: null });
     mocks.maybeSingle.mockReset();
     mocks.redirect.mockClear();
     mocks.requireUser.mockReset().mockResolvedValue({ id: "user-1" });
@@ -59,12 +81,12 @@ describe("latest certificate redirect page", () => {
     ).rejects.toThrow("redirect:/en/dashboard/certificates/cert-1?payment=dodo-success");
 
     expect(client.from).toHaveBeenCalledWith("certificates");
-    expect(client.query.select).toHaveBeenCalledWith("id");
-    expect(client.query.eq).toHaveBeenCalledWith("user_id", "user-1");
-    expect(client.query.eq).toHaveBeenCalledWith("type", "donation");
-    expect(client.query.eq).toHaveBeenCalledWith("status", "active");
-    expect(client.query.order).toHaveBeenCalledWith("issued_at", { ascending: false });
-    expect(client.query.limit).toHaveBeenCalledWith(1);
+    expect(client.certificateQuery.select).toHaveBeenCalledWith("id");
+    expect(client.certificateQuery.eq).toHaveBeenCalledWith("user_id", "user-1");
+    expect(client.certificateQuery.eq).toHaveBeenCalledWith("type", "donation");
+    expect(client.certificateQuery.eq).toHaveBeenCalledWith("status", "active");
+    expect(client.certificateQuery.order).toHaveBeenCalledWith("issued_at", { ascending: false });
+    expect(client.certificateQuery.limit).toHaveBeenCalledWith(1);
   });
 
   it("falls back to dashboard when no generated certificate is available yet", async () => {
@@ -75,5 +97,25 @@ describe("latest certificate redirect page", () => {
     await expect(
       LatestCertificatePage({ params: Promise.resolve({ locale: "zh-Hant" }) }),
     ).rejects.toThrow("redirect:/zh-Hant/dashboard?payment=dodo-success");
+  });
+
+  it("does not redirect to an older certificate when the current checkout has not produced a new paid record yet", async () => {
+    const client = createCertificateClient();
+    mocks.createSupabaseServerClient.mockResolvedValue(client);
+    mocks.donationMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+    await expect(
+      LatestCertificatePage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({ checkout_started_at: "2026-05-04T10:00:00.000Z", payment: "dodo-success" }),
+      } as {
+        params: Promise<{ locale: string }>;
+        searchParams: Promise<{ checkout_started_at: string; payment: string }>;
+      }),
+    ).rejects.toThrow("redirect:/en/dashboard?payment=dodo-success");
+
+    expect(client.from).toHaveBeenCalledWith("donations");
+    expect(client.donationQuery.gte).toHaveBeenCalledWith("paid_at", "2026-05-04T10:00:00.000Z");
+    expect(mocks.maybeSingle).not.toHaveBeenCalled();
   });
 });

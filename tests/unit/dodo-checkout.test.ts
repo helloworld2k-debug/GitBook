@@ -51,7 +51,7 @@ describe("Dodo checkout route", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("https://checkout.dodopayments.test/session");
     expect(mocks.createCheckoutSession).toHaveBeenCalledWith({
-      cancel_url: "https://gitbookai.example/ja/contributions?payment=cancelled",
+      cancel_url: expect.stringMatching(/^https:\/\/gitbookai\.example\/ja\/contributions\?payment=cancelled&checkout_started_at=/),
       customer: {
         email: "ada@example.com",
       },
@@ -71,7 +71,7 @@ describe("Dodo checkout route", () => {
           quantity: 1,
         },
       ],
-      return_url: "https://gitbookai.example/ja/dashboard/certificates/latest?payment=dodo-success",
+      return_url: expect.stringMatching(/^https:\/\/gitbookai\.example\/ja\/dashboard\/certificates\/latest\?payment=dodo-success&checkout_started_at=/),
     });
   });
 
