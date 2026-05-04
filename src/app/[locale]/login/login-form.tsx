@@ -107,22 +107,43 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
   const turnstileWidgetId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (mode !== "register" || !turnstileSiteKey || !turnstileRef.current || !window.turnstile) {
+    if (mode !== "register" || !turnstileSiteKey || !turnstileRef.current) {
       return;
     }
 
-    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-      callback: (token) => {
-        setTurnstileToken(token);
-      },
-      sitekey: turnstileSiteKey,
-    });
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const mountTurnstile = () => {
+      if (cancelled || !turnstileRef.current || turnstileWidgetId.current) {
+        return;
+      }
+
+      if (!window.turnstile) {
+        pollTimer = setTimeout(mountTurnstile, 250);
+        return;
+      }
+
+      turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+        callback: (token) => {
+          setTurnstileToken(token);
+        },
+        sitekey: turnstileSiteKey,
+      });
+    };
+
+    mountTurnstile();
 
     return () => {
+      cancelled = true;
+      if (pollTimer) {
+        clearTimeout(pollTimer);
+      }
       if (turnstileWidgetId.current && window.turnstile) {
         window.turnstile.remove(turnstileWidgetId.current);
         turnstileWidgetId.current = null;
       }
+      setTurnstileToken(null);
     };
   }, [mode, turnstileSiteKey]);
 
