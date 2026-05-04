@@ -26,6 +26,35 @@ export default async function LatestCertificatePage({ params, searchParams }: La
   const user = await requireUser(locale, `/${locale}/dashboard/certificates/latest`);
   const supabase = await createSupabaseServerClient();
 
+  async function findCertificateForDonation(donationId: string) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const { data: certificate, error } = await supabase
+        .from("certificates")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("donation_id", donationId)
+        .eq("type", "donation")
+        .eq("status", "active")
+        .order("issued_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      if (certificate) {
+        return certificate;
+      }
+
+      if (attempt === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+
+    return null;
+  }
+
   if (status?.checkout_started_at) {
     const { data: donation, error: donationError } = await supabase
       .from("donations")
@@ -45,20 +74,7 @@ export default async function LatestCertificatePage({ params, searchParams }: La
       redirect(`/${locale}/dashboard?payment=dodo-success`);
     }
 
-    const { data: certificate, error } = await supabase
-      .from("certificates")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("donation_id", donation.id)
-      .eq("type", "donation")
-      .eq("status", "active")
-      .order("issued_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
+    const certificate = await findCertificateForDonation(donation.id);
 
     if (!certificate) {
       redirect(`/${locale}/dashboard?payment=dodo-success`);

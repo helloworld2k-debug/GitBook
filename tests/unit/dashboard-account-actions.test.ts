@@ -48,7 +48,7 @@ describe("dashboard account actions", () => {
     const eq = vi.fn(async () => ({ error: null }));
     const update = vi.fn(() => ({ eq }));
     const from = vi.fn(() => ({ update }));
-    createSupabaseServerClientMock.mockResolvedValue({ from });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
 
     const formData = new FormData();
     formData.set("display_name", "Ada");
@@ -57,6 +57,7 @@ describe("dashboard account actions", () => {
 
     expect(update).toHaveBeenCalledWith({ display_name: "Ada" });
     expect(eq).toHaveBeenCalledWith("id", "user-1");
+    expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
   });
 
   it("rejects mismatched password confirmation before calling Supabase", async () => {

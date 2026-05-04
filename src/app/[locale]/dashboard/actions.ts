@@ -29,7 +29,7 @@ export async function updateAccountProfile(locale: string, formData: FormData) {
   const safeLocale = getSafeLocale(locale);
   const user = await requireUser(safeLocale, `/${safeLocale}/dashboard`);
   const displayName = String(formData.get("display_name") ?? "").trim() || null;
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { error } = await supabase
     .from("profiles")
     .update({ display_name: displayName })
