@@ -1,4 +1,6 @@
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "@/lib/database.types";
+import { getSupabaseBrowserConfig } from "@/lib/supabase/env";
 
 type RegisterInput = {
   callbackUrl: string;
@@ -7,14 +9,26 @@ type RegisterInput = {
 };
 
 export async function registerWithEmailPassword(input: RegisterInput) {
-  const supabase = createSupabaseAdminClient();
+  const { url, anonKey } = getSupabaseBrowserConfig();
+  const supabase = createBrowserClient<Database>(url, anonKey, {
+    cookies: {
+      getAll() {
+        return [];
+      },
+      setAll() {
+        // The register route only needs to trigger the signup flow and email confirmation.
+      },
+    },
+  });
 
-  return supabase.auth.admin.createUser({
+  return supabase.auth.signUp({
     email: input.email,
-    email_confirm: false,
     password: input.password,
-    user_metadata: {
-      email_redirect_to: input.callbackUrl,
+    options: {
+      data: {
+        source: "register_form",
+      },
+      emailRedirectTo: input.callbackUrl,
     },
   });
 }

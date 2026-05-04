@@ -91,7 +91,7 @@ describe("register route", () => {
     expect(mocks.registerWithEmailPassword).not.toHaveBeenCalled();
   });
 
-  it("creates a new user after passing Turnstile verification", async () => {
+  it("creates a new unconfirmed user through the signup flow after passing Turnstile verification", async () => {
     const response = await POST(
       new Request("https://gitbookai.example/api/auth/register", {
         body: JSON.stringify({
