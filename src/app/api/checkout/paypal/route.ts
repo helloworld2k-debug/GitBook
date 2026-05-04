@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    return NextResponse.redirect(`${origin}/${locale}/login?next=${encodeURIComponent(`/${locale}/donate`)}`, 303);
+    return NextResponse.redirect(`${origin}/${locale}/login?next=${encodeURIComponent(`/${locale}/contributions`)}`, 303);
   }
 
   return NextResponse.json({ error: "PayPal checkout is not enabled yet." }, { status: 503 });

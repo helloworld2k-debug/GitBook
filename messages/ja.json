@@ -71,18 +71,18 @@
     "olderVersions": "旧バージョン"
   },
   "donate": {
-    "title": "GitBook AI の開発を支援",
-    "subtitle": "リリース、AI ナレッジ更新、証明書基盤を支える一回限りの支援金額を選択してください。",
+    "title": "GitBook AI に貢献する",
+    "subtitle": "製品リリース、AI ナレッジ更新、クラウド同期基盤、サポーター証明書を支える一回限りの支援金額を選択してください。",
     "tiers": {
       "monthly": "月額相当の支援",
       "quarterly": "四半期相当の支援",
       "yearly": "年額相当の支援"
     },
-    "checkoutDodo": "Dodo Payments で支払う",
+    "checkoutDodo": "今すぐ支援する",
     "checkoutStripe": "Stripe で支払う",
     "checkoutPayPal": "PayPal で支払う",
-    "oneTimeNote": "一回限りの応援です。自動更新はありません。",
-    "paymentNote": "Dodo はカードと利用可能なローカル決済方法に対応した推奨チェックアウトです。",
+    "oneTimeNote": "ダウンロード提供と継続開発を支える一回限りの支援です。",
+    "paymentNote": "カードと利用可能なローカル決済方法に対応した安全なチェックアウトです。支払い完了後に証明書が発行されます。",
     "payPalUnavailable": "PayPal はまだ有効ではありません。PayPal の応援履歴と証明書発行は現在統合中です。"
   },
   "notifications": {

@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
-    return NextResponse.redirect(`${origin}/${locale}/login?next=${encodeURIComponent(`/${locale}/donate`)}`, 303);
+    return NextResponse.redirect(`${origin}/${locale}/login?next=${encodeURIComponent(`/${locale}/contributions`)}`, 303);
   }
 
   const productId = getDodoProductId(tier.code);
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   }
 
   const session = await createDodoCheckoutSession({
-    cancel_url: `${origin}/${locale}/donate?payment=cancelled`,
+    cancel_url: `${origin}/${locale}/contributions?payment=cancelled`,
     customer: {
       email: data.user.email,
     },

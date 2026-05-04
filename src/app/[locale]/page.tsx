@@ -136,7 +136,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
               {t("supportPrompt")}{" "}
               <Link
                 className="font-semibold text-cyan-100 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
-                href="/donate"
+                href="/contributions"
               >
                 {nav("donate")}
               </Link>

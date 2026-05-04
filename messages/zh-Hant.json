@@ -71,18 +71,18 @@
     "olderVersions": "舊版本"
   },
   "donate": {
-    "title": "支持 GitBook AI 開發",
-    "subtitle": "選擇一次性支持金額，用於版本發布、AI 知識更新與證書基礎設施。",
+    "title": "支持 GitBook AI 持續開發",
+    "subtitle": "選擇一次性支持金額，用於產品版本發布、AI 知識更新、雲端同步基礎設施與支持證書。",
     "tiers": {
       "monthly": "月度支持",
       "quarterly": "季度支持",
       "yearly": "年度支持"
     },
-    "checkoutDodo": "使用 Dodo Payments 支付",
+    "checkoutDodo": "立即支持",
     "checkoutStripe": "使用 Stripe 支付",
     "checkoutPayPal": "使用 PayPal 支付",
-    "oneTimeNote": "一次性自願支持。不會自動續費。",
-    "paymentNote": "建議使用 Dodo 結帳，支援銀行卡與可用的本地支付方式。",
+    "oneTimeNote": "一次性支持，協助下載服務維持可用，也讓開發能持續推進。",
+    "paymentNote": "安全結帳，支援銀行卡與可用的本地支付方式。付款成功後會產生支持證書。",
     "payPalUnavailable": "PayPal 尚未啟用，因為 PayPal 支持記錄與證書仍在整合中。"
   },
   "notifications": {

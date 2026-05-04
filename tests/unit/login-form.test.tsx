@@ -48,9 +48,9 @@ const messages: LoginFormMessages = {
 function renderLoginForm() {
   render(
     <LoginForm
-      callbackUrl="https://gitbookai.example/auth/callback?next=%2Fen%2Fdonate"
+      callbackUrl="https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions"
       messages={messages}
-      nextPath="/en/donate"
+      nextPath="/en/contributions"
       passwordResetCallbackUrl="https://gitbookai.example/auth/callback?next=%2Fen%2Freset-password"
     />,
   );
@@ -97,7 +97,7 @@ describe("LoginForm", () => {
         password: "correct-password",
       });
     });
-    expect(locationAssign).toHaveBeenCalledWith("/en/donate");
+    expect(locationAssign).toHaveBeenCalledWith("/en/contributions");
   });
 
   it("shows an error when password sign-in fails", async () => {
@@ -125,7 +125,7 @@ describe("LoginForm", () => {
         email: "new@example.com",
         password: "new-password",
         options: {
-          emailRedirectTo: "https://gitbookai.example/auth/callback?next=%2Fen%2Fdonate",
+          emailRedirectTo: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
         },
       });
     });
@@ -173,7 +173,7 @@ describe("LoginForm", () => {
       expect(signInWithOAuthMock).toHaveBeenCalledWith({
         provider: "github",
         options: {
-          redirectTo: "https://gitbookai.example/auth/callback?next=%2Fen%2Fdonate",
+          redirectTo: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
         },
       });
     });

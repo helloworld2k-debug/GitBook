@@ -55,7 +55,7 @@ describe("SiteHeader", () => {
     render(await SiteHeader());
 
     expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Contributions" })).toHaveAttribute("href", "/donate");
+    expect(screen.getByRole("link", { name: "Contributions" })).toHaveAttribute("href", "/contributions");
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
     expect(screen.queryByRole("link", { name: "Dashboard" })).not.toBeInTheDocument();
   });

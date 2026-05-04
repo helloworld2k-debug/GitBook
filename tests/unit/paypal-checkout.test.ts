@@ -83,7 +83,7 @@ describe("PayPal checkout route", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("https://gitbookai.example/en/login?next=%2Fen%2Fdonate");
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/en/login?next=%2Fen%2Fcontributions");
     expect(mocks.createPayPalOrder).not.toHaveBeenCalled();
   });
 });

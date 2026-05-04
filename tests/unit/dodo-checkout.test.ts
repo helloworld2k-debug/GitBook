@@ -51,7 +51,7 @@ describe("Dodo checkout route", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("https://checkout.dodopayments.test/session");
     expect(mocks.createCheckoutSession).toHaveBeenCalledWith({
-      cancel_url: "https://gitbookai.example/ja/donate?payment=cancelled",
+      cancel_url: "https://gitbookai.example/ja/contributions?payment=cancelled",
       customer: {
         email: "ada@example.com",
       },
@@ -75,7 +75,7 @@ describe("Dodo checkout route", () => {
     });
   });
 
-  it("redirects anonymous checkout attempts to the localized donate page after login", async () => {
+  it("redirects anonymous checkout attempts to the localized contributions page after login", async () => {
     mocks.getUser.mockResolvedValue({ data: { user: null } });
     const formData = new FormData();
     formData.set("tier", "monthly");
@@ -90,7 +90,7 @@ describe("Dodo checkout route", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "https://gitbookai.example/zh-Hant/login?next=%2Fzh-Hant%2Fdonate",
+      "https://gitbookai.example/zh-Hant/login?next=%2Fzh-Hant%2Fcontributions",
     );
     expect(mocks.createCheckoutSession).not.toHaveBeenCalled();
   });

@@ -11,7 +11,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 describe("auth redirect safety", () => {
   it("preserves safe relative next paths", () => {
-    expect(sanitizeNextPath("/ja/donate?tier=yearly", "/en/dashboard")).toBe("/ja/donate?tier=yearly");
+    expect(sanitizeNextPath("/ja/contributions?tier=yearly", "/en/dashboard")).toBe("/ja/contributions?tier=yearly");
   });
 
   it("uses the first safe path when next is repeated", () => {
@@ -53,12 +53,12 @@ describe("auth callback route", () => {
 
   it("exchanges the code and redirects to a safe next path", async () => {
     const response = await GET(
-      new Request("https://gitbookai.example/auth/callback?code=abc123&next=%2Fja%2Fdonate%3Ftier%3Dyearly"),
+      new Request("https://gitbookai.example/auth/callback?code=abc123&next=%2Fja%2Fcontributions%3Ftier%3Dyearly"),
     );
 
     expect(exchangeCodeForSessionMock).toHaveBeenCalledWith("abc123");
     expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("https://gitbookai.example/ja/donate?tier=yearly");
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/ja/contributions?tier=yearly");
   });
 
   it("falls back to the English dashboard for external next paths", async () => {
@@ -87,11 +87,11 @@ describe("auth callback route", () => {
   });
 
   it("redirects to login with an error when the code is missing", async () => {
-    const response = await GET(new Request("https://gitbookai.example/auth/callback?next=%2Fen%2Fdonate"));
+    const response = await GET(new Request("https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions"));
 
     expect(exchangeCodeForSessionMock).not.toHaveBeenCalled();
     expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe("https://gitbookai.example/en/login?error=missing-code&next=%2Fen%2Fdonate");
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/en/login?error=missing-code&next=%2Fen%2Fcontributions");
   });
 
   it("redirects to login with an error when Supabase rejects the code", async () => {

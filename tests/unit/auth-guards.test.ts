@@ -52,8 +52,8 @@ describe("auth guards", () => {
   });
 
   it("builds locale-aware login redirects", () => {
-    expect(getLoginRedirectPath("ja", "/ja/donate?tier=yearly")).toBe(
-      "/ja/login?next=%2Fja%2Fdonate%3Ftier%3Dyearly",
+    expect(getLoginRedirectPath("ja", "/ja/contributions?tier=yearly")).toBe(
+      "/ja/login?next=%2Fja%2Fcontributions%3Ftier%3Dyearly",
     );
   });
 
@@ -75,10 +75,10 @@ describe("auth guards", () => {
   it("redirects users to locale-aware login when no user is present", async () => {
     createSupabaseServerClientMock.mockResolvedValue(createAuthClient(null));
 
-    await expect(requireUser("ja", "/ja/donate?tier=yearly")).rejects.toThrow(
-      "redirect:/ja/login?next=%2Fja%2Fdonate%3Ftier%3Dyearly",
+    await expect(requireUser("ja", "/ja/contributions?tier=yearly")).rejects.toThrow(
+      "redirect:/ja/login?next=%2Fja%2Fcontributions%3Ftier%3Dyearly",
     );
-    expect(redirectMock).toHaveBeenCalledWith("/ja/login?next=%2Fja%2Fdonate%3Ftier%3Dyearly");
+    expect(redirectMock).toHaveBeenCalledWith("/ja/login?next=%2Fja%2Fcontributions%3Ftier%3Dyearly");
   });
 
   it("redirects anonymous requests without checking Supabase when no auth cookie is present", async () => {

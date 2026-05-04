@@ -72,14 +72,14 @@ describe("LoginPage", () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     const page = await LoginPage({
       params: Promise.resolve({ locale: "en" }),
-      searchParams: Promise.resolve({ next: "/en/donate?tier=yearly" }),
+      searchParams: Promise.resolve({ next: "/en/contributions?tier=yearly" }),
     });
 
     render(page);
 
     expect(screen.getByRole("heading", { name: "Sign in or create your account" })).toBeInTheDocument();
     expect(screen.getByTestId("login-callback").textContent).toBe(
-      "https://gitbookai.example/auth/callback?next=%2Fen%2Fdonate%3Ftier%3Dyearly",
+      "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions%3Ftier%3Dyearly",
     );
     expect(screen.getByTestId("password-reset-callback").textContent).toBe(
       "https://gitbookai.example/auth/callback?next=%2Fen%2Freset-password",

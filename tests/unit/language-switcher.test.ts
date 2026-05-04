@@ -3,7 +3,7 @@ import { getLanguageLabels, getLocalizedPath } from "@/components/language-switc
 
 describe("language switcher URL generation", () => {
   it("replaces a known locale prefix and preserves the rest of the path", () => {
-    expect(getLocalizedPath("/en/donate?tier=yearly", "ja")).toBe("/ja/donate?tier=yearly");
+    expect(getLocalizedPath("/en/contributions?tier=yearly", "ja")).toBe("/ja/contributions?tier=yearly");
     expect(getLocalizedPath("/zh-Hant/dashboard/certificates/abc", "ko")).toBe("/ko/dashboard/certificates/abc");
   });
 

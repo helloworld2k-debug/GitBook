@@ -49,7 +49,7 @@ describe("Stripe checkout route", () => {
 
     expect(mocks.createCheckoutSession).toHaveBeenCalledWith(
       expect.objectContaining({
-        cancel_url: "https://gitbookai.example/en/donate?payment=cancelled",
+        cancel_url: "https://gitbookai.example/en/contributions?payment=cancelled",
         success_url: "https://gitbookai.example/en/dashboard/certificates/latest?payment=stripe-success",
       }),
     );
@@ -70,7 +70,7 @@ describe("Stripe checkout route", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "https://gitbookai.example/zh-Hant/login?next=%2Fzh-Hant%2Fdonate",
+      "https://gitbookai.example/zh-Hant/login?next=%2Fzh-Hant%2Fcontributions",
     );
     expect(mocks.createCheckoutSession).not.toHaveBeenCalled();
   });

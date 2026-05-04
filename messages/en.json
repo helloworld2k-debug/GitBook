@@ -79,18 +79,18 @@
     "empty": "No public releases have been published yet."
   },
   "donate": {
-    "title": "Support GitBook AI development",
-    "subtitle": "Choose a one-time support amount to fund releases, AI knowledge updates, and certificate infrastructure.",
+    "title": "Contribute to GitBook AI",
+    "subtitle": "Choose a one-time contribution to support product releases, AI knowledge updates, cloud sync infrastructure, and supporter certificates.",
     "tiers": {
       "monthly": "Monthly Support",
       "quarterly": "Quarterly Support",
       "yearly": "Yearly Support"
     },
-    "checkoutDodo": "Pay with Dodo Payments",
+    "checkoutDodo": "Contribute now",
     "checkoutStripe": "Pay with Stripe",
     "checkoutPayPal": "Pay with PayPal",
-    "oneTimeNote": "One-time voluntary contribution. No automatic renewal.",
-    "paymentNote": "Dodo is the recommended checkout for cards and supported local payment methods.",
+    "oneTimeNote": "A one-time contribution that helps keep downloads available and development moving.",
+    "paymentNote": "Secure checkout for cards and supported local payment methods. A certificate is issued after successful payment.",
     "payPalUnavailable": "PayPal is not enabled yet because PayPal contribution records and certificates are still being integrated."
   },
   "notifications": {

@@ -46,7 +46,7 @@ export async function SiteHeader() {
           <Link href="/" className={navLinkClass}>
             {t("download")}
           </Link>
-          <Link href="/donate" className={navLinkClass}>
+          <Link href="/contributions" className={navLinkClass}>
             {t("donate")}
           </Link>
           <Link href="/support" className={navLinkClass}>
