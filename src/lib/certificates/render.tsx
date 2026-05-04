@@ -29,12 +29,18 @@ export function formatCertificateIssuedDate(
     return pendingIssueDate;
   }
 
-  return new Intl.DateTimeFormat(locale, {
+  const date = new Date(issuedAt);
+  const formatted = new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     timeZone: "UTC",
-  }).format(new Date(issuedAt));
+  }).format(date);
+
+  return `${formatted} UTC`;
 }
 
 export function getCertificateTypeLabel(type: "donation" | "honor", labels: { donation: string; honor: string }) {

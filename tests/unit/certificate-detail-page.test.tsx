@@ -148,6 +148,7 @@ describe("certificate detail page", () => {
     expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
     expect(screen.getByText("GBAI-2026-D-000001")).toBeInTheDocument();
     expect(screen.getByText("US$50.00")).toBeInTheDocument();
+    expect(screen.getByText("2026년 4월 30일 오전 12:00:00 UTC")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "SVG 다운로드" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "인증서 다운로드" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "홈으로 돌아가기" })).toHaveAttribute("href", "/");

@@ -10,8 +10,8 @@ describe("certificate rendering helpers", () => {
   });
 
   it("formats issued dates in UTC with the current locale", () => {
-    expect(formatCertificateIssuedDate("2026-04-30T00:00:00.000Z", "en", "Pending")).toBe("April 30, 2026");
-    expect(formatCertificateIssuedDate("2026-04-30T00:00:00.000Z", "ja", "未発行")).toBe("2026年4月30日");
+    expect(formatCertificateIssuedDate("2026-04-30T00:00:00.000Z", "en", "Pending")).toBe("April 30, 2026 at 12:00:00 AM UTC");
+    expect(formatCertificateIssuedDate("2026-04-30T00:00:00.000Z", "ja", "未発行")).toBe("2026年4月30日 00:00:00 UTC");
     expect(formatCertificateIssuedDate(null, "ja", "未発行")).toBe("未発行");
   });
 

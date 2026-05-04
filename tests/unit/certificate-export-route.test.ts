@@ -205,7 +205,7 @@ describe("certificate export route", () => {
     expect(body).toContain("GBAI-2026-D-000001");
     expect(body).toContain("寄付証明書");
     expect(body).toContain("$15.00");
-    expect(body).toContain("2026年4月30日");
+    expect(body).toContain("2026年4月30日 00:00:00 UTC");
   });
 
   it("does not advertise unsupported binary formats", async () => {
