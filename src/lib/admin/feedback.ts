@@ -29,6 +29,8 @@ export type AdminFeedbackKey =
   | "status-update-failed"
   | "trial-code-created"
   | "trial-code-create-failed"
+  | "trial-code-deleted"
+  | "trial-code-delete-failed"
   | "trial-code-status-updated"
   | "trial-code-status-update-failed"
   | "trial-code-updated"
@@ -62,6 +64,8 @@ const adminFeedbackKeys = new Set<string>([
   "status-update-failed",
   "trial-code-created",
   "trial-code-create-failed",
+  "trial-code-deleted",
+  "trial-code-delete-failed",
   "trial-code-status-updated",
   "trial-code-status-update-failed",
   "trial-code-updated",

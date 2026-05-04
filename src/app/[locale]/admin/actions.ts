@@ -786,6 +786,62 @@ export async function setTrialCodeActive(formData: FormData) {
   });
 }
 
+export async function deleteTrialCode(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const trialCodeId = getRequiredString(formData, "trial_code_id", "Trial code is required");
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("trial_codes")
+    .select("code_mask,is_active,label,trial_days")
+    .eq("id", trialCodeId)
+    .single();
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("trial_codes")
+    .update({
+      deleted_at: now,
+      is_active: false,
+      updated_at: now,
+      updated_by: admin.id,
+    })
+    .eq("id", trialCodeId);
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/licenses",
+      formData,
+      key: "trial-code-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "delete_trial_code",
+    adminUserId: admin.id,
+    after: {
+      deleted_at: now,
+      is_active: false,
+      updated_by: admin.id,
+    },
+    before: before ?? null,
+    reason: "Soft-deleted trial code",
+    targetId: trialCodeId,
+    targetType: "trial_code",
+  });
+
+  revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/licenses",
+    formData,
+    key: "trial-code-deleted",
+    locale,
+    tone: "notice",
+  });
+}
+
 export async function updateTrialCode(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);

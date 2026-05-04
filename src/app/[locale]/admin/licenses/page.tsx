@@ -2,12 +2,14 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   createTrialCode,
+  deleteTrialCode,
   revokeCloudSyncLease,
   revokeDesktopSession,
   setTrialCodeActive,
@@ -58,13 +60,20 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/licenses");
   const supabase = createSupabaseAdminClient();
 
-  const [trialCodesResult, trialRedemptionsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
+  const [trialCodesResult, deletedTrialCodesResult, trialRedemptionsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
     supabase
       .from("trial_codes")
-      .select("id,label,trial_days,duration_kind,code_mask,max_redemptions,redemption_count,is_active,created_at")
+      .select("id,label,trial_days,duration_kind,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by")
       .is("deleted_at", null)
       .eq("duration_kind", "trial_3_day")
       .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("trial_codes")
+      .select("id,label,trial_days,duration_kind,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by")
+      .not("deleted_at", "is", null)
+      .eq("duration_kind", "trial_3_day")
+      .order("deleted_at", { ascending: false })
       .limit(50),
     supabase
       .from("trial_code_redemptions")
@@ -92,6 +101,10 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
     throw trialCodesResult.error;
   }
 
+  if (deletedTrialCodesResult.error) {
+    throw deletedTrialCodesResult.error;
+  }
+
   if (entitlementsResult.error) {
     throw entitlementsResult.error;
   }
@@ -109,6 +122,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   }
 
   const trialCodes = trialCodesResult.data ?? [];
+  const deletedTrialCodes = deletedTrialCodesResult.data ?? [];
   const trialRedemptions = trialRedemptionsResult.data ?? [];
   const entitlements = entitlementsResult.data ?? [];
   const sessions = sessionsResult.data ?? [];
@@ -223,7 +237,17 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                           </form>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
-                          {trialCode.code_mask ?? "-"}
+                          <div className="grid gap-2">
+                            <span>{trialCode.code_mask ?? "-"}</span>
+                            <p className="max-w-48 font-sans text-xs leading-5 text-slate-500">{t("licenses.revealHelp")}</p>
+                            <TrialCodeRevealButton
+                              errorLabel={t("licenses.revealError")}
+                              hideLabel={t("licenses.hide")}
+                              locale={locale}
+                              revealLabel={t("licenses.reveal")}
+                              trialCodeId={trialCode.id}
+                            />
+                          </div>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {trialCode.trial_days} {t("licenses.days")}
@@ -240,18 +264,31 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                           </AdminStatusBadge>
                         </td>
                         <td className="px-5 py-4">
-                          <form action={setTrialCodeActive}>
-                            <input name="locale" type="hidden" value={locale} />
-                            <input name="return_to" type="hidden" value="/admin/licenses" />
-                            <input name="trial_code_id" type="hidden" value={trialCode.id} />
-                            <input name="is_active" type="hidden" value={trialCode.is_active ? "false" : "true"} />
-                            <AdminSubmitButton
-                              className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-                              pendingLabel={t("common.processing")}
-                            >
-                              {trialCode.is_active ? t("licenses.deactivate") : t("licenses.activate")}
-                            </AdminSubmitButton>
-                          </form>
+                          <div className="flex flex-wrap gap-2">
+                            <form action={setTrialCodeActive}>
+                              <input name="locale" type="hidden" value={locale} />
+                              <input name="return_to" type="hidden" value="/admin/licenses" />
+                              <input name="trial_code_id" type="hidden" value={trialCode.id} />
+                              <input name="is_active" type="hidden" value={trialCode.is_active ? "false" : "true"} />
+                              <AdminSubmitButton
+                                className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                                pendingLabel={t("common.processing")}
+                              >
+                                {trialCode.is_active ? t("licenses.deactivate") : t("licenses.activate")}
+                              </AdminSubmitButton>
+                            </form>
+                            <form action={deleteTrialCode}>
+                              <input name="locale" type="hidden" value={locale} />
+                              <input name="return_to" type="hidden" value="/admin/licenses" />
+                              <input name="trial_code_id" type="hidden" value={trialCode.id} />
+                              <AdminSubmitButton
+                                className="inline-flex min-h-10 items-center rounded-md border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-700 transition-colors hover:border-red-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+                                pendingLabel={t("common.processing")}
+                              >
+                                {t("licenses.delete")}
+                              </AdminSubmitButton>
+                            </form>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -260,6 +297,50 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               </div>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyTrialCodes")}</p>
+            )}
+          </AdminCard>
+
+          <AdminCard className="mt-6">
+            <div className="border-b border-slate-200 px-5 py-4">
+              <h2 className="text-base font-semibold text-slate-950">{t("licenses.deletedTrialCodesTitle")}</h2>
+            </div>
+            {deletedTrialCodes.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-[900px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                    <tr>
+                      <th className="px-5 py-3">{t("licenses.label")}</th>
+                      <th className="px-5 py-3">{t("licenses.code")}</th>
+                      <th className="px-5 py-3">{t("licenses.duration")}</th>
+                      <th className="px-5 py-3">{t("licenses.generatedAt")}</th>
+                      <th className="px-5 py-3">{t("licenses.deletedAt")}</th>
+                      <th className="px-5 py-3">{t("licenses.deletedBy")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {deletedTrialCodes.map((trialCode) => (
+                      <tr key={trialCode.id}>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-950">{trialCode.label}</td>
+                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">{trialCode.code_mask ?? "-"}</td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                          {trialCode.trial_days} {t("licenses.days")}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                          {formatDateTime(trialCode.created_at, locale)}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                          {formatOptionalDateTime(trialCode.deleted_at, locale, "-")}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
+                          {trialCode.updated_by ?? "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyDeletedTrialCodes")}</p>
             )}
           </AdminCard>
 

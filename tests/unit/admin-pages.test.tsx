@@ -91,6 +91,7 @@ function createAdminListQuery(data: unknown, error: Error | null = null) {
     eq: vi.fn(() => query),
     is: vi.fn(() => query),
     limit: vi.fn(() => Promise.resolve({ data, error })),
+    not: vi.fn(() => query),
     order: vi.fn(() => query),
     select: vi.fn(() => query),
     single: vi.fn(() => Promise.resolve({ data, error })),
@@ -208,12 +209,21 @@ const testMessages = {
         redemptions: "Redemptions",
         status: "Status",
         action: "Action",
+        deletedAt: "Deleted",
+        deletedBy: "Deleted by",
         days: "days",
         active: "Active",
         inactive: "Inactive",
         activate: "Activate",
         deactivate: "Deactivate",
         save: "Save",
+        delete: "Delete",
+        reveal: "Reveal",
+        hide: "Hide",
+        revealHelp: "Reveal only when sending this code to a user. The view is audited.",
+        revealError: "Unable to reveal this code.",
+        deletedTrialCodesTitle: "Deleted trial codes",
+        emptyDeletedTrialCodes: "No deleted trial codes found.",
         emptyTrialCodes: "No trial codes found.",
         trialRedemptionsTitle: "Trial redemptions",
         user: "User",
@@ -852,12 +862,32 @@ describe("admin pages", () => {
         max_redemptions: 1,
         redemption_count: 0,
         is_active: true,
+        updated_by: null,
         created_at: "2026-05-01T10:00:00.000Z",
+        deleted_at: null,
+      },
+    ]);
+    const deletedTrialCodesQuery = createAdminListQuery([
+      {
+        id: "trial-code-deleted",
+        label: "Old trial",
+        trial_days: 3,
+        code_mask: "WXYZ-****-****-ABCD",
+        redemption_count: 0,
+        max_redemptions: 1,
+        is_active: false,
+        created_at: "2026-04-01T10:00:00.000Z",
+        deleted_at: "2026-05-02T10:00:00.000Z",
+        updated_by: "admin-1",
       },
     ]);
     const emptyQuery = createAdminListQuery([]);
     const from = vi.fn((table: string) => {
-      if (table === "trial_codes") return trialCodesQuery;
+      if (table === "trial_codes") {
+        return from.mock.calls.filter(([name]) => name === "trial_codes").length === 1
+          ? trialCodesQuery
+          : deletedTrialCodesQuery;
+      }
       return emptyQuery;
     });
     createSupabaseAdminClientMock.mockReturnValue({ from });
@@ -867,7 +897,7 @@ describe("admin pages", () => {
     render(element);
 
     expect(from).toHaveBeenCalledWith("trial_codes");
-    expect(trialCodesQuery.select).toHaveBeenCalledWith("id,label,trial_days,duration_kind,code_mask,max_redemptions,redemption_count,is_active,created_at");
+    expect(trialCodesQuery.select).toHaveBeenCalledWith("id,label,trial_days,duration_kind,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by");
     expect(screen.getByRole("heading", { name: "License management" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Create trial code" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Code")).not.toBeInTheDocument();
@@ -876,6 +906,11 @@ describe("admin pages", () => {
     expect(screen.queryByText("Bulk license code actions")).not.toBeInTheDocument();
     expect(screen.queryByText("1 month")).not.toBeInTheDocument();
     expect(screen.getByText("ABCD-****-****-MNOP")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reveal" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Deleted trial codes" })).toBeInTheDocument();
+    expect(screen.getByText("WXYZ-****-****-ABCD")).toBeInTheDocument();
+    expect(screen.getByText("admin-1")).toBeInTheDocument();
   });
 
   it("shows role editing controls on the users page only to owner admins", async () => {

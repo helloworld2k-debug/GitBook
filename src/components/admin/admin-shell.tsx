@@ -200,6 +200,8 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "status-update-failed": "Unable to update account status.",
   "trial-code-created": "Trial code created.",
   "trial-code-create-failed": "Unable to create trial code.",
+  "trial-code-deleted": "Trial code deleted.",
+  "trial-code-delete-failed": "Unable to delete trial code.",
   "trial-code-status-updated": "Trial code status updated.",
   "trial-code-status-update-failed": "Unable to update trial code status.",
   "trial-code-updated": "Trial code updated.",

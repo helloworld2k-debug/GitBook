@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createTrialCode,
+  deleteTrialCode,
+  revealLicenseCode,
   revokeCloudSyncLease,
   revokeDesktopSession,
   setTrialCodeActive,
@@ -190,6 +192,90 @@ describe("admin license actions", () => {
     expect(eq).toHaveBeenCalledWith("id", "trial-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/licenses");
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "update_trial_code" }));
+  });
+
+  it("reveals an encrypted trial code for admin delivery and audits the view", async () => {
+    const encrypted = {
+      encrypted_code_algorithm: "aes-256-gcm",
+      encrypted_code_ciphertext: "encrypted-ciphertext",
+      encrypted_code_iv: "encrypted-iv",
+      encrypted_code_tag: "encrypted-tag",
+      id: "trial-1",
+    };
+    const single = vi.fn(async () => ({ data: encrypted, error: null }));
+    const eq = vi.fn(() => ({ single }));
+    const select = vi.fn(() => ({ eq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") return { select };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+    const decryptSpy = vi.spyOn(await import("@/lib/license/license-codes"), "decryptLicenseCode").mockReturnValueOnce("ABCD-EFGH-JKLM-NPQR");
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("trial_code_id", "trial-1");
+
+    await expect(revealLicenseCode(formData)).resolves.toEqual({ code: "ABCD-EFGH-JKLM-NPQR" });
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(select).toHaveBeenCalledWith("id,encrypted_code_algorithm,encrypted_code_ciphertext,encrypted_code_iv,encrypted_code_tag");
+    expect(eq).toHaveBeenCalledWith("id", "trial-1");
+    expect(decryptSpy).toHaveBeenCalled();
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "reveal_license_code",
+      admin_user_id: "admin-1",
+      target_id: "trial-1",
+      target_type: "trial_code",
+    }));
+    decryptSpy.mockRestore();
+  });
+
+  it("soft deletes trial codes and records who deleted them", async () => {
+    const single = vi.fn(async () => ({
+      data: {
+        code_mask: "ABCD-****-****-WXYZ",
+        is_active: true,
+        label: "Launch trial",
+        trial_days: 3,
+      },
+      error: null,
+    }));
+    const selectEq = vi.fn(() => ({ single }));
+    const select = vi.fn(() => ({ eq: selectEq }));
+    const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
+    const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") return { select, update };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "zh-Hant");
+    formData.set("trial_code_id", "trial-1");
+
+    await expect(deleteTrialCode(formData)).rejects.toThrow("redirect:/zh-Hant/admin/licenses?notice=trial-code-deleted");
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("zh-Hant");
+    expect(update).toHaveBeenCalledWith({
+      deleted_at: expect.any(String),
+      is_active: false,
+      updated_at: expect.any(String),
+      updated_by: "admin-1",
+    });
+    expect(eq).toHaveBeenCalledWith("id", "trial-1");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "delete_trial_code",
+      admin_user_id: "admin-1",
+      before: expect.objectContaining({ code_mask: "ABCD-****-****-WXYZ" }),
+      target_id: "trial-1",
+      target_type: "trial_code",
+    }));
   });
 
   it("revokes desktop sessions", async () => {
