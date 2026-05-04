@@ -7,6 +7,7 @@ const signInWithPasswordMock = vi.hoisted(() => vi.fn());
 const signUpMock = vi.hoisted(() => vi.fn());
 const signInWithOAuthMock = vi.hoisted(() => vi.fn());
 const resetPasswordForEmailMock = vi.hoisted(() => vi.fn());
+const fetchMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/supabase/client", () => ({
   createSupabaseBrowserClient: createSupabaseBrowserClientMock,
@@ -18,6 +19,8 @@ const messages: LoginFormMessages = {
   createAccount: "Create account",
   email: "Email address",
   emailPlaceholder: "you@example.com",
+  humanVerificationError: "Verify that you are human and try again.",
+  humanVerificationLabel: "Human verification",
   oauthError: "Could not start sign in.",
   password: "Password",
   passwordMismatch: "Passwords do not match.",
@@ -35,6 +38,7 @@ const messages: LoginFormMessages = {
   providersLabel: "Quick sign-in options",
   registerTab: "Register",
   registrationSuccess: "Check your email to verify your account before signing in.",
+  registrationRateLimited: "Too many registration attempts. Please try again later.",
   signInSubmit: "Sign in with email",
   signInTab: "Sign in",
   signingIn: "Signing in...",
@@ -52,6 +56,7 @@ function renderLoginForm() {
       messages={messages}
       nextPath="/en/contributions"
       passwordResetCallbackUrl="https://gitbookai.example/auth/callback?next=%2Fen%2Freset-password"
+      turnstileSiteKey="turnstile_site_key"
     />,
   );
 }
@@ -65,7 +70,19 @@ describe("LoginForm", () => {
     signUpMock.mockReset();
     signInWithOAuthMock.mockReset();
     resetPasswordForEmailMock.mockReset();
+    fetchMock.mockReset();
     locationAssign.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+    Object.defineProperty(window, "turnstile", {
+      configurable: true,
+      value: {
+        remove: vi.fn(),
+        render: vi.fn((_: unknown, options: { callback?: (token: string) => void }) => {
+          options.callback?.("turnstile-token");
+          return "widget-id";
+        }),
+      },
+    });
     Object.defineProperty(window, "location", {
       configurable: true,
       value: { assign: locationAssign },
@@ -74,6 +91,11 @@ describe("LoginForm", () => {
     signUpMock.mockResolvedValue({ error: null });
     signInWithOAuthMock.mockResolvedValue({ error: null });
     resetPasswordForEmailMock.mockResolvedValue({ error: null });
+    fetchMock.mockResolvedValue({
+      json: async () => ({ ok: true }),
+      ok: true,
+      status: 200,
+    });
     createSupabaseBrowserClientMock.mockReturnValue({
       auth: {
         resetPasswordForEmail: resetPasswordForEmailMock,
@@ -137,21 +159,19 @@ describe("LoginForm", () => {
     renderLoginForm();
 
     fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    expect(screen.getByTestId("turnstile-placeholder")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "new@example.com" } });
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "new-password" } });
     fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "new-password" } });
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
     await waitFor(() => {
-      expect(signUpMock).toHaveBeenCalledWith({
-        email: "new@example.com",
-        password: "new-password",
-        options: {
-          emailRedirectTo: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
-        },
-      });
+      expect(fetchMock).toHaveBeenCalledWith("/api/auth/register", expect.objectContaining({
+        method: "POST",
+      }));
     });
     expect(await screen.findByRole("status")).toHaveTextContent("Check your email to verify your account before signing in.");
+    expect(signUpMock).not.toHaveBeenCalled();
   });
 
   it("does not register when passwords do not match", async () => {
@@ -164,7 +184,28 @@ describe("LoginForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Passwords do not match.");
-    expect(signUpMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("shows a human verification error when no Turnstile token is available", async () => {
+    Object.defineProperty(window, "turnstile", {
+      configurable: true,
+      value: {
+        remove: vi.fn(),
+        render: vi.fn(() => "widget-id"),
+      },
+    });
+
+    renderLoginForm();
+
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "new@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "new-password" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "new-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Verify that you are human and try again.");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("shows Google and GitHub quick sign-in options without Apple", () => {

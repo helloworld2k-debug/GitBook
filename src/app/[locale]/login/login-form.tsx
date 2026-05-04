@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type OAuthProvider = "google" | "github";
@@ -13,6 +13,8 @@ export type LoginFormMessages = {
   createAccount: string;
   email: string;
   emailPlaceholder: string;
+  humanVerificationError: string;
+  humanVerificationLabel: string;
   oauthError: string;
   password: string;
   passwordMismatch: string;
@@ -27,6 +29,7 @@ export type LoginFormMessages = {
   providersLabel: string;
   registerTab: string;
   registrationSuccess: string;
+  registrationRateLimited: string;
   signInSubmit: string;
   signInTab: string;
   signingIn: string;
@@ -42,7 +45,17 @@ type LoginFormProps = {
   messages: LoginFormMessages;
   nextPath: string;
   passwordResetCallbackUrl: string;
+  turnstileSiteKey?: string;
 };
+
+declare global {
+  interface Window {
+    turnstile?: {
+      remove: (widgetId: string) => void;
+      render: (container: HTMLElement, options: { callback?: (token: string) => void; sitekey: string }) => string;
+    };
+  }
+}
 
 const providerOrder: OAuthProvider[] = ["google", "github"];
 
@@ -85,10 +98,33 @@ function ProviderIcon({ provider }: { provider: OAuthProvider }) {
   return provider === "google" ? <GoogleIcon /> : <GitHubIcon />;
 }
 
-export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallbackUrl }: LoginFormProps) {
+export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallbackUrl, turnstileSiteKey }: LoginFormProps) {
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [activeProvider, setActiveProvider] = useState<OAuthProvider | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (mode !== "register" || !turnstileSiteKey || !turnstileRef.current || !window.turnstile) {
+      return;
+    }
+
+    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+      callback: (token) => {
+        setTurnstileToken(token);
+      },
+      sitekey: turnstileSiteKey,
+    });
+
+    return () => {
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetId.current);
+        turnstileWidgetId.current = null;
+      }
+    };
+  }, [mode, turnstileSiteKey]);
 
   async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,15 +151,37 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
         return;
       }
 
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: callbackUrl,
+      if (!turnstileToken) {
+        setStatus("error");
+        return;
+      }
+
+      const response = await fetch("/api/auth/register", {
+        body: JSON.stringify({
+          callbackUrl,
+          email,
+          password,
+          turnstileToken,
+        }),
+        headers: {
+          "Content-Type": "application/json",
         },
+        method: "POST",
       });
 
-      setStatus(error ? "error" : "success");
+      if (response.status === 429) {
+        setStatus("error");
+        return;
+      }
+
+      const result = await response.json() as { error?: string; ok?: boolean };
+
+      if (!response.ok || !result.ok) {
+        setStatus("error");
+        return;
+      }
+
+      setStatus("success");
       return;
     }
 
@@ -196,7 +254,13 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
   const submittingLabel = isRegistering ? messages.signingUp : messages.signingIn;
   const passwordSubmitLabel = isSubmitting && activeProvider === null ? submittingLabel : submitLabel;
   const errorMessage =
-    status === "password-mismatch" ? messages.passwordMismatch : isRegistering ? messages.signUpError : messages.signInError;
+    status === "password-mismatch"
+      ? messages.passwordMismatch
+      : isRegistering && !turnstileToken
+        ? messages.humanVerificationError
+        : isRegistering
+          ? messages.signUpError
+          : messages.signInError;
 
   return (
     <div className="glass-panel rounded-lg p-5 sm:p-6">
@@ -273,6 +337,16 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
               ) : null}
             </>
           )}
+          {isRegistering ? (
+            <div className="mt-4 grid gap-2">
+              <p className="text-sm font-medium text-slate-200">{messages.humanVerificationLabel}</p>
+              <div
+                className="min-h-16 rounded-md border border-cyan-300/20 bg-slate-950/70 p-3"
+                data-testid="turnstile-placeholder"
+                ref={turnstileRef}
+              />
+            </div>
+          ) : null}
         </div>
         <button
           className="neon-button inline-flex min-h-11 w-full items-center justify-center rounded-md px-4 text-sm font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"

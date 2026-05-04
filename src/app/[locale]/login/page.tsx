@@ -52,6 +52,8 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
     createAccount: t("createAccount"),
     email: t("email"),
     emailPlaceholder: t("emailPlaceholder"),
+    humanVerificationError: t("humanVerificationError"),
+    humanVerificationLabel: t("humanVerificationLabel"),
     oauthError: t("oauthError"),
     password: t("password"),
     passwordMismatch: t("passwordMismatch"),
@@ -69,6 +71,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
     providersLabel: t("providersLabel"),
     registerTab: t("registerTab"),
     registrationSuccess: t("registrationSuccess"),
+    registrationRateLimited: t("registrationRateLimited"),
     signInSubmit: t("signInSubmit"),
     signInTab: t("signInTab"),
     signingIn: t("signingIn"),
@@ -113,6 +116,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
               messages={messages}
               nextPath={nextPath}
               passwordResetCallbackUrl={getPasswordResetCallbackUrl(locale)}
+              turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
             />
           </div>
         </section>
