@@ -5,6 +5,10 @@ export type AdminFeedbackTone = "error" | "notice";
 
 export type AdminFeedbackKey =
   | "account-profile-updated"
+  | "bulk-user-role-updated"
+  | "bulk-user-role-update-failed"
+  | "bulk-user-status-updated"
+  | "bulk-user-status-update-failed"
   | "certificate-revoked"
   | "cloud-sync-lease-revoked"
   | "cloud-sync-lease-revoke-failed"
@@ -36,10 +40,18 @@ export type AdminFeedbackKey =
   | "trial-code-updated"
   | "trial-code-update-failed"
   | "trial-machine-unbound"
-  | "trial-machine-unbind-failed";
+  | "trial-machine-unbind-failed"
+  | "user-permanently-deleted"
+  | "user-permanent-delete-failed"
+  | "user-soft-deleted"
+  | "user-soft-delete-failed";
 
 const adminFeedbackKeys = new Set<string>([
   "account-profile-updated",
+  "bulk-user-role-updated",
+  "bulk-user-role-update-failed",
+  "bulk-user-status-updated",
+  "bulk-user-status-update-failed",
   "certificate-revoked",
   "cloud-sync-lease-revoked",
   "cloud-sync-lease-revoke-failed",
@@ -72,6 +84,10 @@ const adminFeedbackKeys = new Set<string>([
   "trial-code-update-failed",
   "trial-machine-unbound",
   "trial-machine-unbind-failed",
+  "user-permanently-deleted",
+  "user-permanent-delete-failed",
+  "user-soft-deleted",
+  "user-soft-delete-failed",
 ]);
 
 export function isAdminFeedbackKey(value: string | null | undefined): value is AdminFeedbackKey {

@@ -5,7 +5,7 @@ import { isSupabaseAuthCookieName } from "@/lib/auth/supabase-cookies";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type AdminRole = "owner" | "operator" | "user";
-export type AccountStatus = "active" | "disabled";
+export type AccountStatus = "active" | "disabled" | "deleted";
 
 type AdminLike = { is_admin?: boolean; admin_role?: AdminRole | null; account_status?: AccountStatus | null } | null;
 
@@ -38,11 +38,13 @@ export function getLoginRedirectPath(locale: Locale | string, nextPath: string) 
 }
 
 export function isAdminProfile(profile: AdminLike) {
-  return profile?.account_status !== "disabled" && (profile?.is_admin === true || profile?.admin_role === "owner" || profile?.admin_role === "operator");
+  const accountStatus = profile?.account_status ?? "active";
+  return accountStatus === "active" && (profile?.is_admin === true || profile?.admin_role === "owner" || profile?.admin_role === "operator");
 }
 
 export function isOwnerProfile(profile: AdminLike) {
-  return profile?.account_status !== "disabled" && (profile?.is_admin === true || profile?.admin_role === "owner");
+  const accountStatus = profile?.account_status ?? "active";
+  return accountStatus === "active" && (profile?.is_admin === true || profile?.admin_role === "owner");
 }
 
 async function hasSupabaseAuthCookie() {

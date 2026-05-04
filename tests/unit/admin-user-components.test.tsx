@@ -1,0 +1,146 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { AdminUserBulkToolbar, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
+import { AdminUserDeleteDangerZone } from "@/components/admin/admin-user-delete-danger-zone";
+import { AdminUserFilters } from "@/components/admin/admin-user-filters";
+
+describe("AdminUserFilters", () => {
+  it("renders search, common filters, more-filters trigger, and reset link", () => {
+    render(
+      <AdminUserFilters
+        actionPath="/en/admin/users"
+        labels={{
+          allRoles: "All permissions",
+          allStatuses: "All statuses",
+          allTypes: "All user types",
+          apply: "Apply",
+          createdFrom: "Registered from",
+          createdTo: "Registered to",
+          moreFilters: "More filters",
+          reset: "Reset",
+          role: "Permission",
+          search: "Search users",
+          searchPlaceholder: "Email, display name, or user ID",
+          status: "Status",
+          type: "User type",
+        }}
+        values={{ createdFrom: "", createdTo: "", query: "alice", role: "operator", status: "disabled", type: "admin" }}
+      />,
+    );
+
+    expect(screen.getByPlaceholderText("Email, display name, or user ID")).toHaveValue("alice");
+    expect(screen.getByLabelText("Permission")).toBeInTheDocument();
+    expect(screen.getByText("More filters")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Reset" })).toHaveAttribute("href", "/en/admin/users");
+  });
+});
+
+describe("AdminUserBulkToolbar", () => {
+  it("shows selected count and bulk actions", () => {
+    document.body.innerHTML = `
+      <form id="bulk-users-form">
+        <input type="checkbox" name="user_ids" value="user-1" checked />
+        <input type="checkbox" name="user_ids" value="user-2" checked />
+        <input type="checkbox" name="user_ids" value="user-3" checked />
+      </form>
+    `;
+
+    render(
+      <AdminUserBulkToolbar
+        canManageRoles
+        formId="bulk-users-form"
+        labels={{
+          bulkDisable: "Bulk disable",
+          bulkEnable: "Bulk enable",
+          bulkRole: "Bulk change role",
+          bulkSoftDelete: "Bulk soft delete",
+          clearSelection: "Clear selection",
+          operatorRole: "Operator",
+          ownerRole: "Owner",
+          roleTarget: "Target role",
+          selectedCount: "{count} selected",
+          userRole: "User",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("3 selected")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bulk soft delete" })).toBeInTheDocument();
+  });
+
+  it("clears all selected users through the toolbar", () => {
+    document.body.innerHTML = `
+      <form id="bulk-users-form">
+        <input type="checkbox" name="user_ids" value="user-1" checked />
+        <input type="checkbox" name="user_ids" value="user-2" checked />
+      </form>
+    `;
+
+    render(
+      <AdminUserBulkToolbar
+        canManageRoles={false}
+        formId="bulk-users-form"
+        labels={{
+          bulkDisable: "Bulk disable",
+          bulkEnable: "Bulk enable",
+          bulkRole: "Bulk change role",
+          bulkSoftDelete: "Bulk soft delete",
+          clearSelection: "Clear selection",
+          operatorRole: "Operator",
+          ownerRole: "Owner",
+          roleTarget: "Target role",
+          selectedCount: "{count} selected",
+          userRole: "User",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+
+    const selected = document.querySelectorAll<HTMLInputElement>('input[name="user_ids"]:checked');
+    expect(selected).toHaveLength(0);
+  });
+});
+
+describe("AdminUserSelectAllCheckbox", () => {
+  it("toggles every row checkbox in the target form", () => {
+    document.body.innerHTML = `
+      <form id="bulk-users-form">
+        <input type="checkbox" name="user_ids" value="user-1" />
+        <input type="checkbox" name="user_ids" value="user-2" />
+      </form>
+    `;
+
+    render(<AdminUserSelectAllCheckbox formId="bulk-users-form" label="Select all users" />);
+
+    fireEvent.click(screen.getByLabelText("Select all users"));
+
+    const selected = document.querySelectorAll<HTMLInputElement>('input[name="user_ids"]:checked');
+    expect(selected).toHaveLength(2);
+  });
+});
+
+describe("AdminUserDeleteDangerZone", () => {
+  it("renders the permanent delete explanation and confirmation field", () => {
+    render(
+      <AdminUserDeleteDangerZone
+        action={vi.fn(async () => {})}
+        email="user@example.com"
+        labels={{
+          confirmation: "Type DELETE or the user email to confirm",
+          description: "Permanently deleting a user removes the profile and cannot be undone.",
+          hint: "user@example.com",
+          submit: "Permanent delete",
+          title: "Danger zone",
+          warning: "Only use this when the account must be fully erased.",
+        }}
+        locale="en"
+        userId="user-1"
+      />,
+    );
+
+    expect(screen.getByText("Danger zone")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Permanent delete" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("user@example.com")).toBeInTheDocument();
+  });
+});

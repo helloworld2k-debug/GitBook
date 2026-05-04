@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import AdminPage from "@/app/[locale]/admin/page";
 import AdminAuditLogsPage from "@/app/[locale]/admin/audit-logs/page";
@@ -275,6 +275,48 @@ const testMessages = {
         entitlements: "Entitlements",
         leases: "Leases",
         sessions: "Desktop sessions",
+        search: "Search users",
+        searchPlaceholder: "Email, display name, or user ID",
+        applyFilters: "Apply",
+        reset: "Reset",
+        filterRole: "Permission",
+        filterType: "User type",
+        filterStatus: "Status",
+        moreFilters: "More filters",
+        allRoles: "All permissions",
+        allTypes: "All user types",
+        allStatuses: "All statuses",
+        createdFrom: "Registered from",
+        createdTo: "Registered to",
+        selectAll: "Select all users",
+        selectedCount: "{count} selected",
+        bulkEnable: "Bulk enable",
+        bulkDisable: "Bulk disable",
+        bulkChangeRole: "Bulk change role",
+        bulkSoftDelete: "Bulk soft delete",
+        clearSelection: "Clear selection",
+        roleTarget: "Target role",
+        summaryTotal: "Total users",
+        summaryActive: "Active users",
+        summaryDisabled: "Disabled users",
+        summaryElevated: "Elevated users",
+        actions: "Actions",
+        type: "Type",
+        devicesAndTrials: "Devices / trials",
+        createdAt: "Created",
+        standardType: "Standard",
+        adminType: "Admin",
+        emptyFiltered: "No users match the current filters.",
+        softDelete: "Soft delete",
+        ownerPill: "Owner access",
+        operatorPill: "Operator access",
+        userPill: "Standard user",
+        deletedPill: "Soft-deleted",
+        dangerZone: "Danger zone",
+        dangerDescription: "Permanently deleting a user removes the profile and cannot be undone.",
+        dangerWarning: "Only use this when the account must be fully erased.",
+        deleteConfirmation: "Type DELETE or the user email to confirm",
+        permanentDelete: "Permanent delete",
         save: "Save",
         saveRole: "Save role",
         viewDetails: "View details",
@@ -303,6 +345,7 @@ const testMessages = {
         statuses: {
           active: "Active",
           disabled: "Disabled",
+          deleted: "Deleted",
         },
         description: "Review account roles, statuses, trial bindings, and desktop devices.",
       },
@@ -1096,6 +1139,128 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "Entitlements" })).toBeInTheDocument();
     expect(screen.getByText("cloud_sync")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Leases" })).toBeInTheDocument();
+  });
+
+  it("renders admin users summary cards and search controls", async () => {
+    const profilesQuery = createAdminListQuery([
+      {
+        id: "user-1",
+        email: "alice@example.com",
+        display_name: "Alice",
+        admin_role: "operator",
+        account_status: "deleted",
+        is_admin: false,
+        created_at: "2026-05-01T00:00:00.000Z",
+      },
+    ]);
+    const emptyQuery = createAdminListQuery([]);
+    const ownerQuery = createAdminListQuery({
+      admin_role: "owner",
+      is_admin: true,
+      account_status: "active",
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profilesQuery : ownerQuery;
+      }
+
+      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+    requireAdminMock.mockResolvedValue({ id: "admin-owner" });
+
+    render(await AdminUsersPage({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ query: "alice", status: "deleted" }),
+    }));
+
+    expect(screen.getByText("Total users")).toBeInTheDocument();
+    expect(screen.getByText("Deleted")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("alice")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Select alice@example.com"));
+    expect(screen.getByRole("button", { name: "Bulk soft delete" })).toBeInTheDocument();
+  });
+
+  it("shows an empty filtered state with reset action", async () => {
+    const profilesQuery = createAdminListQuery([
+      {
+        id: "user-1",
+        email: "alice@example.com",
+        display_name: "Alice",
+        admin_role: "operator",
+        account_status: "active",
+        is_admin: false,
+        created_at: "2026-05-01T00:00:00.000Z",
+      },
+    ]);
+    const emptyQuery = createAdminListQuery([]);
+    const ownerQuery = createAdminListQuery({
+      admin_role: "owner",
+      is_admin: true,
+      account_status: "active",
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profilesQuery : ownerQuery;
+      }
+
+      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+    requireAdminMock.mockResolvedValue({ id: "admin-owner" });
+
+    render(await AdminUsersPage({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ query: "nobody" }),
+    }));
+
+    expect(screen.getByText("No users match the current filters.")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Reset" }).length).toBeGreaterThan(0);
+  });
+
+  it("renders the permanent delete danger zone on the admin user detail page", async () => {
+    const profileQuery = createAdminListQuery({
+      id: "user-1",
+      email: "alice@example.com",
+      display_name: "Alice",
+      public_display_name: "Alice",
+      public_supporter_enabled: true,
+      admin_role: "user",
+      account_status: "active",
+      is_admin: false,
+      created_at: "2026-05-01T00:00:00.000Z",
+    });
+    const emptyQuery = createAdminListQuery([]);
+    const ownerQuery = createAdminListQuery({
+      admin_role: "owner",
+      is_admin: true,
+      account_status: "active",
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return from.mock.calls.filter(([name]) => name === "profiles").length <= 2 ? profileQuery : ownerQuery;
+      }
+
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases"].includes(table)) {
+        return emptyQuery;
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+    requireAdminMock.mockResolvedValue({ id: "admin-owner" });
+
+    render(await AdminUserDetailPage({
+      params: Promise.resolve({ id: "user-1", locale: "en" }),
+      searchParams: Promise.resolve({}),
+    }));
+
+    expect(screen.getByText("Danger zone")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Permanent delete" })).toBeInTheDocument();
   });
 
   it("queries and renders newest audit logs for admins", async () => {

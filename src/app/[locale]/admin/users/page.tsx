@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AdminUserBulkToolbar, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
+import { AdminUserFilters } from "@/components/admin/admin-user-filters";
 import { AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
@@ -8,11 +10,22 @@ import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { isOwnerProfile, requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { unbindTrialMachine, updateUserAccountStatus, updateUserAdminRole } from "../actions";
+import { bulkProcessUsers, softDeleteUser, unbindTrialMachine, updateUserAccountStatus, updateUserAdminRole } from "../actions";
+
+type AdminUsersSearchParams = {
+  createdFrom?: string;
+  createdTo?: string;
+  error?: string;
+  notice?: string;
+  query?: string;
+  role?: string;
+  status?: string;
+  type?: string;
+};
 
 type AdminUsersPageProps = {
   params: Promise<{ locale: string }>;
-  searchParams?: Promise<{ error?: string; notice?: string }>;
+  searchParams?: Promise<AdminUsersSearchParams>;
 };
 
 function shortHash(value: string | null) {
@@ -33,6 +46,53 @@ function formatDate(value: string | null, locale: string) {
   }).format(new Date(value));
 }
 
+function matchesSearch(profile: { display_name: string | null; email: string | null; id: string }, query?: string) {
+  const normalized = String(query ?? "").trim().toLowerCase();
+
+  if (!normalized) {
+    return true;
+  }
+
+  return [profile.email ?? "", profile.display_name ?? "", profile.id].some((value) => value.toLowerCase().includes(normalized));
+}
+
+function matchesRole(profile: { admin_role: string | null; is_admin: boolean | null }, role?: string) {
+  if (!role) {
+    return true;
+  }
+
+  const resolvedRole = profile.admin_role ?? (profile.is_admin ? "owner" : "user");
+  return resolvedRole === role;
+}
+
+function matchesStatus(profile: { account_status: string | null }, status?: string) {
+  return !status || (profile.account_status ?? "active") === status;
+}
+
+function matchesType(profile: { is_admin: boolean | null }, type?: string) {
+  if (!type) {
+    return true;
+  }
+
+  return type === "admin" ? profile.is_admin === true : profile.is_admin !== true;
+}
+
+function matchesCreatedAt(profile: { created_at: string }, createdFrom?: string, createdTo?: string) {
+  const value = new Date(profile.created_at).getTime();
+  const start = createdFrom ? new Date(createdFrom).getTime() : null;
+  const end = createdTo ? new Date(`${createdTo}T23:59:59.999Z`).getTime() : null;
+
+  if (start && value < start) {
+    return false;
+  }
+
+  if (end && value > end) {
+    return false;
+  }
+
+  return true;
+}
+
 export default async function AdminUsersPage({ params, searchParams }: AdminUsersPageProps) {
   const { locale } = await params;
   const feedback = await searchParams;
@@ -47,6 +107,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
   const adminT = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/users");
   const supabase = createSupabaseAdminClient();
+
   const [profilesResult, trialsResult, sessionsResult, adminProfileResult] = await Promise.all([
     supabase
       .from("profiles")
@@ -75,6 +136,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
   if (sessionsResult.error) throw sessionsResult.error;
   if (adminProfileResult.error) throw adminProfileResult.error;
 
+  const allProfiles = profilesResult.data ?? [];
   const canManageRoles = isOwnerProfile(adminProfileResult.data);
 
   const trialsByUser = new Map<string, NonNullable<typeof trialsResult.data>>();
@@ -91,134 +153,221 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
     sessionsByUser.set(session.user_id, current);
   }
 
+  const filteredProfiles = allProfiles.filter((profile) => {
+    return (
+      matchesSearch(profile, feedback?.query) &&
+      matchesRole(profile, feedback?.role) &&
+      matchesStatus(profile, feedback?.status) &&
+      matchesType(profile, feedback?.type) &&
+      matchesCreatedAt(profile, feedback?.createdFrom, feedback?.createdTo)
+    );
+  });
+
+  const summary = {
+    active: allProfiles.filter((profile) => (profile.account_status ?? "active") === "active").length,
+    disabled: allProfiles.filter((profile) => profile.account_status === "disabled").length,
+    elevated: allProfiles.filter((profile) => profile.is_admin || profile.admin_role === "operator").length,
+    total: allProfiles.length,
+  };
+
   return (
     <AdminShell {...shellProps}>
-        <section className="mx-auto max-w-7xl">
-          <AdminPageHeader
-            backHref="/admin"
-            backLabel={adminT("shell.backToAdmin")}
-            description={adminT("users.description")}
-            eyebrow={t("eyebrow")}
-            title={t("title")}
-          />
-          <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
-          <AdminCard>
+      <section className="mx-auto max-w-7xl">
+        <AdminPageHeader
+          backHref="/admin"
+          backLabel={adminT("shell.backToAdmin")}
+          description={adminT("users.description")}
+          eyebrow={t("eyebrow")}
+          title={t("title")}
+        />
+        <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <AdminCard className="p-4">
+            <p className="text-sm text-slate-500">{t("summaryTotal")}</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.total}</p>
+          </AdminCard>
+          <AdminCard className="p-4">
+            <p className="text-sm text-slate-500">{t("summaryActive")}</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.active}</p>
+          </AdminCard>
+          <AdminCard className="p-4">
+            <p className="text-sm text-slate-500">{t("summaryDisabled")}</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.disabled}</p>
+          </AdminCard>
+          <AdminCard className="p-4">
+            <p className="text-sm text-slate-500">{t("summaryElevated")}</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.elevated}</p>
+          </AdminCard>
+        </div>
+
+        <AdminUserFilters
+          actionPath={`/${locale}/admin/users`}
+          labels={{
+            allRoles: t("allRoles"),
+            allStatuses: t("allStatuses"),
+            allTypes: t("allTypes"),
+            apply: t("applyFilters"),
+            createdFrom: t("createdFrom"),
+            createdTo: t("createdTo"),
+            moreFilters: t("moreFilters"),
+            reset: t("reset"),
+            role: t("filterRole"),
+            search: t("search"),
+            searchPlaceholder: t("searchPlaceholder"),
+            status: t("filterStatus"),
+            type: t("filterType"),
+          }}
+          values={{
+            createdFrom: feedback?.createdFrom,
+            createdTo: feedback?.createdTo,
+            query: feedback?.query,
+            role: feedback?.role,
+            status: feedback?.status,
+            type: feedback?.type,
+          }}
+        />
+
+        <AdminUserBulkToolbar
+          canManageRoles={canManageRoles}
+          formId="bulk-users-bulk-action-form"
+          labels={{
+            bulkDisable: t("bulkDisable"),
+            bulkEnable: t("bulkEnable"),
+            bulkRole: t("bulkChangeRole"),
+            bulkSoftDelete: t("bulkSoftDelete"),
+            clearSelection: t("clearSelection"),
+            operatorRole: t("roles.operator"),
+            ownerRole: t("roles.owner"),
+            roleTarget: t("roleTarget"),
+            selectedCount: t("selectedCount", { count: "0" }),
+            userRole: t("roles.user"),
+          }}
+        />
+
+        <form action={bulkProcessUsers} className="hidden" id="bulk-users-bulk-action-form">
+          <input name="locale" type="hidden" value={locale} />
+          <input name="return_to" type="hidden" value="/admin/users" />
+        </form>
+
+        <AdminCard className="mt-6">
+          {filteredProfiles.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-base font-medium text-slate-950">{t("emptyFiltered")}</p>
+              <Link className="mt-4 inline-flex min-h-10 items-center rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700" href="/admin/users">
+                {t("reset")}
+              </Link>
+            </div>
+          ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
-                  <tr>
+                    <tr>
+                      <th className="px-5 py-3">
+                        <AdminUserSelectAllCheckbox formId="bulk-users-bulk-action-form" label={t("selectAll")} />
+                      </th>
                     <th className="px-5 py-3">{t("user")}</th>
                     <th className="px-5 py-3">{t("role")}</th>
+                    <th className="px-5 py-3">{t("type")}</th>
                     <th className="px-5 py-3">{t("status")}</th>
-                    <th className="px-5 py-3">{t("trials")}</th>
-                    <th className="px-5 py-3">{t("devices")}</th>
+                    <th className="px-5 py-3">{t("devicesAndTrials")}</th>
+                    <th className="px-5 py-3">{t("createdAt")}</th>
+                    <th className="px-5 py-3">{t("actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {(profilesResult.data ?? []).map((profile) => {
+                  {filteredProfiles.map((profile) => {
                     const trials = trialsByUser.get(profile.id) ?? [];
                     const sessions = sessionsByUser.get(profile.id) ?? [];
+                    const resolvedRole = profile.admin_role ?? (profile.is_admin ? "owner" : "user");
+                    const accountStatus = profile.account_status ?? "active";
 
-                    return (
-                      <tr key={profile.id}>
-                        <td className="min-w-64 px-5 py-4 align-top">
+                      return (
+                        <tr key={profile.id}>
+                          <td className="px-5 py-4 align-top">
+                            <input aria-label={`Select ${profile.email}`} className="size-4 rounded border-slate-300" form="bulk-users-bulk-action-form" name="user_ids" type="checkbox" value={profile.id} />
+                          </td>
+                        <td className="min-w-72 px-5 py-4 align-top">
                           <p className="font-medium text-slate-950">{profile.email}</p>
                           <p className="mt-1 text-slate-600">{profile.display_name ?? "-"}</p>
                           <p className="mt-1 font-mono text-xs text-slate-500">{profile.id}</p>
-                          <Link className="mt-3 inline-flex min-h-9 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/users/${profile.id}`}>
-                            {t("viewDetails")}
-                          </Link>
                         </td>
                         <td className="px-5 py-4 align-top">
                           {canManageRoles ? (
                             <form action={updateUserAdminRole} className="flex gap-2">
-                              <input name="locale" type="hidden" value={locale} />
-                              <input name="return_to" type="hidden" value="/admin/users" />
-                              <input name="user_id" type="hidden" value={profile.id} />
-                              <select aria-label={t("role")} className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="admin_role" defaultValue={profile.admin_role ?? (profile.is_admin ? "owner" : "user")}>
-                                <option value="user">{t("roles.user")}</option>
-                                <option value="operator">{t("roles.operator")}</option>
-                                <option value="owner">{t("roles.owner")}</option>
-                              </select>
-                              <AdminSubmitButton aria-label={t("saveRole")} className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
-                                {t("save")}
-                              </AdminSubmitButton>
+                                <input name="locale" type="hidden" value={locale} />
+                                <input name="return_to" type="hidden" value="/admin/users" />
+                                <input name="user_id" type="hidden" value={profile.id} />
+                                <select aria-label={t("role")} className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="admin_role" defaultValue={resolvedRole}>
+                                  <option value="user">{t("roles.user")}</option>
+                                  <option value="operator">{t("roles.operator")}</option>
+                                  <option value="owner">{t("roles.owner")}</option>
+                                </select>
+                                <AdminSubmitButton aria-label={t("saveRole")} className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
+                                  {t("save")}
+                                </AdminSubmitButton>
                             </form>
                           ) : (
-                            <span className="text-slate-700">{t(`roles.${profile.admin_role ?? (profile.is_admin ? "owner" : "user")}`)}</span>
+                            <AdminStatusBadge tone={resolvedRole === "owner" ? "success" : resolvedRole === "operator" ? "warning" : "neutral"}>
+                              {resolvedRole === "owner" ? t("ownerPill") : resolvedRole === "operator" ? t("operatorPill") : t("userPill")}
+                            </AdminStatusBadge>
                           )}
                         </td>
                         <td className="px-5 py-4 align-top">
-                          <form action={updateUserAccountStatus} className="flex gap-2">
-                            <input name="locale" type="hidden" value={locale} />
-                            <input name="return_to" type="hidden" value="/admin/users" />
-                            <input name="user_id" type="hidden" value={profile.id} />
-                            <select className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="account_status" defaultValue={profile.account_status ?? "active"}>
-                              <option value="active">{t("statuses.active")}</option>
-                              <option value="disabled">{t("statuses.disabled")}</option>
-                            </select>
-                            <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
-                              {t("save")}
-                            </AdminSubmitButton>
-                          </form>
+                          <AdminStatusBadge tone={profile.is_admin ? "success" : "neutral"}>
+                            {profile.is_admin ? t("adminType") : t("standardType")}
+                          </AdminStatusBadge>
                         </td>
-                        <td className="min-w-80 px-5 py-4 align-top">
-                          {trials.length > 0 ? (
-                            <div className="space-y-3">
-                              {trials.map((trial) => (
-                                <div key={trial.id} className="rounded-md border border-slate-200 p-3">
-                                  <p className="font-medium text-slate-950">
-                                    <AdminStatusBadge tone={trial.bound_at ? "success" : "warning"}>
-                                      {trial.bound_at ? t("bound") : t("unbound")}
-                                    </AdminStatusBadge>
-                                  </p>
-                                  <p className="mt-1 text-xs text-slate-600">
-                                    {t("redeemed")}: {formatDate(trial.redeemed_at, locale)}
-                                  </p>
-                                  <p className="mt-1 text-xs text-slate-600">
-                                    {t("validUntil")}: {formatDate(trial.trial_valid_until, locale)}
-                                  </p>
-                                  <p className="mt-1 font-mono text-xs text-slate-600">
-                                    {t("machine")}: {shortHash(trial.machine_code_hash)}
-                                  </p>
-                                  {trial.machine_code_hash ? (
-                                    <form action={unbindTrialMachine} className="mt-2">
-                                      <input name="locale" type="hidden" value={locale} />
-                                      <input name="return_to" type="hidden" value="/admin/users" />
-                                      <input name="trial_redemption_id" type="hidden" value={trial.id} />
-                                      <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("unbind")} pendingLabel={adminT("common.processing")}>
-                                        {t("unbind")}
-                                      </ConfirmActionButton>
-                                    </form>
-                                  ) : null}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="text-slate-500">{t("emptyTrials")}</span>
-                          )}
+                        <td className="px-5 py-4 align-top">
+                          <div className="space-y-2">
+                            <AdminStatusBadge tone={accountStatus === "deleted" ? "warning" : accountStatus === "active" ? "success" : "danger"}>
+                              {accountStatus === "deleted" ? t("deletedPill") : t(`statuses.${accountStatus}`)}
+                            </AdminStatusBadge>
+                            <form action={updateUserAccountStatus} className="flex gap-2">
+                                <input name="locale" type="hidden" value={locale} />
+                                <input name="return_to" type="hidden" value="/admin/users" />
+                                <input name="user_id" type="hidden" value={profile.id} />
+                                <select className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="account_status" defaultValue={accountStatus}>
+                                  <option value="active">{t("statuses.active")}</option>
+                                  <option value="disabled">{t("statuses.disabled")}</option>
+                                  <option value="deleted">{t("deletedPill")}</option>
+                                </select>
+                                <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
+                                  {t("save")}
+                                </AdminSubmitButton>
+                            </form>
+                          </div>
                         </td>
-                        <td className="min-w-80 px-5 py-4 align-top">
-                          {sessions.length > 0 ? (
-                            <div className="space-y-3">
-                              {sessions.map((session) => (
-                                <div key={session.id} className="rounded-md border border-slate-200 p-3">
-                                  <p className="font-medium text-slate-950">{session.device_id}</p>
-                                  <p className="mt-1 text-xs text-slate-600">
-                                    {session.platform} {session.app_version ?? ""}
-                                  </p>
-                                  <p className="mt-1 text-xs text-slate-600">
-                                    {t("lastSeen")}: {formatDate(session.last_seen_at, locale)}
-                                  </p>
-                                  <p className="mt-1 font-mono text-xs text-slate-600">
-                                    {t("machine")}: {shortHash(session.machine_code_hash)}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="text-slate-500">{t("emptyDevices")}</span>
-                          )}
+                        <td className="min-w-56 px-5 py-4 align-top">
+                          <p className="text-sm text-slate-700">{sessions.length} {t("devices")}</p>
+                          <p className="mt-1 text-sm text-slate-700">{trials.length} {t("trials")}</p>
+                          {trials[0]?.machine_code_hash ? <p className="mt-1 font-mono text-xs text-slate-500">{shortHash(trials[0].machine_code_hash)}</p> : null}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 align-top text-sm text-slate-700">{formatDate(profile.created_at, locale)}</td>
+                        <td className="min-w-52 px-5 py-4 align-top">
+                          <div className="flex flex-wrap gap-2">
+                            <Link className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/users/${profile.id}`}>
+                              {t("viewDetails")}
+                            </Link>
+                            {trials[0]?.machine_code_hash ? (
+                              <form action={unbindTrialMachine}>
+                                  <input name="locale" type="hidden" value={locale} />
+                                  <input name="return_to" type="hidden" value="/admin/users" />
+                                  <input name="trial_redemption_id" type="hidden" value={trials[0].id} />
+                                  <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("unbind")} pendingLabel={adminT("common.processing")}>
+                                    {t("unbind")}
+                                  </ConfirmActionButton>
+                              </form>
+                            ) : null}
+                            <form action={softDeleteUser}>
+                              <input name="locale" type="hidden" value={locale} />
+                              <input name="return_to" type="hidden" value="/admin/users" />
+                              <input name="user_id" type="hidden" value={profile.id} />
+                              <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("softDelete")} pendingLabel={adminT("common.processing")}>
+                                {t("softDelete")}
+                              </ConfirmActionButton>
+                            </form>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -226,8 +375,9 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                 </tbody>
               </table>
             </div>
-          </AdminCard>
-        </section>
+          )}
+        </AdminCard>
+      </section>
     </AdminShell>
   );
 }

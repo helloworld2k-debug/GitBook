@@ -47,6 +47,16 @@ function getRequiredString(formData: FormData, key: string, message: string) {
   return value;
 }
 
+function getUserIds(formData: FormData) {
+  const values = formData.getAll("user_ids").map((value) => String(value).trim()).filter(Boolean);
+
+  if (values.length === 0) {
+    throw new Error("At least one user is required");
+  }
+
+  return [...new Set(values)];
+}
+
 function getPositiveInteger(formData: FormData, key: string, message: string) {
   const value = Number(formData.get(key));
 
@@ -1043,7 +1053,7 @@ export async function updateUserAccountStatus(formData: FormData) {
   const userId = getRequiredString(formData, "user_id", "User is required");
   const accountStatus = getRequiredString(formData, "account_status", "Account status is required");
 
-  if (accountStatus !== "active" && accountStatus !== "disabled") {
+  if (accountStatus !== "active" && accountStatus !== "disabled" && accountStatus !== "deleted") {
     throw new Error("Invalid account status");
   }
 
@@ -1085,6 +1095,198 @@ export async function updateUserAccountStatus(formData: FormData) {
     fallbackPath: "/admin/users",
     formData,
     key: "status-updated",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function softDeleteUser(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const userId = getRequiredString(formData, "user_id", "User is required");
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase.from("profiles").select("account_status,email").eq("id", userId).single();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ account_status: "deleted", updated_at: new Date().toISOString() })
+    .eq("id", userId);
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "user-soft-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "soft_delete_user",
+    adminUserId: admin.id,
+    after: { account_status: "deleted" },
+    before: before ?? null,
+    reason: "Soft deleted user from admin list",
+    targetId: userId,
+    targetType: "profile",
+  });
+
+  revalidatePath(`/${locale}/admin/users`);
+  revalidatePath(`/${locale}/admin/users/${userId}`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/users",
+    formData,
+    key: "user-soft-deleted",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function bulkProcessUsers(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const intent = getRequiredString(formData, "intent", "Bulk intent is required");
+  const userIds = getUserIds(formData);
+
+  if (intent === "enable" || intent === "disable" || intent === "soft-delete") {
+    const admin = await requireAdmin(locale);
+    const accountStatus = intent === "enable" ? "active" : intent === "disable" ? "disabled" : "deleted";
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ account_status: accountStatus, updated_at: new Date().toISOString() })
+      .in("id", userIds);
+
+    if (error) {
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/users",
+        formData,
+        key: "bulk-user-status-update-failed",
+        locale,
+        tone: "error",
+      });
+    }
+
+    await insertAdminAuditLog({
+      action: "bulk_update_user_account_status",
+      adminUserId: admin.id,
+      after: { account_status: accountStatus, count: userIds.length },
+      reason: `Bulk updated account status to ${accountStatus}`,
+      targetId: userIds.join(","),
+      targetType: "profile_batch",
+    });
+
+    revalidatePath(`/${locale}/admin/users`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "bulk-user-status-updated",
+      locale,
+      tone: "notice",
+    });
+  }
+
+  if (intent === "change-role") {
+    const admin = await requireOwner(locale);
+    const adminRole = getRequiredString(formData, "admin_role", "Admin role is required");
+
+    if (adminRole !== "owner" && adminRole !== "operator" && adminRole !== "user") {
+      throw new Error("Invalid admin role");
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        admin_role: adminRole,
+        is_admin: adminRole === "owner",
+        updated_at: new Date().toISOString(),
+      })
+      .in("id", userIds);
+
+    if (error) {
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/users",
+        formData,
+        key: "bulk-user-role-update-failed",
+        locale,
+        tone: "error",
+      });
+    }
+
+    await insertAdminAuditLog({
+      action: "bulk_update_user_admin_role",
+      adminUserId: admin.id,
+      after: { admin_role: adminRole, count: userIds.length },
+      reason: `Bulk updated user admin role to ${adminRole}`,
+      targetId: userIds.join(","),
+      targetType: "profile_batch",
+    });
+
+    revalidatePath(`/${locale}/admin/users`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "bulk-user-role-updated",
+      locale,
+      tone: "notice",
+    });
+  }
+
+  throw new Error("Invalid bulk intent");
+}
+
+export async function permanentlyDeleteUser(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireOwner(locale);
+  const userId = getRequiredString(formData, "user_id", "User is required");
+  const confirmation = getRequiredString(formData, "confirmation", "Confirmation is required");
+  const supabase = createSupabaseAdminClient();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("email").eq("id", userId).single();
+
+  if (profileError || !profile) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "user-permanent-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  if (confirmation !== "DELETE" && confirmation !== profile.email) {
+    throw new Error("Confirmation does not match");
+  }
+
+  const { error } = await supabase.from("profiles").delete().eq("id", userId);
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "user-permanent-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "permanently_delete_user",
+    adminUserId: admin.id,
+    before: { email: profile.email },
+    reason: "Permanently deleted user from admin detail page",
+    targetId: userId,
+    targetType: "profile",
+  });
+
+  revalidatePath(`/${locale}/admin/users`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/users",
+    formData,
+    key: "user-permanently-deleted",
     locale,
     tone: "notice",
   });

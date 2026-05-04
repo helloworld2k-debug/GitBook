@@ -176,6 +176,10 @@ export function AdminPageHeader({ backHref, backLabel, description, eyebrow, tit
 
 const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "account-profile-updated": "User profile updated.",
+  "bulk-user-role-updated": "Updated user role for the selected users.",
+  "bulk-user-role-update-failed": "Unable to update user role for the selected users.",
+  "bulk-user-status-updated": "Updated account status for the selected users.",
+  "bulk-user-status-update-failed": "Unable to update account status for the selected users.",
   "certificate-revoked": "Certificate revoked.",
   "cloud-sync-lease-revoked": "Cloud sync lease revoked.",
   "cloud-sync-lease-revoke-failed": "Unable to revoke cloud sync lease.",
@@ -208,6 +212,10 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "trial-code-update-failed": "Unable to update trial code.",
   "trial-machine-unbound": "Trial machine unbound.",
   "trial-machine-unbind-failed": "Unable to unbind trial machine.",
+  "user-permanently-deleted": "User permanently deleted.",
+  "user-permanent-delete-failed": "Unable to permanently delete the user.",
+  "user-soft-deleted": "User soft-deleted.",
+  "user-soft-delete-failed": "Unable to soft-delete the user.",
 };
 
 export function AdminFeedbackBanner({

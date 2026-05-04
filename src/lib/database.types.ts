@@ -66,7 +66,7 @@ export type Database = {
           public_display_name: string | null;
           is_admin: boolean;
           admin_role: "owner" | "operator" | "user";
-          account_status: "active" | "disabled";
+          account_status: "active" | "disabled" | "deleted";
           created_at: string;
           updated_at: string;
         };
@@ -80,7 +80,7 @@ export type Database = {
           public_display_name?: string | null;
           is_admin?: boolean;
           admin_role?: "owner" | "operator" | "user";
-          account_status?: "active" | "disabled";
+          account_status?: "active" | "disabled" | "deleted";
           created_at?: string;
           updated_at?: string;
         };
@@ -94,7 +94,7 @@ export type Database = {
           public_display_name?: string | null;
           is_admin?: boolean;
           admin_role?: "owner" | "operator" | "user";
-          account_status?: "active" | "disabled";
+          account_status?: "active" | "disabled" | "deleted";
           created_at?: string;
           updated_at?: string;
         };

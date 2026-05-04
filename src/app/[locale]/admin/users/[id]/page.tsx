@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
+import { AdminUserDeleteDangerZone } from "@/components/admin/admin-user-delete-danger-zone";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
@@ -10,6 +11,7 @@ import { isOwnerProfile, requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   addManualDonation,
+  permanentlyDeleteUser,
   revokeCloudSyncLease,
   revokeDesktopSession,
   unbindTrialMachine,
@@ -282,6 +284,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 <select className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="account_status" defaultValue={profile.account_status ?? "active"}>
                   <option value="active">{t("statuses.active")}</option>
                   <option value="disabled">{t("statuses.disabled")}</option>
+                  <option value="deleted">{t("statuses.deleted")}</option>
                 </select>
                 <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
                   {t("save")}
@@ -459,6 +462,21 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
             )}
           </AdminCard>
         </div>
+
+        <AdminUserDeleteDangerZone
+          action={permanentlyDeleteUser}
+          email={profile.email}
+          labels={{
+            confirmation: t("deleteConfirmation"),
+            description: t("dangerDescription"),
+            hint: profile.email,
+            submit: t("permanentDelete"),
+            title: t("dangerZone"),
+            warning: t("dangerWarning"),
+          }}
+          locale={locale}
+          userId={profile.id}
+        />
       </section>
     </AdminShell>
   );
