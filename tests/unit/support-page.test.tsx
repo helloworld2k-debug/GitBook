@@ -4,6 +4,8 @@ import SupportPage from "@/app/[locale]/support/page";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
+  getDefaultSupportChannelsConfig: vi.fn(),
+  normalizeSupportChannels: vi.fn(),
   submitSupportFeedback: vi.fn(),
 }));
 
@@ -12,7 +14,8 @@ vi.mock("@/components/site-header", () => ({
 }));
 
 vi.mock("@/config/support", () => ({
-  getVisibleSupportChannels: () => [],
+  getDefaultSupportChannelsConfig: (...args: unknown[]) => mocks.getDefaultSupportChannelsConfig(...args),
+  normalizeSupportChannels: (...args: unknown[]) => mocks.normalizeSupportChannels(...args),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -48,7 +51,7 @@ vi.mock("next-intl/server", () => ({
       submit: "Send feedback",
       signInRequiredTitle: "Sign in to submit feedback",
       signInRequiredDescription: "Feedback is tied to your account.",
-      signInToSubmit: "Sign in",
+      signInToSubmit: "Sign in to send feedback",
       myFeedbackTitle: "My feedback",
       myFeedbackEmpty: "No feedback threads yet.",
       viewThread: "View thread",
@@ -61,20 +64,78 @@ vi.mock("next-intl/server", () => ({
 }));
 
 describe("SupportPage", () => {
+  it("shows a disabled feedback form and sign-in CTA for logged-out users", async () => {
+    mocks.getDefaultSupportChannelsConfig.mockReturnValue({
+      discord: "",
+      email: "",
+      qq: "",
+      telegram: "",
+      wechat: "",
+    });
+    mocks.normalizeSupportChannels.mockReturnValue([
+      { href: "mailto:support@example.com", icon: () => null, id: "email", label: "Email", value: "support@example.com" },
+    ]);
+    mocks.createSupabaseServerClient.mockResolvedValue({
+      auth: {
+        getUser: async () => ({ data: { user: null } }),
+      },
+      from: () => ({
+        select: () => ({
+          order: async () => ({ data: [], error: null }),
+        }),
+      }),
+    });
+
+    render(
+      await SupportPage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({}),
+      }),
+    );
+
+    expect(screen.getByRole("link", { name: "Sign in to send feedback" })).toHaveAttribute("href", "/login?next=%2Fen%2Fsupport");
+    expect(screen.getByLabelText("Preferred contact")).toBeDisabled();
+    expect(screen.getByLabelText("Subject")).toBeDisabled();
+    expect(screen.getByLabelText("Message")).toBeDisabled();
+    expect(screen.getByRole("link", { name: "Email support@example.com" })).toHaveAttribute("href", "mailto:support@example.com");
+  });
+
   it("renders a success banner and a Dodo checkout expectation style form state for signed-in users", async () => {
+    mocks.getDefaultSupportChannelsConfig.mockReturnValue({
+      discord: "",
+      email: "",
+      qq: "",
+      telegram: "",
+      wechat: "",
+    });
+    mocks.normalizeSupportChannels.mockReturnValue([]);
     mocks.createSupabaseServerClient.mockResolvedValue({
       auth: {
         getUser: async () => ({ data: { user: { id: "user-1", email: "ada@example.com" } } }),
       },
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            order: () => ({
-              limit: async () => ({ data: [], error: null }),
+      from: (table: string) => {
+        if (table === "support_contact_channels") {
+          return {
+            select: () => ({
+              order: async () => ({ data: [], error: null }),
             }),
-          }),
-        }),
-      }),
+          };
+        }
+
+        if (table === "support_feedback") {
+          return {
+            select: () => ({
+              eq: () => ({
+                order: () => ({
+                  limit: async () => ({ data: [], error: null }),
+                }),
+              }),
+            }),
+          };
+        }
+
+        throw new Error(`Unexpected table: ${table}`);
+      },
     });
 
     render(
@@ -86,5 +147,6 @@ describe("SupportPage", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Feedback sent. We will review it soon.");
     expect(screen.getByRole("button", { name: "Send feedback" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Preferred contact")).not.toBeDisabled();
   });
 });

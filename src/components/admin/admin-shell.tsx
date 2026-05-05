@@ -31,6 +31,7 @@ type AdminShellLabels = {
   releases: string;
   returnToSite: string;
   supportFeedback: string;
+  supportSettings: string;
   users: string;
 };
 
@@ -52,6 +53,7 @@ function getAdminItems(labels: AdminShellLabels) {
     { href: "/admin/releases", label: labels.releases, icon: Package },
     { href: "/admin/notifications", label: labels.notifications, icon: Bell },
     { href: "/admin/support-feedback", label: labels.supportFeedback, icon: MessageSquareText },
+    { href: "/admin/support-settings", label: labels.supportSettings, icon: MessageSquareText },
     { href: "/admin/licenses", label: labels.licenses, icon: KeyRound },
     { href: "/admin/users", label: labels.users, icon: Users },
     { href: "/admin/audit-logs", label: labels.auditLogs, icon: ClipboardList },
@@ -202,6 +204,8 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "role-update-failed": "Unable to update user role.",
   "status-updated": "Account status updated.",
   "status-update-failed": "Unable to update account status.",
+  "support-contact-updated": "Support contact updated.",
+  "support-contact-update-failed": "Unable to update support contact.",
   "trial-code-created": "Trial code created.",
   "trial-code-create-failed": "Unable to create trial code.",
   "trial-code-deleted": "Trial code deleted.",

@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
-import { getVisibleSupportChannels } from "@/config/support";
+import { getDefaultSupportChannelsConfig, normalizeSupportChannels } from "@/config/support";
 import { Link } from "@/i18n/routing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { submitSupportFeedback } from "./actions";
@@ -13,14 +13,6 @@ type SupportPageProps = {
   params: Promise<{ locale: string }>;
   searchParams?: Promise<{ feedback?: string }>;
 };
-
-function getChannelHref(value: string) {
-  if (value.startsWith("http://") || value.startsWith("https://")) {
-    return value;
-  }
-
-  return null;
-}
 
 export default async function SupportPage({ params, searchParams }: SupportPageProps) {
   const { locale } = await params;
@@ -33,10 +25,18 @@ export default async function SupportPage({ params, searchParams }: SupportPageP
   setRequestLocale(locale);
   const t = await getTranslations("support");
   const submitFeedback = submitSupportFeedback.bind(null, locale);
-  const channels = getVisibleSupportChannels();
   const supabase = await createSupabaseServerClient();
+  const defaults = getDefaultSupportChannelsConfig();
   const { data } = await supabase.auth.getUser();
   const user = data.user;
+  const { data: channelRows } = await supabase
+    .from("support_contact_channels")
+    .select("id,label,value,is_enabled,sort_order")
+    .order("sort_order", { ascending: true });
+  const channels = normalizeSupportChannels({
+    defaults,
+    rows: channelRows ?? [],
+  });
   const { data: feedback } = user
     ? await supabase
       .from("support_feedback")
@@ -64,7 +64,6 @@ export default async function SupportPage({ params, searchParams }: SupportPageP
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   {channels.map((channel) => {
                     const Icon = channel.icon;
-                    const href = getChannelHref(channel.value);
                     const content = (
                       <>
                         <span className="flex size-10 items-center justify-center rounded-md border border-cyan-300/20 bg-cyan-300/10 text-cyan-100">
@@ -77,13 +76,14 @@ export default async function SupportPage({ params, searchParams }: SupportPageP
                       </>
                     );
 
-                    return href ? (
+                    return channel.href ? (
                       <a
                         className="flex min-h-16 items-center gap-3 rounded-md border border-cyan-300/15 bg-slate-950/60 px-3 transition-colors hover:border-cyan-300/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
-                        href={href}
+                        aria-label={`${channel.label} ${channel.value}`}
+                        href={channel.href}
                         key={channel.id}
                         rel="noreferrer"
-                        target="_blank"
+                        target={channel.href.startsWith("mailto:") ? undefined : "_blank"}
                       >
                         {content}
                       </a>
@@ -125,12 +125,28 @@ export default async function SupportPage({ params, searchParams }: SupportPageP
                 </FormSubmitButton>
               </form>
             ) : (
-              <div className="mt-4 rounded-md border border-cyan-300/20 bg-slate-950/60 p-4">
-                <p className="text-sm font-semibold text-white">{t("signInRequiredTitle")}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-300">{t("signInRequiredDescription")}</p>
-                <Link className="mt-4 inline-flex min-h-11 items-center rounded-md border border-cyan-300/30 px-4 text-sm font-semibold text-cyan-100" href={`/login?next=${encodeURIComponent(`/${locale}/support`)}`}>
-                  {t("signInToSubmit")}
-                </Link>
+              <div className="mt-4">
+                <div className="rounded-md border border-cyan-300/20 bg-slate-950/60 p-4">
+                  <p className="text-sm font-semibold text-white">{t("signInRequiredTitle")}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{t("signInRequiredDescription")}</p>
+                </div>
+                <form className="mt-4 grid gap-4">
+                  <label className="grid gap-2 text-sm font-medium text-slate-100">
+                    {t("contact")}
+                    <input className="min-h-11 rounded-md border border-cyan-300/20 bg-slate-950/40 px-3 text-slate-400 disabled:cursor-not-allowed disabled:opacity-70" disabled maxLength={200} name="contact" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-medium text-slate-100">
+                    {t("subject")}
+                    <input className="min-h-11 rounded-md border border-cyan-300/20 bg-slate-950/40 px-3 text-slate-400 disabled:cursor-not-allowed disabled:opacity-70" disabled maxLength={180} name="subject" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-medium text-slate-100">
+                    {t("message")}
+                    <textarea className="min-h-36 rounded-md border border-cyan-300/20 bg-slate-950/40 px-3 py-3 text-slate-400 disabled:cursor-not-allowed disabled:opacity-70" disabled maxLength={4000} name="message" />
+                  </label>
+                  <Link className="neon-button inline-flex min-h-11 items-center justify-center rounded-md px-4 text-sm font-semibold text-white" href={`/login?next=${encodeURIComponent(`/${locale}/support`)}`}>
+                    {t("signInToSubmit")}
+                  </Link>
+                </form>
               </div>
             )}
           </section>

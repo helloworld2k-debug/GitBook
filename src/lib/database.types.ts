@@ -100,6 +100,47 @@ export type Database = {
         };
         Relationships: [];
       };
+      support_contact_channels: {
+        Row: {
+          id: "telegram" | "discord" | "qq" | "email" | "wechat";
+          label: string;
+          value: string;
+          is_enabled: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          id: "telegram" | "discord" | "qq" | "email" | "wechat";
+          label: string;
+          value?: string;
+          is_enabled?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: "telegram" | "discord" | "qq" | "email" | "wechat";
+          label?: string;
+          value?: string;
+          is_enabled?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "support_contact_channels_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       donations: {
         Row: {
           id: string;

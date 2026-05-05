@@ -30,6 +30,7 @@ const MAX_NOTIFICATION_BODY_LENGTH = 4000;
 const notificationAudiences = ["all", "authenticated", "admins"] as const;
 const notificationPriorities = ["info", "success", "warning", "critical"] as const;
 const feedbackStatuses = ["open", "reviewing", "closed"] as const;
+const supportContactChannelIds = ["telegram", "discord", "qq", "email", "wechat"] as const;
 
 function getSafeLocale(locale: FormDataEntryValue | null) {
   const value = String(locale ?? "en");
@@ -181,6 +182,16 @@ function sanitizeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._ -]+/g, "-").replace(/\s+/g, "-");
 }
 
+function getSupportContactChannelId(formData: FormData) {
+  const channelId = getRequiredString(formData, "channel_id", "Channel is required");
+
+  if (!supportContactChannelIds.includes(channelId as (typeof supportContactChannelIds)[number])) {
+    throw new Error("Invalid support contact channel");
+  }
+
+  return channelId as (typeof supportContactChannelIds)[number];
+}
+
 export async function addManualDonation(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);
@@ -303,6 +314,58 @@ export async function createNotification(formData: FormData) {
     fallbackPath: "/admin/notifications",
     formData,
     key: "notification-created",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function updateSupportContactChannel(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const channelId = getSupportContactChannelId(formData);
+  const value = String(formData.get("value") ?? "").trim();
+  const label = getRequiredString(formData, "label", "Label is required");
+  const sortOrder = getPositiveInteger(formData, "sort_order", "Sort order must be a positive integer");
+  const isEnabled = formData.get("is_enabled") === "on";
+
+  const { error } = await createSupabaseAdminClient()
+    .from("support_contact_channels")
+    .update({
+      is_enabled: isEnabled,
+      label,
+      sort_order: sortOrder,
+      updated_at: new Date().toISOString(),
+      updated_by: admin.id,
+      value,
+    })
+    .eq("id", channelId);
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/support-settings",
+      formData,
+      key: "support-contact-update-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "update_support_contact_channel",
+    adminUserId: admin.id,
+    after: { channel_id: channelId, is_enabled: isEnabled, label, sort_order: sortOrder, value },
+    reason: `Updated support contact channel ${channelId}`,
+    targetId: channelId,
+    targetType: "support_contact_channel",
+  });
+
+  revalidatePath(`/${locale}/support`);
+  revalidatePath(`/${locale}/admin/support-settings`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/support-settings",
+    formData,
+    key: "support-contact-updated",
     locale,
     tone: "notice",
   });
