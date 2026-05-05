@@ -524,6 +524,7 @@
       "adminType": "管理",
       "emptyFiltered": "目前篩選條件下沒有符合的使用者。",
       "softDelete": "軟刪除",
+      "moreActions": "更多操作",
       "ownerPill": "最高管理權限",
       "operatorPill": "營運權限",
       "userPill": "一般使用者",

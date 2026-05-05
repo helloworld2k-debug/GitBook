@@ -532,6 +532,7 @@
       "adminType": "Admin",
       "emptyFiltered": "No users match the current filters.",
       "softDelete": "Soft delete",
+      "moreActions": "More actions",
       "ownerPill": "Owner access",
       "operatorPill": "Operator access",
       "userPill": "Standard user",

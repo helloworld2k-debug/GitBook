@@ -240,7 +240,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             operatorRole: t("roles.operator"),
             ownerRole: t("roles.owner"),
             roleTarget: t("roleTarget"),
-            selectedCount: t("selectedCount", { count: "0" }),
+            selectedCount: t("selectedCount", { count: "__COUNT__" }),
             userRole: t("roles.user"),
           }}
         />
@@ -360,24 +360,31 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                               <Link className="inline-flex min-h-10 items-center rounded-md bg-slate-950 px-3 text-sm font-medium text-white" href={`/admin/users/${profile.id}`}>
                                 {t("manageUser")}
                               </Link>
-                              {trials[0]?.machine_code_hash ? (
-                                <form action={unbindTrialMachine}>
-                                  <input name="locale" type="hidden" value={locale} />
-                                  <input name="return_to" type="hidden" value="/admin/users" />
-                                  <input name="trial_redemption_id" type="hidden" value={trials[0].id} />
-                                  <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("unbind")} pendingLabel={adminT("common.processing")}>
-                                    {t("unbind")}
-                                  </ConfirmActionButton>
-                              </form>
-                            ) : null}
-                            <form action={softDeleteUser}>
-                              <input name="locale" type="hidden" value={locale} />
-                              <input name="return_to" type="hidden" value="/admin/users" />
-                              <input name="user_id" type="hidden" value={profile.id} />
-                              <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("softDelete")} pendingLabel={adminT("common.processing")}>
-                                {t("softDelete")}
-                              </ConfirmActionButton>
-                            </form>
+                              <details aria-label={t("moreActions")} className="relative">
+                                <summary className="inline-flex min-h-10 cursor-pointer list-none items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950">
+                                  {t("moreActions")}
+                                </summary>
+                                <div className="absolute right-0 z-20 mt-2 grid w-56 gap-3 rounded-md border border-slate-200 bg-white p-3 text-left shadow-lg">
+                                  {trials[0]?.machine_code_hash ? (
+                                    <form action={unbindTrialMachine}>
+                                      <input name="locale" type="hidden" value={locale} />
+                                      <input name="return_to" type="hidden" value="/admin/users" />
+                                      <input name="trial_redemption_id" type="hidden" value={trials[0].id} />
+                                      <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("unbind")} pendingLabel={adminT("common.processing")}>
+                                        {t("unbind")}
+                                      </ConfirmActionButton>
+                                    </form>
+                                  ) : null}
+                                  <form action={softDeleteUser}>
+                                    <input name="locale" type="hidden" value={locale} />
+                                    <input name="return_to" type="hidden" value="/admin/users" />
+                                    <input name="user_id" type="hidden" value={profile.id} />
+                                    <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("softDelete")} pendingLabel={adminT("common.processing")}>
+                                      {t("softDelete")}
+                                    </ConfirmActionButton>
+                                  </form>
+                                </div>
+                              </details>
                           </div>
                         </td>
                       </tr>

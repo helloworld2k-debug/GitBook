@@ -26,6 +26,46 @@ function getAllUserInputs(formId: string) {
   );
 }
 
+function setHiddenFormValue(form: HTMLFormElement, name: string, value: string) {
+  const existing = form.querySelector<HTMLInputElement>(`input[type="hidden"][name="${name}"]`);
+
+  if (existing) {
+    existing.value = value;
+    return;
+  }
+
+  const input = document.createElement("input");
+  input.name = name;
+  input.type = "hidden";
+  input.value = value;
+  form.append(input);
+}
+
+function syncSelectedUsersToForm(form: HTMLFormElement, formId: string) {
+  form.querySelectorAll<HTMLInputElement>('input[data-bulk-generated="true"][name="user_ids"]').forEach((input) => input.remove());
+
+  getSelectedUserInputs(formId).filter((selected) => selected.form !== form).forEach((selected) => {
+    const input = document.createElement("input");
+    input.dataset.bulkGenerated = "true";
+    input.name = "user_ids";
+    input.type = "hidden";
+    input.value = selected.value;
+    form.append(input);
+  });
+}
+
+function submitBulkIntent(formId: string, intent: string) {
+  const form = document.getElementById(formId);
+
+  if (!(form instanceof HTMLFormElement)) {
+    return;
+  }
+
+  setHiddenFormValue(form, "intent", intent);
+  syncSelectedUsersToForm(form, formId);
+  form.requestSubmit();
+}
+
 export function AdminUserSelectAllCheckbox({ formId, label }: { formId: string; label: string }) {
   const [checked, setChecked] = useState(false);
 
@@ -48,8 +88,7 @@ export function AdminUserSelectAllCheckbox({ formId, label }: { formId: string; 
       checked={checked}
       className="size-4 rounded border-slate-300"
       onChange={(event) => {
-        const rows = document.querySelectorAll<HTMLInputElement>(`form#${formId} input[name="user_ids"]`);
-        rows.forEach((row) => {
+        getAllUserInputs(formId).forEach((row) => {
           row.checked = event.currentTarget.checked;
           row.dispatchEvent(new Event("change", { bubbles: true }));
         });
@@ -99,11 +138,11 @@ export function AdminUserBulkToolbar({
   return (
     <div className="mt-4 rounded-md border border-slate-200 bg-slate-950 p-4 text-white shadow-sm">
       <div className="flex flex-wrap items-center gap-3">
-        <p className="text-sm font-semibold">{labels.selectedCount.replace("{count}", String(count))}</p>
-        <button className="inline-flex min-h-10 items-center rounded-md bg-white/10 px-3 text-sm font-medium" form={formId} name="intent" type="submit" value="enable">
+        <p className="text-sm font-semibold">{labels.selectedCount.replace("{count}", String(count)).replace("__COUNT__", String(count))}</p>
+        <button className="inline-flex min-h-10 items-center rounded-md bg-white/10 px-3 text-sm font-medium transition-colors hover:bg-white/15 active:bg-white/20" onClick={() => submitBulkIntent(formId, "enable")} type="button">
           {labels.bulkEnable}
         </button>
-        <button className="inline-flex min-h-10 items-center rounded-md bg-white/10 px-3 text-sm font-medium" form={formId} name="intent" type="submit" value="disable">
+        <button className="inline-flex min-h-10 items-center rounded-md bg-white/10 px-3 text-sm font-medium transition-colors hover:bg-white/15 active:bg-white/20" onClick={() => submitBulkIntent(formId, "disable")} type="button">
           {labels.bulkDisable}
         </button>
         {canManageRoles ? (
@@ -116,12 +155,12 @@ export function AdminUserBulkToolbar({
               <option value="operator">{labels.operatorRole}</option>
               <option value="owner">{labels.ownerRole}</option>
             </select>
-            <button className="inline-flex min-h-9 items-center rounded-md border border-white/20 px-3 text-sm font-medium" form={formId} name="intent" type="submit" value="change-role">
+            <button className="inline-flex min-h-9 items-center rounded-md border border-white/20 px-3 text-sm font-medium transition-colors hover:bg-white/10 active:bg-white/15" onClick={() => submitBulkIntent(formId, "change-role")} type="button">
               {labels.bulkRole}
             </button>
           </div>
         ) : null}
-        <button className="inline-flex min-h-10 items-center rounded-md bg-red-500 px-3 text-sm font-semibold text-white" form={formId} name="intent" type="submit" value="soft-delete">
+        <button className="inline-flex min-h-10 items-center rounded-md bg-red-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-red-400 active:bg-red-300" onClick={() => submitBulkIntent(formId, "soft-delete")} type="button">
           {labels.bulkSoftDelete}
         </button>
         <button

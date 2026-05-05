@@ -524,6 +524,7 @@
       "adminType": "관리자",
       "emptyFiltered": "현재 필터에 일치하는 사용자가 없습니다.",
       "softDelete": "소프트 삭제",
+      "moreActions": "추가 작업",
       "ownerPill": "소유자 권한",
       "operatorPill": "운영 권한",
       "userPill": "일반 사용자",

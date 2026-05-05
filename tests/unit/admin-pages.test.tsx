@@ -267,6 +267,7 @@ const testMessages = {
         detailTitle: "User operations",
         detailDescription: "Review and maintain one user's profile, donations, certificates, trials, devices, and entitlements.",
         manageUser: "Manage user",
+        moreActions: "More actions",
         detailEntryHint: "Detailed account, contributions, certificates, and devices",
         user: "User",
         details: "Details",
@@ -1202,6 +1203,9 @@ describe("admin pages", () => {
     fireEvent.click(screen.getByLabelText("Select alice@example.com"));
     expect(screen.getByRole("button", { name: "Bulk soft delete" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Manage user" })).toHaveAttribute("href", "/admin/users/user-1");
+    const moreActions = screen.getByRole("group", { name: "More actions" });
+    expect(moreActions).not.toHaveAttribute("open");
+    expect(moreActions).toContainElement(screen.getByRole("button", { name: "Soft delete" }));
     expect(screen.getByText("Detailed account, contributions, certificates, and devices")).toBeInTheDocument();
   });
 

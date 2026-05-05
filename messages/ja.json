@@ -524,6 +524,7 @@
       "adminType": "管理",
       "emptyFiltered": "現在の条件に一致するユーザーはいません。",
       "softDelete": "ソフト削除",
+      "moreActions": "その他の操作",
       "ownerPill": "オーナー権限",
       "operatorPill": "運用権限",
       "userPill": "一般ユーザー",

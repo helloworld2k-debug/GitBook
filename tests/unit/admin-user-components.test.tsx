@@ -68,6 +68,84 @@ describe("AdminUserBulkToolbar", () => {
     expect(screen.getByRole("button", { name: "Bulk soft delete" })).toBeInTheDocument();
   });
 
+  it("submits the selected users and intent through the target form", () => {
+    document.body.innerHTML = `
+      <form id="bulk-users-form">
+        <input name="locale" type="hidden" value="en" />
+        <input type="checkbox" name="user_ids" value="user-1" checked />
+        <input type="checkbox" name="user_ids" value="user-2" checked />
+        <input type="checkbox" name="user_ids" value="user-3" />
+      </form>
+    `;
+    const form = document.getElementById("bulk-users-form") as HTMLFormElement;
+    const submit = vi.fn((event: SubmitEvent) => event.preventDefault());
+    form.addEventListener("submit", submit);
+
+    render(
+      <AdminUserBulkToolbar
+        canManageRoles={false}
+        formId="bulk-users-form"
+        labels={{
+          bulkDisable: "Bulk disable",
+          bulkEnable: "Bulk enable",
+          bulkRole: "Bulk change role",
+          bulkSoftDelete: "Bulk soft delete",
+          clearSelection: "Clear selection",
+          operatorRole: "Operator",
+          ownerRole: "Owner",
+          roleTarget: "Target role",
+          selectedCount: "{count} selected",
+          userRole: "User",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Bulk disable" }));
+
+    const submittedData = new FormData(form);
+    expect(submit).toHaveBeenCalledTimes(1);
+    expect(submittedData.get("intent")).toBe("disable");
+    expect(submittedData.getAll("user_ids")).toEqual(["user-1", "user-2"]);
+  });
+
+  it("copies externally associated selected users into the hidden form before submit", () => {
+    document.body.innerHTML = `
+      <form id="bulk-users-form">
+        <input name="locale" type="hidden" value="en" />
+      </form>
+      <input form="bulk-users-form" type="checkbox" name="user_ids" value="user-1" checked />
+      <input form="bulk-users-form" type="checkbox" name="user_ids" value="user-2" checked />
+      <input form="bulk-users-form" type="checkbox" name="user_ids" value="user-3" />
+    `;
+    const form = document.getElementById("bulk-users-form") as HTMLFormElement;
+    form.addEventListener("submit", (event) => event.preventDefault());
+
+    render(
+      <AdminUserBulkToolbar
+        canManageRoles={false}
+        formId="bulk-users-form"
+        labels={{
+          bulkDisable: "Bulk disable",
+          bulkEnable: "Bulk enable",
+          bulkRole: "Bulk change role",
+          bulkSoftDelete: "Bulk soft delete",
+          clearSelection: "Clear selection",
+          operatorRole: "Operator",
+          ownerRole: "Owner",
+          roleTarget: "Target role",
+          selectedCount: "{count} selected",
+          userRole: "User",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Bulk disable" }));
+
+    const submittedData = new FormData(form);
+    expect(submittedData.get("intent")).toBe("disable");
+    expect(submittedData.getAll("user_ids")).toEqual(["user-1", "user-2"]);
+  });
+
   it("clears all selected users through the toolbar", () => {
     document.body.innerHTML = `
       <form id="bulk-users-form">
