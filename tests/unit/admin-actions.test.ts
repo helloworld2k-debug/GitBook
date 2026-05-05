@@ -376,12 +376,11 @@ describe("admin actions", () => {
   });
 
   it("updates a support contact channel and redirects with a success notice", async () => {
-    const eq = vi.fn(async () => ({ error: null }));
-    const update = vi.fn(() => ({ eq }));
+    const upsert = vi.fn(async () => ({ error: null }));
     const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "support_contact_channels") {
-        return { update };
+        return { upsert };
       }
 
       if (table === "admin_audit_logs") {
@@ -403,14 +402,47 @@ describe("admin actions", () => {
 
     await expect(updateSupportContactChannel(formData)).rejects.toThrow("redirect:/en/admin/support-settings?notice=support-contact-updated");
 
-    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      id: "telegram",
       is_enabled: true,
       label: "Telegram",
       sort_order: 10,
       updated_by: "admin-1",
       value: "https://t.me/example",
-    }));
-    expect(eq).toHaveBeenCalledWith("id", "telegram");
+    }), { onConflict: "id" });
+  });
+
+  it("creates a missing support contact channel row through upsert", async () => {
+    const upsert = vi.fn(async () => ({ error: null }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "support_contact_channels") {
+        return { upsert };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("return_to", "/admin/support-settings");
+    formData.set("channel_id", "email");
+    formData.set("label", "Email");
+    formData.set("value", "support@example.com");
+    formData.set("sort_order", "40");
+    formData.set("is_enabled", "on");
+
+    await expect(updateSupportContactChannel(formData)).rejects.toThrow("redirect:/en/admin/support-settings?notice=support-contact-updated");
+
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      id: "email",
+      value: "support@example.com",
+    }), { onConflict: "id" });
   });
 
   it("rejects invalid support contact values before writing", async () => {

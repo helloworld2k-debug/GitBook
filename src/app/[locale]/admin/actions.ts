@@ -394,15 +394,15 @@ export async function updateSupportContactChannel(formData: FormData) {
 
   const { error } = await createSupabaseAdminClient()
     .from("support_contact_channels")
-    .update({
+    .upsert({
+      id: channelId,
       is_enabled: isEnabled,
       label,
       sort_order: sortOrder,
       updated_at: new Date().toISOString(),
       updated_by: admin.id,
       value,
-    })
-    .eq("id", channelId);
+    }, { onConflict: "id" });
 
   if (error) {
     redirectWithAdminFeedback({
