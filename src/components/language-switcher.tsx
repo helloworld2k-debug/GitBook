@@ -1,78 +1,21 @@
 "use client";
 
-import { useId } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Globe } from "lucide-react";
 import { supportedLocales, type Locale } from "@/config/site";
 
-const languageLabels: Record<Locale, { short: string; label: string; countryCode: "US" | "HK" | "JP" | "KR" }> = {
-  en: { short: "EN", label: "English", countryCode: "US" },
-  "zh-Hant": { short: "中文", label: "中文", countryCode: "HK" },
-  ja: { short: "日", label: "日本語", countryCode: "JP" },
-  ko: { short: "한", label: "한국어", countryCode: "KR" },
+const languageLabels: Record<Locale, { short: string; label: string }> = {
+  en: { short: "EN", label: "English" },
+  "zh-Hant": { short: "ZH", label: "中文" },
+  ja: { short: "JP", label: "日本語" },
+  ko: { short: "KR", label: "한국어" },
 };
 
-function FlagIcon({ countryCode }: { countryCode: (typeof languageLabels)[Locale]["countryCode"] }) {
-  const label = `${countryCode} flag`;
-  const clipId = useId();
-
-  if (countryCode === "US") {
-    return (
-      <svg aria-label={label} className="size-5 shrink-0 rounded-full" viewBox="0 0 32 32" role="img">
-        <clipPath id={clipId}><circle cx="16" cy="16" r="16" /></clipPath>
-        <g clipPath={`url(#${clipId})`}>
-          <path fill="#fff" d="M0 0h32v32H0z" />
-          {Array.from({ length: 7 }).map((_, index) => (
-            <path fill="#b22234" d={`M0 ${index * 5}h32v2.5H0z`} key={index} />
-          ))}
-          <path fill="#3c3b6e" d="M0 0h15.2v17.5H0z" />
-          <path fill="#fff" d="M3 4h2v2H3zm5 0h2v2H8zm-5 5h2v2H3zm5 0h2v2H8zm-5 5h2v2H3zm5 0h2v2H8z" />
-        </g>
-      </svg>
-    );
-  }
-
-  if (countryCode === "HK") {
-    return (
-      <svg aria-label={label} className="size-5 shrink-0 rounded-full" viewBox="0 0 32 32" role="img">
-        <clipPath id={clipId}><circle cx="16" cy="16" r="16" /></clipPath>
-        <g clipPath={`url(#${clipId})`}>
-          <path fill="#de2910" d="M0 0h32v32H0z" />
-          <g fill="#fff" transform="translate(16 16)">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <ellipse
-                cx="0"
-                cy="-5.2"
-                key={index}
-                rx="1.8"
-                ry="5.4"
-                transform={`rotate(${index * 72})`}
-              />
-            ))}
-          </g>
-        </g>
-      </svg>
-    );
-  }
-
-  if (countryCode === "JP") {
-    return (
-      <svg aria-label={label} className="size-5 shrink-0 rounded-full" viewBox="0 0 32 32" role="img">
-        <circle cx="16" cy="16" r="16" fill="#fff" />
-        <circle cx="16" cy="16" r="7" fill="#bc002d" />
-      </svg>
-    );
-  }
-
+function LanguageBadge({ text }: { text: string }) {
   return (
-    <svg aria-label={label} className="size-5 shrink-0 rounded-full" viewBox="0 0 32 32" role="img">
-      <clipPath id={clipId}><circle cx="16" cy="16" r="16" /></clipPath>
-      <g clipPath={`url(#${clipId})`}>
-        <path fill="#fff" d="M0 0h32v32H0z" />
-        <path fill="#cd2e3a" d="M16 8a8 8 0 0 1 0 16 4 4 0 0 1 0-8 4 4 0 0 0 0-8z" />
-        <path fill="#0047a0" d="M16 24a8 8 0 0 1 0-16 4 4 0 0 1 0 8 4 4 0 0 0 0 8z" />
-        <path stroke="#111827" strokeWidth="1.4" d="M6 7l5 5m-3-7l5 5m8 12l5 5m-3-7l5 5M25 7l-5 5m7-3l-5 5M7 25l5-5m-7 3l5-5" />
-      </g>
-    </svg>
+    <span className="inline-flex min-w-9 items-center justify-center rounded-md border border-current/15 bg-current/5 px-2 py-1 text-[11px] font-bold tracking-[0.12em]">
+      {text}
+    </span>
   );
 }
 
@@ -120,7 +63,7 @@ export function LanguageSwitcher({ currentLocale, label = "Language", variant = 
   return (
     <details className="group relative">
       <summary aria-label={label} className={summaryClass}>
-        <FlagIcon countryCode={languageLabels[currentLocale].countryCode} />
+        <Globe aria-hidden="true" className="size-4 shrink-0" />
         <span>{languageLabels[currentLocale].short}</span>
       </summary>
       <div className={menuClass} role="menu">
@@ -132,7 +75,7 @@ export function LanguageSwitcher({ currentLocale, label = "Language", variant = 
             role="menuitem"
             type="button"
           >
-            <FlagIcon countryCode={languageLabels[locale].countryCode} />
+            <LanguageBadge text={languageLabels[locale].short} />
             <span>{languageLabels[locale].label}</span>
           </button>
         ))}

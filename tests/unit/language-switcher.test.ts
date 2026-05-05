@@ -12,12 +12,12 @@ describe("language switcher URL generation", () => {
     expect(getLocalizedPath("/", "en")).toBe("/en");
   });
 
-  it("defines flag metadata for every supported language", () => {
+  it("defines language abbreviations for every supported language", () => {
     expect(getLanguageLabels()).toEqual({
-      en: expect.objectContaining({ countryCode: "US", short: "EN" }),
-      "zh-Hant": expect.objectContaining({ countryCode: "HK", short: "中文", label: "中文" }),
-      ja: expect.objectContaining({ countryCode: "JP", short: "日" }),
-      ko: expect.objectContaining({ countryCode: "KR", short: "한" }),
+      en: expect.objectContaining({ short: "EN", label: "English" }),
+      "zh-Hant": expect.objectContaining({ short: "ZH", label: "中文" }),
+      ja: expect.objectContaining({ short: "JP", label: "日本語" }),
+      ko: expect.objectContaining({ short: "KR", label: "한국어" }),
     });
   });
 });
