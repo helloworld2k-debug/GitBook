@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { optionalTimeout } from "@/lib/async/optional-timeout";
-import { getPublishedReleases, getReleaseAsset, type ReleaseClient, type SoftwareRelease } from "@/lib/releases/software-releases";
+import { getPlatformDelivery, getPublishedReleases, type ReleaseClient, type SoftwareRelease } from "@/lib/releases/software-releases";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type VersionsPageProps = {
@@ -54,8 +54,8 @@ export default async function VersionsPage({ params }: VersionsPageProps) {
           {releases.length > 0 ? (
             <div className="mt-10 space-y-4">
               {releases.map((release) => {
-                const macAsset = getReleaseAsset(release, "macos");
-                const windowsAsset = getReleaseAsset(release, "windows");
+                const macDelivery = getPlatformDelivery(release, "macos");
+                const windowsDelivery = getPlatformDelivery(release, "windows");
 
                 return (
                   <article className="glass-panel rounded-lg p-5" key={release.id}>
@@ -66,22 +66,10 @@ export default async function VersionsPage({ params }: VersionsPageProps) {
                         {release.notes ? <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-300">{release.notes}</p> : null}
                       </div>
                       <div className="flex flex-wrap gap-3">
-                        {macAsset ? (
-                          <a
-                            className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/50"
-                            href={macAsset.downloadUrl}
-                          >
-                            {t("downloadMac")}
-                          </a>
-                        ) : null}
-                        {windowsAsset ? (
-                          <a
-                            className="inline-flex min-h-11 items-center justify-center rounded-md border border-violet-300/20 bg-violet-300/10 px-4 text-sm font-semibold text-violet-100 transition-colors hover:border-violet-300/50"
-                            href={windowsAsset.downloadUrl}
-                          >
-                            {t("downloadWindows")}
-                          </a>
-                        ) : null}
+                        {macDelivery?.primaryUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/50" href={macDelivery.primaryUrl}>{t("downloadMac")} {t("releases.primaryLink")}</a> : null}
+                        {macDelivery?.backupUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-300/20 bg-slate-900/50 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/50" href={macDelivery.backupUrl}>{t("downloadMac")} {t("releases.backupLink")}</a> : null}
+                        {windowsDelivery?.primaryUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-violet-300/20 bg-violet-300/10 px-4 text-sm font-semibold text-violet-100 transition-colors hover:border-violet-300/50" href={windowsDelivery.primaryUrl}>{t("downloadWindows")} {t("releases.primaryLink")}</a> : null}
+                        {windowsDelivery?.backupUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-violet-300/20 bg-slate-900/50 px-4 text-sm font-semibold text-violet-100 transition-colors hover:border-violet-300/50" href={windowsDelivery.backupUrl}>{t("downloadWindows")} {t("releases.backupLink")}</a> : null}
                       </div>
                     </div>
                   </article>

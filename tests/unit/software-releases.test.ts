@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { getLatestPublishedRelease, getPublishedReleases } from "@/lib/releases/software-releases";
+import { getLatestPublishedRelease, getPlatformDelivery, getPublishedReleases } from "@/lib/releases/software-releases";
 
 function createReleaseClient(rows: unknown[]) {
   const getPublicUrl = vi.fn((path: string) => ({
@@ -28,6 +28,11 @@ describe("software release queries", () => {
         version: "v1.2.0",
         released_at: "2026-04-30",
         notes: "Fast AI indexing",
+        delivery_mode: "file",
+        macos_primary_url: null,
+        macos_backup_url: null,
+        windows_primary_url: null,
+        windows_backup_url: null,
         software_release_assets: [
           {
             id: "asset-mac",
@@ -50,6 +55,12 @@ describe("software release queries", () => {
       version: "v1.2.0",
       releasedAt: "2026-04-30",
       notes: "Fast AI indexing",
+      deliveryMode: "file",
+      macosPrimaryUrl: null,
+      macosBackupUrl: null,
+      windowsPrimaryUrl: null,
+      windowsBackupUrl: null,
+      isPublished: undefined,
       assets: [
         {
           id: "asset-mac",
@@ -70,14 +81,12 @@ describe("software release queries", () => {
         version: "v1.2.0",
         released_at: "2026-04-30",
         notes: null,
+        delivery_mode: "link",
+        macos_primary_url: "https://downloads.example/mac-primary.dmg",
+        macos_backup_url: "https://mirror.example/mac-backup.dmg",
+        windows_primary_url: "https://downloads.example/win-primary.exe",
+        windows_backup_url: null,
         software_release_assets: [
-          {
-            id: "asset-win",
-            platform: "windows",
-            file_name: "GitBookAI.exe",
-            storage_path: "release-2/windows/GitBookAI.exe",
-            file_size: null,
-          },
         ],
       },
       {
@@ -85,6 +94,11 @@ describe("software release queries", () => {
         version: "v1.1.0",
         released_at: "2026-04-01",
         notes: "Older build",
+        delivery_mode: "file",
+        macos_primary_url: null,
+        macos_backup_url: null,
+        windows_primary_url: null,
+        windows_backup_url: null,
         software_release_assets: [],
       },
     ]);
@@ -93,6 +107,16 @@ describe("software release queries", () => {
 
     expect(releases).toHaveLength(2);
     expect(releases[0]?.version).toBe("v1.2.0");
-    expect(releases[0]?.assets[0]?.downloadUrl).toBe("https://cdn.example/release-2/windows/GitBookAI.exe");
+    expect(releases[0]?.deliveryMode).toBe("link");
+    expect(getPlatformDelivery(releases[0]!, "macos")).toMatchObject({
+      backupUrl: "https://mirror.example/mac-backup.dmg",
+      primaryUrl: "https://downloads.example/mac-primary.dmg",
+      source: "link",
+    });
+    expect(getPlatformDelivery(releases[0]!, "windows")).toMatchObject({
+      backupUrl: null,
+      primaryUrl: "https://downloads.example/win-primary.exe",
+      source: "link",
+    });
   });
 });

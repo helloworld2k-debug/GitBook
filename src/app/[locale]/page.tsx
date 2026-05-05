@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import { siteConfig, supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { optionalTimeout } from "@/lib/async/optional-timeout";
-import { getLatestPublishedRelease, getReleaseAsset, type ReleaseClient, type ReleasePlatform, type SoftwareRelease } from "@/lib/releases/software-releases";
+import { getLatestPublishedRelease, getPlatformDelivery, type ReleaseClient, type ReleasePlatform, type SoftwareRelease } from "@/lib/releases/software-releases";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type LocalizedPageProps = {
@@ -53,8 +53,8 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
     latestRelease = null;
   }
 
-  const macAsset = getReleaseAsset(latestRelease, "macos");
-  const windowsAsset = getReleaseAsset(latestRelease, "windows");
+  const macDelivery = getPlatformDelivery(latestRelease, "macos");
+  const windowsDelivery = getPlatformDelivery(latestRelease, "windows");
   const latestVersionLabel = latestRelease
     ? t("latestVersion", {
         version: latestRelease.version,
@@ -64,14 +64,18 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
   const downloads = [
     {
       label: t("downloadMac"),
-      href: macAsset?.downloadUrl ?? getFallbackDownload("macos"),
-      unavailable: latestRelease ? !macAsset : false,
+      href: macDelivery?.primaryUrl ?? getFallbackDownload("macos"),
+      backupHref: macDelivery?.backupUrl ?? null,
+      backupLabel: "macOS Backup",
+      unavailable: latestRelease ? !macDelivery?.primaryUrl : false,
       className: `${downloadLinkClass} neon-button text-white`,
     },
     {
       label: t("downloadWindows"),
-      href: windowsAsset?.downloadUrl ?? getFallbackDownload("windows"),
-      unavailable: latestRelease ? !windowsAsset : false,
+      href: windowsDelivery?.primaryUrl ?? getFallbackDownload("windows"),
+      backupHref: windowsDelivery?.backupUrl ?? null,
+      backupLabel: "Windows Backup",
+      unavailable: latestRelease ? !windowsDelivery?.primaryUrl : false,
       className: `${downloadLinkClass} border border-cyan-300/20 bg-white/[0.08] text-cyan-100 hover:border-cyan-300/50 hover:bg-white/[0.12]`,
     },
   ];
@@ -117,9 +121,16 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
                     {download.label}
                   </span>
                 ) : (
-                  <a className={download.className} href={download.href} key={download.label}>
-                    {download.label}
-                  </a>
+                  <div className="flex flex-col gap-2" key={download.label}>
+                    <a className={download.className} href={download.href}>
+                      {download.label}
+                    </a>
+                    {download.backupHref ? (
+                      <a className={`${downloadLinkClass} border border-slate-700 bg-slate-900/40 text-slate-200 hover:border-slate-500`} href={download.backupHref}>
+                        {download.backupLabel}
+                      </a>
+                    ) : null}
+                  </div>
                 ),
               )}
             </div>

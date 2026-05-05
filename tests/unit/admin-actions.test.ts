@@ -553,6 +553,7 @@ describe("admin actions", () => {
     formData.set("version", "v1.2.0");
     formData.set("released_at", "2026-04-30");
     formData.set("notes", "Fast AI indexing");
+    formData.set("delivery_mode", "file");
     formData.set("is_published", "on");
     formData.set("macos_file", new File(["mac"], "GitBook AI.dmg"));
     formData.set("windows_file", new File(["win"], "GitBook AI.exe"));
@@ -562,10 +563,15 @@ describe("admin actions", () => {
     expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
     expect(releaseInsert).toHaveBeenCalledWith({
       created_by: "admin-1",
+      delivery_mode: "file",
       is_published: true,
+      macos_backup_url: null,
+      macos_primary_url: null,
       notes: "Fast AI indexing",
       released_at: "2026-04-30",
       version: "v1.2.0",
+      windows_backup_url: null,
+      windows_primary_url: null,
     });
     expect(storageFrom).toHaveBeenCalledWith("software-releases");
     expect(upload).toHaveBeenCalledTimes(2);
@@ -578,6 +584,60 @@ describe("admin actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/versions");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
+  });
+
+  it("creates a software release in link mode without writing release assets", async () => {
+    const releaseInsertSingle = vi.fn(async () => ({ data: { id: "release-1" }, error: null }));
+    const releaseSelect = vi.fn(() => ({ single: releaseInsertSingle }));
+    const releaseInsert = vi.fn(() => ({ select: releaseSelect }));
+    const assetInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "software_releases") {
+        return { insert: releaseInsert };
+      }
+
+      if (table === "software_release_assets") {
+        return { insert: assetInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, storage: { from: vi.fn() } });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("version", "v1.3.0");
+    formData.set("released_at", "2026-05-01");
+    formData.set("delivery_mode", "link");
+    formData.set("macos_primary_url", "https://downloads.example/mac.dmg");
+    formData.set("macos_backup_url", "https://mirror.example/mac.dmg");
+    formData.set("windows_primary_url", "https://downloads.example/win.exe");
+    formData.set("windows_backup_url", "https://mirror.example/win.exe");
+
+    await expect(createSoftwareRelease(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-created");
+
+    expect(releaseInsert).toHaveBeenCalledWith(expect.objectContaining({
+      delivery_mode: "link",
+      macos_primary_url: "https://downloads.example/mac.dmg",
+      macos_backup_url: "https://mirror.example/mac.dmg",
+      windows_primary_url: "https://downloads.example/win.exe",
+      windows_backup_url: "https://mirror.example/win.exe",
+    }));
+    expect(assetInsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects duplicate backup and primary URLs for the same platform", async () => {
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("version", "v1.3.0");
+    formData.set("released_at", "2026-05-01");
+    formData.set("delivery_mode", "link");
+    formData.set("macos_primary_url", "https://downloads.example/mac.dmg");
+    formData.set("macos_backup_url", "https://downloads.example/mac.dmg");
+    formData.set("windows_primary_url", "https://downloads.example/win.exe");
+
+    await expect(createSoftwareRelease(formData)).rejects.toThrow("Backup URL must be different from the primary URL");
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
   it("publishes and unpublishes a software release", async () => {

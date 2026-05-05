@@ -711,6 +711,11 @@ export type Database = {
           version: string;
           released_at: string;
           notes: string | null;
+          delivery_mode: "file" | "link";
+          macos_primary_url: string | null;
+          macos_backup_url: string | null;
+          windows_primary_url: string | null;
+          windows_backup_url: string | null;
           is_published: boolean;
           created_by: string | null;
           created_at: string;
@@ -721,6 +726,11 @@ export type Database = {
           version: string;
           released_at: string;
           notes?: string | null;
+          delivery_mode?: "file" | "link";
+          macos_primary_url?: string | null;
+          macos_backup_url?: string | null;
+          windows_primary_url?: string | null;
+          windows_backup_url?: string | null;
           is_published?: boolean;
           created_by?: string | null;
           created_at?: string;
@@ -731,6 +741,11 @@ export type Database = {
           version?: string;
           released_at?: string;
           notes?: string | null;
+          delivery_mode?: "file" | "link";
+          macos_primary_url?: string | null;
+          macos_backup_url?: string | null;
+          windows_primary_url?: string | null;
+          windows_backup_url?: string | null;
           is_published?: boolean;
           created_by?: string | null;
           created_at?: string;

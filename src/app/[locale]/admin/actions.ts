@@ -182,6 +182,45 @@ function sanitizeFileName(fileName: string) {
   return fileName.replace(/[^a-zA-Z0-9._ -]+/g, "-").replace(/\s+/g, "-");
 }
 
+function getReleaseDeliveryMode(formData: FormData) {
+  const deliveryMode = getRequiredString(formData, "delivery_mode", "Delivery mode is required");
+
+  if (deliveryMode !== "file" && deliveryMode !== "link") {
+    throw new Error("Invalid delivery mode");
+  }
+
+  return deliveryMode as "file" | "link";
+}
+
+function getOptionalReleaseUrl(formData: FormData, key: string) {
+  const value = String(formData.get(key) ?? "").trim();
+
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      throw new Error("Enter a valid URL");
+    }
+  } catch {
+    throw new Error("Enter a valid URL");
+  }
+
+  return value;
+}
+
+function getRequiredReleaseUrl(formData: FormData, key: string) {
+  const value = getOptionalReleaseUrl(formData, key);
+
+  if (!value) {
+    throw new Error("Primary download URL is required");
+  }
+
+  return value;
+}
+
 function getSupportContactChannelId(formData: FormData) {
   const channelId = getRequiredString(formData, "channel_id", "Channel is required");
 
@@ -614,13 +653,35 @@ export async function createSoftwareRelease(formData: FormData) {
   const version = getRequiredString(formData, "version", "Version is required");
   const releasedAt = getReleaseDate(formData);
   const notes = getReleaseNotes(formData);
-  const files: { platform: ReleasePlatform; file: File }[] = [
-    { platform: "macos", file: getUploadFile(formData, "macos_file") as File },
-    { platform: "windows", file: getUploadFile(formData, "windows_file") as File },
-  ].filter((entry): entry is { platform: ReleasePlatform; file: File } => Boolean(entry.file));
+  const deliveryMode = getReleaseDeliveryMode(formData);
+  let files: { platform: ReleasePlatform; file: File }[] = [];
+  let macosPrimaryUrl: string | null = null;
+  let macosBackupUrl: string | null = null;
+  let windowsPrimaryUrl: string | null = null;
+  let windowsBackupUrl: string | null = null;
 
-  if (files.length === 0) {
-    throw new Error("Upload at least one installer file");
+  if (deliveryMode === "file") {
+    files = [
+      { platform: "macos", file: getUploadFile(formData, "macos_file") as File },
+      { platform: "windows", file: getUploadFile(formData, "windows_file") as File },
+    ].filter((entry): entry is { platform: ReleasePlatform; file: File } => Boolean(entry.file));
+
+    if (files.length !== 2) {
+      throw new Error("Upload both macOS and Windows installer files");
+    }
+  } else {
+    macosPrimaryUrl = getRequiredReleaseUrl(formData, "macos_primary_url");
+    macosBackupUrl = getOptionalReleaseUrl(formData, "macos_backup_url");
+    windowsPrimaryUrl = getRequiredReleaseUrl(formData, "windows_primary_url");
+    windowsBackupUrl = getOptionalReleaseUrl(formData, "windows_backup_url");
+
+    if (macosBackupUrl && macosBackupUrl === macosPrimaryUrl) {
+      throw new Error("Backup URL must be different from the primary URL");
+    }
+
+    if (windowsBackupUrl && windowsBackupUrl === windowsPrimaryUrl) {
+      throw new Error("Backup URL must be different from the primary URL");
+    }
   }
 
   const supabase = createSupabaseAdminClient();
@@ -628,10 +689,15 @@ export async function createSoftwareRelease(formData: FormData) {
     .from("software_releases")
     .insert({
       created_by: admin.id,
+      delivery_mode: deliveryMode,
       is_published: formData.get("is_published") === "on",
+      macos_backup_url: macosBackupUrl,
+      macos_primary_url: macosPrimaryUrl,
       notes,
       released_at: releasedAt,
       version,
+      windows_backup_url: windowsBackupUrl,
+      windows_primary_url: windowsPrimaryUrl,
     })
     .select("id")
     .single();
@@ -646,39 +712,41 @@ export async function createSoftwareRelease(formData: FormData) {
     });
   }
 
-  const assets = [];
+  if (deliveryMode === "file") {
+    const assets = [];
 
-  for (const { platform, file } of files) {
-    const safeFileName = sanitizeFileName(file.name);
-    const storagePath = `${release.id}/${platform}/${safeFileName}`;
-    const { error: uploadError } = await supabase.storage.from(SOFTWARE_RELEASES_BUCKET).upload(storagePath, file, {
-      contentType: file.type || "application/octet-stream",
-      upsert: true,
-    });
+    for (const { platform, file } of files) {
+      const safeFileName = sanitizeFileName(file.name);
+      const storagePath = `${release.id}/${platform}/${safeFileName}`;
+      const { error: uploadError } = await supabase.storage.from(SOFTWARE_RELEASES_BUCKET).upload(storagePath, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: true,
+      });
 
-    if (uploadError) {
-      throw new Error(`Unable to upload ${platform} installer`);
+      if (uploadError) {
+        throw new Error(`Unable to upload ${platform} installer`);
+      }
+
+      assets.push({
+        file_name: file.name,
+        file_size: file.size,
+        platform,
+        release_id: release.id,
+        storage_path: storagePath,
+      });
     }
 
-    assets.push({
-      file_name: file.name,
-      file_size: file.size,
-      platform,
-      release_id: release.id,
-      storage_path: storagePath,
-    });
-  }
+    const { error: assetError } = await supabase.from("software_release_assets").insert(assets);
 
-  const { error: assetError } = await supabase.from("software_release_assets").insert(assets);
-
-  if (assetError) {
-    redirectWithAdminFeedback({
-      fallbackPath: "/admin/releases",
-      formData,
-      key: "operation-failed",
-      locale,
-      tone: "error",
-    });
+    if (assetError) {
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/releases",
+        formData,
+        key: "operation-failed",
+        locale,
+        tone: "error",
+      });
+    }
   }
 
   revalidatePath(`/${locale}`);
