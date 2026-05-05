@@ -359,9 +359,12 @@
       "enabled": "サポートページに表示",
       "disabled": "サポートページで非表示",
       "save": "チャネルを保存",
+      "guidanceTitle": "設定ガイド",
+      "guidanceBody": "有効化したチャネルだけがサポートページに公開表示されます。Telegram と Discord は完全な URL、QQ と WeChat は識別子、Email は公開用のサポートアドレスを入力してください。",
       "emailHelp": "これはユーザー向けに公開表示するサポート用メールアドレスです。ログイン用メール設定とは別です。",
       "previewTitle": "チャネル設定",
       "previewDescription": "以下で各連絡チャネルを編集できます。有効な項目だけが設定順で公開表示されます。",
+      "publicPreviewTitle": "公開プレビュー",
       "previewEmpty": "有効なサポート連絡先チャネルはまだありません。"
     },
     "licenses": {

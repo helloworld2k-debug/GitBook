@@ -35,6 +35,13 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
 
   const channelRows = rows && rows.length > 0 ? rows : toSupportChannelRows(defaults);
   const previewChannels = normalizeSupportChannels({ defaults, rows: rows ?? [] });
+  const channelPlaceholders: Record<string, string> = {
+    discord: "https://discord.gg/your-community",
+    email: "support@example.com",
+    qq: "123456789",
+    telegram: "https://t.me/your_channel",
+    wechat: "your_wechat_id",
+  };
 
   return (
     <AdminShell {...shellProps}>
@@ -48,6 +55,11 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
         />
         <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
 
+        <AdminCard className="mb-6 p-5">
+          <h2 className="text-base font-semibold text-slate-950">{t("supportSettings.guidanceTitle")}</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{t("supportSettings.guidanceBody")}</p>
+        </AdminCard>
+
         <AdminCard>
           <div className="border-b border-slate-200 px-5 py-4">
             <h2 className="text-base font-semibold text-slate-950">{t("supportSettings.previewTitle")}</h2>
@@ -55,7 +67,7 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
           </div>
           <div className="divide-y divide-slate-200">
             {channelRows.map((channel) => (
-              <form action={updateSupportContactChannel} className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.45fr)_220px_130px_auto]" key={channel.id}>
+              <form action={updateSupportContactChannel} className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.55fr)_220px_120px_160px]" key={channel.id}>
                 <input name="locale" type="hidden" value={locale} />
                 <input name="return_to" type="hidden" value="/admin/support-settings" />
                 <input name="channel_id" type="hidden" value={channel.id} />
@@ -66,7 +78,7 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
                 </label>
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("supportSettings.value")}
-                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={channel.value} name="value" />
+                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={channel.value} name="value" placeholder={channelPlaceholders[channel.id] ?? ""} />
                 </label>
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("supportSettings.status")}
@@ -80,7 +92,7 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
                   <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={channel.sort_order} min="1" name="sort_order" type="number" />
                 </label>
                 <div className="flex items-end">
-                  <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white lg:w-auto" pendingLabel={t("common.saving")}>
+                  <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" pendingLabel={t("common.saving")}>
                     {t("supportSettings.save")}
                   </AdminSubmitButton>
                 </div>
@@ -90,7 +102,7 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
         </AdminCard>
 
         <AdminCard className="mt-6 p-5">
-          <h2 className="text-base font-semibold text-slate-950">{t("supportSettings.previewTitle")}</h2>
+          <h2 className="text-base font-semibold text-slate-950">{t("supportSettings.publicPreviewTitle")}</h2>
           {previewChannels.length > 0 ? (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {previewChannels.map((channel) => (

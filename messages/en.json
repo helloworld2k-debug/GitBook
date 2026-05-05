@@ -332,9 +332,12 @@
       "enabled": "Shown on Support page",
       "disabled": "Hidden from Support page",
       "save": "Save channel",
+      "guidanceTitle": "How these settings work",
+      "guidanceBody": "Enabled channels are shown publicly on the Support page. Use full URLs for Telegram and Discord, plain account identifiers for QQ or WeChat, and a valid mailbox for Email.",
       "emailHelp": "This is the public support mailbox shown to users. It is separate from account login email settings.",
       "previewTitle": "Channel settings",
       "previewDescription": "Edit each support channel below. Enabled entries will appear publicly in the configured order.",
+      "publicPreviewTitle": "Public preview",
       "previewEmpty": "No support contact channels are enabled yet."
     },
     "certificates": {

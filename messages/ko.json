@@ -359,9 +359,12 @@
       "enabled": "지원 페이지에 표시",
       "disabled": "지원 페이지에서 숨김",
       "save": "채널 저장",
+      "guidanceTitle": "설정 안내",
+      "guidanceBody": "활성화된 채널만 지원 페이지에 공개됩니다. Telegram과 Discord는 전체 URL, QQ와 WeChat은 계정 식별자, Email은 공개용 지원 메일 주소를 입력하세요.",
       "emailHelp": "이 주소는 사용자에게 공개되는 지원용 이메일입니다. 로그인 이메일 설정과는 별개입니다.",
       "previewTitle": "채널 설정",
       "previewDescription": "아래에서 각 연락 채널을 수정할 수 있습니다. 활성화된 항목만 설정한 순서대로 공개됩니다.",
+      "publicPreviewTitle": "공개 미리보기",
       "previewEmpty": "활성화된 지원 연락 채널이 아직 없습니다."
     },
     "licenses": {
