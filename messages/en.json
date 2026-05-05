@@ -329,6 +329,7 @@
       "value": "Contact value",
       "status": "Visibility",
       "sortOrder": "Display order",
+      "sortOrderHelp": "Smaller numbers appear first in the public channel list.",
       "enabled": "Shown on Support page",
       "disabled": "Hidden from Support page",
       "statusHelp": "Switch this channel on only when the value is ready for public display.",
@@ -344,6 +345,7 @@
       "previewTitle": "Channel settings",
       "previewDescription": "Edit each support channel below. Enabled entries will appear publicly in the configured order.",
       "publicPreviewTitle": "Public preview",
+      "publicPreviewDescription": "This is how the enabled support channels will appear to visitors on the Support page.",
       "previewEmpty": "No support contact channels are enabled yet."
     },
     "certificates": {

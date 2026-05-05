@@ -102,6 +102,7 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("supportSettings.sortOrder")}
                   <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={channel.sort_order} min="1" name="sort_order" type="number" />
+                  <span className="text-xs text-slate-500">{t("supportSettings.sortOrderHelp")}</span>
                 </label>
                 <div className="flex items-end">
                   <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" pendingLabel={t("common.saving")}>
@@ -115,12 +116,20 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
 
         <AdminCard className="mt-6 p-5">
           <h2 className="text-base font-semibold text-slate-950">{t("supportSettings.publicPreviewTitle")}</h2>
+          <p className="mt-2 text-sm text-slate-600">{t("supportSettings.publicPreviewDescription")}</p>
           {previewChannels.length > 0 ? (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {previewChannels.map((channel) => (
                 <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3" key={channel.id}>
-                  <p className="text-sm font-semibold text-slate-950">{channel.label}</p>
-                  <p className="mt-1 text-sm text-slate-600">{channel.value}</p>
+                  <div className="flex items-start gap-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700">
+                      <channel.icon aria-hidden="true" className="size-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-950">{channel.label}</p>
+                      <p className="mt-1 break-all text-sm text-slate-600">{channel.value}</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

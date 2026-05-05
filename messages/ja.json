@@ -356,6 +356,7 @@
       "value": "連絡先",
       "status": "表示状態",
       "sortOrder": "表示順",
+      "sortOrderHelp": "数値が小さいほど公開チャネル一覧の上に表示されます。",
       "enabled": "サポートページに表示",
       "disabled": "サポートページで非表示",
       "statusHelp": "公開表示の準備ができているチャネルだけを有効にしてください。",
@@ -371,6 +372,7 @@
       "previewTitle": "チャネル設定",
       "previewDescription": "以下で各連絡チャネルを編集できます。有効な項目だけが設定順で公開表示されます。",
       "publicPreviewTitle": "公開プレビュー",
+      "publicPreviewDescription": "有効なサポートチャネルが、公開サポートページでどのように見えるかのプレビューです。",
       "previewEmpty": "有効なサポート連絡先チャネルはまだありません。"
     },
     "licenses": {

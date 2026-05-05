@@ -356,6 +356,7 @@
       "value": "연락처 값",
       "status": "노출 상태",
       "sortOrder": "표시 순서",
+      "sortOrderHelp": "숫자가 작을수록 공개 연락 목록에서 먼저 표시됩니다.",
       "enabled": "지원 페이지에 표시",
       "disabled": "지원 페이지에서 숨김",
       "statusHelp": "공개 노출 준비가 된 채널만 활성화하세요.",
@@ -371,6 +372,7 @@
       "previewTitle": "채널 설정",
       "previewDescription": "아래에서 각 연락 채널을 수정할 수 있습니다. 활성화된 항목만 설정한 순서대로 공개됩니다.",
       "publicPreviewTitle": "공개 미리보기",
+      "publicPreviewDescription": "활성화된 지원 채널이 공개 지원 페이지에서 어떻게 보이는지 미리 보여줍니다.",
       "previewEmpty": "활성화된 지원 연락 채널이 아직 없습니다."
     },
     "licenses": {

@@ -356,6 +356,7 @@
       "value": "聯絡內容",
       "status": "顯示狀態",
       "sortOrder": "顯示順序",
+      "sortOrderHelp": "數字越小會越先顯示在公開聯絡列表中。",
       "enabled": "顯示在支援頁",
       "disabled": "隱藏於支援頁",
       "statusHelp": "只有當這個渠道的內容準備好對外公開時，才建議啟用。",
@@ -371,6 +372,7 @@
       "previewTitle": "渠道設定",
       "previewDescription": "請在下方編輯各聯絡渠道。啟用後會依照你設定的順序顯示給訪客。",
       "publicPreviewTitle": "公開預覽",
+      "publicPreviewDescription": "這是啟用後的支援聯絡渠道在公開支援頁上的顯示方式。",
       "previewEmpty": "目前尚未啟用任何支援聯絡渠道。"
     },
     "licenses": {
