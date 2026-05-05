@@ -192,6 +192,29 @@ function getSupportContactChannelId(formData: FormData) {
   return channelId as (typeof supportContactChannelIds)[number];
 }
 
+function validateSupportContactValue(channelId: (typeof supportContactChannelIds)[number], value: string) {
+  if (!value) {
+    return;
+  }
+
+  if (channelId === "telegram" || channelId === "discord") {
+    try {
+      const url = new URL(value);
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
+        throw new Error("Enter a valid URL");
+      }
+    } catch {
+      throw new Error("Enter a valid URL");
+    }
+  }
+
+  if (channelId === "email") {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      throw new Error("Enter a valid email address");
+    }
+  }
+}
+
 export async function addManualDonation(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);
@@ -327,6 +350,8 @@ export async function updateSupportContactChannel(formData: FormData) {
   const label = getRequiredString(formData, "label", "Label is required");
   const sortOrder = getPositiveInteger(formData, "sort_order", "Sort order must be a positive integer");
   const isEnabled = formData.get("is_enabled") === "on";
+
+  validateSupportContactValue(channelId, value);
 
   const { error } = await createSupabaseAdminClient()
     .from("support_contact_channels")

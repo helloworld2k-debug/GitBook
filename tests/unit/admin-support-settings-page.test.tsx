@@ -30,15 +30,21 @@ vi.mock("next-intl/server", () => ({
       "admin.supportSettings.value": "Value",
       "admin.supportSettings.status": "Status",
       "admin.supportSettings.sortOrder": "Sort order",
+      "admin.supportSettings.sortOrderHelp": "Smaller numbers appear first in the public channel list.",
       "admin.supportSettings.enabled": "Enabled",
       "admin.supportSettings.disabled": "Disabled",
+      "admin.supportSettings.statusHelp": "Switch this channel on only when the value is ready for public display.",
       "admin.supportSettings.save": "Save",
       "admin.supportSettings.guidanceTitle": "How these settings work",
       "admin.supportSettings.guidanceBody": "Enabled channels are shown publicly on the Support page.",
       "admin.supportSettings.emailHelp": "This is the public support mailbox shown on the Support page.",
+      "admin.supportSettings.valueHintTelegram": "Use a full Telegram URL such as https://t.me/your_channel",
+      "admin.supportSettings.valueHintEmail": "Use the public mailbox users should email for support",
       "admin.supportSettings.previewTitle": "Channel settings",
       "admin.supportSettings.previewDescription": "Edit each support channel below.",
       "admin.supportSettings.publicPreviewTitle": "Public preview",
+      "admin.supportSettings.publicPreviewDescription": "This is how the enabled support channels will appear to visitors on the Support page.",
+      "admin.supportSettings.rowSaved": "Saved",
       "admin.shell.backToAdmin": "Back to admin",
       "admin.shell.dashboard": "Overview",
       "admin.shell.donations": "Donations",
@@ -100,6 +106,8 @@ describe("AdminSupportSettingsPage", () => {
     expect(screen.getAllByDisplayValue("Telegram").length).toBeGreaterThan(0);
     expect(screen.getAllByDisplayValue("support@example.com").length).toBeGreaterThan(0);
     expect(screen.getByPlaceholderText("https://t.me/your_channel")).toBeInTheDocument();
+    expect(screen.getByText("Use a full Telegram URL such as https://t.me/your_channel")).toBeInTheDocument();
     expect(screen.getByText("This is the public support mailbox shown on the Support page.")).toBeInTheDocument();
+    expect(screen.getByText("This is how the enabled support channels will appear to visitors on the Support page.")).toBeInTheDocument();
   });
 });

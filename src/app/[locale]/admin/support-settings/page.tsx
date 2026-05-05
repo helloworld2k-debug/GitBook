@@ -11,7 +11,7 @@ import { updateSupportContactChannel } from "../actions";
 
 type AdminSupportSettingsPageProps = {
   params: Promise<{ locale: string }>;
-  searchParams?: Promise<{ error?: string; notice?: string }>;
+  searchParams?: Promise<{ channel?: string; error?: string; notice?: string }>;
 };
 
 export default async function AdminSupportSettingsPage({ params, searchParams }: AdminSupportSettingsPageProps) {
@@ -74,7 +74,15 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
           </div>
           <div className="divide-y divide-slate-200">
             {channelRows.map((channel) => (
-              <form action={updateSupportContactChannel} className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.55fr)_240px_120px_160px]" key={channel.id}>
+              <form
+                action={updateSupportContactChannel}
+                className={`grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.55fr)_240px_120px_160px] ${
+                  feedback?.notice === "support-contact-updated" && feedback?.channel === channel.id
+                    ? "bg-emerald-50/60"
+                    : ""
+                }`}
+                key={channel.id}
+              >
                 <input name="locale" type="hidden" value={locale} />
                 <input name="return_to" type="hidden" value="/admin/support-settings" />
                 <input name="channel_id" type="hidden" value={channel.id} />
@@ -105,9 +113,17 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
                   <span className="text-xs text-slate-500">{t("supportSettings.sortOrderHelp")}</span>
                 </label>
                 <div className="flex items-end">
-                  <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" pendingLabel={t("common.saving")}>
-                    {t("supportSettings.save")}
-                  </AdminSubmitButton>
+                  <div className="flex w-full flex-col gap-2">
+                    <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" pendingLabel={t("common.saving")}>
+                      {t("supportSettings.save")}
+                    </AdminSubmitButton>
+                    {feedback?.notice === "support-contact-updated" && feedback?.channel === channel.id ? (
+                      <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                        <p className="font-semibold">{t("supportSettings.rowSaved")}</p>
+                        <p className="mt-1">{t("supportSettings.rowSavedDescription")}</p>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </form>
             ))}
@@ -127,7 +143,13 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
                     </span>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-950">{channel.label}</p>
-                      <p className="mt-1 break-all text-sm text-slate-600">{channel.value}</p>
+                      {channel.href ? (
+                        <a className="mt-1 block break-all text-sm text-cyan-700 underline underline-offset-4 hover:text-cyan-800" href={channel.href} rel="noreferrer" target={channel.href.startsWith("mailto:") ? undefined : "_blank"}>
+                          {channel.value}
+                        </a>
+                      ) : (
+                        <p className="mt-1 break-all text-sm text-slate-600">{channel.value}</p>
+                      )}
                     </div>
                   </div>
                 </div>

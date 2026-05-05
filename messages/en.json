@@ -339,6 +339,8 @@
       "valueHintEmail": "Use the public mailbox users should email for support",
       "valueHintWeChat": "Use the public WeChat ID users should add",
       "save": "Save channel",
+      "rowSaved": "Saved just now",
+      "rowSavedDescription": "This channel has been updated successfully.",
       "guidanceTitle": "How these settings work",
       "guidanceBody": "Enabled channels are shown publicly on the Support page. Use full URLs for Telegram and Discord, plain account identifiers for QQ or WeChat, and a valid mailbox for Email.",
       "emailHelp": "This is the public support mailbox shown to users. It is separate from account login email settings.",

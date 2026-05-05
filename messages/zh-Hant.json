@@ -366,6 +366,8 @@
       "valueHintEmail": "請填提供給使用者聯絡支援的公開信箱",
       "valueHintWeChat": "請填可公開聯絡的 WeChat ID",
       "save": "儲存渠道",
+      "rowSaved": "剛剛已儲存",
+      "rowSavedDescription": "這個渠道的設定已成功更新。",
       "guidanceTitle": "設定說明",
       "guidanceBody": "啟用後的渠道會公開顯示在支援頁。Telegram 與 Discord 請填完整連結，QQ 與 WeChat 可填帳號，Email 請填可公開使用的支援信箱。",
       "emailHelp": "這是公開展示給使用者的支援信箱，和帳號登入信箱設定分開。",

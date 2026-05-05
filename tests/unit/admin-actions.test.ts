@@ -9,6 +9,7 @@ import {
   revokeCertificate,
   setSoftwareReleasePublished,
   softDeleteUser,
+  updateSupportContactChannel,
   updateTrialCode,
   updateUserAccountStatus,
   updateUserAdminRole,
@@ -372,6 +373,57 @@ describe("admin actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/donations");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/certificates");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/audit-logs");
+  });
+
+  it("updates a support contact channel and redirects with a success notice", async () => {
+    const eq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "support_contact_channels") {
+        return { update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("return_to", "/admin/support-settings");
+    formData.set("channel_id", "telegram");
+    formData.set("label", "Telegram");
+    formData.set("value", "https://t.me/example");
+    formData.set("sort_order", "10");
+    formData.set("is_enabled", "on");
+
+    await expect(updateSupportContactChannel(formData)).rejects.toThrow("redirect:/en/admin/support-settings?notice=support-contact-updated");
+
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      is_enabled: true,
+      label: "Telegram",
+      sort_order: 10,
+      updated_by: "admin-1",
+      value: "https://t.me/example",
+    }));
+    expect(eq).toHaveBeenCalledWith("id", "telegram");
+  });
+
+  it("rejects invalid support contact values before writing", async () => {
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("channel_id", "telegram");
+    formData.set("label", "Telegram");
+    formData.set("value", "telegram-user");
+    formData.set("sort_order", "10");
+    formData.set("is_enabled", "on");
+
+    await expect(updateSupportContactChannel(formData)).rejects.toThrow("Enter a valid URL");
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
   it("requires a stable manual reference for idempotent manual donation creation", async () => {

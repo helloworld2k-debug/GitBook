@@ -366,6 +366,8 @@
       "valueHintEmail": "사용자가 지원 문의에 사용할 공개 이메일 주소를 입력하세요",
       "valueHintWeChat": "사용자에게 공개할 WeChat ID를 입력하세요",
       "save": "채널 저장",
+      "rowSaved": "방금 저장됨",
+      "rowSavedDescription": "이 채널 설정이 정상적으로 업데이트되었습니다.",
       "guidanceTitle": "설정 안내",
       "guidanceBody": "활성화된 채널만 지원 페이지에 공개됩니다. Telegram과 Discord는 전체 URL, QQ와 WeChat은 계정 식별자, Email은 공개용 지원 메일 주소를 입력하세요.",
       "emailHelp": "이 주소는 사용자에게 공개되는 지원용 이메일입니다. 로그인 이메일 설정과는 별개입니다.",

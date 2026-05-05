@@ -366,6 +366,8 @@
       "valueHintEmail": "ユーザーが問い合わせる公開サポートメールアドレスを入力してください",
       "valueHintWeChat": "ユーザーに案内する公開 WeChat ID を入力してください",
       "save": "チャネルを保存",
+      "rowSaved": "保存済み",
+      "rowSavedDescription": "このチャネル設定は正常に更新されました。",
       "guidanceTitle": "設定ガイド",
       "guidanceBody": "有効化したチャネルだけがサポートページに公開表示されます。Telegram と Discord は完全な URL、QQ と WeChat は識別子、Email は公開用のサポートアドレスを入力してください。",
       "emailHelp": "これはユーザー向けに公開表示するサポート用メールアドレスです。ログイン用メール設定とは別です。",
