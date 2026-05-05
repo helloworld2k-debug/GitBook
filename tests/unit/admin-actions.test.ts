@@ -223,7 +223,11 @@ describe("admin actions", () => {
     }));
   });
 
-  it("bulk updates account status for multiple users", async () => {
+  it.each([
+    ["enable", "active"],
+    ["disable", "disabled"],
+    ["soft-delete", "deleted"],
+  ])("bulk updates account status to %s for multiple users", async (intent, accountStatus) => {
     const updateIn = vi.fn(async () => ({ error: null }));
     const update = vi.fn(() => ({ in: updateIn }));
     const auditInsert = vi.fn(async () => ({ error: null }));
@@ -244,12 +248,12 @@ describe("admin actions", () => {
     formData.set("locale", "en");
     formData.append("user_ids", "user-1");
     formData.append("user_ids", "user-2");
-    formData.set("intent", "enable");
+    formData.set("intent", intent);
 
     await expect(bulkProcessUsers(formData)).rejects.toThrow("redirect:/en/admin/users?notice=bulk-user-status-updated");
 
     expect(update).toHaveBeenCalledWith({
-      account_status: "active",
+      account_status: accountStatus,
       updated_at: expect.any(String),
     });
     expect(updateIn).toHaveBeenCalledWith("id", ["user-1", "user-2"]);

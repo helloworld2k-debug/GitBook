@@ -143,7 +143,59 @@ describe("AdminUserBulkToolbar", () => {
 
     const submittedData = new FormData(form);
     expect(submittedData.get("intent")).toBe("disable");
-    expect(submittedData.getAll("user_ids")).toEqual(["user-1", "user-2"]);
+    const generatedUserIds = Array.from(form.querySelectorAll<HTMLInputElement>('input[data-bulk-generated="true"][name="user_ids"]')).map((input) => input.value);
+    expect(generatedUserIds).toEqual(["user-1", "user-2"]);
+    expect(submittedData.getAll("user_ids")).toContain("user-1");
+    expect(submittedData.getAll("user_ids")).toContain("user-2");
+  });
+
+  it("submits every bulk intent with generated hidden fields", () => {
+    document.body.innerHTML = `
+      <form id="bulk-users-form">
+        <input name="locale" type="hidden" value="en" />
+      </form>
+      <input form="bulk-users-form" type="checkbox" name="user_ids" value="user-1" checked />
+      <input form="bulk-users-form" type="checkbox" name="user_ids" value="user-2" checked />
+    `;
+    const form = document.getElementById("bulk-users-form") as HTMLFormElement;
+    const submit = vi.fn((event: SubmitEvent) => event.preventDefault());
+    form.addEventListener("submit", submit);
+
+    render(
+      <AdminUserBulkToolbar
+        canManageRoles
+        formId="bulk-users-form"
+        labels={{
+          bulkDisable: "Bulk disable",
+          bulkEnable: "Bulk enable",
+          bulkRole: "Bulk change role",
+          bulkSoftDelete: "Bulk soft delete",
+          clearSelection: "Clear selection",
+          operatorRole: "Operator",
+          ownerRole: "Owner",
+          roleTarget: "Target role",
+          selectedCount: "{count} selected",
+          userRole: "User",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Bulk enable" }));
+    expect(new FormData(form).get("intent")).toBe("enable");
+
+    fireEvent.click(screen.getByRole("button", { name: "Bulk disable" }));
+    expect(new FormData(form).get("intent")).toBe("disable");
+
+    fireEvent.change(screen.getByLabelText("Target role"), { target: { value: "operator" } });
+    fireEvent.click(screen.getByRole("button", { name: "Bulk change role" }));
+    expect(new FormData(form).get("intent")).toBe("change-role");
+    expect(new FormData(form).get("admin_role")).toBe("operator");
+
+    fireEvent.click(screen.getByRole("button", { name: "Bulk soft delete" }));
+    const submittedData = new FormData(form);
+    expect(submittedData.get("intent")).toBe("soft-delete");
+    expect(Array.from(form.querySelectorAll<HTMLInputElement>('input[data-bulk-generated="true"][name="user_ids"]')).map((input) => input.value)).toEqual(["user-1", "user-2"]);
+    expect(submit).toHaveBeenCalledTimes(4);
   });
 
   it("clears all selected users through the toolbar", () => {

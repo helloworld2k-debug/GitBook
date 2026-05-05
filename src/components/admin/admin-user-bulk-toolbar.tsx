@@ -44,7 +44,7 @@ function setHiddenFormValue(form: HTMLFormElement, name: string, value: string) 
 function syncSelectedUsersToForm(form: HTMLFormElement, formId: string) {
   form.querySelectorAll<HTMLInputElement>('input[data-bulk-generated="true"][name="user_ids"]').forEach((input) => input.remove());
 
-  getSelectedUserInputs(formId).filter((selected) => selected.form !== form).forEach((selected) => {
+  getSelectedUserInputs(formId).filter((selected) => !form.contains(selected)).forEach((selected) => {
     const input = document.createElement("input");
     input.dataset.bulkGenerated = "true";
     input.name = "user_ids";
