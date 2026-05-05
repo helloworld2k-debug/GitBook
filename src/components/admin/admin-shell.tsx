@@ -254,9 +254,15 @@ export function AdminCard({ children, className = "" }: { children: React.ReactN
   return <section className={`rounded-md border border-slate-200 bg-white shadow-sm ${className}`}>{children}</section>;
 }
 
-export function AdminTableShell({ children, empty }: { children: React.ReactNode; empty?: React.ReactNode }) {
+export function AdminTableShell({ children, empty, label = "Scrollable admin table" }: { children: React.ReactNode; empty?: React.ReactNode; label?: string }) {
   return (
-    <div className="overflow-x-auto">
+    <div
+      aria-label={label}
+      className="overflow-x-auto overscroll-x-contain rounded-b-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+      data-testid="admin-table-shell"
+      role="region"
+      tabIndex={0}
+    >
       {empty ?? null}
       {children}
     </div>

@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
-import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
@@ -126,8 +125,15 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
           </AdminCard>
           <AdminCard className="mt-6">
             {donations && donations.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+              <AdminTableShell label={t("donations.title")}>
+                <table aria-label={t("donations.title")} className="min-w-[1040px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[180px]" />
+                    <col className="w-[150px]" />
+                    <col className="w-[170px]" />
+                    <col className="w-[240px]" />
+                    <col className="w-[300px]" />
+                  </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("donations.provider")}</th>
@@ -154,14 +160,14 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatDateTimeWithSeconds(donation.paid_at ?? donation.created_at, locale)}
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
-                          {donation.provider_transaction_id}
+                        <td className="px-5 py-4 font-mono text-xs text-slate-700">
+                          <span className="block break-all">{donation.provider_transaction_id}</span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("donations.empty")}</p>
             )}

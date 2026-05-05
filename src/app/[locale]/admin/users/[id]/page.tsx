@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 import { AdminUserDeleteDangerZone } from "@/components/admin/admin-user-delete-danger-zone";
-import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
@@ -339,20 +339,28 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
               <h2 className="text-base font-semibold text-slate-950">{t("donations")}</h2>
             </div>
             {donations.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+              <AdminTableShell label={t("donations")}>
+                <table aria-label={t("donations")} className="min-w-[860px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[160px]" />
+                    <col className="w-[180px]" />
+                    <col className="w-[240px]" />
+                    <col className="w-[280px]" />
+                  </colgroup>
                   <tbody className="divide-y divide-slate-200">
                     {donations.map((donation) => (
                       <tr key={donation.id}>
                         <td className="px-5 py-4 text-slate-950">{formatAmount(donation.amount, donation.currency, locale)}</td>
                         <td className="px-5 py-4 text-slate-700">{donation.provider} / {donation.status}</td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(donation.paid_at ?? donation.created_at, locale)}</td>
-                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">{donation.provider_transaction_id}</td>
+                        <td className="px-5 py-4 font-mono text-xs text-slate-700">
+                          <span className="block break-all">{donation.provider_transaction_id}</span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("emptyDonations")}</p>
             )}
@@ -363,12 +371,20 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
               <h2 className="text-base font-semibold text-slate-950">{t("certificates")}</h2>
             </div>
             {certificates.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+              <AdminTableShell label={t("certificates")}>
+                <table aria-label={t("certificates")} className="min-w-[760px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[260px]" />
+                    <col className="w-[140px]" />
+                    <col className="w-[140px]" />
+                    <col className="w-[220px]" />
+                  </colgroup>
                   <tbody className="divide-y divide-slate-200">
                     {certificates.map((certificate) => (
                       <tr key={certificate.id}>
-                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-950">{certificate.certificate_number}</td>
+                        <td className="px-5 py-4 font-mono text-xs text-slate-950">
+                          <span className="block break-all">{certificate.certificate_number}</span>
+                        </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">{certificate.type}</td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">{certificate.status}</td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(certificate.issued_at, locale)}</td>
@@ -376,7 +392,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("emptyCertificates")}</p>
             )}

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminPageHeader, AdminShell } from "@/components/admin/admin-shell";
+import { AdminCard, AdminPageHeader, AdminShell, AdminTableShell } from "@/components/admin/admin-shell";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -69,8 +69,15 @@ export default async function AdminAuditLogsPage({ params }: AdminAuditLogsPageP
           />
           <AdminCard>
             {logs.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+              <AdminTableShell label={t("auditLogs.title")}>
+                <table aria-label={t("auditLogs.title")} className="min-w-[1080px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[200px]" />
+                    <col className="w-[260px]" />
+                    <col className="w-[260px]" />
+                    <col className="w-[200px]" />
+                    <col className="w-[220px]" />
+                  </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("auditLogs.action")}</th>
@@ -86,8 +93,8 @@ export default async function AdminAuditLogsPage({ params }: AdminAuditLogsPageP
                         <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-950">
                           {log.action}
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
-                          {log.target_type}/{log.target_id}
+                        <td className="px-5 py-4 font-mono text-xs text-slate-700">
+                          <span className="block break-all">{log.target_type}/{log.target_id}</span>
                         </td>
                         <td className="max-w-sm px-5 py-4 text-slate-700">{log.reason}</td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
@@ -101,7 +108,7 @@ export default async function AdminAuditLogsPage({ params }: AdminAuditLogsPageP
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("auditLogs.empty")}</p>
             )}

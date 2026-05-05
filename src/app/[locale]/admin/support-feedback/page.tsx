@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
@@ -58,8 +58,16 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
         <AdminFeedbackBanner error={feedbackState?.error} notice={feedbackState?.notice} />
         <AdminCard>
           {feedback && feedback.length > 0 ? (
-            <div className="overflow-x-auto">
-                <table className="min-w-[980px] text-left text-sm">
+            <AdminTableShell label={t("supportFeedback.title")}>
+                <table aria-label={t("supportFeedback.title")} className="min-w-[1180px] table-fixed text-left text-sm">
+                <colgroup>
+                  <col className="w-[230px]" />
+                  <col className="w-[240px]" />
+                  <col className="w-[320px]" />
+                  <col className="w-[140px]" />
+                  <col className="w-[220px]" />
+                  <col className="w-[160px]" />
+                </colgroup>
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                   <tr>
                     <th className="px-5 py-3">{t("supportFeedback.subject")}</th>
@@ -115,7 +123,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                   ))}
                 </tbody>
               </table>
-            </div>
+            </AdminTableShell>
           ) : (
             <p className="px-5 py-6 text-sm text-slate-600">{t("supportFeedback.empty")}</p>
           )}

@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { AdminPageHeader, AdminShell } from "@/components/admin/admin-shell";
+import { AdminPageHeader, AdminShell, AdminTableShell } from "@/components/admin/admin-shell";
 
 vi.mock("@/components/language-switcher", () => ({
   LanguageSwitcher: ({ currentLocale }: { currentLocale: string }) => <div>Language {currentLocale}</div>,
@@ -69,5 +69,27 @@ describe("AdminPageHeader", () => {
     expect(screen.getByText("Admin")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Users" })).toBeInTheDocument();
     expect(screen.getByText("Manage users and devices.")).toBeInTheDocument();
+  });
+});
+
+describe("AdminTableShell", () => {
+  it("creates a stable responsive scroll container for dense admin tables", () => {
+    render(
+      <AdminTableShell>
+        <table>
+          <tbody>
+            <tr>
+              <td>Dense content</td>
+            </tr>
+          </tbody>
+        </table>
+      </AdminTableShell>,
+    );
+
+    const shell = screen.getByTestId("admin-table-shell");
+
+    expect(shell).toHaveClass("overflow-x-auto", "overscroll-x-contain", "rounded-b-md");
+    expect(shell).toHaveAttribute("tabIndex", "0");
+    expect(shell).toHaveAttribute("aria-label", "Scrollable admin table");
   });
 });

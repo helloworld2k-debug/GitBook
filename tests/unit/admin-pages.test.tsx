@@ -972,6 +972,11 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "Deleted trial codes" })).toBeInTheDocument();
     expect(screen.getByText("WXYZ-****-****-ABCD")).toBeInTheDocument();
     expect(screen.getByText("admin-1")).toBeInTheDocument();
+
+    const trialCodesTable = screen.getByRole("table", { name: "Trial codes" });
+    expect(trialCodesTable).toHaveClass("min-w-[1420px]", "table-fixed");
+    expect(screen.getAllByTestId("admin-table-shell")[0]).toHaveClass("overflow-x-auto", "overscroll-x-contain");
+    expect(screen.getByTestId("trial-code-actions-trial-code-1")).toHaveClass("min-w-[220px]");
   });
 
   it("shows role editing controls on the users page only to owner admins", async () => {

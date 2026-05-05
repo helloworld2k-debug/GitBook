@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminUserBulkToolbar, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
 import { AdminUserFilters } from "@/components/admin/admin-user-filters";
-import { AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
@@ -259,8 +259,18 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
               </Link>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
+            <AdminTableShell label={t("title")}>
+              <table aria-label={t("title")} className="min-w-[1500px] table-fixed text-left text-sm">
+                <colgroup>
+                  <col className="w-[72px]" />
+                  <col className="w-[320px]" />
+                  <col className="w-[230px]" />
+                  <col className="w-[150px]" />
+                  <col className="w-[260px]" />
+                  <col className="w-[220px]" />
+                  <col className="w-[220px]" />
+                  <col className="w-[260px]" />
+                </colgroup>
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">
@@ -287,10 +297,10 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           <td className="px-5 py-4 align-top">
                             <input aria-label={`Select ${profile.email}`} className="size-4 rounded border-slate-300" form="bulk-users-bulk-action-form" name="user_ids" type="checkbox" value={profile.id} />
                           </td>
-                          <td className="min-w-72 px-5 py-4 align-top">
-                            <p className="font-medium text-slate-950">{profile.email}</p>
+                          <td className="px-5 py-4 align-top">
+                            <p className="break-all font-medium text-slate-950">{profile.email}</p>
                             <p className="mt-1 text-slate-600">{profile.display_name ?? "-"}</p>
-                            <p className="mt-1 font-mono text-xs text-slate-500">{profile.id}</p>
+                            <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
                             <p className="mt-2 text-xs text-slate-500">{t("detailEntryHint")}</p>
                           </td>
                         <td className="px-5 py-4 align-top">
@@ -375,7 +385,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                   })}
                 </tbody>
               </table>
-            </div>
+            </AdminTableShell>
           )}
         </AdminCard>
       </section>

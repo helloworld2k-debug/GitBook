@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
-import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
@@ -73,8 +72,15 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
           <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
           <AdminCard>
             {certificates && certificates.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+              <AdminTableShell label={t("certificates.title")}>
+                <table aria-label={t("certificates.title")} className="min-w-[1100px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[240px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[150px]" />
+                    <col className="w-[180px]" />
+                    <col className="w-[310px]" />
+                  </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("certificates.certificateNumber")}</th>
@@ -87,8 +93,8 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
                   <tbody className="divide-y divide-slate-200">
                     {certificates.map((certificate) => (
                       <tr key={certificate.id}>
-                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-950">
-                          {certificate.certificate_number}
+                        <td className="px-5 py-4 font-mono text-xs text-slate-950">
+                          <span className="block break-all">{certificate.certificate_number}</span>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {t(`certificates.types.${certificate.type as CertificateType}`)}
@@ -135,7 +141,7 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("certificates.empty")}</p>
             )}

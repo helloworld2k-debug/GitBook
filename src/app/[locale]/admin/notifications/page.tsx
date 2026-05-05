@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { supportedLocales, type Locale } from "@/config/site";
@@ -105,8 +105,15 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
 
         <AdminCard className="mt-6">
           {notifications && notifications.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
+            <AdminTableShell label={t("notifications.title")}>
+              <table aria-label={t("notifications.title")} className="min-w-[980px] table-fixed text-left text-sm">
+                <colgroup>
+                  <col className="w-[360px]" />
+                  <col className="w-[150px]" />
+                  <col className="w-[140px]" />
+                  <col className="w-[220px]" />
+                  <col className="w-[140px]" />
+                </colgroup>
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                   <tr>
                     <th className="px-5 py-3">{t("notifications.titleLabel")}</th>
@@ -150,7 +157,7 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
                   ))}
                 </tbody>
               </table>
-            </div>
+            </AdminTableShell>
           ) : (
             <p className="px-5 py-6 text-sm text-slate-600">{t("notifications.empty")}</p>
           )}

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
+import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
@@ -186,8 +186,17 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.trialCodesTitle")}</h2>
             </div>
             {trialCodes.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-[1000px] text-left text-sm">
+              <AdminTableShell label={t("licenses.trialCodesTitle")}>
+                <table aria-label={t("licenses.trialCodesTitle")} className="min-w-[1420px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[340px]" />
+                    <col className="w-[260px]" />
+                    <col className="w-[120px]" />
+                    <col className="w-[240px]" />
+                    <col className="w-[150px]" />
+                    <col className="w-[130px]" />
+                    <col className="w-[220px]" />
+                  </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("licenses.label")}</th>
@@ -202,7 +211,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                   <tbody className="divide-y divide-slate-200">
                     {trialCodes.map((trialCode) => (
                       <tr key={trialCode.id}>
-                        <td className="min-w-72 px-5 py-4 align-top">
+                        <td className="px-5 py-4 align-top">
                           <form action={updateTrialCode} className="grid gap-3">
                             <input name="locale" type="hidden" value={locale} />
                             <input name="return_to" type="hidden" value="/admin/licenses" />
@@ -237,10 +246,10 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                             </AdminSubmitButton>
                           </form>
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
+                        <td className="px-5 py-4 align-top font-mono text-xs text-slate-700">
                           <div className="grid gap-2">
-                            <span>{trialCode.code_mask ?? "-"}</span>
-                            <p className="max-w-48 font-sans text-xs leading-5 text-slate-500">{t("licenses.revealHelp")}</p>
+                            <span className="break-all">{trialCode.code_mask ?? "-"}</span>
+                            <p className="font-sans text-xs leading-5 text-slate-500">{t("licenses.revealHelp")}</p>
                             <TrialCodeRevealButton
                               errorLabel={t("licenses.revealError")}
                               hideLabel={t("licenses.hide")}
@@ -250,22 +259,22 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                             />
                           </div>
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                        <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">
                           {trialCode.trial_days} {t("licenses.days")}
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                        <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">
                           {formatDateTime(trialCode.created_at, locale)}
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                        <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">
                           {trialCode.redemption_count} / {trialCode.max_redemptions ?? t("licenses.unlimited")}
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">
+                        <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">
                           <AdminStatusBadge tone={trialCode.is_active ? "success" : "neutral"}>
                             {trialCode.is_active ? t("licenses.active") : t("licenses.inactive")}
                           </AdminStatusBadge>
                         </td>
-                        <td className="px-5 py-4">
-                          <div className="flex flex-wrap gap-2">
+                        <td className="px-5 py-4 align-top">
+                          <div className="flex min-w-[220px] flex-wrap gap-2" data-testid={`trial-code-actions-${trialCode.id}`}>
                             <form action={setTrialCodeActive}>
                               <input name="locale" type="hidden" value={locale} />
                               <input name="return_to" type="hidden" value="/admin/licenses" />
@@ -296,7 +305,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyTrialCodes")}</p>
             )}
@@ -307,8 +316,16 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.deletedTrialCodesTitle")}</h2>
             </div>
             {deletedTrialCodes.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-[900px] text-left text-sm">
+              <AdminTableShell label={t("licenses.deletedTrialCodesTitle")}>
+                <table aria-label={t("licenses.deletedTrialCodesTitle")} className="min-w-[1120px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[260px]" />
+                    <col className="w-[240px]" />
+                    <col className="w-[120px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[180px]" />
+                  </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("licenses.label")}</th>
@@ -340,7 +357,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyDeletedTrialCodes")}</p>
             )}
@@ -351,8 +368,16 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.trialRedemptionsTitle")}</h2>
             </div>
             {trialRedemptions.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-[900px] text-left text-sm">
+              <AdminTableShell label={t("licenses.trialRedemptionsTitle")}>
+                <table aria-label={t("licenses.trialRedemptionsTitle")} className="min-w-[1120px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[140px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[140px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[200px]" />
+                    <col className="w-[200px]" />
+                  </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("licenses.user")}</th>
@@ -380,7 +405,9 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatDateTime(redemption.trial_valid_until, locale)}
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">{redemption.device_id ?? "-"}</td>
+                        <td className="px-5 py-4 text-slate-700">
+                          <span className="block break-all">{redemption.device_id ?? "-"}</span>
+                        </td>
                         <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
                           {shortHash(redemption.machine_code_hash)}
                         </td>
@@ -388,7 +415,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyTrialRedemptions")}</p>
             )}
@@ -399,8 +426,15 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.entitlementsTitle")}</h2>
             </div>
             {entitlements.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+              <AdminTableShell label={t("licenses.entitlementsTitle")}>
+                <table aria-label={t("licenses.entitlementsTitle")} className="min-w-[980px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[140px]" />
+                    <col className="w-[240px]" />
+                    <col className="w-[240px]" />
+                    <col className="w-[140px]" />
+                    <col className="w-[220px]" />
+                  </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("licenses.user")}</th>
@@ -428,7 +462,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyEntitlements")}</p>
             )}
@@ -439,8 +473,18 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.desktopSessionsTitle")}</h2>
             </div>
             {sessions.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+              <AdminTableShell label={t("licenses.desktopSessionsTitle")}>
+                <table aria-label={t("licenses.desktopSessionsTitle")} className="min-w-[1420px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[240px]" />
+                    <col className="w-[140px]" />
+                    <col className="w-[140px]" />
+                    <col className="w-[200px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[160px]" />
+                  </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("licenses.device")}</th>
@@ -456,8 +500,8 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                   <tbody className="divide-y divide-slate-200">
                     {sessions.map((session) => (
                       <tr key={session.id}>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-950">
-                          <span className="block font-medium">{session.device_id}</span>
+                        <td className="px-5 py-4 text-slate-950">
+                          <span className="block break-all font-medium">{session.device_id}</span>
                           {session.app_version ? <span className="block text-xs text-slate-500">{session.app_version}</span> : null}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
@@ -496,7 +540,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptySessions")}</p>
             )}
@@ -507,8 +551,17 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.cloudSyncLeasesTitle")}</h2>
             </div>
             {leases.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
+              <AdminTableShell label={t("licenses.cloudSyncLeasesTitle")}>
+                <table aria-label={t("licenses.cloudSyncLeasesTitle")} className="min-w-[1240px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[240px]" />
+                    <col className="w-[140px]" />
+                    <col className="w-[160px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[160px]" />
+                  </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
                       <th className="px-5 py-3">{t("licenses.device")}</th>
@@ -523,7 +576,9 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                   <tbody className="divide-y divide-slate-200">
                     {leases.map((lease) => (
                       <tr key={lease.id}>
-                        <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-950">{lease.device_id}</td>
+                        <td className="px-5 py-4 font-medium text-slate-950">
+                          <span className="block break-all">{lease.device_id}</span>
+                        </td>
                         <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">
                           {shortId(lease.user_id)}
                         </td>
@@ -559,7 +614,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </AdminTableShell>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyLeases")}</p>
             )}
