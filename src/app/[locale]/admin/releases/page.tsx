@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AdminReleaseDeliveryModeFields } from "@/components/admin/admin-release-delivery-mode-fields";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
@@ -117,53 +118,21 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                 {t("releases.notes")}
                 <textarea className="mt-2 min-h-28 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" name="notes" />
               </label>
-              <fieldset className="grid gap-3">
-                <legend className="text-sm font-medium text-slate-950">{t("releases.deliveryMode")}</legend>
-                <label className="flex items-start gap-3 rounded-md border border-slate-200 px-4 py-3">
-                  <input className="mt-1 size-4" defaultChecked name="delivery_mode" type="radio" value="file" />
-                  <span>
-                    <span className="block text-sm font-semibold text-slate-950">{t("releases.deliveryModeFile")}</span>
-                    <span className="mt-1 block text-sm text-slate-600">{t("releases.deliveryModeFileHelp")}</span>
-                  </span>
-                </label>
-                <label className="flex items-start gap-3 rounded-md border border-slate-200 px-4 py-3">
-                  <input className="mt-1 size-4" name="delivery_mode" type="radio" value="link" />
-                  <span>
-                    <span className="block text-sm font-semibold text-slate-950">{t("releases.deliveryModeLink")}</span>
-                    <span className="mt-1 block text-sm text-slate-600">{t("releases.deliveryModeLinkHelp")}</span>
-                  </span>
-                </label>
-              </fieldset>
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm font-medium text-slate-950">
-                  {t("releases.macFile")}
-                  <input className="mt-2 block w-full text-sm text-slate-700" name="macos_file" type="file" />
-                </label>
-                <label className="text-sm font-medium text-slate-950">
-                  {t("releases.windowsFile")}
-                  <input className="mt-2 block w-full text-sm text-slate-700" name="windows_file" type="file" />
-                </label>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm font-medium text-slate-950">
-                  {t("releases.macPrimaryUrl")}
-                  <input className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" name="macos_primary_url" placeholder="https://downloads.example/mac.dmg" />
-                </label>
-                <label className="text-sm font-medium text-slate-950">
-                  {t("releases.macBackupUrl")}
-                  <input className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" name="macos_backup_url" placeholder="https://mirror.example/mac.dmg" />
-                </label>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm font-medium text-slate-950">
-                  {t("releases.windowsPrimaryUrl")}
-                  <input className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" name="windows_primary_url" placeholder="https://downloads.example/win.exe" />
-                </label>
-                <label className="text-sm font-medium text-slate-950">
-                  {t("releases.windowsBackupUrl")}
-                  <input className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" name="windows_backup_url" placeholder="https://mirror.example/win.exe" />
-                </label>
-              </div>
+              <AdminReleaseDeliveryModeFields
+                labels={{
+                  deliveryMode: t("releases.deliveryMode"),
+                  deliveryModeFile: t("releases.deliveryModeFile"),
+                  deliveryModeFileHelp: t("releases.deliveryModeFileHelp"),
+                  deliveryModeLink: t("releases.deliveryModeLink"),
+                  deliveryModeLinkHelp: t("releases.deliveryModeLinkHelp"),
+                  macBackupUrl: t("releases.macBackupUrl"),
+                  macFile: t("releases.macFile"),
+                  macPrimaryUrl: t("releases.macPrimaryUrl"),
+                  windowsBackupUrl: t("releases.windowsBackupUrl"),
+                  windowsFile: t("releases.windowsFile"),
+                  windowsPrimaryUrl: t("releases.windowsPrimaryUrl"),
+                }}
+              />
               <label className="flex items-center gap-3 text-sm font-medium text-slate-950">
                 <input className="size-4" name="is_published" type="checkbox" />
                 {t("releases.published")}
