@@ -348,6 +348,22 @@
         "closed": "完了"
       }
     },
+    "supportSettings": {
+      "eyebrow": "管理画面",
+      "title": "サポート設定",
+      "description": "サポートページに表示する公開連絡先を管理します。実際に確認しているチャネルだけを有効にしてください。",
+      "channel": "チャネル名",
+      "value": "連絡先",
+      "status": "表示状態",
+      "sortOrder": "表示順",
+      "enabled": "サポートページに表示",
+      "disabled": "サポートページで非表示",
+      "save": "チャネルを保存",
+      "emailHelp": "これはユーザー向けに公開表示するサポート用メールアドレスです。ログイン用メール設定とは別です。",
+      "previewTitle": "チャネル設定",
+      "previewDescription": "以下で各連絡チャネルを編集できます。有効な項目だけが設定順で公開表示されます。",
+      "previewEmpty": "有効なサポート連絡先チャネルはまだありません。"
+    },
     "licenses": {
       "eyebrow": "管理者",
       "title": "ライセンス管理",
@@ -533,6 +549,7 @@
       "releases": "リリース",
       "returnToSite": "サイトへ戻る",
       "supportFeedback": "フィードバック",
+      "supportSettings": "サポート設定",
       "users": "ユーザー"
     }
   },

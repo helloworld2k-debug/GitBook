@@ -50,12 +50,12 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
 
         <AdminCard>
           <div className="border-b border-slate-200 px-5 py-4">
-            <h2 className="text-base font-semibold text-slate-950">{t("supportSettings.title")}</h2>
+            <h2 className="text-base font-semibold text-slate-950">{t("supportSettings.previewTitle")}</h2>
             <p className="mt-2 text-sm text-slate-600">{t("supportSettings.previewDescription")}</p>
           </div>
           <div className="divide-y divide-slate-200">
             {channelRows.map((channel) => (
-              <form action={updateSupportContactChannel} className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)_140px_140px_auto]" key={channel.id}>
+              <form action={updateSupportContactChannel} className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.45fr)_220px_130px_auto]" key={channel.id}>
                 <input name="locale" type="hidden" value={locale} />
                 <input name="return_to" type="hidden" value="/admin/support-settings" />
                 <input name="channel_id" type="hidden" value={channel.id} />
@@ -80,7 +80,7 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
                   <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={channel.sort_order} min="1" name="sort_order" type="number" />
                 </label>
                 <div className="flex items-end">
-                  <AdminSubmitButton className="inline-flex min-h-11 items-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" pendingLabel={t("common.saving")}>
+                  <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white lg:w-auto" pendingLabel={t("common.saving")}>
                     {t("supportSettings.save")}
                   </AdminSubmitButton>
                 </div>

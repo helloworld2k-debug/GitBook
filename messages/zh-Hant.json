@@ -348,6 +348,22 @@
         "closed": "已關閉"
       }
     },
+    "supportSettings": {
+      "eyebrow": "管理後台",
+      "title": "支援設定",
+      "description": "管理顯示在支援頁上的公開聯絡方式，只啟用你有實際維護的渠道。",
+      "channel": "渠道名稱",
+      "value": "聯絡內容",
+      "status": "顯示狀態",
+      "sortOrder": "顯示順序",
+      "enabled": "顯示在支援頁",
+      "disabled": "隱藏於支援頁",
+      "save": "儲存渠道",
+      "emailHelp": "這是公開展示給使用者的支援信箱，和帳號登入信箱設定分開。",
+      "previewTitle": "渠道設定",
+      "previewDescription": "請在下方編輯各聯絡渠道。啟用後會依照你設定的順序顯示給訪客。",
+      "previewEmpty": "目前尚未啟用任何支援聯絡渠道。"
+    },
     "licenses": {
       "eyebrow": "管理後台",
       "title": "授權管理",
@@ -533,6 +549,7 @@
       "releases": "版本發布",
       "returnToSite": "返回網站",
       "supportFeedback": "回饋",
+      "supportSettings": "支援設定",
       "users": "使用者"
     }
   },

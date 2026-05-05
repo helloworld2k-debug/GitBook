@@ -321,6 +321,22 @@
         "closed": "Closed"
       }
     },
+    "supportSettings": {
+      "eyebrow": "Admin",
+      "title": "Support settings",
+      "description": "Manage the public contact methods shown on the Support page. Enable only the channels you actively monitor.",
+      "channel": "Channel name",
+      "value": "Contact value",
+      "status": "Visibility",
+      "sortOrder": "Display order",
+      "enabled": "Shown on Support page",
+      "disabled": "Hidden from Support page",
+      "save": "Save channel",
+      "emailHelp": "This is the public support mailbox shown to users. It is separate from account login email settings.",
+      "previewTitle": "Channel settings",
+      "previewDescription": "Edit each support channel below. Enabled entries will appear publicly in the configured order.",
+      "previewEmpty": "No support contact channels are enabled yet."
+    },
     "certificates": {
       "eyebrow": "Admin",
       "title": "Admin certificates",
@@ -540,6 +556,7 @@
       "releases": "Releases",
       "notifications": "Notifications",
       "supportFeedback": "Feedback",
+      "supportSettings": "Support settings",
       "returnToSite": "Return to site",
       "users": "Users"
     }
