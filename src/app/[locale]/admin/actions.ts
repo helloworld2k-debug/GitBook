@@ -392,7 +392,14 @@ export async function updateSupportContactChannel(formData: FormData) {
 
   validateSupportContactValue(channelId, value);
 
-  const { error } = await createSupabaseAdminClient()
+  const supabase = createSupabaseAdminClient();
+  const { data: existingChannel } = await supabase
+    .from("support_contact_channels")
+    .select("id")
+    .eq("id", channelId)
+    .single();
+
+  const { error } = await supabase
     .from("support_contact_channels")
     .upsert({
       id: channelId,
@@ -414,14 +421,16 @@ export async function updateSupportContactChannel(formData: FormData) {
     });
   }
 
-  await insertAdminAuditLog({
-    action: "update_support_contact_channel",
-    adminUserId: admin.id,
-    after: { channel_id: channelId, is_enabled: isEnabled, label, sort_order: sortOrder, value },
-    reason: `Updated support contact channel ${channelId}`,
-    targetId: channelId,
-    targetType: "support_contact_channel",
-  });
+  if (existingChannel?.id === channelId) {
+    await insertAdminAuditLog({
+      action: "update_support_contact_channel",
+      adminUserId: admin.id,
+      after: { channel_id: channelId, is_enabled: isEnabled, label, sort_order: sortOrder, value },
+      reason: `Updated support contact channel ${channelId}`,
+      targetId: "11111111-1111-1111-1111-111111111111",
+      targetType: "support_contact_channel",
+    });
+  }
 
   revalidatePath(`/${locale}/support`);
   revalidatePath(`/${locale}/admin/support-settings`);

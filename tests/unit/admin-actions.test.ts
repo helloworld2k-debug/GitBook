@@ -378,9 +378,12 @@ describe("admin actions", () => {
   it("updates a support contact channel and redirects with a success notice", async () => {
     const upsert = vi.fn(async () => ({ error: null }));
     const auditInsert = vi.fn(async () => ({ error: null }));
+    const selectSingle = vi.fn(async () => ({ data: { id: "telegram" }, error: null }));
+    const selectEq = vi.fn(() => ({ single: selectSingle }));
+    const select = vi.fn(() => ({ eq: selectEq }));
     const from = vi.fn((table: string) => {
       if (table === "support_contact_channels") {
-        return { upsert };
+        return { select, upsert };
       }
 
       if (table === "admin_audit_logs") {
@@ -410,14 +413,20 @@ describe("admin actions", () => {
       updated_by: "admin-1",
       value: "https://t.me/example",
     }), { onConflict: "id" });
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      target_id: "11111111-1111-1111-1111-111111111111",
+    }));
   });
 
   it("creates a missing support contact channel row through upsert", async () => {
     const upsert = vi.fn(async () => ({ error: null }));
     const auditInsert = vi.fn(async () => ({ error: null }));
+    const selectSingle = vi.fn(async () => ({ data: null, error: null }));
+    const selectEq = vi.fn(() => ({ single: selectSingle }));
+    const select = vi.fn(() => ({ eq: selectEq }));
     const from = vi.fn((table: string) => {
       if (table === "support_contact_channels") {
-        return { upsert };
+        return { select, upsert };
       }
 
       if (table === "admin_audit_logs") {
@@ -443,6 +452,7 @@ describe("admin actions", () => {
       id: "email",
       value: "support@example.com",
     }), { onConflict: "id" });
+    expect(auditInsert).not.toHaveBeenCalled();
   });
 
   it("rejects invalid support contact values before writing", async () => {
