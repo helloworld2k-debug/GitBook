@@ -42,6 +42,13 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
     telegram: "https://t.me/your_channel",
     wechat: "your_wechat_id",
   };
+  const channelHintKey: Record<string, string> = {
+    discord: "supportSettings.valueHintDiscord",
+    email: "supportSettings.valueHintEmail",
+    qq: "supportSettings.valueHintQQ",
+    telegram: "supportSettings.valueHintTelegram",
+    wechat: "supportSettings.valueHintWeChat",
+  };
 
   return (
     <AdminShell {...shellProps}>
@@ -67,7 +74,7 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
           </div>
           <div className="divide-y divide-slate-200">
             {channelRows.map((channel) => (
-              <form action={updateSupportContactChannel} className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.55fr)_220px_120px_160px]" key={channel.id}>
+              <form action={updateSupportContactChannel} className="grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.55fr)_240px_120px_160px]" key={channel.id}>
                 <input name="locale" type="hidden" value={locale} />
                 <input name="return_to" type="hidden" value="/admin/support-settings" />
                 <input name="channel_id" type="hidden" value={channel.id} />
@@ -79,13 +86,18 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("supportSettings.value")}
                   <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={channel.value} name="value" placeholder={channelPlaceholders[channel.id] ?? ""} />
+                  <span className="text-xs text-slate-500">{t(channelHintKey[channel.id] ?? "supportSettings.previewDescription")}</span>
                 </label>
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("supportSettings.status")}
-                  <span className="inline-flex min-h-11 items-center rounded-md border border-slate-300 px-3">
-                    <input className="size-4 rounded border-slate-300" defaultChecked={channel.is_enabled} name="is_enabled" type="checkbox" />
-                    <span className="ml-2 text-sm text-slate-700">{channel.is_enabled ? t("supportSettings.enabled") : t("supportSettings.disabled")}</span>
+                  <span className="inline-flex min-h-11 items-center justify-between rounded-md border border-slate-300 px-3">
+                    <span className="text-sm text-slate-700">{channel.is_enabled ? t("supportSettings.enabled") : t("supportSettings.disabled")}</span>
+                    <span className={`relative ml-3 inline-flex h-6 w-11 items-center rounded-full transition-colors ${channel.is_enabled ? "bg-slate-950" : "bg-slate-300"}`}>
+                      <span className={`absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform ${channel.is_enabled ? "translate-x-5" : "translate-x-0"}`} />
+                      <input className="absolute inset-0 cursor-pointer opacity-0" defaultChecked={channel.is_enabled} name="is_enabled" type="checkbox" />
+                    </span>
                   </span>
+                  <span className="text-xs text-slate-500">{t("supportSettings.statusHelp")}</span>
                 </label>
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("supportSettings.sortOrder")}

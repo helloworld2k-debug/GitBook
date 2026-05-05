@@ -33,7 +33,12 @@ vi.mock("next-intl/server", () => ({
       "admin.supportSettings.enabled": "Enabled",
       "admin.supportSettings.disabled": "Disabled",
       "admin.supportSettings.save": "Save",
+      "admin.supportSettings.guidanceTitle": "How these settings work",
+      "admin.supportSettings.guidanceBody": "Enabled channels are shown publicly on the Support page.",
       "admin.supportSettings.emailHelp": "This is the public support mailbox shown on the Support page.",
+      "admin.supportSettings.previewTitle": "Channel settings",
+      "admin.supportSettings.previewDescription": "Edit each support channel below.",
+      "admin.supportSettings.publicPreviewTitle": "Public preview",
       "admin.shell.backToAdmin": "Back to admin",
       "admin.shell.dashboard": "Overview",
       "admin.shell.donations": "Donations",
@@ -91,8 +96,10 @@ describe("AdminSupportSettingsPage", () => {
     );
 
     expect(screen.getAllByRole("heading", { name: "Support settings" }).length).toBeGreaterThan(0);
+    expect(screen.getByText("How these settings work")).toBeInTheDocument();
     expect(screen.getAllByDisplayValue("Telegram").length).toBeGreaterThan(0);
     expect(screen.getAllByDisplayValue("support@example.com").length).toBeGreaterThan(0);
+    expect(screen.getByPlaceholderText("https://t.me/your_channel")).toBeInTheDocument();
     expect(screen.getByText("This is the public support mailbox shown on the Support page.")).toBeInTheDocument();
   });
 });
