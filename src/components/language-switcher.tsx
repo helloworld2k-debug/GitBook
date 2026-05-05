@@ -13,7 +13,7 @@ const languageLabels: Record<Locale, { short: string; label: string }> = {
 
 function LanguageBadge({ text }: { text: string }) {
   return (
-    <span className="inline-flex min-w-9 items-center justify-center rounded-md border border-current/15 bg-current/5 px-2 py-1 text-[11px] font-bold tracking-[0.12em]">
+    <span className="inline-flex min-w-10 items-center justify-center rounded-md border border-current/12 bg-current/[0.06] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.18em] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
       {text}
     </span>
   );
@@ -51,20 +51,22 @@ export function LanguageSwitcher({ currentLocale, label = "Language", variant = 
   const currentPath = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
   const isAdmin = variant === "admin";
   const summaryClass = isAdmin
-    ? "inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 [&::-webkit-details-marker]:hidden"
-    : "inline-flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-md border border-cyan-300/15 bg-white/[0.05] px-3 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/35 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 [&::-webkit-details-marker]:hidden";
+    ? "inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 [&::-webkit-details-marker]:hidden"
+    : "inline-flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-md border border-cyan-300/15 bg-white/[0.05] px-3 text-sm font-semibold text-cyan-100 shadow-[0_8px_24px_rgba(8,145,178,0.12)] transition-colors hover:border-cyan-300/35 hover:bg-white/[0.08] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 [&::-webkit-details-marker]:hidden";
   const menuClass = isAdmin
-    ? "absolute right-0 top-12 z-[100] w-48 rounded-md border border-slate-200 bg-white p-1 shadow-xl"
-    : "absolute right-0 top-12 z-[100] w-48 rounded-md border border-cyan-300/20 bg-slate-950/95 p-1 shadow-2xl shadow-cyan-950/30 backdrop-blur-xl";
+    ? "absolute right-0 top-12 z-[100] w-48 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl"
+    : "absolute right-0 top-12 z-[100] w-48 rounded-xl border border-cyan-300/20 bg-slate-950/95 p-1.5 shadow-2xl shadow-cyan-950/30 backdrop-blur-xl";
   const itemClass = isAdmin
-    ? "flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-    : "flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-medium text-slate-100 transition-colors hover:bg-cyan-300/10 hover:text-cyan-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300";
+    ? "flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+    : "flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium text-slate-100 transition-colors hover:bg-cyan-300/10 hover:text-cyan-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300";
 
   return (
     <details className="group relative">
       <summary aria-label={label} className={summaryClass}>
-        <Globe aria-hidden="true" className="size-4 shrink-0" />
-        <span>{languageLabels[currentLocale].short}</span>
+        <span className={`inline-flex items-center justify-center rounded-full ${isAdmin ? "bg-slate-100 text-slate-600" : "bg-cyan-300/10 text-cyan-100"} size-7`}>
+          <Globe aria-hidden="true" className="size-4 shrink-0" />
+        </span>
+        <span className="text-[11px] font-extrabold uppercase tracking-[0.18em]">{languageLabels[currentLocale].short}</span>
       </summary>
       <div className={menuClass} role="menu">
         {supportedLocales.map((locale) => (
