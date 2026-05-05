@@ -106,13 +106,13 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
         <AdminCard className="mt-6">
           {notifications && notifications.length > 0 ? (
             <AdminTableShell label={t("notifications.title")}>
-              <table aria-label={t("notifications.title")} className="min-w-[980px] table-fixed text-left text-sm">
+              <table aria-label={t("notifications.title")} className="min-w-[1090px] table-fixed text-left text-sm">
                 <colgroup>
                   <col className="w-[360px]" />
                   <col className="w-[150px]" />
                   <col className="w-[140px]" />
                   <col className="w-[220px]" />
-                  <col className="w-[140px]" />
+                  <col className="w-[220px]" />
                 </colgroup>
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                   <tr>
@@ -120,7 +120,7 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
                     <th className="px-5 py-3">{t("notifications.audience")}</th>
                     <th className="px-5 py-3">{t("notifications.status")}</th>
                     <th className="px-5 py-3">{t("notifications.publishedAt")}</th>
-                    <th className="px-5 py-3">{t("licenses.action")}</th>
+                    <th className="sticky right-0 z-10 w-[220px] border-l border-slate-200 bg-slate-50 px-5 py-3 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">{t("licenses.action")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
@@ -139,7 +139,7 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
                       <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                         {notification.published_at ? formatDateTimeWithSeconds(notification.published_at, locale) : "-"}
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                         <form action={notification.published_at ? unpublishNotification : publishNotification}>
                           <input name="locale" type="hidden" value={locale} />
                           <input name="return_to" type="hidden" value="/admin/notifications" />

@@ -260,7 +260,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             </div>
           ) : (
             <AdminTableShell label={t("title")}>
-              <table aria-label={t("title")} className="min-w-[1500px] table-fixed text-left text-sm">
+              <table aria-label={t("title")} className="min-w-[1540px] table-fixed text-left text-sm">
                 <colgroup>
                   <col className="w-[72px]" />
                   <col className="w-[320px]" />
@@ -269,7 +269,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                   <col className="w-[260px]" />
                   <col className="w-[220px]" />
                   <col className="w-[220px]" />
-                  <col className="w-[260px]" />
+                  <col className="w-[300px]" />
                 </colgroup>
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
@@ -282,7 +282,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                     <th className="px-5 py-3">{t("status")}</th>
                     <th className="px-5 py-3">{t("devicesAndTrials")}</th>
                     <th className="px-5 py-3">{t("createdAt")}</th>
-                    <th className="px-5 py-3">{t("actions")}</th>
+                    <th className="sticky right-0 z-10 w-[300px] border-l border-slate-200 bg-slate-50 px-5 py-3 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">{t("actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
@@ -355,8 +355,8 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           {trials[0]?.machine_code_hash ? <p className="mt-1 font-mono text-xs text-slate-500">{shortHash(trials[0].machine_code_hash)}</p> : null}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 align-top text-sm text-slate-700">{formatDate(profile.created_at, locale)}</td>
-                          <td className="min-w-52 px-5 py-4 align-top">
-                            <div className="flex flex-wrap gap-2">
+                          <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
+                            <div className="flex min-w-[260px] flex-wrap justify-end gap-2">
                               <Link className="inline-flex min-h-10 items-center rounded-md bg-slate-950 px-3 text-sm font-medium text-white" href={`/admin/users/${profile.id}`}>
                                 {t("manageUser")}
                               </Link>

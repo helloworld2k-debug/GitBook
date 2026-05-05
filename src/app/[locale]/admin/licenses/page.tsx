@@ -187,7 +187,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             </div>
             {trialCodes.length > 0 ? (
               <AdminTableShell label={t("licenses.trialCodesTitle")}>
-                <table aria-label={t("licenses.trialCodesTitle")} className="min-w-[1420px] table-fixed text-left text-sm">
+                <table aria-label={t("licenses.trialCodesTitle")} className="min-w-[1540px] table-fixed text-left text-sm">
                   <colgroup>
                     <col className="w-[340px]" />
                     <col className="w-[260px]" />
@@ -195,7 +195,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     <col className="w-[240px]" />
                     <col className="w-[150px]" />
                     <col className="w-[130px]" />
-                    <col className="w-[220px]" />
+                    <col className="w-[300px]" />
                   </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
@@ -205,7 +205,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                       <th className="px-5 py-3">{t("licenses.generatedAt")}</th>
                       <th className="px-5 py-3">{t("licenses.redemptions")}</th>
                       <th className="px-5 py-3">{t("licenses.status")}</th>
-                      <th className="px-5 py-3">{t("licenses.action")}</th>
+                      <th className="sticky right-0 z-10 w-[300px] border-l border-slate-200 bg-slate-50 px-5 py-3 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">{t("licenses.action")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -273,8 +273,8 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                             {trialCode.is_active ? t("licenses.active") : t("licenses.inactive")}
                           </AdminStatusBadge>
                         </td>
-                        <td className="px-5 py-4 align-top">
-                          <div className="flex min-w-[220px] flex-wrap gap-2" data-testid={`trial-code-actions-${trialCode.id}`}>
+                        <td className="sticky right-0 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
+                          <div className="flex min-w-[260px] flex-wrap justify-end gap-2" data-testid={`trial-code-actions-${trialCode.id}`}>
                             <form action={setTrialCodeActive}>
                               <input name="locale" type="hidden" value={locale} />
                               <input name="return_to" type="hidden" value="/admin/licenses" />
@@ -322,7 +322,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     <col className="w-[260px]" />
                     <col className="w-[240px]" />
                     <col className="w-[120px]" />
-                    <col className="w-[220px]" />
+                    <col className="w-[160px]" />
                     <col className="w-[220px]" />
                     <col className="w-[180px]" />
                   </colgroup>
@@ -474,7 +474,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             </div>
             {sessions.length > 0 ? (
               <AdminTableShell label={t("licenses.desktopSessionsTitle")}>
-                <table aria-label={t("licenses.desktopSessionsTitle")} className="min-w-[1420px] table-fixed text-left text-sm">
+                <table aria-label={t("licenses.desktopSessionsTitle")} className="min-w-[1480px] table-fixed text-left text-sm">
                   <colgroup>
                     <col className="w-[240px]" />
                     <col className="w-[140px]" />
@@ -483,7 +483,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     <col className="w-[220px]" />
                     <col className="w-[220px]" />
                     <col className="w-[220px]" />
-                    <col className="w-[160px]" />
+                    <col className="w-[220px]" />
                   </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
@@ -494,7 +494,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                       <th className="px-5 py-3">{t("licenses.lastSeen")}</th>
                       <th className="px-5 py-3">{t("licenses.expiresAt")}</th>
                       <th className="px-5 py-3">{t("licenses.revokedAt")}</th>
-                      <th className="px-5 py-3">{t("licenses.action")}</th>
+                      <th className="sticky right-0 z-10 w-[220px] border-l border-slate-200 bg-slate-50 px-5 py-3 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">{t("licenses.action")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -520,7 +520,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatOptionalDateTime(session.revoked_at, locale, t("licenses.notRevoked"))}
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                           {session.revoked_at ? null : (
                             <form action={revokeDesktopSession}>
                               <input name="locale" type="hidden" value={locale} />
@@ -552,15 +552,15 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             </div>
             {leases.length > 0 ? (
               <AdminTableShell label={t("licenses.cloudSyncLeasesTitle")}>
-                <table aria-label={t("licenses.cloudSyncLeasesTitle")} className="min-w-[1240px] table-fixed text-left text-sm">
+                <table aria-label={t("licenses.cloudSyncLeasesTitle")} className="min-w-[1460px] table-fixed text-left text-sm">
                   <colgroup>
                     <col className="w-[240px]" />
                     <col className="w-[140px]" />
-                    <col className="w-[160px]" />
                     <col className="w-[220px]" />
                     <col className="w-[220px]" />
                     <col className="w-[220px]" />
-                    <col className="w-[160px]" />
+                    <col className="w-[220px]" />
+                    <col className="w-[220px]" />
                   </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
@@ -570,7 +570,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                       <th className="px-5 py-3">{t("licenses.lastHeartbeat")}</th>
                       <th className="px-5 py-3">{t("licenses.expiresAt")}</th>
                       <th className="px-5 py-3">{t("licenses.revokedAt")}</th>
-                      <th className="px-5 py-3">{t("licenses.action")}</th>
+                      <th className="sticky right-0 z-10 w-[220px] border-l border-slate-200 bg-slate-50 px-5 py-3 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">{t("licenses.action")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -594,7 +594,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatOptionalDateTime(lease.revoked_at, locale, t("licenses.notRevoked"))}
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                           {lease.revoked_at ? null : (
                             <form action={revokeCloudSyncLease}>
                               <input name="locale" type="hidden" value={locale} />

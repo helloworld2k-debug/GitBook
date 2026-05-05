@@ -73,13 +73,13 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
           <AdminCard>
             {certificates && certificates.length > 0 ? (
               <AdminTableShell label={t("certificates.title")}>
-                <table aria-label={t("certificates.title")} className="min-w-[1100px] table-fixed text-left text-sm">
+                <table aria-label={t("certificates.title")} className="min-w-[1120px] table-fixed text-left text-sm">
                   <colgroup>
                     <col className="w-[240px]" />
                     <col className="w-[220px]" />
                     <col className="w-[150px]" />
                     <col className="w-[180px]" />
-                    <col className="w-[310px]" />
+                    <col className="w-[330px]" />
                   </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
@@ -87,7 +87,7 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
                       <th className="px-5 py-3">{t("certificates.type")}</th>
                       <th className="px-5 py-3">{t("certificates.status")}</th>
                       <th className="px-5 py-3">{t("certificates.issued")}</th>
-                      <th className="px-5 py-3">{t("certificates.action")}</th>
+                      <th className="sticky right-0 z-10 w-[330px] border-l border-slate-200 bg-slate-50 px-5 py-3 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">{t("certificates.action")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -107,7 +107,7 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           {formatIssuedAt(certificate.issued_at, locale, t("certificates.notIssued"))}
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                           {certificate.status === "active" ? (
                             <form action={revokeCertificate} className="flex min-w-72 gap-2">
                               <input name="locale" type="hidden" value={locale} />
