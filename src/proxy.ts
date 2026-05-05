@@ -10,7 +10,7 @@ function hasSupabaseAuthCookie(request: NextRequest) {
   return request.cookies.getAll().some(({ name }) => isSupabaseAuthCookieName(name));
 }
 
-export default async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const response = intlMiddleware(request);
 
   if (
@@ -23,6 +23,8 @@ export default async function middleware(request: NextRequest) {
 
   return refreshSupabaseSession(request, response);
 }
+
+export default proxy;
 
 export const config = {
   matcher: ["/((?!api|auth/callback|_next|_vercel|.*\\..*).*)"],

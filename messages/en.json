@@ -91,7 +91,8 @@
     },
     "checkoutDodo": "Contribute now",
     "oneTimeNote": "A one-time contribution that helps keep downloads available and development moving.",
-    "paymentNote": "Secure checkout with Dodo Payments for cards and supported local payment methods. A certificate is issued after successful payment."
+    "paymentNote": "Secure checkout with Dodo Payments for cards and supported local payment methods. A certificate is issued after successful payment.",
+    "cancelled": "Checkout was cancelled. You can review the support tiers and try again when ready."
   },
   "notifications": {
     "eyebrow": "Notification center",

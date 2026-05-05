@@ -3,14 +3,18 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { optionalTimeout } from "@/lib/async/optional-timeout";
-import { getPlatformDelivery, getPublishedReleases, type ReleaseClient, type SoftwareRelease } from "@/lib/releases/software-releases";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCachedPublishedReleases } from "@/lib/releases/public-cache";
+import { getPlatformDelivery, type SoftwareRelease } from "@/lib/releases/software-releases";
 
 type VersionsPageProps = {
   params: Promise<{
     locale: string;
   }>;
 };
+
+export function generateStaticParams() {
+  return supportedLocales.map((locale) => ({ locale }));
+}
 
 function formatReleaseDate(value: string, locale: string) {
   return new Intl.DateTimeFormat(locale, {
@@ -32,8 +36,7 @@ export default async function VersionsPage({ params }: VersionsPageProps) {
   let releases: SoftwareRelease[] = [];
 
   try {
-    const supabase = (await createSupabaseServerClient()) as unknown as ReleaseClient;
-    releases = (await optionalTimeout(getPublishedReleases(supabase))) ?? [];
+    releases = (await optionalTimeout(getCachedPublishedReleases())) ?? [];
   } catch {
     releases = [];
   }

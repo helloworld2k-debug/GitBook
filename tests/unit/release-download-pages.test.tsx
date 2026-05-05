@@ -1,10 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import HomePage from "@/app/[locale]/page";
-import VersionsPage from "@/app/[locale]/versions/page";
+import VersionsPage, { generateStaticParams as generateVersionStaticParams } from "@/app/[locale]/versions/page";
 
 const mocks = vi.hoisted(() => ({
-  createSupabaseServerClient: vi.fn(),
+  getCachedLatestPublishedRelease: vi.fn(),
+  getCachedPublishedReleases: vi.fn(),
 }));
 
 vi.mock("@/components/site-header", () => ({
@@ -19,8 +20,9 @@ vi.mock("@/i18n/routing", () => ({
   ),
 }));
 
-vi.mock("@/lib/supabase/server", () => ({
-  createSupabaseServerClient: mocks.createSupabaseServerClient,
+vi.mock("@/lib/releases/public-cache", () => ({
+  getCachedLatestPublishedRelease: mocks.getCachedLatestPublishedRelease,
+  getCachedPublishedReleases: mocks.getCachedPublishedReleases,
 }));
 
 vi.mock("next-intl/server", () => ({
@@ -74,36 +76,28 @@ vi.mock("next-intl/server", () => ({
 }));
 
 describe("release download pages", () => {
+  it("pre-renders the release archive for every supported locale", () => {
+    expect(generateVersionStaticParams()).toEqual([
+      { locale: "en" },
+      { locale: "zh-Hant" },
+      { locale: "ja" },
+      { locale: "ko" },
+    ]);
+  });
+
   it("shows primary and backup download actions for the latest linked release on the homepage", async () => {
-    mocks.createSupabaseServerClient.mockResolvedValue({
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            order: vi.fn(() => ({
-              order: vi.fn(() => ({
-                limit: vi.fn(async () => ({
-                  data: [
-                    {
-                      id: "release-1",
-                      version: "v1.3.0",
-                      released_at: "2026-05-05",
-                      notes: null,
-                      delivery_mode: "link",
-                      macos_primary_url: "https://downloads.example/mac-primary.dmg",
-                      macos_backup_url: "https://mirror.example/mac-backup.dmg",
-                      windows_primary_url: "https://downloads.example/win-primary.exe",
-                      windows_backup_url: "https://mirror.example/win-backup.exe",
-                      software_release_assets: [],
-                    },
-                  ],
-                  error: null,
-                })),
-              })),
-            })),
-          })),
-        })),
-      })),
-      storage: { from: vi.fn(() => ({ getPublicUrl: vi.fn() })) },
+    mocks.getCachedLatestPublishedRelease.mockResolvedValue({
+      assets: [],
+      deliveryMode: "link",
+      id: "release-1",
+      isPublished: true,
+      macosBackupUrl: "https://mirror.example/mac-backup.dmg",
+      macosPrimaryUrl: "https://downloads.example/mac-primary.dmg",
+      notes: null,
+      releasedAt: "2026-05-05",
+      version: "v1.3.0",
+      windowsBackupUrl: "https://mirror.example/win-backup.exe",
+      windowsPrimaryUrl: "https://downloads.example/win-primary.exe",
     });
 
     render(await HomePage({ params: Promise.resolve({ locale: "en" }) }));
@@ -115,37 +109,21 @@ describe("release download pages", () => {
   });
 
   it("shows paired platform actions for linked releases on the versions page", async () => {
-    mocks.createSupabaseServerClient.mockResolvedValue({
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            order: vi.fn(() => ({
-              order: vi.fn(() => ({
-                then: (resolve: (value: unknown) => void) =>
-                  resolve({
-                    data: [
-                      {
-                        id: "release-1",
-                        version: "v1.3.0",
-                        released_at: "2026-05-05",
-                        notes: "Linked build",
-                        delivery_mode: "link",
-                        macos_primary_url: "https://downloads.example/mac-primary.dmg",
-                        macos_backup_url: "https://mirror.example/mac-backup.dmg",
-                        windows_primary_url: "https://downloads.example/win-primary.exe",
-                        windows_backup_url: null,
-                        software_release_assets: [],
-                      },
-                    ],
-                    error: null,
-                  }),
-              })),
-            })),
-          })),
-        })),
-      })),
-      storage: { from: vi.fn(() => ({ getPublicUrl: vi.fn() })) },
-    });
+    mocks.getCachedPublishedReleases.mockResolvedValue([
+      {
+        assets: [],
+        deliveryMode: "link",
+        id: "release-1",
+        isPublished: true,
+        macosBackupUrl: "https://mirror.example/mac-backup.dmg",
+        macosPrimaryUrl: "https://downloads.example/mac-primary.dmg",
+        notes: "Linked build",
+        releasedAt: "2026-05-05",
+        version: "v1.3.0",
+        windowsBackupUrl: null,
+        windowsPrimaryUrl: "https://downloads.example/win-primary.exe",
+      },
+    ]);
 
     render(await VersionsPage({ params: Promise.resolve({ locale: "en" }) }));
 

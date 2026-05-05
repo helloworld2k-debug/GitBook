@@ -7,5 +7,5 @@ test("anonymous visitor can see public download buttons", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Download for macOS" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Download for Windows" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Linux/i })).toHaveCount(0);
-  await expect(page.getByText("Downloads stay free. Donations keep the AI knowledge engine improving.")).toBeVisible();
+  await expect(page.getByText("Downloads stay free. Voluntary support keeps the AI knowledge engine improving.")).toBeVisible();
 });

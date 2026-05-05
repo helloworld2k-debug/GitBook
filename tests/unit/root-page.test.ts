@@ -11,8 +11,8 @@ vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
-describe("root scaffold", () => {
-  it("redirects the root route to the localized site", () => {
+describe("root page", () => {
+  it("redirects to the default localized homepage instead of serving starter content", () => {
     expect(() => Home()).toThrow("redirect:/en");
   });
 });

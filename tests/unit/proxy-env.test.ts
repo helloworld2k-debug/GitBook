@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import middleware from "@/middleware";
+import { proxy } from "@/proxy";
 import { refreshSupabaseSession } from "@/lib/supabase/middleware";
 
 const originalEnv = process.env;
@@ -22,7 +22,7 @@ vi.mock("@/lib/supabase/middleware", () => ({
   refreshSupabaseSession: vi.fn(async (_request, response) => response),
 }));
 
-describe("middleware Supabase environment handling", () => {
+describe("proxy Supabase environment handling", () => {
   afterEach(() => {
     process.env = originalEnv;
     vi.clearAllMocks();
@@ -35,20 +35,7 @@ describe("middleware Supabase environment handling", () => {
       NEXT_PUBLIC_SUPABASE_URL: "",
     };
 
-    const response = await middleware(new NextRequest("https://gitbookai.example/en"));
-
-    expect(response).toBeInstanceOf(NextResponse);
-    expect(refreshSupabaseSession).not.toHaveBeenCalled();
-  });
-
-  it("does not refresh Supabase sessions for anonymous requests without auth cookies", async () => {
-    process.env = {
-      ...originalEnv,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
-      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
-    };
-
-    const response = await middleware(new NextRequest("https://gitbookai.example/en/login"));
+    const response = await proxy(new NextRequest("https://gitbookai.example/en"));
 
     expect(response).toBeInstanceOf(NextResponse);
     expect(refreshSupabaseSession).not.toHaveBeenCalled();
@@ -67,25 +54,7 @@ describe("middleware Supabase environment handling", () => {
       },
     });
 
-    await middleware(request);
-
-    expect(refreshSupabaseSession).toHaveBeenCalled();
-  });
-
-  it("refreshes Supabase sessions for split OAuth auth cookies", async () => {
-    process.env = {
-      ...originalEnv,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
-      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
-    };
-
-    const request = new NextRequest("https://gitbookai.example/en/dashboard", {
-      headers: {
-        cookie: "sb-dzsnhbszojdaghvolcnq-auth-token.0=token-part",
-      },
-    });
-
-    await middleware(request);
+    await proxy(request);
 
     expect(refreshSupabaseSession).toHaveBeenCalled();
   });

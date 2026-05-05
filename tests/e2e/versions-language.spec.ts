@@ -11,7 +11,7 @@ test("language switcher preserves the current route semantics", async ({ page })
   await page.goto("/en");
 
   await page.getByLabel("Language").click();
-  await page.getByRole("menuitem", { name: "JP flag 日本語" }).click();
+  await page.getByRole("menuitem", { name: "JP 日本語" }).click();
 
   await expect(page).toHaveURL(/\/ja\/?$/);
   await expect(page.getByRole("heading", { name: "GitBook AI" })).toBeVisible();

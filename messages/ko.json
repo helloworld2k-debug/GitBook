@@ -83,7 +83,8 @@
     },
     "checkoutDodo": "지금 지원하기",
     "oneTimeNote": "다운로드 제공과 지속적인 개발을 돕는 일회성 지원입니다.",
-    "paymentNote": "Dodo Payments를 통한 안전한 결제로 카드와 지원되는 현지 결제 수단을 사용할 수 있습니다. 결제 완료 후 인증서가 발급됩니다."
+    "paymentNote": "Dodo Payments를 통한 안전한 결제로 카드와 지원되는 현지 결제 수단을 사용할 수 있습니다. 결제 완료 후 인증서가 발급됩니다.",
+    "cancelled": "결제가 취소되었습니다. 지원 등급을 다시 확인하고 준비되면 다시 시도할 수 있습니다."
   },
   "notifications": {
     "eyebrow": "알림 센터",

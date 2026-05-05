@@ -24,8 +24,8 @@ describe("i18n configuration", () => {
     expect(messageKeys(koMessages).sort()).toEqual(expectedKeys);
   });
 
-  it("normalizes localized app routes through next-intl middleware without intercepting auth callbacks", () => {
-    const middleware = readFileSync("src/middleware.ts", "utf8");
+  it("normalizes localized app routes through next-intl proxy without intercepting auth callbacks", () => {
+    const middleware = readFileSync("src/proxy.ts", "utf8");
 
     expect(middleware).toContain('matcher: ["/((?!api|auth/callback|_next|_vercel|.*\\\\..*).*)"]');
     expect(middleware).toContain("createMiddleware(routing)");

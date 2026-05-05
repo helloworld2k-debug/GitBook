@@ -51,7 +51,7 @@ export default async function NotificationsPage({ params }: NotificationsPagePro
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader showAccountMenu />
       <main className="tech-shell flex-1">
         <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
           <p className="inline-flex min-h-8 items-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-3 text-sm font-semibold uppercase text-cyan-200">

@@ -10,6 +10,10 @@ vi.mock("@/components/donation-tier-card", () => ({
   DonationTierCard: ({ label }: { label: string }) => <div>{label}</div>,
 }));
 
+vi.mock("@/components/payment-status-banner", () => ({
+  PaymentStatusBanner: ({ message }: { message: string }) => <div role="status">{message}</div>,
+}));
+
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (key: string) => {
     const messages: Record<string, string> = {
@@ -30,14 +34,12 @@ vi.mock("next-intl/server", () => ({
 }));
 
 describe("ContributionsPage", () => {
-  it("shows a warning banner when Dodo checkout is cancelled", async () => {
+  it("passes the cancelled checkout copy to the client-side status banner", async () => {
     render(
       await ContributionsPage({
         params: Promise.resolve({ locale: "en" }),
-        searchParams: Promise.resolve({ payment: "cancelled" }),
       } as {
         params: Promise<{ locale: string }>;
-        searchParams: Promise<{ payment: string }>;
       }),
     );
 

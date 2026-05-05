@@ -83,7 +83,8 @@
     },
     "checkoutDodo": "立即支持",
     "oneTimeNote": "一次性支持，協助下載服務維持可用，也讓開發能持續推進。",
-    "paymentNote": "透過 Dodo Payments 安全結帳，支援銀行卡與可用的本地支付方式。付款成功後會產生支持證書。"
+    "paymentNote": "透過 Dodo Payments 安全結帳，支援銀行卡與可用的本地支付方式。付款成功後會產生支持證書。",
+    "cancelled": "結帳已取消。你可以重新查看支持方案，準備好後再試一次。"
   },
   "notifications": {
     "eyebrow": "通知中心",

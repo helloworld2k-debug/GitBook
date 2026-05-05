@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SiteHeader } from "@/components/site-header";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 
 const getLocaleMock = vi.hoisted(() => vi.fn());
 const getTranslationsMock = vi.hoisted(() => vi.fn());
@@ -47,15 +48,34 @@ describe("SiteHeader", () => {
     createSupabaseServerClientMock.mockReset();
   });
 
-  it("shows sign in and no dashboard link for signed-out visitors", async () => {
-    createSupabaseServerClientMock.mockResolvedValue({
-      auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
-    });
-
+  it("renders public navigation without querying Supabase", async () => {
     render(await SiteHeader());
 
     expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Contributions" })).toHaveAttribute("href", "/contributions");
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+    expect(screen.queryByRole("link", { name: "Dashboard" })).not.toBeInTheDocument();
+    expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
+  });
+
+  it("can opt into the dynamic account menu for authenticated areas", async () => {
+    createSupabaseServerClientMock.mockResolvedValue({
+      auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
+    });
+
+    render(await SiteHeader({ showAccountMenu: true }));
+
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+    expect(createSupabaseServerClientMock).toHaveBeenCalled();
+  });
+
+  it("shows sign in and no dashboard link for signed-out visitors in the user menu slot", async () => {
+    createSupabaseServerClientMock.mockResolvedValue({
+      auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
+    });
+
+    render(await HeaderUserMenu({ currentLocale: "en", labels: navMessages }));
+
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
     expect(screen.queryByRole("link", { name: "Dashboard" })).not.toBeInTheDocument();
   });
@@ -75,7 +95,7 @@ describe("SiteHeader", () => {
       })),
     });
 
-    render(await SiteHeader());
+    render(await HeaderUserMenu({ currentLocale: "en", labels: navMessages }));
 
     expect(screen.getByLabelText("Open dashboard")).toBeInTheDocument();
     expect(screen.getAllByText("Ada Lovelace")).toHaveLength(2);

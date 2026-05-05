@@ -1,7 +1,8 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { DonationTierCard } from "@/components/donation-tier-card";
-import { FormStatusBanner } from "@/components/form-status-banner";
+import { PaymentStatusBanner } from "@/components/payment-status-banner";
 import { SiteHeader } from "@/components/site-header";
 import { donationTiers, supportedLocales, type Locale } from "@/config/site";
 
@@ -9,14 +10,14 @@ type ContributionsPageProps = {
   params: Promise<{
     locale: string;
   }>;
-  searchParams?: Promise<{
-    payment?: string;
-  }>;
 };
 
-export default async function ContributionsPage({ params, searchParams }: ContributionsPageProps) {
+export function generateStaticParams() {
+  return supportedLocales.map((locale) => ({ locale }));
+}
+
+export default async function ContributionsPage({ params }: ContributionsPageProps) {
   const { locale } = await params;
-  const status = await searchParams;
 
   if (!supportedLocales.includes(locale as Locale)) {
     notFound();
@@ -37,11 +38,9 @@ export default async function ContributionsPage({ params, searchParams }: Contri
             </p>
             <h1 className="mt-4 text-4xl font-semibold tracking-normal text-white">{t("title")}</h1>
             <p className="mt-3 text-base leading-7 text-slate-300">{t("subtitle")}</p>
-            {status?.payment === "cancelled" ? (
-              <div className="mt-5">
-                <FormStatusBanner message="Checkout was cancelled. You can review the support tiers and try again when ready." tone="warning" />
-              </div>
-            ) : null}
+            <Suspense fallback={null}>
+              <PaymentStatusBanner message={t("cancelled")} />
+            </Suspense>
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {donationTiers.map((tier) => (

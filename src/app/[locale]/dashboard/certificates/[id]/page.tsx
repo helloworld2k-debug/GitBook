@@ -59,7 +59,7 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader showAccountMenu />
       <main className="tech-shell flex-1">
         <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
           <CertificateView

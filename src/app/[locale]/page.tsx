@@ -4,8 +4,8 @@ import { SiteHeader } from "@/components/site-header";
 import { siteConfig, supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { optionalTimeout } from "@/lib/async/optional-timeout";
-import { getLatestPublishedRelease, getPlatformDelivery, type ReleaseClient, type ReleasePlatform, type SoftwareRelease } from "@/lib/releases/software-releases";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCachedLatestPublishedRelease } from "@/lib/releases/public-cache";
+import { getPlatformDelivery, type ReleasePlatform, type SoftwareRelease } from "@/lib/releases/software-releases";
 
 type LocalizedPageProps = {
   params: Promise<{
@@ -47,8 +47,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
   let latestRelease: SoftwareRelease | null = null;
 
   try {
-    const supabase = (await createSupabaseServerClient()) as unknown as ReleaseClient;
-    latestRelease = await optionalTimeout(getLatestPublishedRelease(supabase));
+    latestRelease = await optionalTimeout(getCachedLatestPublishedRelease());
   } catch {
     latestRelease = null;
   }
