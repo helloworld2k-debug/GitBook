@@ -26,13 +26,21 @@ type SupportEnvSource = Partial<Record<
   string
 >>;
 
-export function getDefaultSupportChannelsConfig(source: SupportEnvSource = process.env) {
+export function getDefaultSupportChannelsConfig(source?: SupportEnvSource) {
+  const envSource = source ?? {
+    NEXT_PUBLIC_SUPPORT_DISCORD: process.env.NEXT_PUBLIC_SUPPORT_DISCORD,
+    NEXT_PUBLIC_SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL,
+    NEXT_PUBLIC_SUPPORT_QQ: process.env.NEXT_PUBLIC_SUPPORT_QQ,
+    NEXT_PUBLIC_SUPPORT_TELEGRAM: process.env.NEXT_PUBLIC_SUPPORT_TELEGRAM,
+    NEXT_PUBLIC_SUPPORT_WECHAT: process.env.NEXT_PUBLIC_SUPPORT_WECHAT,
+  };
+
   return {
-    discord: source.NEXT_PUBLIC_SUPPORT_DISCORD ?? "",
-    email: source.NEXT_PUBLIC_SUPPORT_EMAIL ?? "",
-    qq: source.NEXT_PUBLIC_SUPPORT_QQ ?? "",
-    telegram: source.NEXT_PUBLIC_SUPPORT_TELEGRAM ?? "",
-    wechat: source.NEXT_PUBLIC_SUPPORT_WECHAT ?? "",
+    discord: envSource.NEXT_PUBLIC_SUPPORT_DISCORD ?? "",
+    email: envSource.NEXT_PUBLIC_SUPPORT_EMAIL ?? "",
+    qq: envSource.NEXT_PUBLIC_SUPPORT_QQ ?? "",
+    telegram: envSource.NEXT_PUBLIC_SUPPORT_TELEGRAM ?? "",
+    wechat: envSource.NEXT_PUBLIC_SUPPORT_WECHAT ?? "",
   } satisfies SupportChannelsConfig;
 }
 
