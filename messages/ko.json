@@ -477,6 +477,8 @@
       "title": "사용자 관리",
       "detailTitle": "사용자 운영",
       "detailDescription": "한 사용자의 프로필, 지원, 인증서, 체험, 기기, 권한을 한곳에서 확인하고 관리합니다.",
+      "manageUser": "사용자 관리",
+      "detailEntryHint": "계정 상세, 지원, 인증서, 기기 설정 보기",
       "user": "사용자",
       "details": "세부 정보",
       "role": "역할",

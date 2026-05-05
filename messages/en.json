@@ -485,6 +485,8 @@
       "title": "User management",
       "detailTitle": "User operations",
       "detailDescription": "Review and maintain one user's profile, contributions, certificates, trials, devices, and entitlements.",
+      "manageUser": "Manage user",
+      "detailEntryHint": "Detailed account, contributions, certificates, and devices",
       "user": "User",
       "details": "Details",
       "role": "Role",

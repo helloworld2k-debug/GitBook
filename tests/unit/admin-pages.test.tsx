@@ -266,6 +266,8 @@ const testMessages = {
         title: "User management",
         detailTitle: "User operations",
         detailDescription: "Review and maintain one user's profile, donations, certificates, trials, devices, and entitlements.",
+        manageUser: "Manage user",
+        detailEntryHint: "Detailed account, contributions, certificates, and devices",
         user: "User",
         details: "Details",
         role: "Role",
@@ -1193,6 +1195,8 @@ describe("admin pages", () => {
     expect(screen.getByDisplayValue("alice")).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Select alice@example.com"));
     expect(screen.getByRole("button", { name: "Bulk soft delete" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Manage user" })).toHaveAttribute("href", "/admin/users/user-1");
+    expect(screen.getByText("Detailed account, contributions, certificates, and devices")).toBeInTheDocument();
   });
 
   it("shows an empty filtered state with reset action", async () => {

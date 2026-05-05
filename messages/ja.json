@@ -477,6 +477,8 @@
       "title": "ユーザー管理",
       "detailTitle": "ユーザー運用",
       "detailDescription": "1 人のユーザーのプロフィール、応援、証明書、トライアル、端末、権限をまとめて確認・保守します。",
+      "manageUser": "ユーザー管理へ進む",
+      "detailEntryHint": "アカウント詳細、応援、証明書、端末設定を確認",
       "user": "ユーザー",
       "details": "詳細",
       "role": "ロール",

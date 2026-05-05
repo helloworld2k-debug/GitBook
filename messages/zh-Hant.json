@@ -477,6 +477,8 @@
       "title": "使用者管理",
       "detailTitle": "使用者營運維護",
       "detailDescription": "集中檢視並維護單一使用者的資料、支持、證書、試用、裝置與權益。",
+      "manageUser": "管理使用者",
+      "detailEntryHint": "查看帳號詳情、支持、證書與裝置設定",
       "user": "使用者",
       "details": "詳細資料",
       "role": "角色",

@@ -287,11 +287,12 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           <td className="px-5 py-4 align-top">
                             <input aria-label={`Select ${profile.email}`} className="size-4 rounded border-slate-300" form="bulk-users-bulk-action-form" name="user_ids" type="checkbox" value={profile.id} />
                           </td>
-                        <td className="min-w-72 px-5 py-4 align-top">
-                          <p className="font-medium text-slate-950">{profile.email}</p>
-                          <p className="mt-1 text-slate-600">{profile.display_name ?? "-"}</p>
-                          <p className="mt-1 font-mono text-xs text-slate-500">{profile.id}</p>
-                        </td>
+                          <td className="min-w-72 px-5 py-4 align-top">
+                            <p className="font-medium text-slate-950">{profile.email}</p>
+                            <p className="mt-1 text-slate-600">{profile.display_name ?? "-"}</p>
+                            <p className="mt-1 font-mono text-xs text-slate-500">{profile.id}</p>
+                            <p className="mt-2 text-xs text-slate-500">{t("detailEntryHint")}</p>
+                          </td>
                         <td className="px-5 py-4 align-top">
                           {canManageRoles ? (
                             <form action={updateUserAdminRole} className="flex gap-2">
@@ -344,13 +345,13 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           {trials[0]?.machine_code_hash ? <p className="mt-1 font-mono text-xs text-slate-500">{shortHash(trials[0].machine_code_hash)}</p> : null}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 align-top text-sm text-slate-700">{formatDate(profile.created_at, locale)}</td>
-                        <td className="min-w-52 px-5 py-4 align-top">
-                          <div className="flex flex-wrap gap-2">
-                            <Link className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/users/${profile.id}`}>
-                              {t("viewDetails")}
-                            </Link>
-                            {trials[0]?.machine_code_hash ? (
-                              <form action={unbindTrialMachine}>
+                          <td className="min-w-52 px-5 py-4 align-top">
+                            <div className="flex flex-wrap gap-2">
+                              <Link className="inline-flex min-h-10 items-center rounded-md bg-slate-950 px-3 text-sm font-medium text-white" href={`/admin/users/${profile.id}`}>
+                                {t("manageUser")}
+                              </Link>
+                              {trials[0]?.machine_code_hash ? (
+                                <form action={unbindTrialMachine}>
                                   <input name="locale" type="hidden" value={locale} />
                                   <input name="return_to" type="hidden" value="/admin/users" />
                                   <input name="trial_redemption_id" type="hidden" value={trials[0].id} />
