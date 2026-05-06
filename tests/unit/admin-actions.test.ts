@@ -292,6 +292,13 @@ describe("admin actions", () => {
       updated_at: expect.any(String),
     });
     expect(updateIn).toHaveBeenCalledWith("id", ["user-1", "user-2"]);
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      after: expect.objectContaining({
+        user_ids: ["user-1", "user-2"],
+      }),
+      target_id: "user-1",
+      target_type: "profile_batch",
+    }));
   });
 
   it.each(["", "not-a-role"])("redirects with feedback when bulk role value is invalid: %s", async (adminRole) => {

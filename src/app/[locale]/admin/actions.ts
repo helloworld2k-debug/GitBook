@@ -1335,9 +1335,9 @@ export async function bulkProcessUsers(formData: FormData) {
     await insertAdminAuditLog({
       action: "bulk_update_user_account_status",
       adminUserId: admin.id,
-      after: { account_status: accountStatus, count: userIds.length },
+      after: { account_status: accountStatus, count: userIds.length, user_ids: userIds },
       reason: `Bulk updated account status to ${accountStatus}`,
-      targetId: userIds.join(","),
+      targetId: userIds[0],
       targetType: "profile_batch",
     });
 
@@ -1389,9 +1389,9 @@ export async function bulkProcessUsers(formData: FormData) {
     await insertAdminAuditLog({
       action: "bulk_update_user_admin_role",
       adminUserId: admin.id,
-      after: { admin_role: adminRole, count: userIds.length },
+      after: { admin_role: adminRole, count: userIds.length, user_ids: userIds },
       reason: `Bulk updated user admin role to ${adminRole}`,
-      targetId: userIds.join(","),
+      targetId: userIds[0],
       targetType: "profile_batch",
     });
 
