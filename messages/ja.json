@@ -642,6 +642,10 @@
     "subtitle": "GitBook AI の過去の macOS / Windows ビルドをダウンロードできます。",
     "downloadMac": "macOS",
     "downloadWindows": "Windows",
+    "releases": {
+      "primaryLink": "主リンク",
+      "backupLink": "予備リンク"
+    },
     "empty": "公開済みリリースはまだありません。"
   },
   "resetPassword": {

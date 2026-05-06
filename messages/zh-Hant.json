@@ -642,6 +642,10 @@
     "subtitle": "下載 GitBook AI 的 macOS 與 Windows 歷史版本。",
     "downloadMac": "macOS",
     "downloadWindows": "Windows",
+    "releases": {
+      "primaryLink": "主連結",
+      "backupLink": "備用連結"
+    },
     "empty": "尚未發布公開版本。"
   },
   "resetPassword": {

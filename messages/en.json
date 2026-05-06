@@ -79,6 +79,10 @@
     "subtitle": "Download previous GitBook AI builds for macOS and Windows.",
     "downloadMac": "macOS",
     "downloadWindows": "Windows",
+    "releases": {
+      "primaryLink": "Primary",
+      "backupLink": "Backup"
+    },
     "empty": "No public releases have been published yet."
   },
   "donate": {

@@ -642,6 +642,10 @@
     "subtitle": "GitBook AI의 이전 macOS 및 Windows 빌드를 다운로드하세요.",
     "downloadMac": "macOS",
     "downloadWindows": "Windows",
+    "releases": {
+      "primaryLink": "기본 링크",
+      "backupLink": "백업 링크"
+    },
     "empty": "아직 공개된 릴리스가 없습니다."
   },
   "resetPassword": {
