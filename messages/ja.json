@@ -213,8 +213,8 @@
       "notificationsDescription": "アプリ内通知を公開・非公開にします。",
       "supportFeedbackTitle": "フィードバック",
       "supportFeedbackDescription": "アカウント問題とサポート依頼を確認します。",
-      "supportSettingsTitle": "サポート設定",
-      "supportSettingsDescription": "公開サポート連絡先を管理します。",
+      "supportSettingsTitle": "応援価格設定",
+      "supportSettingsDescription": "Contributions ページの価格、割引、開発サポート文言、公開サポート連絡先を管理します。",
       "licensesTitle": "ライセンス",
       "licensesDescription": "試用コード、権限、デスクトップのクラウド同期アクセスを管理します。",
       "usersTitle": "ユーザー",
@@ -372,8 +372,8 @@
     },
     "supportSettings": {
       "eyebrow": "管理画面",
-      "title": "サポート設定",
-      "description": "サポートページに表示する公開連絡先を管理します。実際に確認しているチャネルだけを有効にしてください。",
+      "title": "応援価格とサポート設定",
+      "description": "Contributions ページに表示する開発サポートプランと、サポートページの公開連絡先を管理します。",
       "channel": "チャネル名",
       "value": "連絡先",
       "status": "表示状態",
@@ -607,7 +607,7 @@
       "releases": "リリース",
       "returnToSite": "サイトへ戻る",
       "supportFeedback": "フィードバック",
-      "supportSettings": "サポート設定",
+      "supportSettings": "応援価格設定",
       "users": "ユーザー"
     }
   },

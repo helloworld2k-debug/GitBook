@@ -223,8 +223,8 @@
       "notificationsDescription": "Publish and unpublish in-app announcements.",
       "supportFeedbackTitle": "Feedback",
       "supportFeedbackDescription": "Review account issue reports and support requests.",
-      "supportSettingsTitle": "Support settings",
-      "supportSettingsDescription": "Manage public support contact channels.",
+      "supportSettingsTitle": "Contribution pricing",
+      "supportSettingsDescription": "Manage Contributions page prices, discounts, support tier copy, and public support contact channels.",
       "licensesTitle": "Licenses",
       "licensesDescription": "Create trial codes, review entitlements, and revoke desktop cloud sync access.",
       "usersTitle": "Users",
@@ -349,8 +349,8 @@
     },
     "supportSettings": {
       "eyebrow": "Admin",
-      "title": "Support settings",
-      "description": "Manage the public contact methods shown on the Support page. Enable only the channels you actively monitor.",
+      "title": "Contribution pricing & support settings",
+      "description": "Manage the development support tiers shown on the Contributions page, plus the public contact methods shown on the Support page.",
       "channel": "Channel name",
       "value": "Contact value",
       "status": "Visibility",
@@ -618,7 +618,7 @@
       "releases": "Releases",
       "notifications": "Notifications",
       "supportFeedback": "Feedback",
-      "supportSettings": "Support settings",
+      "supportSettings": "Contribution pricing",
       "returnToSite": "Return to site",
       "users": "Users"
     }

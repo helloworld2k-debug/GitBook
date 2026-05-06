@@ -213,8 +213,8 @@
       "notificationsDescription": "發布與下架站內通知。",
       "supportFeedbackTitle": "回饋",
       "supportFeedbackDescription": "檢視帳號問題與支援請求。",
-      "supportSettingsTitle": "支援設定",
-      "supportSettingsDescription": "管理公開支援聯絡渠道。",
+      "supportSettingsTitle": "支持價格設定",
+      "supportSettingsDescription": "管理 Contributions 頁面的價格、折扣、開發支援方案文案與公開支援聯絡渠道。",
       "licensesTitle": "授權",
       "licensesDescription": "建立試用兌換碼、檢視權益，並撤銷桌面雲端同步存取。",
       "usersTitle": "使用者",
@@ -372,8 +372,8 @@
     },
     "supportSettings": {
       "eyebrow": "管理後台",
-      "title": "支援設定",
-      "description": "管理顯示在支援頁上的公開聯絡方式，只啟用你有實際維護的渠道。",
+      "title": "支持價格與支援設定",
+      "description": "管理 Contributions 頁面顯示的開發支援方案，也可維護支援頁上的公開聯絡方式。",
       "channel": "渠道名稱",
       "value": "聯絡內容",
       "status": "顯示狀態",
@@ -607,7 +607,7 @@
       "releases": "版本發布",
       "returnToSite": "返回網站",
       "supportFeedback": "回饋",
-      "supportSettings": "支援設定",
+      "supportSettings": "支持價格設定",
       "users": "使用者"
     }
   },

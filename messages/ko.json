@@ -213,8 +213,8 @@
       "notificationsDescription": "앱 내 공지를 게시하거나 내립니다.",
       "supportFeedbackTitle": "피드백",
       "supportFeedbackDescription": "계정 문제와 지원 요청을 확인합니다.",
-      "supportSettingsTitle": "지원 설정",
-      "supportSettingsDescription": "공개 지원 연락 채널을 관리합니다.",
+      "supportSettingsTitle": "지원 가격 설정",
+      "supportSettingsDescription": "Contributions 페이지의 가격, 할인, 개발 지원 문구와 공개 지원 연락 채널을 관리합니다.",
       "licensesTitle": "라이선스",
       "licensesDescription": "체험 코드, 권한, 데스크톱 클라우드 동기화 접속을 관리합니다.",
       "usersTitle": "사용자",
@@ -372,8 +372,8 @@
     },
     "supportSettings": {
       "eyebrow": "관리",
-      "title": "지원 설정",
-      "description": "지원 페이지에 표시할 공개 연락 방식을 관리합니다. 실제로 운영 중인 채널만 활성화하세요.",
+      "title": "지원 가격 및 지원 설정",
+      "description": "Contributions 페이지에 표시되는 개발 지원 플랜과 지원 페이지의 공개 연락 채널을 관리합니다.",
       "channel": "채널 이름",
       "value": "연락처 값",
       "status": "노출 상태",
@@ -607,7 +607,7 @@
       "releases": "릴리스",
       "returnToSite": "사이트로 돌아가기",
       "supportFeedback": "피드백",
-      "supportSettings": "지원 설정",
+      "supportSettings": "지원 가격 설정",
       "users": "사용자"
     }
   },
