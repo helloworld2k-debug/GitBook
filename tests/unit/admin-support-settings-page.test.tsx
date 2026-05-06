@@ -152,4 +152,77 @@ describe("AdminSupportSettingsPage", () => {
     expect(screen.getByText("This is the public support mailbox shown on the Support page.")).toBeInTheDocument();
     expect(screen.getByText("This is how the enabled support channels will appear to visitors on the Support page.")).toBeInTheDocument();
   });
+
+  it("renders donation tiers when the original price column has not been migrated yet", async () => {
+    const tierSelect = vi
+      .fn()
+      .mockReturnValueOnce({
+        order: async () => ({
+          data: null,
+          error: { code: "42703", message: "column donation_tiers.compare_at_amount does not exist" },
+        }),
+      })
+      .mockReturnValueOnce({
+        order: async () => ({
+          data: [
+            {
+              amount: 2430,
+              code: "quarterly",
+              currency: "usd",
+              description: "Quarterly support",
+              id: "tier-quarterly",
+              is_active: true,
+              label: "Quarterly Support",
+              sort_order: 2,
+            },
+          ],
+          error: null,
+        }),
+    });
+    mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
+    mocks.createSupabaseServerClient
+      .mockResolvedValueOnce({
+        auth: {
+          getUser: async () => ({ data: { user: { id: "admin-1", email: "admin@example.com" } } }),
+        },
+        from: () => ({
+          select: () => ({
+            eq: () => ({
+              single: async () => ({ data: { display_name: "Admin", email: "admin@example.com" }, error: null }),
+            }),
+          }),
+        }),
+      })
+      .mockResolvedValueOnce({
+      auth: {
+        getUser: async () => ({ data: { user: { id: "admin-1", email: "admin@example.com" } } }),
+      },
+      from: (table: string) => {
+        if (table === "support_contact_channels") {
+          return {
+            select: () => ({
+              order: async () => ({ data: [], error: null }),
+            }),
+          };
+        }
+
+        if (table === "donation_tiers") {
+          return { select: tierSelect };
+        }
+
+        throw new Error(`Unexpected table: ${table}`);
+      },
+    });
+
+    render(
+      await AdminSupportSettingsPage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({}),
+      }),
+    );
+
+    expect(screen.getByDisplayValue("Quarterly Support")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("2430")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("2700")).toBeInTheDocument();
+  });
 });

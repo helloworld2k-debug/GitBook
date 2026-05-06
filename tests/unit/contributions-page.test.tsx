@@ -140,4 +140,51 @@ describe("ContributionsPage", () => {
 
     expect(screen.getByText("Quarterly Support 2430 2700 authenticated")).toBeInTheDocument();
   });
+
+  it("still renders tiers when production has not migrated original prices yet", async () => {
+    const select = vi
+      .fn()
+      .mockReturnValueOnce({
+        eq: () => ({
+          order: async () => ({
+            data: null,
+            error: { code: "42703", message: "column donation_tiers.compare_at_amount does not exist" },
+          }),
+        }),
+      })
+      .mockReturnValueOnce({
+        eq: () => ({
+          order: async () => ({
+            data: [
+              {
+                amount: 8640,
+                code: "yearly",
+                currency: "usd",
+                description: "Yearly support",
+                id: "tier-yearly",
+                label: "Yearly Support",
+                sort_order: 3,
+              },
+            ],
+            error: null,
+          }),
+        }),
+      });
+    mocks.createSupabaseServerClient.mockResolvedValueOnce({
+      auth: {
+        getUser: async () => ({ data: { user: null } }),
+      },
+      from: () => ({ select }),
+    });
+
+    render(
+      await ContributionsPage({
+        params: Promise.resolve({ locale: "en" }),
+      } as {
+        params: Promise<{ locale: string }>;
+      }),
+    );
+
+    expect(screen.getByText("Yearly Support 8640 10800 anonymous")).toBeInTheDocument();
+  });
 });

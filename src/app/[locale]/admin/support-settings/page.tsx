@@ -6,6 +6,7 @@ import { supportedLocales, type Locale } from "@/config/site";
 import { getDefaultSupportChannelsConfig, normalizeSupportChannels, toSupportChannelRows } from "@/config/support";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
+import { getManageableDonationTiers } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { updateDonationTier, updateSupportContactChannel } from "../actions";
 
@@ -32,13 +33,9 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
     .from("support_contact_channels")
     .select("id,label,value,is_enabled,sort_order")
     .order("sort_order", { ascending: true });
-  const { data: tierRows } = await supabase
-    .from("donation_tiers")
-    .select("id,code,label,description,amount,compare_at_amount,currency,sort_order,is_active")
-    .order("sort_order", { ascending: true });
 
   const channelRows = rows && rows.length > 0 ? rows : toSupportChannelRows(defaults);
-  const donationTierRows = tierRows ?? [];
+  const donationTierRows = await getManageableDonationTiers(supabase);
   const previewChannels = normalizeSupportChannels({ defaults, rows: rows ?? [] });
   const channelPlaceholders: Record<string, string> = {
     discord: "https://discord.gg/your-community",
@@ -106,15 +103,15 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
                 </label>
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("supportSettings.tierCompareAtAmount")}
-                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={tier.compare_at_amount ?? ""} min="1" name="compare_at_amount" type="number" />
+                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={tier.compareAtAmount ?? ""} min="1" name="compare_at_amount" type="number" />
                 </label>
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("supportSettings.status")}
                   <span className="inline-flex min-h-11 items-center justify-between rounded-md border border-slate-300 px-3">
-                    <span className="text-sm text-slate-700">{tier.is_active ? t("supportSettings.tierActive") : t("supportSettings.tierInactive")}</span>
-                    <span className={`relative ml-3 inline-flex h-6 w-11 items-center rounded-full transition-colors ${tier.is_active ? "bg-slate-950" : "bg-slate-300"}`}>
-                      <span className={`absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform ${tier.is_active ? "translate-x-5" : "translate-x-0"}`} />
-                      <input className="absolute inset-0 cursor-pointer opacity-0" defaultChecked={tier.is_active} name="is_active" type="checkbox" />
+                    <span className="text-sm text-slate-700">{tier.isActive ? t("supportSettings.tierActive") : t("supportSettings.tierInactive")}</span>
+                    <span className={`relative ml-3 inline-flex h-6 w-11 items-center rounded-full transition-colors ${tier.isActive ? "bg-slate-950" : "bg-slate-300"}`}>
+                      <span className={`absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform ${tier.isActive ? "translate-x-5" : "translate-x-0"}`} />
+                      <input className="absolute inset-0 cursor-pointer opacity-0" defaultChecked={tier.isActive} name="is_active" type="checkbox" />
                     </span>
                   </span>
                   <span className="text-xs text-slate-500">{t("supportSettings.tierStatusHelp")}</span>
