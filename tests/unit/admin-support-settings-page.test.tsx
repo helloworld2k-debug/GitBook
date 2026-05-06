@@ -46,8 +46,8 @@ vi.mock("next-intl/server", () => ({
       "admin.supportSettings.tiersDescription": "Update the prices and copy shown on the Contributions page.",
       "admin.supportSettings.tierLabel": "Tier label",
       "admin.supportSettings.tierDescription": "Description",
-      "admin.supportSettings.tierAmount": "Price in cents",
-      "admin.supportSettings.tierCompareAtAmount": "Original price in cents",
+      "admin.supportSettings.tierPrice": "Price",
+      "admin.supportSettings.tierDiscountPercent": "Discount Applicable (%)",
       "admin.supportSettings.tierActive": "Active",
       "admin.supportSettings.tierInactive": "Inactive",
       "admin.supportSettings.tierStatusHelp": "Inactive tiers are hidden from the Contributions page.",
@@ -148,7 +148,8 @@ describe("AdminSupportSettingsPage", () => {
     expect(screen.getByText("Use a full Telegram URL such as https://t.me/your_channel")).toBeInTheDocument();
     expect(screen.getByText("Development support tiers")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Monthly Support")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("900")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("9")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("0")).toBeInTheDocument();
     expect(screen.getByText("This is the public support mailbox shown on the Support page.")).toBeInTheDocument();
     expect(screen.getByText("This is how the enabled support channels will appear to visitors on the Support page.")).toBeInTheDocument();
   });
@@ -222,8 +223,8 @@ describe("AdminSupportSettingsPage", () => {
     );
 
     expect(screen.getByDisplayValue("Quarterly Support")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("2430")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("2700")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("27")).toBeInTheDocument();
+    expect(screen.getAllByDisplayValue("10").some((input) => input.getAttribute("name") === "discount_percent")).toBe(true);
   });
 
   it("opens with default settings when support settings tables are temporarily unavailable", async () => {
@@ -246,7 +247,8 @@ describe("AdminSupportSettingsPage", () => {
 
     expect(screen.getByText("Development support tiers")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Monthly Support")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("900")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("9")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("0")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Telegram")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Email")).toBeInTheDocument();
   });

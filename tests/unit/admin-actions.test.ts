@@ -540,8 +540,8 @@ describe("admin actions", () => {
     formData.set("tier_id", "tier-monthly");
     formData.set("label", "Monthly Support");
     formData.set("description", "New monthly copy");
-    formData.set("amount", "900");
-    formData.set("compare_at_amount", "");
+    formData.set("price", "9");
+    formData.set("discount_percent", "0");
     formData.set("is_active", "on");
 
     await expect(updateDonationTier(formData)).rejects.toThrow("redirect:/en/admin/support-settings?notice=donation-tier-updated");
@@ -561,6 +561,57 @@ describe("admin actions", () => {
       target_type: "donation_tier",
     }));
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/contributions");
+  });
+
+  it("calculates the discounted development support price from original price and discount percent", async () => {
+    const tierSingle = vi.fn(async () => ({
+      data: {
+        amount: 900,
+        compare_at_amount: null,
+        description: "Old yearly copy",
+        is_active: true,
+        label: "Yearly Support",
+      },
+      error: null,
+    }));
+    const tierEqSingle = vi.fn(() => ({ single: tierSingle }));
+    const tierSelect = vi.fn(() => ({ eq: tierEqSingle }));
+    const updateEq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq: updateEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "donation_tiers") {
+        return { select: tierSelect, update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("return_to", "/admin/support-settings");
+    formData.set("tier_id", "tier-yearly");
+    formData.set("label", "Yearly Support");
+    formData.set("description", "New yearly copy");
+    formData.set("price", "108");
+    formData.set("discount_percent", "20");
+    formData.set("is_active", "on");
+
+    await expect(updateDonationTier(formData)).rejects.toThrow("redirect:/en/admin/support-settings?notice=donation-tier-updated");
+
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      amount: 8640,
+      compare_at_amount: 10800,
+      description: "New yearly copy",
+      is_active: true,
+      label: "Yearly Support",
+      updated_at: expect.any(String),
+    }));
   });
 
   it("requires a stable manual reference for idempotent manual donation creation", async () => {

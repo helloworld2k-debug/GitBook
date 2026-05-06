@@ -15,6 +15,20 @@ type AdminSupportSettingsPageProps = {
   searchParams?: Promise<{ channel?: string; error?: string; notice?: string }>;
 };
 
+function formatDollarInput(amountInCents: number | null | undefined) {
+  const amount = (amountInCents ?? 0) / 100;
+
+  return Number.isInteger(amount) ? String(amount) : amount.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function getDiscountPercent(amount: number, compareAtAmount: number | null) {
+  if (!compareAtAmount || compareAtAmount <= amount) {
+    return 0;
+  }
+
+  return Math.round((1 - amount / compareAtAmount) * 100);
+}
+
 async function getSupportContactRows(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>) {
   try {
     const { data: rows } = await supabase
@@ -107,12 +121,29 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
                   <textarea className="min-h-24 rounded-md border border-slate-300 px-3 py-2 text-sm" defaultValue={tier.description} name="description" required />
                 </label>
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
-                  {t("supportSettings.tierAmount")}
-                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={tier.amount} min="1" name="amount" required type="number" />
+                  {t("supportSettings.tierPrice")}
+                  <input
+                    className="min-h-11 rounded-md border border-slate-300 px-3 text-sm"
+                    defaultValue={formatDollarInput(tier.compareAtAmount ?? tier.amount)}
+                    min="0.01"
+                    name="price"
+                    required
+                    step="0.01"
+                    type="number"
+                  />
                 </label>
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
-                  {t("supportSettings.tierCompareAtAmount")}
-                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={tier.compareAtAmount ?? ""} min="1" name="compare_at_amount" type="number" />
+                  {t("supportSettings.tierDiscountPercent")}
+                  <input
+                    className="min-h-11 rounded-md border border-slate-300 px-3 text-sm"
+                    defaultValue={getDiscountPercent(tier.amount, tier.compareAtAmount)}
+                    max="99"
+                    min="0"
+                    name="discount_percent"
+                    required
+                    step="1"
+                    type="number"
+                  />
                 </label>
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("supportSettings.status")}

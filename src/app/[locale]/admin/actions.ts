@@ -70,6 +70,28 @@ function getPositiveInteger(formData: FormData, key: string, message: string) {
   return value;
 }
 
+function getPositiveDollarAmountInCents(formData: FormData, key: string, message: string) {
+  const rawValue = String(formData.get(key) ?? "").trim();
+  const value = Number(rawValue);
+
+  if (!rawValue || !Number.isFinite(value) || value <= 0) {
+    throw new Error(message);
+  }
+
+  return Math.round(value * 100);
+}
+
+function getDiscountPercent(formData: FormData, key: string) {
+  const rawValue = String(formData.get(key) ?? "0").trim();
+  const value = rawValue ? Number(rawValue) : 0;
+
+  if (!Number.isInteger(value) || value < 0 || value >= 100) {
+    throw new Error("Discount must be an integer from 0 to 99");
+  }
+
+  return value;
+}
+
 function getTrialDays(formData: FormData) {
   const value = getPositiveInteger(formData, "trial_days", "Trial days must be between 1 and 7");
 
@@ -575,13 +597,14 @@ export async function updateDonationTier(formData: FormData) {
     "Tier description",
     MAX_DONATION_TIER_DESCRIPTION_LENGTH,
   );
-  const amount = getPositiveInteger(formData, "amount", "Amount must be a positive integer");
-  const compareAtRaw = String(formData.get("compare_at_amount") ?? "").trim();
-  const compareAtAmount = compareAtRaw ? Number(compareAtRaw) : null;
+  const priceAmount = getPositiveDollarAmountInCents(formData, "price", "Price must be a positive dollar amount");
+  const discountPercent = getDiscountPercent(formData, "discount_percent");
+  const amount = Math.round(priceAmount * (100 - discountPercent) / 100);
+  const compareAtAmount = discountPercent > 0 ? priceAmount : null;
   const isActive = formData.get("is_active") === "on";
 
-  if (compareAtAmount !== null && (!Number.isInteger(compareAtAmount) || compareAtAmount <= amount)) {
-    throw new Error("Original price must be greater than the current price");
+  if (amount <= 0) {
+    throw new Error("Discounted price must be positive");
   }
 
   const supabase = createSupabaseAdminClient();
