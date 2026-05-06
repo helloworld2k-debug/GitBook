@@ -41,7 +41,7 @@ export default async function AdminAuditLogsPage({ params }: AdminAuditLogsPageP
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  await requireAdmin(locale, `/${locale}/admin/audit-logs`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/audit-logs");
 

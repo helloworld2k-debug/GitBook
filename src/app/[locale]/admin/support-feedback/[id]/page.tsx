@@ -31,7 +31,7 @@ export default async function AdminSupportFeedbackDetailPage({ params, searchPar
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  await requireAdmin(locale, `/${locale}/admin/support-feedback/${id}`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, `/admin/support-feedback/${id}`);
   const supabase = createSupabaseAdminClient();

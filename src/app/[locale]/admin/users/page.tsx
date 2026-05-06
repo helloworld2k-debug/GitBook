@@ -102,7 +102,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
   }
 
   setRequestLocale(locale);
-  const admin = await requireAdmin(locale);
+  const admin = await requireAdmin(locale, `/${locale}/admin/users`);
   const t = await getTranslations("admin.users");
   const adminT = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/users");

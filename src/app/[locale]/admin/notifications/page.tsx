@@ -24,7 +24,7 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  await requireAdmin(locale, `/${locale}/admin/notifications`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/notifications");
   const { data: notifications, error } = await (await createSupabaseServerClient())

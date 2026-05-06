@@ -39,7 +39,7 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  await requireAdmin(locale, `/${locale}/admin/releases`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/releases");
   const createRelease = createSoftwareRelease;

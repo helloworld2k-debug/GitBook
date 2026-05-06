@@ -84,7 +84,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   }
 
   setRequestLocale(locale);
-  const admin = await requireAdmin(locale);
+  const admin = await requireAdmin(locale, `/${locale}/admin/users/${id}`);
   const t = await getTranslations("admin.users");
   const adminT = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/users");

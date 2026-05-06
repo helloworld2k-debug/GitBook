@@ -795,7 +795,7 @@ describe("admin pages", () => {
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("en");
+    expect(requireAdminMock).toHaveBeenCalledWith("en", "/en/admin");
     expect(screen.getByRole("heading", { name: "Admin" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /donations/i }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
     expect(screen.getAllByRole("link", { name: /certificates/i }).some((link) => link.getAttribute("href") === "/admin/certificates")).toBe(true);
@@ -815,7 +815,7 @@ describe("admin pages", () => {
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("zh-Hant");
+    expect(requireAdminMock).toHaveBeenCalledWith("zh-Hant", "/zh-Hant/admin");
     expect(screen.getByText("管理工具")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "管理後台" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /支持/ }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
@@ -850,7 +850,7 @@ describe("admin pages", () => {
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("zh-Hant");
+    expect(requireAdminMock).toHaveBeenCalledWith("zh-Hant", "/zh-Hant/admin/donations");
     expect(createSupabaseServerClientMock).toHaveBeenCalled();
     expect(requireAdminMock.mock.invocationCallOrder[0]).toBeLessThan(
       createSupabaseServerClientMock.mock.invocationCallOrder[0],
@@ -919,7 +919,7 @@ describe("admin pages", () => {
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("ja");
+    expect(requireAdminMock).toHaveBeenCalledWith("ja", "/ja/admin/donations");
     expect(screen.getByRole("heading", { name: "管理者向け応援記録" })).toBeInTheDocument();
     expect(screen.getAllByText("PayPal").length).toBeGreaterThan(0);
     expect(screen.getAllByText("キャンセル済み").length).toBeGreaterThan(0);
@@ -956,7 +956,7 @@ describe("admin pages", () => {
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("ko");
+    expect(requireAdminMock).toHaveBeenCalledWith("ko", "/ko/admin/certificates");
     expect(createSupabaseServerClientMock).toHaveBeenCalled();
     expect(requireAdminMock.mock.invocationCallOrder[0]).toBeLessThan(
       createSupabaseServerClientMock.mock.invocationCallOrder[0],
@@ -993,7 +993,7 @@ describe("admin pages", () => {
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("ja");
+    expect(requireAdminMock).toHaveBeenCalledWith("ja", "/ja/admin/certificates");
     expect(screen.getByRole("heading", { name: "管理者向け証明書" })).toBeInTheDocument();
     expect(screen.getByText("HON-2026-000002")).toBeInTheDocument();
     expect(screen.getByText("表彰証明書")).toBeInTheDocument();
@@ -1425,7 +1425,7 @@ describe("admin pages", () => {
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("en");
+    expect(requireAdminMock).toHaveBeenCalledWith("en", "/en/admin/audit-logs");
     expect(createSupabaseServerClientMock).toHaveBeenCalled();
     expect(requireAdminMock.mock.invocationCallOrder[0]).toBeLessThan(
       createSupabaseServerClientMock.mock.invocationCallOrder[0],

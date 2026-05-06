@@ -21,7 +21,7 @@ export default async function AdminPage({ params }: AdminPageProps) {
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  await requireAdmin(locale, `/${locale}/admin`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin");
   let usersCount = 0;

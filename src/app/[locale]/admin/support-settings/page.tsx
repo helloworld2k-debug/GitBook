@@ -24,7 +24,7 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  await requireAdmin(locale, `/${locale}/admin/support-settings`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/support-settings");
   const supabase = await createSupabaseServerClient();

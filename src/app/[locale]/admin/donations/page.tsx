@@ -45,7 +45,7 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  await requireAdmin(locale, `/${locale}/admin/donations`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/donations");
 

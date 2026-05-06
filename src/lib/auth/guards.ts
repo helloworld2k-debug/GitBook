@@ -68,12 +68,12 @@ export async function requireUser(locale: Locale | string, nextPath: string) {
   return data.user;
 }
 
-export async function requireAdmin(locale: Locale | string) {
-  return requireOperator(locale);
+export async function requireAdmin(locale: Locale | string, nextPath?: string) {
+  return requireOperator(locale, nextPath);
 }
 
-export async function requireOperator(locale: Locale | string) {
-  const user = await requireUser(locale, `/${locale}/admin`);
+export async function requireOperator(locale: Locale | string, nextPath?: string) {
+  const user = await requireUser(locale, nextPath ?? `/${locale}/admin`);
   const supabase = await createSupabaseServerClient();
   const { data: profile } = await supabase.from("profiles").select("is_admin,admin_role,account_status").eq("id", user.id).single();
 
@@ -84,8 +84,8 @@ export async function requireOperator(locale: Locale | string) {
   return user;
 }
 
-export async function requireOwner(locale: Locale | string) {
-  const user = await requireUser(locale, `/${locale}/admin`);
+export async function requireOwner(locale: Locale | string, nextPath?: string) {
+  const user = await requireUser(locale, nextPath ?? `/${locale}/admin`);
   const supabase = await createSupabaseServerClient();
   const { data: profile } = await supabase.from("profiles").select("is_admin,admin_role,account_status").eq("id", user.id).single();
 

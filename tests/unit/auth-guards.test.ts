@@ -118,6 +118,28 @@ describe("auth guards", () => {
     expect(redirectMock).toHaveBeenCalledWith("/ko/dashboard");
   });
 
+  it("preserves the requested admin page when redirecting anonymous admins to login", async () => {
+    cookiesMock.mockResolvedValue({
+      getAll: vi.fn(() => []),
+    });
+
+    await expect(requireAdmin("en", "/en/admin/support-settings")).rejects.toThrow(
+      "redirect:/en/login?next=%2Fen%2Fadmin%2Fsupport-settings",
+    );
+    expect(redirectMock).toHaveBeenCalledWith("/en/login?next=%2Fen%2Fadmin%2Fsupport-settings");
+  });
+
+  it("preserves the requested owner page when redirecting anonymous owners to login", async () => {
+    cookiesMock.mockResolvedValue({
+      getAll: vi.fn(() => []),
+    });
+
+    await expect(requireOwner("en", "/en/admin/users/admin-1")).rejects.toThrow(
+      "redirect:/en/login?next=%2Fen%2Fadmin%2Fusers%2Fadmin-1",
+    );
+    expect(redirectMock).toHaveBeenCalledWith("/en/login?next=%2Fen%2Fadmin%2Fusers%2Fadmin-1");
+  });
+
   it("returns the current user when the profile is admin", async () => {
     const user = { id: "admin-1" };
     createSupabaseServerClientMock

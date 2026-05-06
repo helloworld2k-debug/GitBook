@@ -45,7 +45,7 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  await requireAdmin(locale, `/${locale}/admin/certificates`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/certificates");
 

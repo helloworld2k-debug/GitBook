@@ -56,7 +56,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   }
 
   setRequestLocale(locale);
-  await requireAdmin(locale);
+  await requireAdmin(locale, `/${locale}/admin/licenses`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/licenses");
   const supabase = createSupabaseAdminClient();
