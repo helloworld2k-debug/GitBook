@@ -104,4 +104,18 @@ describe("getActiveDonationTiers", () => {
       expect.objectContaining({ amount: 8640, code: "yearly", compareAtAmount: 10800 }),
     ]);
   });
+
+  it("returns configured tiers when the Supabase client throws during query construction", async () => {
+    const client = {
+      from: vi.fn(() => {
+        throw new TypeError("Cannot read properties of undefined (reading 'rest')");
+      }),
+    };
+
+    await expect(getActiveDonationTiers(client)).resolves.toEqual([
+      expect.objectContaining({ amount: 900, code: "monthly", compareAtAmount: null }),
+      expect.objectContaining({ amount: 2430, code: "quarterly", compareAtAmount: 2700 }),
+      expect.objectContaining({ amount: 8640, code: "yearly", compareAtAmount: 10800 }),
+    ]);
+  });
 });

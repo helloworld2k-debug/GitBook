@@ -248,6 +248,29 @@ describe("ContributionsPage", () => {
     expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
   });
 
+  it("renders configured tiers when Supabase throws during tier query construction", async () => {
+    mocks.createSupabaseServerClient.mockResolvedValueOnce({
+      auth: {
+        getUser: async () => ({ data: { user: null } }),
+      },
+      from: () => {
+        throw new TypeError("Cannot read properties of undefined (reading 'rest')");
+      },
+    });
+
+    render(
+      await ContributionsPage({
+        params: Promise.resolve({ locale: "en" }),
+      } as {
+        params: Promise<{ locale: string }>;
+      }),
+    );
+
+    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Quarterly Support 2430 2700 anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Yearly Support 8640 10800 anonymous")).toBeInTheDocument();
+  });
+
   it("renders configured tiers when Supabase server configuration is missing", async () => {
     mocks.createSupabaseServerClient.mockRejectedValueOnce(
       new Error("Missing NEXT_PUBLIC_SUPABASE_URL. Set it to your Supabase project URL."),

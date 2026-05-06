@@ -123,12 +123,21 @@ export function findDonationTier(code: FormDataEntryValue | string | null) {
 }
 
 export async function getActiveDonationTiers(client: DonationTierClient): Promise<DonationTier[]> {
-  const { data, error } = await readDonationTiers(
-    client,
-    "id,code,label,description,amount,compare_at_amount,currency,sort_order",
-    "id,code,label,description,amount,currency,sort_order",
-    true,
-  );
+  let data: DonationTierRow[] | null = null;
+  let error: unknown = null;
+
+  try {
+    const result = await readDonationTiers(
+      client,
+      "id,code,label,description,amount,compare_at_amount,currency,sort_order",
+      "id,code,label,description,amount,currency,sort_order",
+      true,
+    );
+    data = result.data;
+    error = result.error;
+  } catch {
+    return getConfiguredDonationTiers();
+  }
 
   if (error) {
     return getConfiguredDonationTiers();
