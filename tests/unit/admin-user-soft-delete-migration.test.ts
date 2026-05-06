@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
-  join(process.cwd(), "supabase/migrations/0009_admin_user_soft_delete.sql"),
+  join(process.cwd(), "supabase/migrations/0016_admin_user_soft_delete_constraint.sql"),
   "utf8",
 );
 

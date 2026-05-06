@@ -12,8 +12,12 @@ create table if not exists public.support_contact_channels (
 
 alter table public.support_contact_channels enable row level security;
 
+drop policy if exists "support_contact_channels_public_read" on public.support_contact_channels;
+
 create policy "support_contact_channels_public_read" on public.support_contact_channels
 for select using (true);
+
+drop policy if exists "support_contact_channels_admin_write" on public.support_contact_channels;
 
 create policy "support_contact_channels_admin_write" on public.support_contact_channels
 for all using (public.is_admin())

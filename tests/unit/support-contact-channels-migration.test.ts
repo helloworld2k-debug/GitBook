@@ -22,4 +22,9 @@ describe("support contact channels migration", () => {
     expect(migration).toContain("('email', 'Email', '', false, 40)");
     expect(migration).toContain("('wechat', 'WeChat', '', false, 50)");
   });
+
+  it("can be re-applied safely when policies already exist", () => {
+    expect(migration).toContain('drop policy if exists "support_contact_channels_public_read"');
+    expect(migration).toContain('drop policy if exists "support_contact_channels_admin_write"');
+  });
 });

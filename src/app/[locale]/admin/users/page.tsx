@@ -361,7 +361,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                                 {t("manageUser")}
                               </Link>
                               <details aria-label={t("moreActions")} className="relative">
-                                <summary className="inline-flex min-h-10 cursor-pointer list-none items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950">
+                                <summary className="inline-flex min-h-10 cursor-pointer list-none items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" role="button">
                                   {t("moreActions")}
                                 </summary>
                                 <div className="absolute right-0 z-20 mt-2 grid w-56 gap-3 rounded-md border border-slate-200 bg-white p-3 text-left shadow-lg">

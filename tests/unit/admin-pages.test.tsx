@@ -1205,6 +1205,7 @@ describe("admin pages", () => {
     expect(screen.getByRole("link", { name: "Manage user" })).toHaveAttribute("href", "/admin/users/user-1");
     const moreActions = screen.getByRole("group", { name: "More actions" });
     expect(moreActions).not.toHaveAttribute("open");
+    expect(screen.getByRole("button", { name: "More actions" })).toBeInTheDocument();
     expect(moreActions).toContainElement(screen.getByRole("button", { name: "Soft delete" }));
     expect(screen.getByText("Detailed account, contributions, certificates, and devices")).toBeInTheDocument();
   });
