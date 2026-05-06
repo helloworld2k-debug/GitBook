@@ -1354,10 +1354,16 @@ export async function bulkProcessUsers(formData: FormData) {
 
   if (intent === "change-role") {
     const admin = await requireOwner(locale);
-    const adminRole = getRequiredString(formData, "admin_role", "Admin role is required");
+    const adminRole = String(formData.get("admin_role") ?? "").trim();
 
     if (adminRole !== "owner" && adminRole !== "operator" && adminRole !== "user") {
-      throw new Error("Invalid admin role");
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/users",
+        formData,
+        key: "bulk-user-role-update-failed",
+        locale,
+        tone: "error",
+      });
     }
 
     const supabase = createSupabaseAdminClient();

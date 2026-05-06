@@ -294,6 +294,31 @@ describe("admin actions", () => {
     expect(updateIn).toHaveBeenCalledWith("id", ["user-1", "user-2"]);
   });
 
+  it.each(["", "not-a-role"])("redirects with feedback when bulk role value is invalid: %s", async (adminRole) => {
+    const update = vi.fn();
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return { update };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.append("user_ids", "user-1");
+    formData.set("intent", "change-role");
+    if (adminRole) {
+      formData.set("admin_role", adminRole);
+    }
+
+    await expect(bulkProcessUsers(formData)).rejects.toThrow("redirect:/en/admin/users?error=bulk-user-role-update-failed");
+
+    expect(mocks.requireOwner).toHaveBeenCalledWith("en");
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("permanently deletes a user after confirmation and audits the action", async () => {
     const profileSingle = vi.fn(async () => ({ data: { email: "user@example.com" }, error: null }));
     const profileEq = vi.fn(() => ({ single: profileSingle }));

@@ -54,6 +54,14 @@ function syncSelectedUsersToForm(form: HTMLFormElement, formId: string) {
   });
 }
 
+function syncBulkRoleToForm(form: HTMLFormElement, formId: string) {
+  const roleSelect = document.getElementById(`${formId}-admin-role`);
+
+  if (roleSelect instanceof HTMLSelectElement) {
+    setHiddenFormValue(form, "admin_role", roleSelect.value);
+  }
+}
+
 function submitBulkIntent(formId: string, intent: string) {
   const form = document.getElementById(formId);
 
@@ -63,6 +71,7 @@ function submitBulkIntent(formId: string, intent: string) {
 
   setHiddenFormValue(form, "intent", intent);
   syncSelectedUsersToForm(form, formId);
+  syncBulkRoleToForm(form, formId);
   form.requestSubmit();
 }
 

@@ -190,6 +190,7 @@ describe("AdminUserBulkToolbar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Bulk change role" }));
     expect(new FormData(form).get("intent")).toBe("change-role");
     expect(new FormData(form).get("admin_role")).toBe("operator");
+    expect(form.querySelector<HTMLInputElement>('input[type="hidden"][name="admin_role"]')?.value).toBe("operator");
 
     fireEvent.click(screen.getByRole("button", { name: "Bulk soft delete" }));
     const submittedData = new FormData(form);
