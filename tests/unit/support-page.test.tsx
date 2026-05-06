@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import SupportPage from "@/app/[locale]/support/page";
+import SupportPage, { dynamic } from "@/app/[locale]/support/page";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
@@ -64,7 +64,16 @@ vi.mock("next-intl/server", () => ({
 }));
 
 describe("SupportPage", () => {
+  it("uses dynamic rendering because feedback visibility depends on auth cookies", () => {
+    expect(dynamic).toBe("force-dynamic");
+  });
+
   it("shows a disabled feedback form and sign-in CTA for logged-out users", async () => {
+    const from = vi.fn(() => ({
+      select: () => ({
+        order: async () => ({ data: [], error: null }),
+      }),
+    }));
     mocks.getDefaultSupportChannelsConfig.mockReturnValue({
       discord: "",
       email: "",
@@ -79,11 +88,7 @@ describe("SupportPage", () => {
       auth: {
         getUser: async () => ({ data: { user: null } }),
       },
-      from: () => ({
-        select: () => ({
-          order: async () => ({ data: [], error: null }),
-        }),
-      }),
+      from,
     });
 
     render(
@@ -98,6 +103,9 @@ describe("SupportPage", () => {
     expect(screen.getByLabelText("Subject")).toBeDisabled();
     expect(screen.getByLabelText("Message")).toBeDisabled();
     expect(screen.getByRole("link", { name: "Email support@example.com" })).toHaveAttribute("href", "mailto:support@example.com");
+    expect(screen.queryByRole("heading", { name: "My feedback" })).not.toBeInTheDocument();
+    expect(from).toHaveBeenCalledWith("support_contact_channels");
+    expect(from).not.toHaveBeenCalledWith("support_feedback");
   });
 
   it("renders a success banner and a Dodo checkout expectation style form state for signed-in users", async () => {

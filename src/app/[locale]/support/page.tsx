@@ -9,6 +9,8 @@ import { Link } from "@/i18n/routing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { submitSupportFeedback } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 type SupportPageProps = {
   params: Promise<{ locale: string }>;
   searchParams?: Promise<{ feedback?: string }>;

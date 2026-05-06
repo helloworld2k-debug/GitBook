@@ -6,6 +6,8 @@ import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { markNotificationRead } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 type NotificationsPageProps = {
   params: Promise<{ locale: string }>;
 };
