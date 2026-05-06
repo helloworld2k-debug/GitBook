@@ -23,6 +23,7 @@ export type Database = {
           label: string;
           description: string;
           amount: number;
+          compare_at_amount: number | null;
           currency: string;
           sort_order: number;
           is_active: boolean;
@@ -35,6 +36,7 @@ export type Database = {
           label: string;
           description: string;
           amount: number;
+          compare_at_amount?: number | null;
           currency?: string;
           sort_order: number;
           is_active?: boolean;
@@ -47,6 +49,7 @@ export type Database = {
           label?: string;
           description?: string;
           amount?: number;
+          compare_at_amount?: number | null;
           currency?: string;
           sort_order?: number;
           is_active?: boolean;

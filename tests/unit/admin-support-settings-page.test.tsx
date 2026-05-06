@@ -42,6 +42,16 @@ vi.mock("next-intl/server", () => ({
       "admin.supportSettings.valueHintEmail": "Use the public mailbox users should email for support",
       "admin.supportSettings.previewTitle": "Channel settings",
       "admin.supportSettings.previewDescription": "Edit each support channel below.",
+      "admin.supportSettings.tiersTitle": "Development support tiers",
+      "admin.supportSettings.tiersDescription": "Update the prices and copy shown on the Contributions page.",
+      "admin.supportSettings.tierLabel": "Tier label",
+      "admin.supportSettings.tierDescription": "Description",
+      "admin.supportSettings.tierAmount": "Price in cents",
+      "admin.supportSettings.tierCompareAtAmount": "Original price in cents",
+      "admin.supportSettings.tierActive": "Active",
+      "admin.supportSettings.tierInactive": "Inactive",
+      "admin.supportSettings.tierStatusHelp": "Inactive tiers are hidden from the Contributions page.",
+      "admin.supportSettings.tierSaved": "Tier saved",
       "admin.supportSettings.publicPreviewTitle": "Public preview",
       "admin.supportSettings.publicPreviewDescription": "This is how the enabled support channels will appear to visitors on the Support page.",
       "admin.supportSettings.rowSaved": "Saved",
@@ -81,17 +91,46 @@ describe("AdminSupportSettingsPage", () => {
       auth: {
         getUser: async () => ({ data: { user: { id: "admin-1", email: "admin@example.com" } } }),
       },
-      from: () => ({
-        select: () => ({
-          order: async () => ({
-            data: [
-              { id: "telegram", is_enabled: true, label: "Telegram", sort_order: 10, value: "https://t.me/help" },
-              { id: "email", is_enabled: true, label: "Email", sort_order: 40, value: "support@example.com" },
-            ],
-            error: null,
-          }),
-        }),
-      }),
+      from: (table: string) => {
+        if (table === "support_contact_channels") {
+          return {
+            select: () => ({
+              order: async () => ({
+                data: [
+                  { id: "telegram", is_enabled: true, label: "Telegram", sort_order: 10, value: "https://t.me/help" },
+                  { id: "email", is_enabled: true, label: "Email", sort_order: 40, value: "support@example.com" },
+                ],
+                error: null,
+              }),
+            }),
+          };
+        }
+
+        if (table === "donation_tiers") {
+          return {
+            select: () => ({
+              order: async () => ({
+                data: [
+                  {
+                    amount: 900,
+                    code: "monthly",
+                    compare_at_amount: null,
+                    currency: "usd",
+                    description: "Monthly support",
+                    id: "tier-monthly",
+                    is_active: true,
+                    label: "Monthly Support",
+                    sort_order: 1,
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          };
+        }
+
+        throw new Error(`Unexpected table: ${table}`);
+      },
     });
 
     render(
@@ -107,6 +146,9 @@ describe("AdminSupportSettingsPage", () => {
     expect(screen.getAllByDisplayValue("support@example.com").length).toBeGreaterThan(0);
     expect(screen.getByPlaceholderText("https://t.me/your_channel")).toBeInTheDocument();
     expect(screen.getByText("Use a full Telegram URL such as https://t.me/your_channel")).toBeInTheDocument();
+    expect(screen.getByText("Development support tiers")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Monthly Support")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("900")).toBeInTheDocument();
     expect(screen.getByText("This is the public support mailbox shown on the Support page.")).toBeInTheDocument();
     expect(screen.getByText("This is how the enabled support channels will appear to visitors on the Support page.")).toBeInTheDocument();
   });

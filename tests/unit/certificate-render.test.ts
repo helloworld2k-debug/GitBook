@@ -22,10 +22,10 @@ describe("certificate rendering helpers", () => {
   });
 
   it("infers donation certificate tiers from paid amounts when old records lack tier links", () => {
-    expect(inferDonationTierCodeFromAmount(500, "usd")).toBe("monthly");
-    expect(inferDonationTierCodeFromAmount(1500, "usd")).toBe("quarterly");
-    expect(inferDonationTierCodeFromAmount(5000, "usd")).toBe("yearly");
-    expect(inferDonationTierCodeFromAmount(5000, "eur")).toBeNull();
+    expect(inferDonationTierCodeFromAmount(900, "usd")).toBe("monthly");
+    expect(inferDonationTierCodeFromAmount(2430, "usd")).toBe("quarterly");
+    expect(inferDonationTierCodeFromAmount(8640, "usd")).toBe("yearly");
+    expect(inferDonationTierCodeFromAmount(8640, "eur")).toBeNull();
   });
 
   it("selects donation certificate templates from tier codes", () => {

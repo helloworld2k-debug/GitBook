@@ -187,6 +187,8 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "cloud-sync-lease-revoke-failed": "Unable to revoke cloud sync lease.",
   "desktop-session-revoked": "Desktop session revoked.",
   "desktop-session-revoke-failed": "Unable to revoke desktop session.",
+  "donation-tier-updated": "Development support tier updated.",
+  "donation-tier-update-failed": "Unable to update development support tier.",
   "feedback-replied": "Reply sent to the user.",
   "feedback-reply-failed": "Unable to send reply.",
   "feedback-updated": "Feedback status updated.",

@@ -27,11 +27,11 @@ export function inferDonationTierCodeFromAmount(amount: number, currency: string
     return null;
   }
 
-  if (amount >= 5000) {
+  if (amount >= 8640) {
     return "yearly";
   }
 
-  if (amount >= 1500) {
+  if (amount >= 2430) {
     return "quarterly";
   }
 

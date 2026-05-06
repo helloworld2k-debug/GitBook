@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supportedLocales, type Locale } from "@/config/site";
 import { createDodoCheckoutSession, getDodoProductId } from "@/lib/payments/dodo";
-import { findDonationTier } from "@/lib/payments/tier";
+import { findActiveDonationTier } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -24,20 +24,20 @@ function getSafeLocale(value: FormDataEntryValue | null) {
 
 export async function POST(request: Request) {
   const formData = await request.formData();
-  const tier = findDonationTier(formData.get("tier"));
   const origin = getSiteOrigin();
   const locale = getSafeLocale(formData.get("locale"));
   const checkoutStartedAt = new Date().toISOString();
-
-  if (!tier) {
-    return NextResponse.json({ error: "Invalid donation tier" }, { status: 400 });
-  }
-
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
     return NextResponse.redirect(`${origin}/${locale}/login?next=${encodeURIComponent(`/${locale}/contributions`)}`, 303);
+  }
+
+  const tier = await findActiveDonationTier(supabase, formData.get("tier"));
+
+  if (!tier) {
+    return NextResponse.json({ error: "Invalid donation tier" }, { status: 400 });
   }
 
   const productId = getDodoProductId(tier.code);
@@ -56,7 +56,9 @@ export async function POST(request: Request) {
     },
     metadata: {
       amount: String(tier.amount),
+      ...(tier.compareAtAmount ? { compare_at_amount: String(tier.compareAtAmount) } : {}),
       currency: tier.currency,
+      ...(tier.id ? { donation_tier_id: tier.id } : {}),
       tier: tier.code,
       user_id: data.user.id,
     },

@@ -4,6 +4,7 @@ import { POST } from "@/app/api/checkout/dodo/route";
 const mocks = vi.hoisted(() => ({
   createCheckoutSession: vi.fn(),
   getUser: vi.fn(),
+  from: vi.fn(),
 }));
 
 vi.mock("@/lib/payments/dodo", () => ({
@@ -21,6 +22,7 @@ vi.mock("@/lib/supabase/server", () => ({
     auth: {
       getUser: mocks.getUser,
     },
+    from: mocks.from,
   })),
 }));
 
@@ -32,6 +34,24 @@ describe("Dodo checkout route", () => {
     process.env.DODO_PRODUCT_YEARLY = "pdt_yearly";
     mocks.createCheckoutSession.mockReset();
     mocks.createCheckoutSession.mockResolvedValue({ checkout_url: "https://checkout.dodopayments.test/session" });
+    const order = vi.fn(async () => ({
+      data: [
+        {
+          amount: 8640,
+          code: "yearly",
+          compare_at_amount: 10800,
+          currency: "usd",
+          description: "Yearly support",
+          id: "tier-yearly",
+          label: "Yearly Support",
+          sort_order: 3,
+        },
+      ],
+      error: null,
+    }));
+    const eq = vi.fn(() => ({ order }));
+    const select = vi.fn(() => ({ eq }));
+    mocks.from.mockReset().mockReturnValue({ select });
     mocks.getUser.mockReset();
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user_123", email: "ada@example.com" } } });
   });
@@ -59,8 +79,10 @@ describe("Dodo checkout route", () => {
         redirect_immediately: true,
       },
       metadata: {
-        amount: "5000",
+        amount: "8640",
+        compare_at_amount: "10800",
         currency: "usd",
+        donation_tier_id: "tier-yearly",
         tier: "yearly",
         user_id: "user_123",
       },

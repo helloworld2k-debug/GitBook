@@ -4,7 +4,11 @@ test("anonymous visitors can review contribution tiers without being redirected 
   await page.goto("/en/contributions");
   await expect(page).toHaveURL(/\/en\/contributions/);
   await expect(page.getByRole("heading", { name: "Contribute to GitBook AI" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Contribute now" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sign in to contribute" }).first()).toHaveAttribute(
+    "href",
+    "/en/login?next=%2Fen%2Fcontributions",
+  );
+  await expect(page.getByRole("button", { name: "Contribute now" })).toHaveCount(0);
 });
 
 test("contributions page explains cancelled checkout state", async ({ page }) => {

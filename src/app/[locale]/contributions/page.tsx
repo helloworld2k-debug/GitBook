@@ -4,7 +4,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { DonationTierCard } from "@/components/donation-tier-card";
 import { PaymentStatusBanner } from "@/components/payment-status-banner";
 import { SiteHeader } from "@/components/site-header";
-import { donationTiers, supportedLocales, type Locale } from "@/config/site";
+import { supportedLocales, type Locale } from "@/config/site";
+import { getLoginRedirectPath } from "@/lib/auth/guards";
+import { getActiveDonationTiers } from "@/lib/payments/tier";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type ContributionsPageProps = {
   params: Promise<{
@@ -26,6 +29,13 @@ export default async function ContributionsPage({ params }: ContributionsPagePro
   setRequestLocale(locale);
 
   const t = await getTranslations("donate");
+  const supabase = await createSupabaseServerClient();
+  const tiers = await getActiveDonationTiers(supabase);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isAuthenticated = Boolean(user);
+  const loginHref = getLoginRedirectPath(locale, `/${locale}/contributions`);
 
   return (
     <>
@@ -43,11 +53,14 @@ export default async function ContributionsPage({ params }: ContributionsPagePro
             </Suspense>
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {donationTiers.map((tier) => (
+            {tiers.map((tier) => (
               <DonationTierCard
                 checkoutDodoLabel={t("checkoutDodo")}
+                isAuthenticated={isAuthenticated}
                 key={tier.code}
                 label={t(`tiers.${tier.code}`)}
+                loginHref={loginHref}
+                loginLabel={t("loginToContribute")}
                 locale={locale}
                 oneTimeNote={t("oneTimeNote")}
                 paymentNote={t("paymentNote")}

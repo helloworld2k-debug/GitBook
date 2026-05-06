@@ -22,9 +22,9 @@ describe("site config", () => {
 
   it("defines one-time USD donation tiers", () => {
     expect(donationTiers).toEqual([
-      { code: "monthly", labelKey: "donate.tiers.monthly", amount: 500, currency: "usd" },
-      { code: "quarterly", labelKey: "donate.tiers.quarterly", amount: 1500, currency: "usd" },
-      { code: "yearly", labelKey: "donate.tiers.yearly", amount: 5000, currency: "usd" },
+      { code: "monthly", labelKey: "donate.tiers.monthly", amount: 900, currency: "usd", compareAtAmount: null },
+      { code: "quarterly", labelKey: "donate.tiers.quarterly", amount: 2430, currency: "usd", compareAtAmount: 2700 },
+      { code: "yearly", labelKey: "donate.tiers.yearly", amount: 8640, currency: "usd", compareAtAmount: 10800 },
     ]);
   });
 

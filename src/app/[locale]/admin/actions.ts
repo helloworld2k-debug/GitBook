@@ -27,6 +27,8 @@ const MAX_TRIAL_LABEL_LENGTH = 120;
 const MAX_TRIAL_DAYS = 7;
 const MAX_NOTIFICATION_TITLE_LENGTH = 160;
 const MAX_NOTIFICATION_BODY_LENGTH = 4000;
+const MAX_DONATION_TIER_LABEL_LENGTH = 120;
+const MAX_DONATION_TIER_DESCRIPTION_LENGTH = 500;
 const notificationAudiences = ["all", "authenticated", "admins"] as const;
 const notificationPriorities = ["info", "success", "warning", "critical"] as const;
 const feedbackStatuses = ["open", "reviewing", "closed"] as const;
@@ -557,6 +559,74 @@ export async function updateSupportFeedbackStatus(formData: FormData) {
     fallbackPath: "/admin/support-feedback",
     formData,
     key: "feedback-updated",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function updateDonationTier(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const tierId = getRequiredString(formData, "tier_id", "Donation tier is required");
+  const label = getBoundedString(formData, "label", "Tier label", MAX_DONATION_TIER_LABEL_LENGTH);
+  const description = getBoundedString(
+    formData,
+    "description",
+    "Tier description",
+    MAX_DONATION_TIER_DESCRIPTION_LENGTH,
+  );
+  const amount = getPositiveInteger(formData, "amount", "Amount must be a positive integer");
+  const compareAtRaw = String(formData.get("compare_at_amount") ?? "").trim();
+  const compareAtAmount = compareAtRaw ? Number(compareAtRaw) : null;
+  const isActive = formData.get("is_active") === "on";
+
+  if (compareAtAmount !== null && (!Number.isInteger(compareAtAmount) || compareAtAmount <= amount)) {
+    throw new Error("Original price must be greater than the current price");
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("donation_tiers")
+    .select("label,description,amount,compare_at_amount,is_active")
+    .eq("id", tierId)
+    .single();
+  const next = {
+    amount,
+    compare_at_amount: compareAtAmount,
+    description,
+    is_active: isActive,
+    label,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await supabase.from("donation_tiers").update(next).eq("id", tierId);
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/support-settings",
+      formData,
+      key: "donation-tier-update-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "update_donation_tier",
+    adminUserId: admin.id,
+    after: next,
+    before: before ?? null,
+    reason: `Updated development support tier ${tierId}`,
+    targetId: tierId,
+    targetType: "donation_tier",
+  });
+
+  revalidatePath(`/${locale}/contributions`);
+  revalidatePath(`/${locale}/admin/support-settings`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/support-settings",
+    formData,
+    key: "donation-tier-updated",
     locale,
     tone: "notice",
   });

@@ -14,6 +14,8 @@ export type AdminFeedbackKey =
   | "cloud-sync-lease-revoke-failed"
   | "desktop-session-revoked"
   | "desktop-session-revoke-failed"
+  | "donation-tier-updated"
+  | "donation-tier-update-failed"
   | "feedback-replied"
   | "feedback-reply-failed"
   | "feedback-updated"
@@ -59,6 +61,8 @@ const adminFeedbackKeys = new Set<string>([
   "cloud-sync-lease-revoke-failed",
   "desktop-session-revoked",
   "desktop-session-revoke-failed",
+  "donation-tier-updated",
+  "donation-tier-update-failed",
   "feedback-replied",
   "feedback-reply-failed",
   "feedback-updated",

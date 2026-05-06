@@ -77,7 +77,7 @@ describe("Dodo webhook route", () => {
         payment_id: "pay_123",
         product_cart: [{ product_id: "pdt_yearly" }],
         status: "succeeded",
-        total_amount: 5000,
+        total_amount: 8640,
       },
     });
 
@@ -86,7 +86,7 @@ describe("Dodo webhook route", () => {
     expect(response.status).toBe(200);
     expect(mocks.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        amount: 5000,
+        amount: 8640,
         currency: "usd",
         metadata: expect.objectContaining({ tier: "yearly" }),
         paid_at: "2026-04-29T00:00:00.000Z",
@@ -116,7 +116,7 @@ describe("Dodo webhook route", () => {
         currency: "USD",
         created_at: "2026-04-29T00:00:00.000Z",
         metadata: {
-          amount: "5000",
+          amount: "8640",
           tier: "yearly",
           user_id: "user_123",
         },
@@ -135,7 +135,7 @@ describe("Dodo webhook route", () => {
         amount: 1200,
         currency: "usd",
         metadata: {
-          expected_amount: 5000,
+          expected_amount: 8640,
           paid_amount: 1200,
           product_id: "pdt_yearly",
           tier: "yearly",

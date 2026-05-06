@@ -8,7 +8,10 @@ describe("DonationTierCard", () => {
     render(
       <DonationTierCard
         checkoutDodoLabel="Contribute now"
+        isAuthenticated
         label="Monthly"
+        loginHref="/en/login?next=%2Fen%2Fcontributions"
+        loginLabel="Sign in to contribute"
         locale="en"
         oneTimeNote="One-time support"
         paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
@@ -28,7 +31,10 @@ describe("DonationTierCard", () => {
     render(
       <DonationTierCard
         checkoutDodoLabel="Contribute now"
+        isAuthenticated
         label="Yearly"
+        loginHref="/en/login?next=%2Fen%2Fcontributions"
+        loginLabel="Sign in to contribute"
         locale="en"
         oneTimeNote="One-time support"
         paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
@@ -39,5 +45,48 @@ describe("DonationTierCard", () => {
     expect(screen.queryByText(/stripe/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/paypal/i)).not.toBeInTheDocument();
     expect(screen.getByText(/dodo payments/i)).toBeInTheDocument();
+  });
+
+  it("shows a sign-in link instead of a checkout form for anonymous users", () => {
+    render(
+      <DonationTierCard
+        checkoutDodoLabel="Contribute now"
+        isAuthenticated={false}
+        label="Monthly"
+        loginHref="/en/login?next=%2Fen%2Fcontributions"
+        loginLabel="Sign in to contribute"
+        locale="en"
+        oneTimeNote="One-time support"
+        paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
+        tier={donationTiers[0]}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Contribute now" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sign in to contribute" })).toHaveAttribute(
+      "href",
+      "/en/login?next=%2Fen%2Fcontributions",
+    );
+    expect(document.querySelector('form[action="/api/checkout/dodo"]')).not.toBeInTheDocument();
+  });
+
+  it("shows the original price and discount for discounted tiers", () => {
+    render(
+      <DonationTierCard
+        checkoutDodoLabel="Contribute now"
+        isAuthenticated
+        label="Quarterly"
+        loginHref="/en/login?next=%2Fen%2Fcontributions"
+        loginLabel="Sign in to contribute"
+        locale="en"
+        oneTimeNote="One-time support"
+        paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
+        tier={{ ...donationTiers[1], amount: 2430, compareAtAmount: 2700 }}
+      />,
+    );
+
+    expect(screen.getByText("$24.30")).toBeInTheDocument();
+    expect(screen.getByText("$27.00")).toBeInTheDocument();
+    expect(screen.getByText("10% off")).toBeInTheDocument();
   });
 });

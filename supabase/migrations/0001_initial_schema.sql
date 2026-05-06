@@ -72,6 +72,7 @@ create table public.donation_tiers (
   label text not null,
   description text not null,
   amount integer not null check (amount > 0),
+  compare_at_amount integer check (compare_at_amount is null or compare_at_amount > amount),
   currency text not null default 'usd',
   sort_order integer not null,
   is_active boolean not null default true,
@@ -174,10 +175,10 @@ create table public.admin_audit_logs (
   created_at timestamptz not null default now()
 );
 
-insert into public.donation_tiers (code, label, description, amount, currency, sort_order) values
-  ('monthly', 'Monthly Support', 'One-time support equal to a monthly contribution.', 500, 'usd', 1),
-  ('quarterly', 'Quarterly Support', 'One-time support equal to a quarterly contribution.', 1500, 'usd', 2),
-  ('yearly', 'Yearly Support', 'One-time support equal to a yearly contribution.', 5000, 'usd', 3);
+insert into public.donation_tiers (code, label, description, amount, compare_at_amount, currency, sort_order) values
+  ('monthly', 'Monthly Support', 'One-time support equal to a monthly contribution.', 900, null, 'usd', 1),
+  ('quarterly', 'Quarterly Support', 'One-time support equal to a quarterly contribution.', 2430, 2700, 'usd', 2),
+  ('yearly', 'Yearly Support', 'One-time support equal to a yearly contribution.', 8640, 10800, 'usd', 3);
 
 insert into public.sponsor_levels (code, label, minimum_total_amount, currency, sort_order) values
   ('bronze', 'Bronze', 500, 'usd', 1),
