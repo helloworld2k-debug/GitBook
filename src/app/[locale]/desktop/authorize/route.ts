@@ -7,6 +7,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const authorizeSchema = z.object({
   deviceSessionId: z.string().trim().min(1).max(200),
+  state: z.string().trim().min(8).max(300),
   returnUrl: z
     .string()
     .min(1)
@@ -39,13 +40,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
   const parsed = authorizeSchema.safeParse({
     deviceSessionId: url.searchParams.get("device_session_id"),
     returnUrl: url.searchParams.get("return_url"),
+    state: url.searchParams.get("state"),
   });
 
   if (!parsed.success) {
     return NextResponse.json({ error: "Missing desktop authorization parameters" }, { status: 400 });
   }
 
-  const { deviceSessionId, returnUrl } = parsed.data;
+  const { deviceSessionId, returnUrl, state } = parsed.data;
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -53,7 +55,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
   } = await supabase.auth.getUser();
 
   if (!user) {
-    const next = `/${locale}/desktop/authorize?device_session_id=${encodeURIComponent(deviceSessionId)}&return_url=${encodeURIComponent(returnUrl)}`;
+    const next = `/${locale}/desktop/authorize?device_session_id=${encodeURIComponent(deviceSessionId)}&return_url=${encodeURIComponent(returnUrl)}&state=${encodeURIComponent(state)}`;
 
     return NextResponse.redirect(new URL(`/${locale}/login?next=${encodeURIComponent(next)}`, request.url));
   }
@@ -62,9 +64,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
     userId: user.id,
     deviceSessionId,
     returnUrl,
+    state,
   });
   const callback = new URL(returnUrl);
   callback.searchParams.set("code", code);
+  callback.searchParams.set("state", state);
 
   return NextResponse.redirect(callback);
 }

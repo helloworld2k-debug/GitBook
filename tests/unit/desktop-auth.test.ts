@@ -19,6 +19,7 @@ describe("desktop auth", () => {
       userId: "user-1",
       deviceSessionId: "desktop-flow-1",
       returnUrl: "gitbookai://auth/callback",
+      state: "state-123",
       now,
     });
 
@@ -31,6 +32,7 @@ describe("desktop auth", () => {
       user_id: "user-1",
       device_session_id: "desktop-flow-1",
       return_url: "gitbookai://auth/callback",
+      state: "state-123",
       expires_at: "2026-05-01T00:05:00.000Z",
     });
   });
@@ -57,6 +59,7 @@ describe("desktop auth", () => {
       platform: "macos",
       appVersion: "1.0.0",
       deviceName: "Studio Mac",
+      state: "state-123",
       now,
     });
 
@@ -73,6 +76,7 @@ describe("desktop auth", () => {
       input_now: "2026-05-01T00:01:00.000Z",
       input_platform: "macos",
       input_session_expires_at: new Date(now.getTime() + DESKTOP_SESSION_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+      input_state: "state-123",
       input_token_hash: await hashDesktopSecret(result.sessionToken, "desktop_token"),
     });
   });
@@ -88,6 +92,7 @@ describe("desktop auth", () => {
         deviceId: "device-a",
         machineCode: "MACHINE-A",
         platform: "macos",
+        state: "state-123",
         now: new Date("2026-05-01T00:01:00.000Z"),
       }),
     ).rejects.toBeInstanceOf(InvalidDesktopAuthCodeError);
@@ -104,6 +109,7 @@ describe("desktop auth", () => {
         deviceId: "device-a",
         machineCode: "MACHINE-A",
         platform: "macos",
+        state: "state-123",
         now: new Date("2026-05-01T00:01:00.000Z"),
       }),
     ).rejects.toThrow("Unable to exchange desktop auth code");

@@ -1,7 +1,20 @@
+import { DESKTOP_SESSION_TTL_DAYS } from "@/lib/license/constants";
 import { hashDesktopSecret } from "@/lib/license/hash";
+import { generateDesktopSecret } from "@/lib/license/tokens";
+import type { Database } from "@/lib/database.types";
 
 type DesktopSessionClient = {
   from: unknown;
+};
+
+type DesktopSessionRpcClient = {
+  rpc: <FunctionName extends keyof Database["public"]["Functions"]>(
+    functionName: FunctionName,
+    args: Database["public"]["Functions"][FunctionName]["Args"],
+  ) => PromiseLike<{
+    data: Database["public"]["Functions"][FunctionName]["Returns"] | null;
+    error: unknown;
+  }>;
 };
 
 type DesktopSessionFrom = (table: "desktop_sessions") => {
@@ -30,6 +43,27 @@ export type ValidDesktopSession = Pick<
   DesktopSessionRow,
   "id" | "user_id" | "device_id" | "machine_code_hash" | "platform" | "app_version"
 >;
+
+type RefreshDesktopSessionInput = {
+  refreshToken: string;
+  now?: Date;
+};
+
+type RevokeDesktopSessionInput = {
+  desktopSessionId: string;
+  now?: Date;
+};
+
+function addDays(date: Date, days: number) {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+export class InvalidDesktopSessionError extends Error {
+  constructor() {
+    super("Invalid desktop session");
+    this.name = "InvalidDesktopSessionError";
+  }
+}
 
 export function readBearerToken(request: Request) {
   const authorization = request.headers.get("authorization");
@@ -83,4 +117,50 @@ export async function validateDesktopSession(
     platform: row.platform,
     app_version: row.app_version,
   };
+}
+
+export async function refreshDesktopSession(client: DesktopSessionRpcClient, input: RefreshDesktopSessionInput) {
+  const now = input.now ?? new Date();
+  const currentTokenHash = await hashDesktopSecret(input.refreshToken, "desktop_token");
+  const sessionToken = generateDesktopSecret();
+  const newTokenHash = await hashDesktopSecret(sessionToken, "desktop_token");
+  const expiresAt = addDays(now, DESKTOP_SESSION_TTL_DAYS).toISOString();
+
+  const { data, error } = await client.rpc("refresh_desktop_session", {
+    input_current_token_hash: currentTokenHash,
+    input_new_expires_at: expiresAt,
+    input_new_token_hash: newTokenHash,
+    input_now: now.toISOString(),
+  });
+
+  if (error) {
+    throw new Error("Unable to refresh desktop session");
+  }
+
+  const row = data?.[0];
+
+  if (!row) {
+    throw new InvalidDesktopSessionError();
+  }
+
+  return {
+    sessionToken,
+    expiresAt,
+    userId: row.user_id,
+    desktopSessionId: row.desktop_session_id,
+  };
+}
+
+export async function revokeDesktopSession(client: DesktopSessionRpcClient, input: RevokeDesktopSessionInput) {
+  const now = input.now ?? new Date();
+  const { data, error } = await client.rpc("revoke_desktop_session_with_leases", {
+    input_desktop_session_id: input.desktopSessionId,
+    input_now: now.toISOString(),
+  });
+
+  if (error || data !== true) {
+    throw new Error("Unable to revoke desktop session");
+  }
+
+  return { revoked: true };
 }

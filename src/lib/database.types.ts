@@ -484,6 +484,7 @@ export type Database = {
           user_id: string;
           device_session_id: string;
           return_url: string;
+          state: string;
           expires_at: string;
           used_at: string | null;
           created_at: string;
@@ -494,6 +495,7 @@ export type Database = {
           user_id: string;
           device_session_id: string;
           return_url: string;
+          state: string;
           expires_at: string;
           used_at?: string | null;
           created_at?: string;
@@ -504,6 +506,7 @@ export type Database = {
           user_id?: string;
           device_session_id?: string;
           return_url?: string;
+          state?: string;
           expires_at?: string;
           used_at?: string | null;
           created_at?: string;
@@ -1158,6 +1161,18 @@ export type Database = {
         };
         Returns: boolean;
       };
+      refresh_desktop_session: {
+        Args: {
+          input_current_token_hash: string;
+          input_new_expires_at: string;
+          input_new_token_hash: string;
+          input_now: string;
+        };
+        Returns: {
+          desktop_session_id: string;
+          user_id: string;
+        }[];
+      };
       read_cloud_sync_lease_status: {
         Args: {
           input_desktop_session_id: string;
@@ -1192,6 +1207,7 @@ export type Database = {
           input_now: string;
           input_platform: string;
           input_session_expires_at: string;
+          input_state: string;
           input_token_hash: string;
         };
         Returns: {

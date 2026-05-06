@@ -47,17 +47,39 @@ describe("desktop license migration", () => {
   it("creates a service-role-only atomic desktop auth exchange function", () => {
     expect(migration).toContain("create or replace function public.exchange_desktop_auth_code");
     expect(migration).toContain("returns table(user_id uuid, desktop_session_id uuid)");
+    expect(migration).toContain("input_state text");
+    expect(migration).toContain("state text not null");
     expect(migration).toContain("update public.desktop_auth_codes");
     expect(migration).toContain("where code_hash = input_code_hash");
+    expect(migration).toContain("and state = input_state");
     expect(migration).toContain("and used_at is null");
     expect(migration).toContain("and expires_at > input_now");
+    expect(migration).toContain("perform pg_advisory_xact_lock(hashtextextended(claimed_user_id::text, 0))");
+    expect(migration).toContain("where user_id = claimed_user_id");
+    expect(migration).toContain("and revoked_at is null");
     expect(migration).toContain("insert into public.desktop_devices");
     expect(migration).toContain("insert into public.desktop_sessions");
     expect(migration).toContain(
-      "revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) from public",
+      "revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, text, timestamptz, timestamptz) from public",
     );
     expect(migration).toContain(
-      "grant execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) to service_role",
+      "grant execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, text, timestamptz, timestamptz) to service_role",
+    );
+  });
+
+  it("creates a service-role-only desktop session refresh function", () => {
+    expect(migration).toContain("create or replace function public.refresh_desktop_session");
+    expect(migration).toContain("input_current_token_hash text");
+    expect(migration).toContain("input_new_token_hash text");
+    expect(migration).toContain("where token_hash = input_current_token_hash");
+    expect(migration).toContain("and revoked_at is null");
+    expect(migration).toContain("and expires_at > input_now");
+    expect(migration).toContain("token_hash = input_new_token_hash");
+    expect(migration).toContain(
+      "revoke execute on function public.refresh_desktop_session(text, text, timestamptz, timestamptz) from public",
+    );
+    expect(migration).toContain(
+      "grant execute on function public.refresh_desktop_session(text, text, timestamptz, timestamptz) to service_role",
     );
   });
 

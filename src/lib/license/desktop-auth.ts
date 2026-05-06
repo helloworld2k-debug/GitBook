@@ -13,6 +13,7 @@ type CreateDesktopAuthCodeFrom = (table: "desktop_auth_codes") => {
     user_id: string;
     device_session_id: string;
     return_url: string;
+    state: string;
     expires_at: string;
   }) => {
     select: (columns: "id") => {
@@ -35,6 +36,7 @@ type CreateDesktopAuthCodeInput = {
   userId: string;
   deviceSessionId: string;
   returnUrl: string;
+  state: string;
   now?: Date;
 };
 
@@ -45,6 +47,7 @@ type ExchangeDesktopAuthCodeInput = {
   platform: string;
   appVersion?: string | null;
   deviceName?: string | null;
+  state: string;
   now?: Date;
 };
 
@@ -76,6 +79,7 @@ export async function createDesktopAuthCode(client: CreateClient, input: CreateD
       user_id: input.userId,
       device_session_id: input.deviceSessionId,
       return_url: input.returnUrl,
+      state: input.state,
       expires_at: expiresAt,
     })
     .select("id")
@@ -106,6 +110,7 @@ export async function exchangeDesktopAuthCode(client: ExchangeClient, input: Exc
     input_now: nowIso,
     input_platform: input.platform,
     input_session_expires_at: expiresAt,
+    input_state: input.state,
     input_token_hash: tokenHash,
   });
 

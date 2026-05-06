@@ -72,6 +72,7 @@ create table public.desktop_auth_codes (
   user_id uuid not null references public.profiles(id) on delete cascade,
   device_session_id text not null,
   return_url text not null,
+  state text not null,
   expires_at timestamptz not null,
   used_at timestamptz,
   created_at timestamptz not null default now()
@@ -422,7 +423,109 @@ create or replace function public.exchange_desktop_auth_code(
   input_platform text,
   input_app_version text,
   input_device_name text,
+  input_state text,
   input_session_expires_at timestamptz,
+  input_now timestamptz
+)
+returns table(user_id uuid, desktop_session_id uuid)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  claimed_user_id uuid;
+  inserted_session_id uuid;
+begin
+  update public.desktop_auth_codes
+  set used_at = input_now
+  where code_hash = input_code_hash
+    and state = input_state
+    and used_at is null
+    and expires_at > input_now
+  returning desktop_auth_codes.user_id
+  into claimed_user_id;
+
+  if claimed_user_id is null then
+    return;
+  end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(claimed_user_id::text, 0));
+
+  update public.desktop_sessions
+  set revoked_at = input_now,
+      cloud_sync_active_until = null,
+      last_seen_at = input_now
+  where user_id = claimed_user_id
+    and revoked_at is null;
+
+  update public.cloud_sync_leases
+  set revoked_at = input_now,
+      updated_at = input_now
+  where user_id = claimed_user_id
+    and revoked_at is null;
+
+  insert into public.desktop_devices (
+    user_id,
+    device_id,
+    machine_code_hash,
+    platform,
+    app_version,
+    device_name,
+    last_seen_at
+  )
+  values (
+    claimed_user_id,
+    input_device_id,
+    input_machine_code_hash,
+    input_platform,
+    input_app_version,
+    input_device_name,
+    input_now
+  )
+  on conflict (user_id, device_id)
+  do update set
+    machine_code_hash = excluded.machine_code_hash,
+    platform = excluded.platform,
+    app_version = excluded.app_version,
+    device_name = excluded.device_name,
+    last_seen_at = excluded.last_seen_at;
+
+  insert into public.desktop_sessions (
+    user_id,
+    token_hash,
+    device_id,
+    machine_code_hash,
+    platform,
+    app_version,
+    last_seen_at,
+    expires_at
+  )
+  values (
+    claimed_user_id,
+    input_token_hash,
+    input_device_id,
+    input_machine_code_hash,
+    input_platform,
+    input_app_version,
+    input_now,
+    input_session_expires_at
+  )
+  returning desktop_sessions.id
+  into inserted_session_id;
+
+  return query select claimed_user_id, inserted_session_id;
+end;
+$$;
+
+revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, text, timestamptz, timestamptz) from public;
+revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, text, timestamptz, timestamptz) from anon;
+revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, text, timestamptz, timestamptz) from authenticated;
+grant execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, text, timestamptz, timestamptz) to service_role;
+
+create or replace function public.refresh_desktop_session(
+  input_current_token_hash text,
+  input_new_token_hash text,
+  input_new_expires_at timestamptz,
   input_now timestamptz
 )
 returns table(user_id uuid, desktop_session_id uuid)
@@ -430,74 +533,20 @@ language sql
 security definer
 set search_path = public
 as $$
-  with claimed as (
-    update public.desktop_auth_codes
-    set used_at = input_now
-    where code_hash = input_code_hash
-      and used_at is null
-      and expires_at > input_now
-    returning desktop_auth_codes.user_id
-  ),
-  upserted_device as (
-    insert into public.desktop_devices (
-      user_id,
-      device_id,
-      machine_code_hash,
-      platform,
-      app_version,
-      device_name,
-      last_seen_at
-    )
-    select
-      claimed.user_id,
-      input_device_id,
-      input_machine_code_hash,
-      input_platform,
-      input_app_version,
-      input_device_name,
-      input_now
-    from claimed
-    on conflict (user_id, device_id)
-    do update set
-      machine_code_hash = excluded.machine_code_hash,
-      platform = excluded.platform,
-      app_version = excluded.app_version,
-      device_name = excluded.device_name,
-      last_seen_at = excluded.last_seen_at
-    returning desktop_devices.user_id
-  ),
-  inserted_session as (
-    insert into public.desktop_sessions (
-      user_id,
-      token_hash,
-      device_id,
-      machine_code_hash,
-      platform,
-      app_version,
-      last_seen_at,
-      expires_at
-    )
-    select
-      claimed.user_id,
-      input_token_hash,
-      input_device_id,
-      input_machine_code_hash,
-      input_platform,
-      input_app_version,
-      input_now,
-      input_session_expires_at
-    from claimed
-    returning desktop_sessions.user_id, desktop_sessions.id
-  )
-  select inserted_session.user_id, inserted_session.id
-  from inserted_session
-  join upserted_device on upserted_device.user_id = inserted_session.user_id;
+  update public.desktop_sessions
+  set token_hash = input_new_token_hash,
+      expires_at = input_new_expires_at,
+      last_seen_at = input_now
+  where token_hash = input_current_token_hash
+    and revoked_at is null
+    and expires_at > input_now
+  returning desktop_sessions.user_id, desktop_sessions.id;
 $$;
 
-revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) from public;
-revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) from anon;
-revoke execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) from authenticated;
-grant execute on function public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz) to service_role;
+revoke execute on function public.refresh_desktop_session(text, text, timestamptz, timestamptz) from public;
+revoke execute on function public.refresh_desktop_session(text, text, timestamptz, timestamptz) from anon;
+revoke execute on function public.refresh_desktop_session(text, text, timestamptz, timestamptz) from authenticated;
+grant execute on function public.refresh_desktop_session(text, text, timestamptz, timestamptz) to service_role;
 
 create or replace function public.activate_cloud_sync_lease(
   input_user_id uuid,

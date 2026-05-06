@@ -10,6 +10,7 @@ const exchangeSchema = z.object({
   deviceId: z.string().min(4).max(200),
   machineCode: z.string().min(4).max(500),
   platform: z.string().min(2).max(80),
+  state: z.string().min(8).max(300),
   appVersion: z.string().max(80).optional(),
   deviceName: z.string().max(120).optional(),
 });
