@@ -254,18 +254,36 @@ export function AdminCard({ children, className = "" }: { children: React.ReactN
   return <section className={`rounded-md border border-slate-200 bg-white shadow-sm ${className}`}>{children}</section>;
 }
 
-export function AdminTableShell({ children, empty, label = "Scrollable admin table" }: { children: React.ReactNode; empty?: React.ReactNode; label?: string }) {
+export function AdminTableShell({
+  children,
+  empty,
+  label = "Scrollable admin table",
+  mobileCards,
+}: {
+  children: React.ReactNode;
+  empty?: React.ReactNode;
+  label?: string;
+  mobileCards?: React.ReactNode;
+}) {
   return (
-    <div
-      aria-label={label}
-      className="overflow-x-auto overscroll-x-contain rounded-b-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-      data-testid="admin-table-shell"
-      role="region"
-      tabIndex={0}
-    >
-      {empty ?? null}
-      {children}
-    </div>
+    <>
+      {mobileCards ? (
+        <div className="grid gap-3 p-3 md:hidden" data-testid="admin-mobile-cards">
+          {empty ?? null}
+          {mobileCards}
+        </div>
+      ) : null}
+      <div
+        aria-label={label}
+        className={`${mobileCards ? "hidden md:block" : ""} overflow-x-auto overscroll-x-contain rounded-b-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950`}
+        data-testid="admin-table-shell"
+        role="region"
+        tabIndex={0}
+      >
+        {empty ?? null}
+        {children}
+      </div>
+    </>
   );
 }
 

@@ -186,7 +186,84 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.trialCodesTitle")}</h2>
             </div>
             {trialCodes.length > 0 ? (
-              <AdminTableShell label={t("licenses.trialCodesTitle")}>
+              <AdminTableShell
+                label={t("licenses.trialCodesTitle")}
+                mobileCards={
+                  <div className="grid gap-3">
+                    {trialCodes.map((trialCode) => (
+                      <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={trialCode.id}>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="break-words text-sm font-semibold text-slate-950">{trialCode.label}</p>
+                            <p className="mt-2 break-all font-mono text-xs text-slate-600">{trialCode.code_mask ?? "-"}</p>
+                          </div>
+                          <AdminStatusBadge tone={trialCode.is_active ? "success" : "neutral"}>
+                            {trialCode.is_active ? t("licenses.active") : t("licenses.inactive")}
+                          </AdminStatusBadge>
+                        </div>
+                        <dl className="mt-4 grid gap-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <dt className="text-slate-500">{t("licenses.duration")}</dt>
+                            <dd className="text-slate-900">
+                              {trialCode.trial_days} {t("licenses.days")}
+                            </dd>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <dt className="text-slate-500">{t("licenses.redemptions")}</dt>
+                            <dd className="text-slate-900">
+                              {trialCode.redemption_count} / {trialCode.max_redemptions ?? t("licenses.unlimited")}
+                            </dd>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <dt className="text-slate-500">{t("licenses.generatedAt")}</dt>
+                            <dd className="text-right text-slate-900">{formatDateTime(trialCode.created_at, locale)}</dd>
+                          </div>
+                        </dl>
+                        <div className="mt-4 grid gap-3">
+                          <TrialCodeRevealButton
+                            errorLabel={t("licenses.revealError")}
+                            hideLabel={t("licenses.hide")}
+                            locale={locale}
+                            revealLabel={t("licenses.reveal")}
+                            trialCodeId={trialCode.id}
+                          />
+                          <div className="flex flex-wrap gap-2">
+                            <form action={setTrialCodeActive} className="flex-1">
+                              <input name="locale" type="hidden" value={locale} />
+                              <input name="return_to" type="hidden" value="/admin/licenses" />
+                              <input name="trial_code_id" type="hidden" value={trialCode.id} />
+                              <input name="is_active" type="hidden" value={trialCode.is_active ? "false" : "true"} />
+                              <AdminSubmitButton
+                                className="inline-flex min-h-10 w-full items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                                pendingLabel={t("common.processing")}
+                              >
+                                {trialCode.is_active ? t("licenses.deactivate") : t("licenses.activate")}
+                              </AdminSubmitButton>
+                            </form>
+                            <details aria-label={t("licenses.action")} className="flex-1">
+                              <summary className="inline-flex min-h-10 w-full cursor-pointer list-none items-center justify-center rounded-md border border-red-200 bg-red-50 px-3 text-sm font-medium text-red-700 transition-colors hover:border-red-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700" role="button">
+                                {t("users.dangerZone")}
+                              </summary>
+                              <form action={deleteTrialCode} className="mt-2 rounded-md border border-red-100 bg-white p-3">
+                                <input name="locale" type="hidden" value={locale} />
+                                <input name="return_to" type="hidden" value="/admin/licenses" />
+                                <input name="trial_code_id" type="hidden" value={trialCode.id} />
+                                <ConfirmActionButton
+                                  className="inline-flex min-h-10 w-full items-center justify-center rounded-md bg-red-600 px-3 text-sm font-medium text-white transition-colors hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+                                  confirmLabel={t("licenses.delete")}
+                                  pendingLabel={t("common.processing")}
+                                >
+                                  {t("licenses.delete")}
+                                </ConfirmActionButton>
+                              </form>
+                            </details>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                }
+              >
                 <table aria-label={t("licenses.trialCodesTitle")} className="min-w-[1540px] table-fixed text-left text-sm">
                   <colgroup>
                     <col className="w-[340px]" />

@@ -5,6 +5,7 @@ import AdminAuditLogsPage from "@/app/[locale]/admin/audit-logs/page";
 import AdminCertificatesPage from "@/app/[locale]/admin/certificates/page";
 import AdminDonationsPage from "@/app/[locale]/admin/donations/page";
 import AdminLicensesPage from "@/app/[locale]/admin/licenses/page";
+import AdminSupportFeedbackPage from "@/app/[locale]/admin/support-feedback/page";
 import AdminUserDetailPage from "@/app/[locale]/admin/users/[id]/page";
 import AdminUsersPage from "@/app/[locale]/admin/users/page";
 
@@ -129,6 +130,11 @@ const testMessages = {
         usersDescription: "Review account roles, statuses, trial bindings, and desktop devices.",
         auditLogsTitle: "Audit logs",
         auditLogsDescription: "Review admin corrections, revocations, and reasons.",
+        metricsTitle: "Operations overview",
+        totalUsersMetric: "Total users",
+        activeTrialsMetric: "Active trials",
+        pendingFeedbackMetric: "Open feedback",
+        recentContributionsMetric: "Recent contributions",
       },
       donations: {
         eyebrow: "Admin",
@@ -195,6 +201,24 @@ const testMessages = {
         createdAt: "Created",
         admin: "Admin",
         empty: "No audit logs found.",
+      },
+      supportFeedback: {
+        eyebrow: "Admin",
+        title: "Support feedback",
+        description: "Review account issue reports submitted through the support page.",
+        subject: "Subject",
+        contact: "Contact",
+        message: "Message",
+        status: "Status",
+        createdAt: "Created",
+        save: "Save",
+        empty: "No feedback found.",
+        view: "Open thread",
+        statuses: {
+          open: "Open",
+          reviewing: "Reviewing",
+          closed: "Closed",
+        },
       },
       licenses: {
         eyebrow: "Admin",
@@ -299,6 +323,7 @@ const testMessages = {
         bulkDisable: "Bulk disable",
         bulkChangeRole: "Bulk change role",
         bulkSoftDelete: "Bulk soft delete",
+        bulkSoftDeleteSelected: "Bulk soft delete selected users",
         clearSelection: "Clear selection",
         roleTarget: "Target role",
         summaryTotal: "Total users",
@@ -334,6 +359,15 @@ const testMessages = {
         validUntil: "Valid until",
         machine: "Machine",
         lastSeen: "Last seen",
+        timelineTitle: "Account timeline",
+        timelineEmpty: "No timeline activity yet.",
+        timelineDonation: "Contribution",
+        timelineCertificate: "Certificate",
+        timelineTrial: "Trial redeemed",
+        timelineSession: "Desktop session",
+        timelineEntitlement: "Entitlement",
+        timelineLease: "Cloud sync lease",
+        timelineFeedback: "Support feedback",
         unbind: "Unbind machine",
         addDonation: "Add manual donation",
         emptyTrials: "No trials",
@@ -400,6 +434,11 @@ const testMessages = {
         usersDescription: "檢視帳號角色、狀態、試用綁定與桌面裝置。",
         auditLogsTitle: "稽核紀錄",
         auditLogsDescription: "檢視管理員修正、撤銷與原因。",
+        metricsTitle: "營運概覽",
+        totalUsersMetric: "使用者總數",
+        activeTrialsMetric: "啟用中的試用碼",
+        pendingFeedbackMetric: "待處理回饋",
+        recentContributionsMetric: "近期支持",
       },
       donations: {
         eyebrow: "管理後台",
@@ -513,6 +552,11 @@ const testMessages = {
         usersDescription: "アカウント権限、状態、トライアル紐付け、デスクトップ端末を確認します。",
         auditLogsTitle: "監査ログ",
         auditLogsDescription: "管理者の修正、取り消し、理由を確認します。",
+        metricsTitle: "運用概要",
+        totalUsersMetric: "総ユーザー数",
+        activeTrialsMetric: "有効な試用コード",
+        pendingFeedbackMetric: "未対応フィードバック",
+        recentContributionsMetric: "最近の応援",
       },
       donations: {
         eyebrow: "管理画面",
@@ -626,6 +670,11 @@ const testMessages = {
         usersDescription: "계정 역할, 상태, 체험 연결, 데스크톱 기기를 확인합니다.",
         auditLogsTitle: "감사 로그",
         auditLogsDescription: "관리자 수정, 폐기, 사유를 확인합니다.",
+        metricsTitle: "운영 개요",
+        totalUsersMetric: "전체 사용자",
+        activeTrialsMetric: "활성 체험 코드",
+        pendingFeedbackMetric: "미처리 피드백",
+        recentContributionsMetric: "최근 지원",
       },
       donations: {
         eyebrow: "관리",
@@ -722,6 +771,26 @@ describe("admin pages", () => {
   });
 
   it("renders the guarded admin overview with admin tool links", async () => {
+    const countQuery = (count: number) => {
+      const query = {
+        eq: vi.fn(() => query),
+        gte: vi.fn(() => query),
+        is: vi.fn(() => query),
+        limit: vi.fn(() => Promise.resolve({ count, data: [], error: null })),
+        select: vi.fn(() => query),
+      };
+
+      return query;
+    };
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return countQuery(12);
+      if (table === "trial_codes") return countQuery(4);
+      if (table === "support_feedback") return countQuery(3);
+      if (table === "donations") return countQuery(7);
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+
     const element = await AdminPage({ params: Promise.resolve({ locale: "en" }) });
 
     render(element);
@@ -733,6 +802,12 @@ describe("admin pages", () => {
     expect(screen.getAllByRole("link", { name: /releases/i }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
     expect(screen.getAllByRole("link", { name: /audit logs/i }).some((link) => link.getAttribute("href") === "/admin/audit-logs")).toBe(true);
     expect(createSupabaseServerClientMock).toHaveBeenCalled();
+    expect(createSupabaseAdminClientMock).toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "Operations overview" })).toBeInTheDocument();
+    expect(screen.getByText("Total users")).toBeInTheDocument();
+    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.getByText("Open feedback")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
   });
 
   it("renders localized admin overview copy beyond English", async () => {
@@ -788,16 +863,42 @@ describe("admin pages", () => {
     expect(screen.getByLabelText("電子郵件或使用者 ID")).toBeRequired();
     expect(screen.getByLabelText("原因")).toBeRequired();
     expect(screen.getByRole("button", { name: "新增人工支持記錄" })).toBeInTheDocument();
-    expect(screen.getByText("Stripe")).toBeInTheDocument();
-    expect(screen.getByText("人工登錄")).toBeInTheDocument();
+    expect(screen.getAllByText("Stripe").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("人工登錄").length).toBeGreaterThan(0);
     expect(screen.queryByText("stripe")).not.toBeInTheDocument();
     expect(screen.queryByText("manual")).not.toBeInTheDocument();
-    expect(screen.getByText("已付款")).toBeInTheDocument();
-    expect(screen.getByText("已退款")).toBeInTheDocument();
+    expect(screen.getAllByText("已付款").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("已退款").length).toBeGreaterThan(0);
     expect(screen.queryByText("paid")).not.toBeInTheDocument();
-    expect(screen.getByText("US$50.00 USD")).toBeInTheDocument();
-    expect(screen.getByText("txn_123")).toBeInTheDocument();
-    expect(screen.getByText("manual_456")).toBeInTheDocument();
+    expect(screen.getAllByText("US$50.00 USD").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("txn_123").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("manual_456").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("admin-mobile-cards")).toHaveTextContent("txn_123");
+  });
+
+  it("renders support feedback in a mobile-safe card list", async () => {
+    const feedbackQuery = createAdminListQuery([
+      {
+        id: "feedback-1",
+        email: "ada@example.com",
+        contact: "telegram",
+        subject: "Cannot redeem trial",
+        message: "The redeem button fails on mobile.",
+        status: "open",
+        created_at: "2026-05-01T10:00:00.000Z",
+      },
+    ]);
+    const from = vi.fn(() => feedbackQuery);
+    createSupabaseServerClientMock.mockResolvedValue({ from });
+
+    const element = await AdminSupportFeedbackPage({ params: Promise.resolve({ locale: "en" }) });
+
+    render(element);
+
+    expect(from).toHaveBeenCalledWith("support_feedback");
+    expect(screen.getByRole("table", { name: "Support feedback" })).toHaveClass("min-w-[1260px]", "table-fixed");
+    expect(screen.getByTestId("admin-mobile-cards")).toHaveTextContent("Cannot redeem trial");
+    expect(screen.getAllByRole("link", { name: "Open thread" })[0]).toHaveAttribute("href", "/admin/support-feedback/feedback-1");
   });
 
   it("renders Japanese admin donation enum labels", async () => {
@@ -820,12 +921,12 @@ describe("admin pages", () => {
 
     expect(requireAdminMock).toHaveBeenCalledWith("ja");
     expect(screen.getByRole("heading", { name: "管理者向け応援記録" })).toBeInTheDocument();
-    expect(screen.getByText("PayPal")).toBeInTheDocument();
-    expect(screen.getByText("キャンセル済み")).toBeInTheDocument();
+    expect(screen.getAllByText("PayPal").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("キャンセル済み").length).toBeGreaterThan(0);
     expect(screen.queryByText("paypal")).not.toBeInTheDocument();
     expect(screen.queryByText("cancelled")).not.toBeInTheDocument();
-    expect(screen.getByText("$35.00 USD")).toBeInTheDocument();
-    expect(screen.getByText("paypal_txn_789")).toBeInTheDocument();
+    expect(screen.getAllByText("$35.00 USD").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("paypal_txn_789").length).toBeGreaterThan(0);
   });
 
   it("throws Supabase donation query errors", async () => {
@@ -967,9 +1068,9 @@ describe("admin pages", () => {
     expect(screen.queryByText("Batch generate license codes")).not.toBeInTheDocument();
     expect(screen.queryByText("Bulk license code actions")).not.toBeInTheDocument();
     expect(screen.queryByText("1 month")).not.toBeInTheDocument();
-    expect(screen.getByText("ABCD-****-****-MNOP")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Reveal" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+    expect(screen.getAllByText("ABCD-****-****-MNOP").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Reveal" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Delete" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Deleted trial codes" })).toBeInTheDocument();
     expect(screen.getByText("WXYZ-****-****-ABCD")).toBeInTheDocument();
     expect(screen.getByText("admin-1")).toBeInTheDocument();
@@ -977,6 +1078,7 @@ describe("admin pages", () => {
     const trialCodesTable = screen.getByRole("table", { name: "Trial codes" });
     expect(trialCodesTable).toHaveClass("min-w-[1540px]", "table-fixed");
     expect(screen.getAllByTestId("admin-table-shell")[0]).toHaveClass("overflow-x-auto", "overscroll-x-contain");
+    expect(screen.getAllByTestId("admin-mobile-cards")[0]).toHaveTextContent("Launch trial");
     expect(screen.getByRole("columnheader", { name: "Action" })).toHaveClass("sticky", "right-0", "w-[300px]");
     expect(screen.getByTestId("trial-code-actions-trial-code-1")).toHaveClass("min-w-[260px]");
   });
@@ -1127,6 +1229,14 @@ describe("admin pages", () => {
         updated_at: "2026-04-30T10:04:00.000Z",
       },
     ]);
+    const supportFeedbackQuery = createAdminListQuery([
+      {
+        id: "feedback-1",
+        subject: "Need help with trial",
+        status: "open",
+        created_at: "2026-04-30T10:05:00.000Z",
+      },
+    ]);
     const from = vi.fn((table: string) => {
       if (table === "profiles") return profileQuery;
       if (table === "donations") return donationsQuery;
@@ -1135,6 +1245,7 @@ describe("admin pages", () => {
       if (table === "desktop_sessions") return sessionsQuery;
       if (table === "license_entitlements") return entitlementsQuery;
       if (table === "cloud_sync_leases") return leasesQuery;
+      if (table === "support_feedback") return supportFeedbackQuery;
       throw new Error(`Unexpected table: ${table}`);
     });
     createSupabaseAdminClientMock.mockReturnValue({ from });
@@ -1152,14 +1263,16 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "Donations" })).toBeInTheDocument();
     expect(screen.getByText("manual_ada")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Certificates" })).toBeInTheDocument();
-    expect(screen.getByText("GBAI-2026-D-000001")).toBeInTheDocument();
+    expect(screen.getAllByText("GBAI-2026-D-000001").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Trials" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Unbind machine" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Desktop sessions" })).toBeInTheDocument();
     expect(screen.getAllByText("MacBook").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Entitlements" })).toBeInTheDocument();
-    expect(screen.getByText("cloud_sync")).toBeInTheDocument();
+    expect(screen.getAllByText("cloud_sync").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Leases" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Account timeline" })).toBeInTheDocument();
+    expect(screen.getByText("Need help with trial")).toBeInTheDocument();
   });
 
   it("renders admin users summary cards and search controls", async () => {
@@ -1201,13 +1314,15 @@ describe("admin pages", () => {
     expect(screen.getByText("Deleted")).toBeInTheDocument();
     expect(screen.getByDisplayValue("alice")).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Select alice@example.com"));
-    expect(screen.getByRole("button", { name: "Bulk soft delete" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Manage user" })).toHaveAttribute("href", "/admin/users/user-1");
-    const moreActions = screen.getByRole("group", { name: "More actions" });
+    expect(screen.queryByRole("button", { name: "Bulk soft delete" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bulk soft delete selected users" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Manage user" })[0]).toHaveAttribute("href", "/admin/users/user-1");
+    const moreActions = screen.getAllByRole("group", { name: "More actions" })[0];
     expect(moreActions).not.toHaveAttribute("open");
-    expect(screen.getByRole("button", { name: "More actions" })).toBeInTheDocument();
-    expect(moreActions).toContainElement(screen.getByRole("button", { name: "Soft delete" }));
+    expect(screen.getAllByRole("button", { name: "More actions" }).length).toBeGreaterThan(0);
+    expect(moreActions).toContainElement(screen.getAllByRole("button", { name: "Soft delete" })[0]);
     expect(screen.getByText("Detailed account, contributions, certificates, and devices")).toBeInTheDocument();
+    expect(screen.getByTestId("admin-mobile-cards")).toHaveTextContent("alice@example.com");
   });
 
   it("shows an empty filtered state with reset action", async () => {
@@ -1272,7 +1387,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length <= 2 ? profileQuery : ownerQuery;
       }
 
-      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases"].includes(table)) {
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "support_feedback"].includes(table)) {
         return emptyQuery;
       }
 

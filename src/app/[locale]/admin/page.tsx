@@ -5,6 +5,7 @@ import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { requireAdmin } from "@/lib/auth/guards";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type AdminPageProps = {
   params: Promise<{
@@ -23,6 +24,52 @@ export default async function AdminPage({ params }: AdminPageProps) {
   await requireAdmin(locale);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale as Locale, "/admin");
+  let usersCount = 0;
+  let activeTrialsCount = 0;
+  let feedbackCount = 0;
+  let donationsCount = 0;
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const [usersMetric, activeTrialsMetric, feedbackMetric, donationsMetric] = await Promise.all([
+      supabase.from("profiles").select("id", { count: "exact", head: true }).limit(0),
+      supabase.from("trial_codes").select("id", { count: "exact", head: true }).eq("is_active", true).is("deleted_at", null).limit(0),
+      supabase.from("support_feedback").select("id", { count: "exact", head: true }).eq("status", "open").limit(0),
+      supabase.from("donations").select("id", { count: "exact", head: true }).eq("status", "paid").limit(0),
+    ]);
+    usersCount = usersMetric.count ?? 0;
+    activeTrialsCount = activeTrialsMetric.count ?? 0;
+    feedbackCount = feedbackMetric.count ?? 0;
+    donationsCount = donationsMetric.count ?? 0;
+  } catch {
+    usersCount = 0;
+    activeTrialsCount = 0;
+    feedbackCount = 0;
+    donationsCount = 0;
+  }
+
+  const metrics = [
+    {
+      href: "/admin/users",
+      label: t("overview.totalUsersMetric"),
+      value: usersCount,
+    },
+    {
+      href: "/admin/licenses",
+      label: t("overview.activeTrialsMetric"),
+      value: activeTrialsCount,
+    },
+    {
+      href: "/admin/support-feedback",
+      label: t("overview.pendingFeedbackMetric"),
+      value: feedbackCount,
+    },
+    {
+      href: "/admin/donations",
+      label: t("overview.recentContributionsMetric"),
+      value: donationsCount,
+    },
+  ];
 
   const adminLinks = [
     {
@@ -76,6 +123,21 @@ export default async function AdminPage({ params }: AdminPageProps) {
     <AdminShell {...shellProps}>
       <AdminPageHeader description={t("overview.description")} eyebrow={t("overview.eyebrow")} title={t("overview.title")} />
       <section className="mx-auto max-w-7xl">
+          <AdminCard className="mb-6 p-5">
+            <h2 className="text-base font-semibold text-slate-950">{t("overview.metricsTitle")}</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {metrics.map((metric) => (
+                <Link
+                  className="rounded-md border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-slate-300 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                  href={metric.href}
+                  key={metric.href}
+                >
+                  <span className="block text-sm font-medium text-slate-600">{metric.label}</span>
+                  <span className="mt-2 block text-3xl font-semibold text-slate-950">{metric.value}</span>
+                </Link>
+              ))}
+            </div>
+          </AdminCard>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {adminLinks.map((link) => (
               <Link

@@ -236,7 +236,9 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             bulkEnable: t("bulkEnable"),
             bulkRole: t("bulkChangeRole"),
             bulkSoftDelete: t("bulkSoftDelete"),
+            bulkSoftDeleteSelected: t("bulkSoftDeleteSelected"),
             clearSelection: t("clearSelection"),
+            dangerZone: t("dangerZone"),
             operatorRole: t("roles.operator"),
             ownerRole: t("roles.owner"),
             roleTarget: t("roleTarget"),
@@ -259,7 +261,86 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
               </Link>
             </div>
           ) : (
-            <AdminTableShell label={t("title")}>
+            <AdminTableShell
+              label={t("title")}
+              mobileCards={
+                <div className="grid gap-3">
+                  {filteredProfiles.map((profile) => {
+                    const trials = trialsByUser.get(profile.id) ?? [];
+                    const sessions = sessionsByUser.get(profile.id) ?? [];
+                    const resolvedRole = profile.admin_role ?? (profile.is_admin ? "owner" : "user");
+                    const accountStatus = profile.account_status ?? "active";
+
+                    return (
+                      <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={profile.id}>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="break-all text-sm font-semibold text-slate-950">{profile.email}</p>
+                            <p className="mt-1 text-sm text-slate-600">{profile.display_name ?? "-"}</p>
+                            <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
+                          </div>
+                          <AdminStatusBadge tone={accountStatus === "deleted" ? "warning" : accountStatus === "active" ? "success" : "danger"}>
+                            {accountStatus === "deleted" ? t("deletedPill") : t(`statuses.${accountStatus}`)}
+                          </AdminStatusBadge>
+                        </div>
+                        <dl className="mt-4 grid gap-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <dt className="text-slate-500">{t("role")}</dt>
+                            <dd className="font-medium text-slate-900">
+                              {resolvedRole === "owner" ? t("ownerPill") : resolvedRole === "operator" ? t("operatorPill") : t("userPill")}
+                            </dd>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <dt className="text-slate-500">{t("type")}</dt>
+                            <dd className="text-slate-900">{profile.is_admin ? t("adminType") : t("standardType")}</dd>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <dt className="text-slate-500">{t("devicesAndTrials")}</dt>
+                            <dd className="text-right text-slate-900">
+                              {sessions.length} {t("devices")} / {trials.length} {t("trials")}
+                            </dd>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <dt className="text-slate-500">{t("createdAt")}</dt>
+                            <dd className="text-right text-slate-900">{formatDate(profile.created_at, locale)}</dd>
+                          </div>
+                        </dl>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Link className="inline-flex min-h-10 flex-1 items-center justify-center rounded-md bg-slate-950 px-3 text-sm font-medium text-white" href={`/admin/users/${profile.id}`}>
+                            {t("manageUser")}
+                          </Link>
+                          <details aria-label={t("moreActions")} className="relative flex-1">
+                            <summary className="inline-flex min-h-10 w-full cursor-pointer list-none items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" role="button">
+                              {t("moreActions")}
+                            </summary>
+                            <div className="mt-2 grid gap-3 rounded-md border border-slate-200 bg-white p-3 text-left shadow-lg">
+                              {trials[0]?.machine_code_hash ? (
+                                <form action={unbindTrialMachine}>
+                                  <input name="locale" type="hidden" value={locale} />
+                                  <input name="return_to" type="hidden" value="/admin/users" />
+                                  <input name="trial_redemption_id" type="hidden" value={trials[0].id} />
+                                  <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("unbind")} pendingLabel={adminT("common.processing")}>
+                                    {t("unbind")}
+                                  </ConfirmActionButton>
+                                </form>
+                              ) : null}
+                              <form action={softDeleteUser}>
+                                <input name="locale" type="hidden" value={locale} />
+                                <input name="return_to" type="hidden" value="/admin/users" />
+                                <input name="user_id" type="hidden" value={profile.id} />
+                                <ConfirmActionButton className="text-sm font-semibold text-red-700" confirmLabel={t("softDelete")} pendingLabel={adminT("common.processing")}>
+                                  {t("softDelete")}
+                                </ConfirmActionButton>
+                              </form>
+                            </div>
+                          </details>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              }
+            >
               <table aria-label={t("title")} className="min-w-[1540px] table-fixed text-left text-sm">
                 <colgroup>
                   <col className="w-[72px]" />

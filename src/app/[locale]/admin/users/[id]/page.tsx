@@ -28,6 +28,14 @@ type AdminUserDetailPageProps = {
   searchParams?: Promise<{ error?: string; notice?: string }>;
 };
 
+type TimelineItem = {
+  date: string | null;
+  detail: string;
+  href?: string;
+  label: string;
+  title: string;
+};
+
 function formatDateTime(value: string | null, locale: string) {
   if (!value) {
     return "-";
@@ -90,6 +98,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
     sessionsResult,
     entitlementsResult,
     leasesResult,
+    supportFeedbackResult,
     adminProfileResult,
   ] = await Promise.all([
     supabase
@@ -134,6 +143,12 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .order("updated_at", { ascending: false })
       .limit(50),
     supabase
+      .from("support_feedback")
+      .select("id,subject,status,created_at")
+      .eq("user_id", id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
       .from("profiles")
       .select("is_admin,admin_role,account_status")
       .eq("id", admin.id)
@@ -150,6 +165,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   if (sessionsResult.error) throw sessionsResult.error;
   if (entitlementsResult.error) throw entitlementsResult.error;
   if (leasesResult.error) throw leasesResult.error;
+  if (supportFeedbackResult.error) throw supportFeedbackResult.error;
   if (adminProfileResult.error) throw adminProfileResult.error;
 
   const profile = profileResult.data;
@@ -159,7 +175,55 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   const sessions = sessionsResult.data ?? [];
   const entitlements = entitlementsResult.data ?? [];
   const leases = leasesResult.data ?? [];
+  const supportFeedback = supportFeedbackResult.data ?? [];
   const canManageRoles = isOwnerProfile(adminProfileResult.data);
+  const timelineItems: TimelineItem[] = [
+    ...supportFeedback.map((item) => ({
+      date: item.created_at,
+      detail: item.status,
+      href: `/admin/support-feedback/${item.id}`,
+      label: t("timelineFeedback"),
+      title: item.subject,
+    })),
+    ...leases.map((item) => ({
+      date: item.updated_at,
+      detail: formatDateTime(item.expires_at, locale),
+      label: t("timelineLease"),
+      title: item.device_id,
+    })),
+    ...sessions.map((item) => ({
+      date: item.last_seen_at,
+      detail: item.platform,
+      label: t("timelineSession"),
+      title: item.device_id,
+    })),
+    ...entitlements.map((item) => ({
+      date: item.updated_at,
+      detail: formatDateTime(item.valid_until, locale),
+      label: t("timelineEntitlement"),
+      title: item.feature_code,
+    })),
+    ...trials.map((item) => ({
+      date: item.redeemed_at,
+      detail: formatDateTime(item.trial_valid_until, locale),
+      label: t("timelineTrial"),
+      title: item.device_id ?? shortHash(item.machine_code_hash),
+    })),
+    ...certificates.map((item) => ({
+      date: item.issued_at,
+      detail: item.status,
+      label: t("timelineCertificate"),
+      title: item.certificate_number,
+    })),
+    ...donations.map((item) => ({
+      date: item.paid_at ?? item.created_at,
+      detail: `${item.provider} / ${item.status}`,
+      label: t("timelineDonation"),
+      title: formatAmount(item.amount, item.currency, locale),
+    })),
+  ]
+    .filter((item) => item.date)
+    .sort((a, b) => new Date(b.date ?? "").getTime() - new Date(a.date ?? "").getTime());
 
   return (
     <AdminShell {...shellProps}>
@@ -478,6 +542,36 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
             )}
           </AdminCard>
         </div>
+
+        <AdminCard className="mt-6 p-5">
+          <h2 className="text-base font-semibold text-slate-950">{t("timelineTitle")}</h2>
+          {timelineItems.length > 0 ? (
+            <ol className="mt-4 space-y-3">
+              {timelineItems.map((item, index) => (
+                <li className="relative rounded-lg border border-slate-200 bg-slate-50 p-4" key={`${item.label}-${item.title}-${index}`}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{item.label}</p>
+                      {item.href ? (
+                        <a className="mt-1 block break-words text-sm font-semibold text-slate-950 underline-offset-4 hover:underline" href={item.href}>
+                          {item.title}
+                        </a>
+                      ) : (
+                        <p className="mt-1 break-words text-sm font-semibold text-slate-950">{item.title}</p>
+                      )}
+                      <p className="mt-1 break-words text-xs text-slate-600">{item.detail}</p>
+                    </div>
+                    <time className="text-right text-xs text-slate-500" dateTime={item.date ?? undefined}>
+                      {formatDateTime(item.date, locale)}
+                    </time>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="mt-4 text-sm text-slate-600">{t("timelineEmpty")}</p>
+          )}
+        </AdminCard>
 
         <AdminUserDeleteDangerZone
           action={permanentlyDeleteUser}

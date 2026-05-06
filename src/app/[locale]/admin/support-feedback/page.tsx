@@ -58,7 +58,36 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
         <AdminFeedbackBanner error={feedbackState?.error} notice={feedbackState?.notice} />
         <AdminCard>
           {feedback && feedback.length > 0 ? (
-            <AdminTableShell label={t("supportFeedback.title")}>
+            <AdminTableShell
+              label={t("supportFeedback.title")}
+              mobileCards={
+                <div className="grid gap-3">
+                  {feedback.map((item) => (
+                    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={item.id}>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <Link className="break-words text-sm font-semibold text-slate-950 underline-offset-4 hover:underline" href={`/admin/support-feedback/${item.id}`}>
+                            {item.subject}
+                          </Link>
+                          <p className="mt-1 break-all text-sm text-slate-600">{item.email ?? "-"}</p>
+                          <p className="text-xs text-slate-500">{item.contact ?? "-"}</p>
+                        </div>
+                        <AdminStatusBadge tone={statusTone(item.status as FeedbackStatus)}>
+                          {t(`supportFeedback.statuses.${item.status as FeedbackStatus}`)}
+                        </AdminStatusBadge>
+                      </div>
+                      <p className="mt-4 line-clamp-4 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{item.message}</p>
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-slate-500">{formatDateTimeWithSeconds(item.created_at, locale)}</p>
+                        <Link className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/support-feedback/${item.id}`}>
+                          {t("supportFeedback.view")}
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              }
+            >
                 <table aria-label={t("supportFeedback.title")} className="min-w-[1260px] table-fixed text-left text-sm">
                 <colgroup>
                   <col className="w-[230px]" />

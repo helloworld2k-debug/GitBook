@@ -125,7 +125,38 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
           </AdminCard>
           <AdminCard className="mt-6">
             {donations && donations.length > 0 ? (
-              <AdminTableShell label={t("donations.title")}>
+              <AdminTableShell
+                label={t("donations.title")}
+                mobileCards={
+                  <div className="grid gap-3">
+                    {donations.map((donation) => (
+                      <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={donation.id}>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-950">
+                              {t(`donations.providers.${donation.provider as DonationProvider}`)}
+                            </p>
+                            <p className="mt-1 text-sm text-slate-600">{formatAmount(donation.amount, donation.currency, locale)}</p>
+                          </div>
+                          <AdminStatusBadge tone={getDonationStatusTone(donation.status as DonationStatus)}>
+                            {t(`donations.statuses.${donation.status as DonationStatus}`)}
+                          </AdminStatusBadge>
+                        </div>
+                        <dl className="mt-4 grid gap-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <dt className="text-slate-500">{t("donations.paidAt")}</dt>
+                            <dd className="text-right text-slate-900">{formatDateTimeWithSeconds(donation.paid_at ?? donation.created_at, locale)}</dd>
+                          </div>
+                          <div className="grid gap-1">
+                            <dt className="text-slate-500">{t("donations.transactionId")}</dt>
+                            <dd className="break-all font-mono text-xs text-slate-900">{donation.provider_transaction_id}</dd>
+                          </div>
+                        </dl>
+                      </article>
+                    ))}
+                  </div>
+                }
+              >
                 <table aria-label={t("donations.title")} className="min-w-[1040px] table-fixed text-left text-sm">
                   <colgroup>
                     <col className="w-[180px]" />

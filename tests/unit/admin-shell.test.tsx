@@ -75,7 +75,14 @@ describe("AdminPageHeader", () => {
 describe("AdminTableShell", () => {
   it("creates a stable responsive scroll container for dense admin tables", () => {
     render(
-      <AdminTableShell>
+      <AdminTableShell
+        mobileCards={
+          <article>
+            <h2>Mobile record</h2>
+            <p>Condensed admin details</p>
+          </article>
+        }
+      >
         <table>
           <tbody>
             <tr>
@@ -91,5 +98,10 @@ describe("AdminTableShell", () => {
     expect(shell).toHaveClass("overflow-x-auto", "overscroll-x-contain", "rounded-b-md");
     expect(shell).toHaveAttribute("tabIndex", "0");
     expect(shell).toHaveAttribute("aria-label", "Scrollable admin table");
+    expect(shell).toHaveClass("hidden", "md:block");
+
+    const mobileShell = screen.getByTestId("admin-mobile-cards");
+    expect(mobileShell).toHaveClass("grid", "md:hidden");
+    expect(screen.getByRole("heading", { name: "Mobile record" })).toBeInTheDocument();
   });
 });

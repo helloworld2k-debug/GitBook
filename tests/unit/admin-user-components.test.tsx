@@ -54,7 +54,9 @@ describe("AdminUserBulkToolbar", () => {
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
           bulkSoftDelete: "Bulk soft delete",
+          bulkSoftDeleteSelected: "Bulk soft delete selected users",
           clearSelection: "Clear selection",
+          dangerZone: "Danger zone",
           operatorRole: "Operator",
           ownerRole: "Owner",
           roleTarget: "Target role",
@@ -65,7 +67,11 @@ describe("AdminUserBulkToolbar", () => {
     );
 
     expect(screen.getByText("3 selected")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Bulk soft delete" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Bulk soft delete" })).not.toBeInTheDocument();
+    expect(screen.getByText("Danger zone")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Danger zone" })).toContainElement(
+      screen.getByRole("button", { name: "Bulk soft delete selected users" }),
+    );
   });
 
   it("submits the selected users and intent through the target form", () => {
@@ -90,7 +96,9 @@ describe("AdminUserBulkToolbar", () => {
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
           bulkSoftDelete: "Bulk soft delete",
+          bulkSoftDeleteSelected: "Bulk soft delete selected users",
           clearSelection: "Clear selection",
+          dangerZone: "Danger zone",
           operatorRole: "Operator",
           ownerRole: "Owner",
           roleTarget: "Target role",
@@ -129,7 +137,9 @@ describe("AdminUserBulkToolbar", () => {
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
           bulkSoftDelete: "Bulk soft delete",
+          bulkSoftDeleteSelected: "Bulk soft delete selected users",
           clearSelection: "Clear selection",
+          dangerZone: "Danger zone",
           operatorRole: "Operator",
           ownerRole: "Owner",
           roleTarget: "Target role",
@@ -170,7 +180,9 @@ describe("AdminUserBulkToolbar", () => {
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
           bulkSoftDelete: "Bulk soft delete",
+          bulkSoftDeleteSelected: "Bulk soft delete selected users",
           clearSelection: "Clear selection",
+          dangerZone: "Danger zone",
           operatorRole: "Operator",
           ownerRole: "Owner",
           roleTarget: "Target role",
@@ -192,7 +204,7 @@ describe("AdminUserBulkToolbar", () => {
     expect(new FormData(form).get("admin_role")).toBe("operator");
     expect(form.querySelector<HTMLInputElement>('input[type="hidden"][name="admin_role"]')?.value).toBe("operator");
 
-    fireEvent.click(screen.getByRole("button", { name: "Bulk soft delete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bulk soft delete selected users" }));
     const submittedData = new FormData(form);
     expect(submittedData.get("intent")).toBe("soft-delete");
     expect(Array.from(form.querySelectorAll<HTMLInputElement>('input[data-bulk-generated="true"][name="user_ids"]')).map((input) => input.value)).toEqual(["user-1", "user-2"]);
@@ -216,7 +228,9 @@ describe("AdminUserBulkToolbar", () => {
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
           bulkSoftDelete: "Bulk soft delete",
+          bulkSoftDeleteSelected: "Bulk soft delete selected users",
           clearSelection: "Clear selection",
+          dangerZone: "Danger zone",
           operatorRole: "Operator",
           ownerRole: "Owner",
           roleTarget: "Target role",

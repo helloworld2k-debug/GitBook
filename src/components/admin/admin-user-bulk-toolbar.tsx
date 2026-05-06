@@ -119,7 +119,9 @@ export function AdminUserBulkToolbar({
     bulkEnable: string;
     bulkRole: string;
     bulkSoftDelete: string;
+    bulkSoftDeleteSelected: string;
     clearSelection: string;
+    dangerZone: string;
     operatorRole: string;
     ownerRole: string;
     roleTarget: string;
@@ -169,9 +171,25 @@ export function AdminUserBulkToolbar({
             </button>
           </div>
         ) : null}
-        <button className="inline-flex min-h-10 items-center rounded-md bg-red-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-red-400 active:bg-red-300" onClick={() => submitBulkIntent(formId, "soft-delete")} type="button">
-          {labels.bulkSoftDelete}
-        </button>
+        <details
+          aria-label={labels.dangerZone}
+          className="rounded-md border border-red-300/30 bg-red-500/10 px-2 py-2"
+          role="group"
+        >
+          <summary className="min-h-9 cursor-pointer list-none rounded-md px-2 text-xs font-semibold uppercase tracking-wide text-red-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white [&::-webkit-details-marker]:hidden">
+            {labels.dangerZone}
+          </summary>
+          <div className="mt-2 grid gap-2">
+            <button
+              aria-label={labels.bulkSoftDeleteSelected}
+              className="inline-flex min-h-10 items-center rounded-md bg-red-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-red-400 active:bg-red-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              onClick={() => submitBulkIntent(formId, "soft-delete")}
+              type="button"
+            >
+              {labels.bulkSoftDelete}
+            </button>
+          </div>
+        </details>
         <button
           className="inline-flex min-h-10 items-center rounded-md border border-white/20 px-3 text-sm font-medium text-white"
           onClick={() => {
