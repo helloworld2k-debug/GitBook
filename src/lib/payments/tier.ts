@@ -110,6 +110,10 @@ function getConfiguredCompareAtAmount(code: string) {
   return donationTiers.find((tier) => tier.code === code)?.compareAtAmount ?? null;
 }
 
+function getConfiguredDonationTiers() {
+  return donationTiers.map((tier, index) => ({ ...tier, sortOrder: index + 1 }));
+}
+
 export function findDonationTier(code: FormDataEntryValue | string | null) {
   if (typeof code !== "string") {
     return null;
@@ -127,11 +131,11 @@ export async function getActiveDonationTiers(client: DonationTierClient): Promis
   );
 
   if (error) {
-    throw new Error("Unable to read donation tiers");
+    return getConfiguredDonationTiers();
   }
 
   if (!data || data.length === 0) {
-    return donationTiers.map((tier, index) => ({ ...tier, sortOrder: index + 1 }));
+    return getConfiguredDonationTiers();
   }
 
   return mapDonationTierRows(data);

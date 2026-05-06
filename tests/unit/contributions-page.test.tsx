@@ -187,4 +187,82 @@ describe("ContributionsPage", () => {
 
     expect(screen.getByText("Yearly Support 8640 10800 anonymous")).toBeInTheDocument();
   });
+
+  it("renders configured tiers when the production database query fails", async () => {
+    mocks.createSupabaseServerClient.mockResolvedValueOnce({
+      auth: {
+        getUser: async () => ({ data: { user: null } }),
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            order: async () => ({
+              data: null,
+              error: { message: "database unavailable" },
+            }),
+          }),
+        }),
+      }),
+    });
+
+    render(
+      await ContributionsPage({
+        params: Promise.resolve({ locale: "en" }),
+      } as {
+        params: Promise<{ locale: string }>;
+      }),
+    );
+
+    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Quarterly Support 2430 2700 anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Yearly Support 8640 10800 anonymous")).toBeInTheDocument();
+  });
+
+  it("renders configured tiers when auth lookup fails", async () => {
+    mocks.createSupabaseServerClient.mockResolvedValueOnce({
+      auth: {
+        getUser: async () => {
+          throw new Error("auth unavailable");
+        },
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            order: async () => ({
+              data: null,
+              error: { message: "database unavailable" },
+            }),
+          }),
+        }),
+      }),
+    });
+
+    render(
+      await ContributionsPage({
+        params: Promise.resolve({ locale: "en" }),
+      } as {
+        params: Promise<{ locale: string }>;
+      }),
+    );
+
+    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
+  });
+
+  it("renders configured tiers when Supabase server configuration is missing", async () => {
+    mocks.createSupabaseServerClient.mockRejectedValueOnce(
+      new Error("Missing NEXT_PUBLIC_SUPABASE_URL. Set it to your Supabase project URL."),
+    );
+
+    render(
+      await ContributionsPage({
+        params: Promise.resolve({ locale: "en" }),
+      } as {
+        params: Promise<{ locale: string }>;
+      }),
+    );
+
+    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Quarterly Support 2430 2700 anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Yearly Support 8640 10800 anonymous")).toBeInTheDocument();
+  });
 });

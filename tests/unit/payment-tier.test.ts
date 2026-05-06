@@ -88,4 +88,20 @@ describe("getActiveDonationTiers", () => {
     ]);
     expect(select).toHaveBeenNthCalledWith(2, "id,code,label,description,amount,currency,sort_order");
   });
+
+  it("returns configured tiers when the database query fails", async () => {
+    const order = vi.fn(async () => ({
+      data: null,
+      error: { message: "relation donation_tiers is unavailable" },
+    }));
+    const eq = vi.fn(() => ({ order }));
+    const select = vi.fn(() => ({ eq }));
+    const client = { from: vi.fn(() => ({ select })) };
+
+    await expect(getActiveDonationTiers(client)).resolves.toEqual([
+      expect.objectContaining({ amount: 900, code: "monthly", compareAtAmount: null }),
+      expect.objectContaining({ amount: 2430, code: "quarterly", compareAtAmount: 2700 }),
+      expect.objectContaining({ amount: 8640, code: "yearly", compareAtAmount: 10800 }),
+    ]);
+  });
 });
