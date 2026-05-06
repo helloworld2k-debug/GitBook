@@ -225,4 +225,29 @@ describe("AdminSupportSettingsPage", () => {
     expect(screen.getByDisplayValue("2430")).toBeInTheDocument();
     expect(screen.getByDisplayValue("2700")).toBeInTheDocument();
   });
+
+  it("opens with default settings when support settings tables are temporarily unavailable", async () => {
+    mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
+    mocks.createSupabaseServerClient.mockResolvedValue({
+      auth: {
+        getUser: async () => ({ data: { user: { id: "admin-1", email: "admin@example.com" } } }),
+      },
+      from: () => {
+        throw new TypeError("Cannot read properties of undefined (reading 'rest')");
+      },
+    });
+
+    render(
+      await AdminSupportSettingsPage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({}),
+      }),
+    );
+
+    expect(screen.getByText("Development support tiers")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Monthly Support")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("900")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Telegram")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Email")).toBeInTheDocument();
+  });
 });

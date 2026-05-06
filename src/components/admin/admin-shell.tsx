@@ -8,6 +8,7 @@ import {
   Gift,
   Home,
   KeyRound,
+  LogOut,
   MessageSquareText,
   Menu,
   Package,
@@ -17,6 +18,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { siteConfig, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { isAdminFeedbackKey, type AdminFeedbackKey, type AdminFeedbackTone } from "@/lib/admin/feedback";
+import { signOutAction } from "@/app/[locale]/dashboard/actions";
 
 type AdminShellLabels = {
   auditLogs: string;
@@ -30,6 +32,7 @@ type AdminShellLabels = {
   notifications: string;
   releases: string;
   returnToSite: string;
+  signOut: string;
   supportFeedback: string;
   supportSettings: string;
   users: string;
@@ -133,6 +136,15 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale }
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-3">
                 <LanguageSwitcher currentLocale={locale} label={labels.language} variant="admin" />
+                <form action={signOutAction.bind(null, locale)}>
+                  <button
+                    className="inline-flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                    type="submit"
+                  >
+                    <LogOut aria-hidden="true" className="size-4" />
+                    {labels.signOut}
+                  </button>
+                </form>
                 <div className="hidden min-h-10 max-w-52 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 sm:flex">
                   <FileText aria-hidden="true" className="size-4 shrink-0 text-slate-400" />
                   <span className="truncate">{adminLabel}</span>

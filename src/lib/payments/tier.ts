@@ -29,6 +29,18 @@ type DonationTierRow = {
   sort_order: number;
 };
 
+const configuredTierLabels: Record<string, string> = {
+  monthly: "Monthly Support",
+  quarterly: "Quarterly Support",
+  yearly: "Yearly Support",
+};
+
+const configuredTierDescriptions: Record<string, string> = {
+  monthly: "Monthly support",
+  quarterly: "Quarterly support",
+  yearly: "Yearly support",
+};
+
 type DonationTierQueryResult = {
   data: DonationTierRow[] | null;
   error: unknown;
@@ -110,8 +122,15 @@ function getConfiguredCompareAtAmount(code: string) {
   return donationTiers.find((tier) => tier.code === code)?.compareAtAmount ?? null;
 }
 
-function getConfiguredDonationTiers() {
-  return donationTiers.map((tier, index) => ({ ...tier, sortOrder: index + 1 }));
+function getConfiguredDonationTiers({ editable = false } = {}) {
+  return donationTiers.map((tier, index) => ({
+    ...tier,
+    description: configuredTierDescriptions[tier.code] ?? tier.code,
+    id: tier.code,
+    isActive: editable ? true : undefined,
+    label: configuredTierLabels[tier.code] ?? tier.code,
+    sortOrder: index + 1,
+  }));
 }
 
 export function findDonationTier(code: FormDataEntryValue | string | null) {
@@ -151,15 +170,24 @@ export async function getActiveDonationTiers(client: DonationTierClient): Promis
 }
 
 export async function getManageableDonationTiers(client: DonationTierClient): Promise<DonationTier[]> {
-  const { data, error } = await readDonationTiers(
-    client,
-    "id,code,label,description,amount,compare_at_amount,currency,sort_order,is_active",
-    "id,code,label,description,amount,currency,sort_order,is_active",
-    false,
-  );
+  let data: DonationTierRow[] | null = null;
+  let error: unknown = null;
+
+  try {
+    const result = await readDonationTiers(
+      client,
+      "id,code,label,description,amount,compare_at_amount,currency,sort_order,is_active",
+      "id,code,label,description,amount,currency,sort_order,is_active",
+      false,
+    );
+    data = result.data;
+    error = result.error;
+  } catch {
+    return getConfiguredDonationTiers({ editable: true });
+  }
 
   if (error || !data) {
-    return [];
+    return getConfiguredDonationTiers({ editable: true });
   }
 
   return mapDonationTierRows(data);

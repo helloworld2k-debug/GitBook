@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { findDonationTier, getActiveDonationTiers } from "@/lib/payments/tier";
+import { findDonationTier, getActiveDonationTiers, getManageableDonationTiers } from "@/lib/payments/tier";
 
 describe("findDonationTier", () => {
   it("returns a tier by code", () => {
@@ -8,6 +8,37 @@ describe("findDonationTier", () => {
 
   it("returns null for invalid tier codes", () => {
     expect(findDonationTier("lifetime")).toBeNull();
+  });
+});
+
+describe("getManageableDonationTiers", () => {
+  it("returns configured editable tiers when the admin query fails", async () => {
+    const order = vi.fn(async () => ({
+      data: null,
+      error: { message: "relation donation_tiers is unavailable" },
+    }));
+    const select = vi.fn(() => ({ order }));
+    const client = { from: vi.fn(() => ({ select })) };
+
+    await expect(getManageableDonationTiers(client)).resolves.toEqual([
+      expect.objectContaining({ amount: 900, code: "monthly", compareAtAmount: null, isActive: true }),
+      expect.objectContaining({ amount: 2430, code: "quarterly", compareAtAmount: 2700, isActive: true }),
+      expect.objectContaining({ amount: 8640, code: "yearly", compareAtAmount: 10800, isActive: true }),
+    ]);
+  });
+
+  it("returns configured editable tiers when the admin query throws", async () => {
+    const client = {
+      from: vi.fn(() => {
+        throw new TypeError("Cannot read properties of undefined (reading 'rest')");
+      }),
+    };
+
+    await expect(getManageableDonationTiers(client)).resolves.toEqual([
+      expect.objectContaining({ amount: 900, code: "monthly", compareAtAmount: null, isActive: true }),
+      expect.objectContaining({ amount: 2430, code: "quarterly", compareAtAmount: 2700, isActive: true }),
+      expect.objectContaining({ amount: 8640, code: "yearly", compareAtAmount: 10800, isActive: true }),
+    ]);
   });
 });
 

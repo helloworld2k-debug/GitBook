@@ -24,6 +24,7 @@ const adminLabels = {
   licenses: "Licenses",
   menu: "Menu",
   notifications: "Notifications",
+  signOut: "Sign out",
   supportFeedback: "Feedback",
   supportSettings: "Support settings",
   releases: "Releases",
@@ -48,6 +49,7 @@ describe("AdminShell", () => {
     expect(within(sidebar).getByRole("link", { name: /Support settings/ })).toHaveAttribute("href", "/admin/support-settings");
     expect(screen.getByRole("navigation", { name: "Admin mobile" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Return to site/ })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("button", { name: /Sign out/ })).toBeInTheDocument();
     expect(screen.getByText("admin@example.com")).toBeInTheDocument();
     expect(screen.getByText("Admin content")).toBeInTheDocument();
   });

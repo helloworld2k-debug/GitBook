@@ -15,6 +15,19 @@ type AdminSupportSettingsPageProps = {
   searchParams?: Promise<{ channel?: string; error?: string; notice?: string }>;
 };
 
+async function getSupportContactRows(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>) {
+  try {
+    const { data: rows } = await supabase
+      .from("support_contact_channels")
+      .select("id,label,value,is_enabled,sort_order")
+      .order("sort_order", { ascending: true });
+
+    return rows ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function AdminSupportSettingsPage({ params, searchParams }: AdminSupportSettingsPageProps) {
   const { locale } = await params;
   const feedback = await searchParams;
@@ -29,11 +42,7 @@ export default async function AdminSupportSettingsPage({ params, searchParams }:
   const shellProps = await getAdminShellProps(locale as Locale, "/admin/support-settings");
   const supabase = await createSupabaseServerClient();
   const defaults = getDefaultSupportChannelsConfig();
-  const { data: rows } = await supabase
-    .from("support_contact_channels")
-    .select("id,label,value,is_enabled,sort_order")
-    .order("sort_order", { ascending: true });
-
+  const rows = await getSupportContactRows(supabase);
   const channelRows = rows && rows.length > 0 ? rows : toSupportChannelRows(defaults);
   const donationTierRows = await getManageableDonationTiers(supabase);
   const previewChannels = normalizeSupportChannels({ defaults, rows: rows ?? [] });
