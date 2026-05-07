@@ -25,7 +25,7 @@ export default async function AdminSupportFeedbackDetailPage({ params, searchPar
   const { id, locale: localeParam } = await params;
   const feedbackState = await searchParams;
 
-  const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/support-feedback/${id}`);
+  const { locale, user } = await setupAdminPage(localeParam, `/${localeParam}/admin/support-feedback/${id}`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, `/admin/support-feedback/${id}`);
   const supabase = createSupabaseAdminClient();
@@ -48,6 +48,15 @@ export default async function AdminSupportFeedbackDetailPage({ params, searchPar
   if (messagesError) {
     throw messagesError;
   }
+
+  await supabase.from("support_feedback_admin_reads").upsert(
+    {
+      admin_user_id: user.id,
+      feedback_id: id,
+      read_at: new Date().toISOString(),
+    },
+    { onConflict: "feedback_id,admin_user_id" },
+  );
 
   return (
     <AdminShell {...shellProps}>

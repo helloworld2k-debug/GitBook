@@ -1,4 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
+import { enrichFeedbackUnreadState, type FeedbackUnreadSource } from "@/lib/admin/support-feedback-unread";
 import { supportedLocales, type Locale } from "@/config/site";
 import { optionalTimeout } from "@/lib/async/optional-timeout";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -18,23 +19,23 @@ export async function getAdminShellProps(locale: Locale, currentPath: string) {
 
   try {
     const supabase = await createSupabaseServerClient();
-    const [authResult, feedbackResult] = await Promise.all([
-      optionalTimeout(supabase.auth.getUser(), 900),
-      optionalTimeout(
+    const authResult = await optionalTimeout(supabase.auth.getUser(), 900);
+    const user = authResult?.data.user;
+
+    if (user) {
+      const feedbackResult = await optionalTimeout(
         Promise.resolve(
           supabase
             .from("support_feedback")
-            .select("id", { count: "exact", head: true })
-            .eq("status", "open")
-            .limit(0),
+            .select("id,created_at,support_feedback_admin_reads(admin_user_id,read_at),support_feedback_messages(author_role,created_at)")
+            .order("updated_at", { ascending: false })
+            .limit(100),
         ),
         900,
-      ),
-    ]);
-    const user = authResult?.data.user;
-    unreadFeedbackCount = feedbackResult?.count ?? 0;
+      );
+      unreadFeedbackCount = enrichFeedbackUnreadState((feedbackResult?.data ?? []) as FeedbackUnreadSource[], user.id)
+        .filter((feedback) => feedback.isUnread).length;
 
-    if (user) {
       const profileResult = await optionalTimeout(
         Promise.resolve(supabase.from("profiles").select("display_name,email").eq("id", user.id).single()),
         900,

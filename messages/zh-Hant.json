@@ -387,7 +387,10 @@
         "open": "待處理",
         "reviewing": "處理中",
         "closed": "已關閉"
-      }
+      },
+      "allFeedback": "所有回饋",
+      "unread": "未讀",
+      "unreadFeedback": "未讀回饋"
     },
     "supportSettings": {
       "eyebrow": "管理後台",
@@ -620,7 +623,7 @@
       "supportSettings": "支援設定",
       "users": "使用者",
       "contributionPricing": "支持價格設定",
-      "supportFeedbackUnread": "有 {count} 則回饋需要跟進"
+      "supportFeedbackUnread": "有 {count} 則未讀回饋"
     },
     "contributionPricing": {
       "eyebrow": "Admin",

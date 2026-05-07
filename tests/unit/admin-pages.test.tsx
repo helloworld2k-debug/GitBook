@@ -216,6 +216,9 @@ const testMessages = {
         save: "Save",
         empty: "No feedback found.",
         view: "Open thread",
+        allFeedback: "All feedback",
+        unread: "Unread",
+        unreadFeedback: "Unread feedback",
         statuses: {
           open: "Open",
           reviewing: "Reviewing",
@@ -902,6 +905,14 @@ describe("admin pages", () => {
         message: "The redeem button fails on mobile.",
         status: "open",
         created_at: "2026-05-01T10:00:00.000Z",
+        updated_at: "2026-05-01T10:00:00.000Z",
+        support_feedback_admin_reads: [],
+        support_feedback_messages: [
+          {
+            author_role: "user",
+            created_at: "2026-05-01T10:05:00.000Z",
+          },
+        ],
       },
     ]);
     const from = vi.fn(() => feedbackQuery);
@@ -913,8 +924,51 @@ describe("admin pages", () => {
 
     expect(from).toHaveBeenCalledWith("support_feedback");
     expect(screen.getByRole("table", { name: "Support feedback" })).toHaveClass("min-w-[1260px]", "table-fixed");
+    expect(screen.getAllByText("Unread").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "Unread feedback" })).toHaveAttribute("href", "/admin/support-feedback?filter=unread");
     expect(screen.getByTestId("admin-mobile-cards")).toHaveTextContent("Cannot redeem trial");
     expect(screen.getAllByRole("link", { name: "Open thread" })[0]).toHaveAttribute("href", "/admin/support-feedback/feedback-1");
+  });
+
+  it("filters support feedback to unread threads", async () => {
+    const feedbackQuery = createAdminListQuery([
+      {
+        id: "feedback-read",
+        email: "read@example.com",
+        contact: null,
+        subject: "Already read",
+        message: "Old message",
+        status: "reviewing",
+        created_at: "2026-05-01T09:00:00.000Z",
+        updated_at: "2026-05-01T09:00:00.000Z",
+        support_feedback_admin_reads: [{ admin_user_id: "admin-1", read_at: "2026-05-01T09:10:00.000Z" }],
+        support_feedback_messages: [{ author_role: "user", created_at: "2026-05-01T09:05:00.000Z" }],
+      },
+      {
+        id: "feedback-unread",
+        email: "unread@example.com",
+        contact: null,
+        subject: "Needs attention",
+        message: "New message",
+        status: "open",
+        created_at: "2026-05-01T10:00:00.000Z",
+        updated_at: "2026-05-01T10:00:00.000Z",
+        support_feedback_admin_reads: [],
+        support_feedback_messages: [{ author_role: "user", created_at: "2026-05-01T10:05:00.000Z" }],
+      },
+    ]);
+    const from = vi.fn(() => feedbackQuery);
+    createSupabaseServerClientMock.mockResolvedValue({ from });
+
+    const element = await AdminSupportFeedbackPage({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ filter: "unread" }),
+    });
+
+    render(element);
+
+    expect(screen.getAllByText("Needs attention").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Already read")).not.toBeInTheDocument();
   });
 
   it("renders Japanese admin donation enum labels", async () => {

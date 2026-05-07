@@ -3,6 +3,7 @@ import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatu
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
+import { enrichFeedbackUnreadState, type FeedbackUnreadSource } from "@/lib/admin/support-feedback-unread";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -10,10 +11,18 @@ import { updateSupportFeedbackStatus } from "../actions";
 
 type AdminSupportFeedbackPageProps = {
   params: Promise<{ locale: string }>;
-  searchParams?: Promise<{ error?: string; notice?: string }>;
+  searchParams?: Promise<{ error?: string; filter?: string; notice?: string }>;
 };
 
 type FeedbackStatus = "open" | "reviewing" | "closed";
+
+type AdminFeedbackRow = FeedbackUnreadSource & {
+  contact: string | null;
+  email: string | null;
+  message: string;
+  status: FeedbackStatus;
+  subject: string;
+};
 
 function statusTone(status: FeedbackStatus) {
   if (status === "closed") return "success";
@@ -25,18 +34,28 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
   const { locale: localeParam } = await params;
   const feedbackState = await searchParams;
 
-  const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/support-feedback`);
+  const { locale, user } = await setupAdminPage(localeParam, `/${localeParam}/admin/support-feedback`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, "/admin/support-feedback");
   const { data: feedback, error } = await (await createSupabaseServerClient())
     .from("support_feedback")
-    .select("id,email,contact,subject,message,status,created_at")
-    .order("created_at", { ascending: false })
+    .select("id,email,contact,subject,message,status,created_at,updated_at,support_feedback_admin_reads(admin_user_id,read_at),support_feedback_messages(author_role,created_at)")
+    .order("updated_at", { ascending: false })
     .limit(100);
 
   if (error) {
     throw error;
   }
+  const filter = feedbackState?.filter === "unread" ? "unread" : "all";
+  const feedbackWithUnreadState = enrichFeedbackUnreadState((feedback ?? []) as AdminFeedbackRow[], user.id)
+    .sort((a, b) => {
+      if (a.isUnread !== b.isUnread) {
+        return a.isUnread ? -1 : 1;
+      }
+
+      return new Date(b.latestUserMessageAt ?? b.created_at).getTime() - new Date(a.latestUserMessageAt ?? a.created_at).getTime();
+    });
+  const visibleFeedback = filter === "unread" ? feedbackWithUnreadState.filter((item) => item.isUnread) : feedbackWithUnreadState;
 
   return (
     <AdminShell {...shellProps}>
@@ -49,14 +68,32 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
           title={t("supportFeedback.title")}
         />
         <AdminFeedbackBanner error={feedbackState?.error} notice={feedbackState?.notice} />
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Link
+            className={`inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium ${
+              filter === "all" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-white text-slate-700"
+            }`}
+            href="/admin/support-feedback"
+          >
+            {t("supportFeedback.allFeedback")}
+          </Link>
+          <Link
+            className={`inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium ${
+              filter === "unread" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-white text-slate-700"
+            }`}
+            href="/admin/support-feedback?filter=unread"
+          >
+            {t("supportFeedback.unreadFeedback")}
+          </Link>
+        </div>
         <AdminCard>
-          {feedback && feedback.length > 0 ? (
+          {visibleFeedback.length > 0 ? (
             <AdminTableShell
               label={t("supportFeedback.title")}
               mobileCards={
                 <div className="grid gap-3">
-                  {feedback.map((item) => (
-                    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={item.id}>
+                  {visibleFeedback.map((item) => (
+                    <article className={`rounded-lg border bg-white p-4 shadow-sm ${item.isUnread ? "border-rose-200 ring-1 ring-rose-100" : "border-slate-200"}`} key={item.id}>
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
                           <Link className="break-words text-sm font-semibold text-slate-950 underline-offset-4 hover:underline" href={`/admin/support-feedback/${item.id}`}>
@@ -68,6 +105,11 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                         <AdminStatusBadge tone={statusTone(item.status as FeedbackStatus)}>
                           {t(`supportFeedback.statuses.${item.status as FeedbackStatus}`)}
                         </AdminStatusBadge>
+                        {item.isUnread ? (
+                          <span className="inline-flex min-h-7 items-center rounded-md border border-rose-200 bg-rose-50 px-2 text-xs font-semibold text-rose-700">
+                            {t("supportFeedback.unread")}
+                          </span>
+                        ) : null}
                       </div>
                       <p className="mt-4 line-clamp-4 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{item.message}</p>
                       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -84,6 +126,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                 <table aria-label={t("supportFeedback.title")} className="min-w-[1260px] table-fixed text-left text-sm">
                 <colgroup>
                   <col className="w-[230px]" />
+                  <col className="w-[120px]" />
                   <col className="w-[240px]" />
                   <col className="w-[320px]" />
                   <col className="w-[140px]" />
@@ -93,6 +136,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                   <tr>
                     <th className="px-5 py-3">{t("supportFeedback.subject")}</th>
+                    <th className="px-5 py-3">{t("supportFeedback.unread")}</th>
                     <th className="px-5 py-3">{t("supportFeedback.contact")}</th>
                     <th className="px-5 py-3">{t("supportFeedback.message")}</th>
                     <th className="px-5 py-3">{t("supportFeedback.status")}</th>
@@ -101,12 +145,21 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {feedback.map((item) => (
-                    <tr key={item.id}>
+                  {visibleFeedback.map((item) => (
+                    <tr className={item.isUnread ? "bg-rose-50/40" : ""} key={item.id}>
                       <td className="min-w-56 px-5 py-4 font-medium text-slate-950">
                         <Link className="underline-offset-4 hover:underline" href={`/admin/support-feedback/${item.id}`}>
                           {item.subject}
                         </Link>
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4">
+                        {item.isUnread ? (
+                          <span className="inline-flex min-h-7 items-center rounded-md border border-rose-200 bg-rose-50 px-2 text-xs font-semibold text-rose-700">
+                            {t("supportFeedback.unread")}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
+                        )}
                       </td>
                       <td className="min-w-56 px-5 py-4 text-slate-700">
                         <span className="block">{item.email ?? "-"}</span>

@@ -387,7 +387,10 @@
         "open": "未対応",
         "reviewing": "確認中",
         "closed": "完了"
-      }
+      },
+      "allFeedback": "すべてのフィードバック",
+      "unread": "未読",
+      "unreadFeedback": "未読フィードバック"
     },
     "supportSettings": {
       "eyebrow": "管理画面",
@@ -620,7 +623,7 @@
       "supportSettings": "サポート設定",
       "users": "ユーザー",
       "contributionPricing": "応援価格設定",
-      "supportFeedbackUnread": "{count} 件のフィードバックに対応が必要です"
+      "supportFeedbackUnread": "{count} 件の未読フィードバックがあります"
     },
     "contributionPricing": {
       "eyebrow": "Admin",

@@ -364,7 +364,10 @@
         "open": "Open",
         "reviewing": "Reviewing",
         "closed": "Closed"
-      }
+      },
+      "allFeedback": "All feedback",
+      "unread": "Unread",
+      "unreadFeedback": "Unread feedback"
     },
     "supportSettings": {
       "eyebrow": "Admin",
@@ -632,7 +635,7 @@
       "returnToSite": "Return to site",
       "users": "Users",
       "contributionPricing": "Contribution pricing",
-      "supportFeedbackUnread": "You have {count} feedback threads needing follow-up"
+      "supportFeedbackUnread": "You have {count} unread feedback threads"
     },
     "contributionPricing": {
       "eyebrow": "Admin",

@@ -1027,6 +1027,39 @@ export type Database = {
           },
         ];
       };
+      support_feedback_admin_reads: {
+        Row: {
+          feedback_id: string;
+          admin_user_id: string;
+          read_at: string;
+        };
+        Insert: {
+          feedback_id: string;
+          admin_user_id: string;
+          read_at?: string;
+        };
+        Update: {
+          feedback_id?: string;
+          admin_user_id?: string;
+          read_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "support_feedback_admin_reads_admin_user_id_fkey";
+            columns: ["admin_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "support_feedback_admin_reads_feedback_id_fkey";
+            columns: ["feedback_id"];
+            isOneToOne: false;
+            referencedRelation: "support_feedback";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       support_feedback_messages: {
         Row: {
           id: string;

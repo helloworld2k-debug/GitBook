@@ -387,7 +387,10 @@
         "open": "열림",
         "reviewing": "검토 중",
         "closed": "닫힘"
-      }
+      },
+      "allFeedback": "전체 피드백",
+      "unread": "읽지 않음",
+      "unreadFeedback": "읽지 않은 피드백"
     },
     "supportSettings": {
       "eyebrow": "관리",
@@ -620,7 +623,7 @@
       "supportSettings": "지원 설정",
       "users": "사용자",
       "contributionPricing": "지원 가격 설정",
-      "supportFeedbackUnread": "후속 조치가 필요한 피드백 {count}건이 있습니다"
+      "supportFeedbackUnread": "읽지 않은 피드백 {count}건이 있습니다"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
