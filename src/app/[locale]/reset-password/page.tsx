@@ -1,9 +1,8 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { KeyRound } from "lucide-react";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
-import { supportedLocales, type Locale } from "@/config/site";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { updateResetPassword } from "./actions";
 
 type ResetPasswordPageProps = {
@@ -16,14 +15,9 @@ type ResetPasswordPageProps = {
 };
 
 export default async function ResetPasswordPage({ params, searchParams }: ResetPasswordPageProps) {
-  const { locale } = await params;
+  const { locale: localeParam } = await params;
+  const locale = resolvePageLocale(localeParam);
   const query = await searchParams;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
   const t = await getTranslations("resetPassword");
   const updatePassword = updateResetPassword.bind(null, locale);
 

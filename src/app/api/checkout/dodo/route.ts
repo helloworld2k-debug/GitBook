@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supportedLocales, type Locale } from "@/config/site";
+import { jsonError } from "@/lib/api/responses";
 import { createDodoCheckoutSession, getDodoProductId } from "@/lib/payments/dodo";
 import { findActiveDonationTier } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -37,13 +38,13 @@ export async function POST(request: Request) {
   const tier = await findActiveDonationTier(supabase, formData.get("tier"));
 
   if (!tier) {
-    return NextResponse.json({ error: "Invalid donation tier" }, { status: 400 });
+    return jsonError("Invalid donation tier");
   }
 
   const productId = getDodoProductId(tier.code);
 
   if (!productId) {
-    return NextResponse.json({ error: "Invalid donation tier" }, { status: 400 });
+    return jsonError("Invalid donation tier");
   }
 
   const session = await createDodoCheckoutSession({
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
   });
 
   if (!session.checkout_url) {
-    return NextResponse.json({ error: "Unable to create checkout" }, { status: 502 });
+    return jsonError("Unable to create checkout", 502);
   }
 
   return NextResponse.redirect(session.checkout_url, 303);

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { jsonOk } from "@/lib/api/responses";
 import { releaseCloudSyncLease } from "@/lib/license/cloud-sync-leases";
 import { readBearerToken, validateDesktopSession } from "@/lib/license/desktop-session";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   const token = readBearerToken(request);
 
   if (!token) {
-    return NextResponse.json({ allowed: false, reason: "not_authenticated" }, { status: 401 });
+    return jsonOk({ allowed: false, reason: "not_authenticated" }, 401);
   }
 
   try {
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const session = await validateDesktopSession(client, token);
 
     if (!session) {
-      return NextResponse.json({ allowed: false, reason: "not_authenticated" }, { status: 401 });
+      return jsonOk({ allowed: false, reason: "not_authenticated" }, 401);
     }
 
     await releaseCloudSyncLease(client, {
@@ -25,8 +25,8 @@ export async function POST(request: Request) {
       userId: session.user_id,
     });
 
-    return NextResponse.json({ released: true });
+    return jsonOk({ released: true });
   } catch {
-    return NextResponse.json({ released: false, reason: "internal_error" }, { status: 500 });
+    return jsonOk({ released: false, reason: "internal_error" }, 500);
   }
 }

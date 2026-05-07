@@ -1,10 +1,9 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
-import { supportedLocales, type Locale } from "@/config/site";
 import { getDefaultSupportChannelsConfig, normalizeSupportChannels } from "@/config/support";
 import { Link } from "@/i18n/routing";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { submitSupportFeedback } from "./actions";
 
@@ -16,14 +15,9 @@ type SupportPageProps = {
 };
 
 export default async function SupportPage({ params, searchParams }: SupportPageProps) {
-  const { locale } = await params;
+  const { locale: localeParam } = await params;
+  const locale = resolvePageLocale(localeParam);
   const status = await searchParams;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
   const t = await getTranslations("support");
   const submitFeedback = submitSupportFeedback.bind(null, locale);
   const supabase = await createSupabaseServerClient();

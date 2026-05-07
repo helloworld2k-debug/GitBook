@@ -1,10 +1,8 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
-import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { requireAdmin } from "@/lib/auth/guards";
+import { setupAdminPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { addManualDonation } from "../actions";
@@ -37,17 +35,12 @@ function getDonationStatusTone(status: DonationStatus) {
 }
 
 export default async function AdminDonationsPage({ params, searchParams }: AdminDonationsPageProps) {
-  const { locale } = await params;
+  const { locale: localeParam } = await params;
   const feedback = await searchParams;
 
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  await requireAdmin(locale, `/${locale}/admin/donations`);
+  const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/donations`);
   const t = await getTranslations("admin");
-  const shellProps = await getAdminShellProps(locale as Locale, "/admin/donations");
+  const shellProps = await getAdminShellProps(locale, "/admin/donations");
 
   const supabase = await createSupabaseServerClient();
   const { data: donations, error } = await supabase

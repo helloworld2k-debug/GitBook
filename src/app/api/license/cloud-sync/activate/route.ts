@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { jsonOk } from "@/lib/api/responses";
 import { activateCloudSyncLease } from "@/lib/license/cloud-sync-leases";
 import { readBearerToken, validateDesktopSession } from "@/lib/license/desktop-session";
 import { getLicenseStatus } from "@/lib/license/status";
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   const token = readBearerToken(request);
 
   if (!token) {
-    return NextResponse.json({ allowed: false, reason: "not_authenticated" }, { status: 401 });
+    return jsonOk({ allowed: false, reason: "not_authenticated" }, 401);
   }
 
   try {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const session = await validateDesktopSession(client, token);
 
     if (!session) {
-      return NextResponse.json({ allowed: false, reason: "not_authenticated" }, { status: 401 });
+      return jsonOk({ allowed: false, reason: "not_authenticated" }, 401);
     }
 
     const status = await getLicenseStatus(client, {
@@ -27,13 +27,13 @@ export async function POST(request: Request) {
     });
 
     if (!status.allowed) {
-      return NextResponse.json(
+      return jsonOk(
         {
           allowed: false,
           reason: status.reason,
           validUntil: status.validUntil,
         },
-        { status: 403 },
+        403,
       );
     }
 
@@ -45,10 +45,10 @@ export async function POST(request: Request) {
     });
 
     if (!lease.ok) {
-      return NextResponse.json({ allowed: false, reason: "not_authenticated" }, { status: 401 });
+      return jsonOk({ allowed: false, reason: "not_authenticated" }, 401);
     }
 
-    return NextResponse.json({
+    return jsonOk({
       allowed: true,
       reason: "active",
       leaseId: lease.leaseId,
@@ -56,6 +56,6 @@ export async function POST(request: Request) {
       activeDeviceId: lease.activeDeviceId,
     });
   } catch {
-    return NextResponse.json({ allowed: false, reason: "internal_error" }, { status: 500 });
+    return jsonOk({ allowed: false, reason: "internal_error" }, 500);
   }
 }

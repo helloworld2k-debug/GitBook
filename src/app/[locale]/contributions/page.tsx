@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { DonationTierCard } from "@/components/donation-tier-card";
 import { PaymentStatusBanner } from "@/components/payment-status-banner";
-import { donationTiers, supportedLocales, type Locale } from "@/config/site";
+import { donationTiers, supportedLocales } from "@/config/site";
 import { getLoginRedirectPath } from "@/lib/auth/guards";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { getActiveDonationTiers } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -19,13 +19,8 @@ export function generateStaticParams() {
 }
 
 export default async function ContributionsPage({ params }: ContributionsPageProps) {
-  const { locale } = await params;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
+  const { locale: localeParam } = await params;
+  const locale = resolvePageLocale(localeParam);
 
   const t = await getTranslations("donate");
   const fallbackTiers = donationTiers.map((tier, index) => ({ ...tier, sortOrder: index + 1 }));

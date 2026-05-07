@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { supportedLocales, type Locale } from "@/config/site";
+import { getTranslations } from "next-intl/server";
+import { supportedLocales } from "@/config/site";
 import { optionalTimeout } from "@/lib/async/optional-timeout";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { getCachedPublishedReleases } from "@/lib/releases/public-cache";
 import { getPlatformDelivery, type SoftwareRelease } from "@/lib/releases/software-releases";
 
@@ -24,13 +24,8 @@ function formatReleaseDate(value: string, locale: string) {
 }
 
 export default async function VersionsPage({ params }: VersionsPageProps) {
-  const { locale } = await params;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
+  const { locale: localeParam } = await params;
+  const locale = resolvePageLocale(localeParam);
   const t = await getTranslations("versions");
   let releases: SoftwareRelease[] = [];
 

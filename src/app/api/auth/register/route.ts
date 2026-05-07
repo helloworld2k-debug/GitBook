@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { jsonError, jsonOk } from "@/lib/api/responses";
 import { checkRegisterRateLimit } from "@/lib/auth/register-rate-limit";
 import { registerWithEmailPassword } from "@/lib/auth/register";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
@@ -24,22 +24,22 @@ export async function POST(request: Request) {
   const turnstileToken = String(body.turnstileToken ?? "").trim();
 
   if (!email || !password || !callbackUrl) {
-    return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    return jsonError("invalid_request");
   }
 
   if (!turnstileToken) {
-    return NextResponse.json({ error: "captcha_required" }, { status: 400 });
+    return jsonError("captcha_required");
   }
 
   const ip = getIpAddress(request);
   const limit = checkRegisterRateLimit({ email, ip });
 
   if (!limit.ok) {
-    return NextResponse.json(
-      { error: "rate_limited" },
+    return jsonError(
+      "rate_limited",
+      429,
       {
         headers: { "retry-after": String(limit.retryAfterSeconds) },
-        status: 429,
       },
     );
   }
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   const turnstile = await verifyTurnstileToken(turnstileToken, ip);
 
   if (!turnstile.ok) {
-    return NextResponse.json({ error: "captcha_invalid" }, { status: 400 });
+    return jsonError("captcha_invalid");
   }
 
   const result = await registerWithEmailPassword({
@@ -57,8 +57,8 @@ export async function POST(request: Request) {
   });
 
   if (result.error) {
-    return NextResponse.json({ error: "register_failed" }, { status: 400 });
+    return jsonError("register_failed");
   }
 
-  return NextResponse.json({ ok: true });
+  return jsonOk({ ok: true });
 }

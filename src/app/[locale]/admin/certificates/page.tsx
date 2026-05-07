@@ -1,10 +1,8 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
-import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { requireAdmin } from "@/lib/auth/guards";
+import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revokeCertificate } from "../actions";
 
@@ -37,17 +35,12 @@ function getCertificateStatusTone(status: CertificateStatus) {
 }
 
 export default async function AdminCertificatesPage({ params, searchParams }: AdminCertificatesPageProps) {
-  const { locale } = await params;
+  const { locale: localeParam } = await params;
   const feedback = await searchParams;
 
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  await requireAdmin(locale, `/${locale}/admin/certificates`);
+  const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/certificates`);
   const t = await getTranslations("admin");
-  const shellProps = await getAdminShellProps(locale as Locale, "/admin/certificates");
+  const shellProps = await getAdminShellProps(locale, "/admin/certificates");
 
   const supabase = await createSupabaseServerClient();
   const { data: certificates, error } = await supabase
