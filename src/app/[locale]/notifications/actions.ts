@@ -1,16 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supportedLocales, type Locale } from "@/config/site";
 import { requireUser } from "@/lib/auth/guards";
+import { getActionLocale } from "@/lib/i18n/action-locale";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-function getSafeLocale(locale: string) {
-  return supportedLocales.includes(locale as Locale) ? locale : "en";
-}
-
 export async function markNotificationRead(locale: string, formData: FormData) {
-  const safeLocale = getSafeLocale(locale);
+  const safeLocale = getActionLocale(locale);
   const user = await requireUser(safeLocale, `/${safeLocale}/notifications`);
   const notificationId = String(formData.get("notification_id") ?? "").trim();
 

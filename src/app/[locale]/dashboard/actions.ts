@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { supportedLocales, type Locale } from "@/config/site";
 import { requireUser } from "@/lib/auth/guards";
+import { getActionLocale } from "@/lib/i18n/action-locale";
 import { redeemTrialCode, type TrialRedeemFailure } from "@/lib/license/trial-codes";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -15,18 +15,14 @@ function getDashboardPath(
     | { password: "saved" | "error" | "mismatch" }
     | { trial: "saved" | "invalid" | "inactive" | "limit" | "machine_used" | "duplicate" | "error" },
 ) {
-  const safeLocale = supportedLocales.includes(locale as Locale) ? locale : "en";
+  const safeLocale = getActionLocale(locale);
   const [key, value] = Object.entries(params)[0] ?? ["profile", "error"];
 
   return `/${safeLocale}/dashboard?${key}=${value}`;
 }
 
-function getSafeLocale(locale: string) {
-  return supportedLocales.includes(locale as Locale) ? locale : "en";
-}
-
 export async function updateAccountProfile(locale: string, formData: FormData) {
-  const safeLocale = getSafeLocale(locale);
+  const safeLocale = getActionLocale(locale);
   const user = await requireUser(safeLocale, `/${safeLocale}/dashboard`);
   const displayName = String(formData.get("display_name") ?? "").trim() || null;
   const supabase = createSupabaseAdminClient();
@@ -44,7 +40,7 @@ export async function updateAccountProfile(locale: string, formData: FormData) {
 }
 
 export async function updateDashboardPassword(locale: string, formData: FormData) {
-  const safeLocale = getSafeLocale(locale);
+  const safeLocale = getActionLocale(locale);
   await requireUser(safeLocale, `/${safeLocale}/dashboard`);
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirm_password") ?? "");
@@ -71,7 +67,7 @@ const trialStatusByReason: Record<TrialRedeemFailure, "invalid" | "inactive" | "
 };
 
 export async function redeemDashboardTrialCode(locale: string, formData: FormData) {
-  const safeLocale = getSafeLocale(locale);
+  const safeLocale = getActionLocale(locale);
   const user = await requireUser(safeLocale, `/${safeLocale}/dashboard`);
   const code = String(formData.get("trial_code") ?? "").trim();
 
@@ -97,7 +93,7 @@ export async function redeemDashboardTrialCode(locale: string, formData: FormDat
 }
 
 export async function signOutAction(locale: string) {
-  const safeLocale = getSafeLocale(locale);
+  const safeLocale = getActionLocale(locale);
   const supabase = await createSupabaseServerClient();
 
   await supabase.auth.signOut();

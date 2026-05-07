@@ -1,17 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { supportedLocales, type Locale } from "@/config/site";
 import { requireUser } from "@/lib/auth/guards";
+import { getActionLocale } from "@/lib/i18n/action-locale";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const MAX_SUBJECT_LENGTH = 180;
 const MAX_MESSAGE_LENGTH = 4000;
 const MAX_CONTACT_LENGTH = 200;
-
-function getSafeLocale(locale: string) {
-  return supportedLocales.includes(locale as Locale) ? locale : "en";
-}
 
 function getRequiredString(formData: FormData, key: string, message: string, maxLength: number) {
   const value = String(formData.get(key) ?? "").trim();
@@ -38,7 +34,7 @@ function getOptionalString(formData: FormData, key: string, maxLength: number) {
 }
 
 export async function submitSupportFeedback(locale: string, formData: FormData) {
-  const safeLocale = getSafeLocale(locale);
+  const safeLocale = getActionLocale(locale);
   const user = await requireUser(safeLocale, `/${safeLocale}/support`);
   const subject = getRequiredString(formData, "subject", "Subject is required", MAX_SUBJECT_LENGTH);
   const message = getRequiredString(formData, "message", "Message is required", MAX_MESSAGE_LENGTH);
@@ -59,7 +55,7 @@ export async function submitSupportFeedback(locale: string, formData: FormData) 
 }
 
 export async function replySupportFeedback(locale: string, feedbackId: string, formData: FormData) {
-  const safeLocale = getSafeLocale(locale);
+  const safeLocale = getActionLocale(locale);
   const user = await requireUser(safeLocale, `/${safeLocale}/support/feedback/${feedbackId}`);
   const message = getRequiredString(formData, "message", "Message is required", MAX_MESSAGE_LENGTH);
   const supabase = createSupabaseAdminClient();
