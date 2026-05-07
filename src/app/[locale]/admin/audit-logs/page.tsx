@@ -1,9 +1,7 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminPageHeader, AdminShell, AdminTableShell } from "@/components/admin/admin-shell";
-import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { requireAdmin } from "@/lib/auth/guards";
+import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type AdminAuditLogsPageProps = {
@@ -34,16 +32,10 @@ function formatCreatedAt(value: string, locale: string) {
 }
 
 export default async function AdminAuditLogsPage({ params }: AdminAuditLogsPageProps) {
-  const { locale } = await params;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  await requireAdmin(locale, `/${locale}/admin/audit-logs`);
+  const { locale: localeParam } = await params;
+  const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/audit-logs`);
   const t = await getTranslations("admin");
-  const shellProps = await getAdminShellProps(locale as Locale, "/admin/audit-logs");
+  const shellProps = await getAdminShellProps(locale, "/admin/audit-logs");
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

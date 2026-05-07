@@ -42,22 +42,13 @@ vi.mock("next-intl/server", () => ({
       "admin.supportSettings.valueHintEmail": "Use the public mailbox users should email for support",
       "admin.supportSettings.previewTitle": "Channel settings",
       "admin.supportSettings.previewDescription": "Edit each support channel below.",
-      "admin.supportSettings.tiersTitle": "Development support tiers",
-      "admin.supportSettings.tiersDescription": "Update the prices and copy shown on the Contributions page.",
-      "admin.supportSettings.tierLabel": "Tier label",
-      "admin.supportSettings.tierDescription": "Description",
-      "admin.supportSettings.tierPrice": "Price",
-      "admin.supportSettings.tierDiscountPercent": "Discount Applicable (%)",
-      "admin.supportSettings.tierActive": "Active",
-      "admin.supportSettings.tierInactive": "Inactive",
-      "admin.supportSettings.tierStatusHelp": "Inactive tiers are hidden from the Contributions page.",
-      "admin.supportSettings.tierSaved": "Tier saved",
       "admin.supportSettings.publicPreviewTitle": "Public preview",
       "admin.supportSettings.publicPreviewDescription": "This is how the enabled support channels will appear to visitors on the Support page.",
       "admin.supportSettings.rowSaved": "Saved",
       "admin.shell.backToAdmin": "Back to admin",
       "admin.shell.dashboard": "Overview",
       "admin.shell.donations": "Donations",
+      "admin.shell.contributionPricing": "Contribution pricing",
       "admin.shell.certificates": "Certificates",
       "admin.shell.releases": "Releases",
       "admin.shell.notifications": "Notifications",
@@ -106,29 +97,6 @@ describe("AdminSupportSettingsPage", () => {
           };
         }
 
-        if (table === "donation_tiers") {
-          return {
-            select: () => ({
-              order: async () => ({
-                data: [
-                  {
-                    amount: 900,
-                    code: "monthly",
-                    compare_at_amount: null,
-                    currency: "usd",
-                    description: "Monthly support",
-                    id: "tier-monthly",
-                    is_active: true,
-                    label: "Monthly Support",
-                    sort_order: 1,
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          };
-        }
-
         throw new Error(`Unexpected table: ${table}`);
       },
     });
@@ -146,85 +114,10 @@ describe("AdminSupportSettingsPage", () => {
     expect(screen.getAllByDisplayValue("support@example.com").length).toBeGreaterThan(0);
     expect(screen.getByPlaceholderText("https://t.me/your_channel")).toBeInTheDocument();
     expect(screen.getByText("Use a full Telegram URL such as https://t.me/your_channel")).toBeInTheDocument();
-    expect(screen.getByText("Development support tiers")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Monthly Support")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("9")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("0")).toBeInTheDocument();
+    expect(screen.queryByText("Development support tiers")).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue("Monthly Support")).not.toBeInTheDocument();
     expect(screen.getByText("This is the public support mailbox shown on the Support page.")).toBeInTheDocument();
     expect(screen.getByText("This is how the enabled support channels will appear to visitors on the Support page.")).toBeInTheDocument();
-  });
-
-  it("renders donation tiers when the original price column has not been migrated yet", async () => {
-    const tierSelect = vi
-      .fn()
-      .mockReturnValueOnce({
-        order: async () => ({
-          data: null,
-          error: { code: "42703", message: "column donation_tiers.compare_at_amount does not exist" },
-        }),
-      })
-      .mockReturnValueOnce({
-        order: async () => ({
-          data: [
-            {
-              amount: 2430,
-              code: "quarterly",
-              currency: "usd",
-              description: "Quarterly support",
-              id: "tier-quarterly",
-              is_active: true,
-              label: "Quarterly Support",
-              sort_order: 2,
-            },
-          ],
-          error: null,
-        }),
-    });
-    mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
-    mocks.createSupabaseServerClient
-      .mockResolvedValueOnce({
-        auth: {
-          getUser: async () => ({ data: { user: { id: "admin-1", email: "admin@example.com" } } }),
-        },
-        from: () => ({
-          select: () => ({
-            eq: () => ({
-              single: async () => ({ data: { display_name: "Admin", email: "admin@example.com" }, error: null }),
-            }),
-          }),
-        }),
-      })
-      .mockResolvedValueOnce({
-      auth: {
-        getUser: async () => ({ data: { user: { id: "admin-1", email: "admin@example.com" } } }),
-      },
-      from: (table: string) => {
-        if (table === "support_contact_channels") {
-          return {
-            select: () => ({
-              order: async () => ({ data: [], error: null }),
-            }),
-          };
-        }
-
-        if (table === "donation_tiers") {
-          return { select: tierSelect };
-        }
-
-        throw new Error(`Unexpected table: ${table}`);
-      },
-    });
-
-    render(
-      await AdminSupportSettingsPage({
-        params: Promise.resolve({ locale: "en" }),
-        searchParams: Promise.resolve({}),
-      }),
-    );
-
-    expect(screen.getByDisplayValue("Quarterly Support")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("27")).toBeInTheDocument();
-    expect(screen.getAllByDisplayValue("10").some((input) => input.getAttribute("name") === "discount_percent")).toBe(true);
   });
 
   it("opens with default settings when support settings tables are temporarily unavailable", async () => {
@@ -245,11 +138,8 @@ describe("AdminSupportSettingsPage", () => {
       }),
     );
 
-    expect(screen.getByText("Development support tiers")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Monthly Support")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("9")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("0")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Telegram")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Email")).toBeInTheDocument();
+    expect(screen.queryByText("Development support tiers")).not.toBeInTheDocument();
   });
 });

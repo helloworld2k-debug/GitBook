@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { DonationTierCard } from "@/components/donation-tier-card";
 import { PaymentStatusBanner } from "@/components/payment-status-banner";
-import { SiteHeader } from "@/components/site-header";
 import { donationTiers, supportedLocales, type Locale } from "@/config/site";
 import { getLoginRedirectPath } from "@/lib/auth/guards";
 import { getActiveDonationTiers } from "@/lib/payments/tier";
@@ -38,7 +37,6 @@ export default async function ContributionsPage({ params }: ContributionsPagePro
 
   return (
     <>
-      <SiteHeader />
       <main className="tech-shell flex-1">
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
           <div className="max-w-2xl">

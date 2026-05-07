@@ -1,11 +1,10 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
-import { supportedLocales, type Locale } from "@/config/site";
+import { supportedLocales } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { requireAdmin } from "@/lib/auth/guards";
+import { setupAdminPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createNotification, publishNotification, unpublishNotification } from "../actions";
@@ -16,17 +15,12 @@ type AdminNotificationsPageProps = {
 };
 
 export default async function AdminNotificationsPage({ params, searchParams }: AdminNotificationsPageProps) {
-  const { locale } = await params;
+  const { locale: localeParam } = await params;
   const feedback = await searchParams;
 
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  await requireAdmin(locale, `/${locale}/admin/notifications`);
+  const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/notifications`);
   const t = await getTranslations("admin");
-  const shellProps = await getAdminShellProps(locale as Locale, "/admin/notifications");
+  const shellProps = await getAdminShellProps(locale, "/admin/notifications");
   const { data: notifications, error } = await (await createSupabaseServerClient())
     .from("notifications")
     .select("id,title,body,locale,audience,priority,published_at,expires_at,created_at")

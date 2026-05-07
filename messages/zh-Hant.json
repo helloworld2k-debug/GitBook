@@ -64,6 +64,16 @@
     "featureTwoText": "快速下載、可預期的版本發布，以及證書和支持記錄儀表板。",
     "featureThreeTitle": "全球可用",
     "featureThreeText": "英文優先，並提供中文、日文與韓文路由給國際使用者。",
+    "relatedTitle": "相關內容",
+    "relatedSubtitle": "繼續查看版本歷史、支持入口、帳戶工具與產品更新。",
+    "relatedVersionsTitle": "版本封存",
+    "relatedVersionsText": "需要特定版本時，可下載先前的 macOS 與 Windows 構建。",
+    "relatedContributionsTitle": "支持",
+    "relatedContributionsText": "透過一次性支持協助持續開發，並取得支持證書。",
+    "relatedSupportTitle": "支援",
+    "relatedSupportText": "查看聯絡渠道、提交回饋，並追蹤你的支援對話。",
+    "relatedNotificationsTitle": "通知",
+    "relatedNotificationsText": "閱讀產品更新、服務公告與帳戶通知。",
     "mockTitle": "知識引擎",
     "mockStatus": "在線",
     "mockLineOne": "索引編程章節",
@@ -72,6 +82,13 @@
     "latestVersion": "最新版本 {version} · {date}",
     "latestVersionPending": "最新版本準備中",
     "olderVersions": "舊版本"
+  },
+  "footer": {
+    "tagline": "AI 編程知識、下載與支援集中在一處。",
+    "product": "產品",
+    "account": "帳戶",
+    "resources": "資源",
+    "copyright": "獨立軟體支援網站。"
   },
   "donate": {
     "title": "支持 GitBook AI 持續開發",
@@ -213,8 +230,8 @@
       "notificationsDescription": "發布與下架站內通知。",
       "supportFeedbackTitle": "回饋",
       "supportFeedbackDescription": "檢視帳號問題與支援請求。",
-      "supportSettingsTitle": "支持價格設定",
-      "supportSettingsDescription": "管理 Contributions 頁面的價格、折扣、開發支援方案文案與公開支援聯絡渠道。",
+      "supportSettingsTitle": "支援設定",
+      "supportSettingsDescription": "管理 Support 頁面顯示的公開支援聯絡渠道。",
       "licensesTitle": "授權",
       "licensesDescription": "建立試用兌換碼、檢視權益，並撤銷桌面雲端同步存取。",
       "usersTitle": "使用者",
@@ -224,7 +241,9 @@
       "activeTrialsMetric": "啟用中的試用碼",
       "pendingFeedbackMetric": "待處理回饋",
       "recentContributionsMetric": "近期支持",
-      "description": "管理支持記錄、證書、版本、授權、使用者與稽核活動。"
+      "description": "管理支持記錄、證書、版本、授權、使用者與稽核活動。",
+      "contributionPricingTitle": "支持價格設定",
+      "contributionPricingDescription": "管理 Contributions 頁面的價格、折扣與開發支持方案文案。"
     },
     "donations": {
       "eyebrow": "管理後台",
@@ -242,12 +261,12 @@
       "reason": "原因",
       "submitManualDonation": "新增人工支持記錄",
       "empty": "尚無支持記錄。",
-        "providers": {
-          "stripe": "Stripe",
-          "paypal": "PayPal",
-          "manual": "人工登錄",
-          "dodo": "Dodo Payments"
-        },
+      "providers": {
+        "stripe": "Stripe",
+        "paypal": "PayPal",
+        "manual": "人工登錄",
+        "dodo": "Dodo Payments"
+      },
       "statuses": {
         "pending": "待處理",
         "paid": "已付款",
@@ -372,8 +391,8 @@
     },
     "supportSettings": {
       "eyebrow": "管理後台",
-      "title": "支持價格與支援設定",
-      "description": "管理 Contributions 頁面顯示的開發支援方案，也可維護支援頁上的公開聯絡方式。",
+      "title": "支援設定",
+      "description": "管理 Support 頁面顯示的公開聯絡方式。",
       "channel": "渠道名稱",
       "value": "聯絡內容",
       "status": "顯示狀態",
@@ -390,16 +409,6 @@
       "save": "儲存渠道",
       "rowSaved": "剛剛已儲存",
       "rowSavedDescription": "這個渠道的設定已成功更新。",
-      "tiersTitle": "開發支援方案",
-      "tiersDescription": "更新 Contributions 頁面顯示的價格與文案。",
-      "tierLabel": "方案名稱",
-      "tierDescription": "說明",
-      "tierPrice": "價格",
-      "tierDiscountPercent": "適用優惠（%）",
-      "tierActive": "啟用",
-      "tierInactive": "停用",
-      "tierStatusHelp": "停用的方案不會顯示在 Contributions 頁面。",
-      "tierSaved": "方案已儲存",
       "guidanceTitle": "設定說明",
       "guidanceBody": "啟用後的渠道會公開顯示在支援頁。Telegram 與 Discord 請填完整連結，QQ 與 WeChat 可填帳號，Email 請填可公開使用的支援信箱。",
       "emailHelp": "這是公開展示給使用者的支援信箱，和帳號登入信箱設定分開。",
@@ -608,8 +617,26 @@
       "returnToSite": "返回網站",
       "signOut": "登出",
       "supportFeedback": "回饋",
-      "supportSettings": "支持價格設定",
-      "users": "使用者"
+      "supportSettings": "支援設定",
+      "users": "使用者",
+      "contributionPricing": "支持價格設定"
+    },
+    "contributionPricing": {
+      "eyebrow": "Admin",
+      "title": "支持價格設定",
+      "description": "管理 Contributions 頁面的價格、折扣與開發支持方案文案。",
+      "tiersTitle": "開發支持方案",
+      "tiersDescription": "更新 Contributions 頁面顯示的價格與文案。",
+      "tierLabel": "方案名稱",
+      "tierDescription": "描述",
+      "tierPrice": "價格",
+      "tierDiscountPercent": "折扣率 (%)",
+      "status": "顯示狀態",
+      "tierActive": "啟用",
+      "tierInactive": "停用",
+      "tierStatusHelp": "停用的方案會從 Contributions 頁面隱藏。",
+      "save": "儲存方案",
+      "tierSaved": "方案已儲存"
     }
   },
   "certificate": {

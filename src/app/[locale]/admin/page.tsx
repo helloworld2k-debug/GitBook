@@ -98,6 +98,11 @@ export default async function AdminPage({ params }: AdminPageProps) {
       description: t("overview.supportFeedbackDescription"),
     },
     {
+      href: "/admin/contribution-pricing",
+      title: t("overview.contributionPricingTitle"),
+      description: t("overview.contributionPricingDescription"),
+    },
+    {
       href: "/admin/support-settings",
       title: t("overview.supportSettingsTitle"),
       description: t("overview.supportSettingsDescription"),

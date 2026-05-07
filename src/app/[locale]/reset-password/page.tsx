@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { KeyRound } from "lucide-react";
-import { SiteHeader } from "@/components/site-header";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
@@ -30,7 +29,6 @@ export default async function ResetPasswordPage({ params, searchParams }: ResetP
 
   return (
     <>
-      <SiteHeader />
       <main className="tech-shell flex-1">
         <section className="mx-auto flex min-h-[calc(100dvh-76px)] max-w-xl items-center px-4 py-10 sm:px-6">
           <div className="glass-panel w-full rounded-lg p-5 sm:p-6">

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { CertificateView, formatCertificateAmount, getCertificateTypeLabel } from "@/lib/certificates/render";
@@ -59,7 +58,6 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 
   return (
     <>
-      <SiteHeader showAccountMenu />
       <main className="tech-shell flex-1">
         <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
           <CertificateView

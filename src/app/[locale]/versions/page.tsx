@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { optionalTimeout } from "@/lib/async/optional-timeout";
 import { getCachedPublishedReleases } from "@/lib/releases/public-cache";
@@ -43,7 +42,6 @@ export default async function VersionsPage({ params }: VersionsPageProps) {
 
   return (
     <>
-      <SiteHeader />
       <main className="tech-shell flex-1">
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
           <div className="max-w-3xl">

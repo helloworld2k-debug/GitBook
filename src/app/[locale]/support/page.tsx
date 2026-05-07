@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
@@ -50,7 +49,6 @@ export default async function SupportPage({ params, searchParams }: SupportPageP
 
   return (
     <>
-      <SiteHeader />
       <main className="tech-shell flex-1">
         <section className="mx-auto grid max-w-6xl gap-6 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.7fr)]">
           <div>

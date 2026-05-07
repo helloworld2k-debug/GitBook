@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import { getTranslations } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { getLocaleDashboardPath, sanitizeNextPath } from "@/lib/auth/guards";
 import { LoginForm, type LoginFormMessages } from "./login-form";
@@ -91,7 +90,6 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
           strategy="afterInteractive"
         />
       ) : null}
-      <SiteHeader />
       <main className="tech-shell flex-1">
         <section className="mx-auto grid min-h-[calc(100dvh-76px)] max-w-6xl items-center gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(360px,440px)]">
           <div className="max-w-xl">

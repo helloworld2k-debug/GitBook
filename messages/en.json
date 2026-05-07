@@ -67,11 +67,28 @@
     "featureTwoText": "Fast downloads, predictable releases, and a dashboard for certificates and supporter history.",
     "featureThreeTitle": "Global access",
     "featureThreeText": "English-first with Chinese, Japanese, and Korean routes for international users.",
+    "relatedTitle": "Related content",
+    "relatedSubtitle": "Keep going with release history, support, account tools, and product updates.",
+    "relatedVersionsTitle": "Release archive",
+    "relatedVersionsText": "Download previous macOS and Windows builds when you need a specific version.",
+    "relatedContributionsTitle": "Contributions",
+    "relatedContributionsText": "Support continued development with a one-time contribution and certificate.",
+    "relatedSupportTitle": "Support",
+    "relatedSupportText": "Find contact channels, submit feedback, and follow your support conversations.",
+    "relatedNotificationsTitle": "Notifications",
+    "relatedNotificationsText": "Read product updates, service notices, and account announcements.",
     "mockTitle": "Knowledge engine",
     "mockStatus": "Online",
     "mockLineOne": "Indexing coding chapters",
     "mockLineTwo": "Mapping examples to concepts",
     "mockLineThree": "Ready for download"
+  },
+  "footer": {
+    "tagline": "AI coding knowledge, downloads, and support in one place.",
+    "product": "Product",
+    "account": "Account",
+    "resources": "Resources",
+    "copyright": "Independent software support site."
   },
   "versions": {
     "eyebrow": "Release archive",
@@ -223,8 +240,8 @@
       "notificationsDescription": "Publish and unpublish in-app announcements.",
       "supportFeedbackTitle": "Feedback",
       "supportFeedbackDescription": "Review account issue reports and support requests.",
-      "supportSettingsTitle": "Contribution pricing",
-      "supportSettingsDescription": "Manage Contributions page prices, discounts, support tier copy, and public support contact channels.",
+      "supportSettingsTitle": "Support settings",
+      "supportSettingsDescription": "Manage public support contact channels shown on the Support page.",
       "licensesTitle": "Licenses",
       "licensesDescription": "Create trial codes, review entitlements, and revoke desktop cloud sync access.",
       "usersTitle": "Users",
@@ -236,7 +253,9 @@
       "activeTrialsMetric": "Active trials",
       "pendingFeedbackMetric": "Open feedback",
       "recentContributionsMetric": "Recent contributions",
-      "description": "Manage contributions, certificates, releases, licenses, users, and audit activity."
+      "description": "Manage contributions, certificates, releases, licenses, users, and audit activity.",
+      "contributionPricingTitle": "Contribution pricing",
+      "contributionPricingDescription": "Manage Contributions page prices, discounts, and support tier copy."
     },
     "releases": {
       "eyebrow": "Admin",
@@ -284,12 +303,12 @@
       "reason": "Reason",
       "submitManualDonation": "Add manual contribution",
       "empty": "No contributions found.",
-        "providers": {
-          "stripe": "Stripe",
-          "paypal": "PayPal",
-          "manual": "Manual",
-          "dodo": "Dodo Payments"
-        },
+      "providers": {
+        "stripe": "Stripe",
+        "paypal": "PayPal",
+        "manual": "Manual",
+        "dodo": "Dodo Payments"
+      },
       "statuses": {
         "pending": "Pending",
         "paid": "Paid",
@@ -349,8 +368,8 @@
     },
     "supportSettings": {
       "eyebrow": "Admin",
-      "title": "Contribution pricing & support settings",
-      "description": "Manage the development support tiers shown on the Contributions page, plus the public contact methods shown on the Support page.",
+      "title": "Support settings",
+      "description": "Manage the public contact methods shown on the Support page.",
       "channel": "Channel name",
       "value": "Contact value",
       "status": "Visibility",
@@ -367,16 +386,6 @@
       "save": "Save channel",
       "rowSaved": "Saved just now",
       "rowSavedDescription": "This channel has been updated successfully.",
-      "tiersTitle": "Development support tiers",
-      "tiersDescription": "Update the prices and copy shown on the Contributions page.",
-      "tierLabel": "Tier label",
-      "tierDescription": "Description",
-      "tierPrice": "Price",
-      "tierDiscountPercent": "Discount Applicable (%)",
-      "tierActive": "Active",
-      "tierInactive": "Inactive",
-      "tierStatusHelp": "Inactive tiers are hidden from the Contributions page.",
-      "tierSaved": "Tier saved",
       "guidanceTitle": "How these settings work",
       "guidanceBody": "Enabled channels are shown publicly on the Support page. Use full URLs for Telegram and Discord, plain account identifiers for QQ or WeChat, and a valid mailbox for Email.",
       "emailHelp": "This is the public support mailbox shown to users. It is separate from account login email settings.",
@@ -619,9 +628,27 @@
       "notifications": "Notifications",
       "signOut": "Sign out",
       "supportFeedback": "Feedback",
-      "supportSettings": "Contribution pricing",
+      "supportSettings": "Support settings",
       "returnToSite": "Return to site",
-      "users": "Users"
+      "users": "Users",
+      "contributionPricing": "Contribution pricing"
+    },
+    "contributionPricing": {
+      "eyebrow": "Admin",
+      "title": "Contribution pricing",
+      "description": "Manage Contributions page prices, discounts, and support tier copy.",
+      "tiersTitle": "Development support tiers",
+      "tiersDescription": "Update the prices and copy shown on the Contributions page.",
+      "tierLabel": "Tier label",
+      "tierDescription": "Description",
+      "tierPrice": "Price",
+      "tierDiscountPercent": "Discount Applicable (%)",
+      "status": "Visibility",
+      "tierActive": "Active",
+      "tierInactive": "Inactive",
+      "tierStatusHelp": "Inactive tiers are hidden from the Contributions page.",
+      "save": "Save tier",
+      "tierSaved": "Tier saved"
     }
   },
   "certificate": {

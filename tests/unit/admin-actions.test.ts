@@ -15,6 +15,15 @@ import {
   updateUserAccountStatus,
   updateUserAdminRole,
 } from "@/app/[locale]/admin/actions";
+import {
+  getBoundedString,
+  getDiscountPercent,
+  getOptionalReleaseUrl,
+  getPositiveInteger,
+  getSafeLocale,
+  validateSupportContactValue,
+} from "@/app/[locale]/admin/actions/validation";
+import { insertAdminAuditLog } from "@/app/[locale]/admin/actions/audit";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
@@ -52,6 +61,104 @@ vi.mock("next/cache", () => ({
 vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
+
+describe("admin action validation helpers", () => {
+  it("falls back to English when a form locale is unsupported", () => {
+    expect(getSafeLocale("zh-Hant")).toBe("zh-Hant");
+    expect(getSafeLocale("not-a-locale")).toBe("en");
+  });
+
+  it("parses positive integers and rejects invalid values", () => {
+    const formData = new FormData();
+    formData.set("sort_order", "3");
+
+    expect(getPositiveInteger(formData, "sort_order", "Sort order must be a positive integer")).toBe(3);
+
+    formData.set("sort_order", "0");
+    expect(() => getPositiveInteger(formData, "sort_order", "Sort order must be a positive integer")).toThrow(
+      "Sort order must be a positive integer",
+    );
+  });
+
+  it("requires discount percentages from 0 through 99", () => {
+    const formData = new FormData();
+    formData.set("discount_percent", "20");
+
+    expect(getDiscountPercent(formData, "discount_percent")).toBe(20);
+
+    formData.set("discount_percent", "100");
+    expect(() => getDiscountPercent(formData, "discount_percent")).toThrow("Discount must be an integer from 0 to 99");
+  });
+
+  it("bounds required strings with the existing error message shape", () => {
+    const formData = new FormData();
+    formData.set("label", "A label");
+
+    expect(getBoundedString(formData, "label", "Label is required", 12)).toBe("A label");
+
+    formData.set("label", "A very long label");
+    expect(() => getBoundedString(formData, "label", "Label is required", 12)).toThrow(
+      "Label is required must be 12 characters or fewer",
+    );
+  });
+
+  it("accepts optional HTTP release URLs and rejects unsupported protocols", () => {
+    const formData = new FormData();
+    formData.set("macos_primary_url", "https://downloads.example/mac.dmg");
+
+    expect(getOptionalReleaseUrl(formData, "macos_primary_url")).toBe("https://downloads.example/mac.dmg");
+
+    formData.set("macos_primary_url", "ftp://downloads.example/mac.dmg");
+    expect(() => getOptionalReleaseUrl(formData, "macos_primary_url")).toThrow("Enter a valid URL");
+  });
+
+  it("validates support contact values for URL and email channels", () => {
+    expect(() => validateSupportContactValue("telegram", "https://t.me/example")).not.toThrow();
+    expect(() => validateSupportContactValue("email", "support@example.com")).not.toThrow();
+    expect(() => validateSupportContactValue("discord", "discord-user")).toThrow("Enter a valid URL");
+    expect(() => validateSupportContactValue("email", "support")).toThrow("Enter a valid email address");
+  });
+});
+
+describe("admin action audit helpers", () => {
+  it("inserts admin audit log rows with stable column names", async () => {
+    const insert = vi.fn(async () => ({ error: null }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from: vi.fn(() => ({ insert })) });
+
+    await insertAdminAuditLog({
+      action: "update_user_account_status",
+      adminUserId: "admin-1",
+      after: { account_status: "disabled" },
+      before: { account_status: "active" },
+      reason: "Violation confirmed",
+      targetId: "user-1",
+      targetType: "profile",
+    });
+
+    expect(insert).toHaveBeenCalledWith({
+      action: "update_user_account_status",
+      admin_user_id: "admin-1",
+      after: { account_status: "disabled" },
+      before: { account_status: "active" },
+      reason: "Violation confirmed",
+      target_id: "user-1",
+      target_type: "profile",
+    });
+  });
+
+  it("throws the existing audit failure message when insertion fails", async () => {
+    const insert = vi.fn(async () => ({ error: new Error("database down") }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from: vi.fn(() => ({ insert })) });
+
+    await expect(insertAdminAuditLog({
+      action: "update_user_account_status",
+      adminUserId: "admin-1",
+      reason: "Violation confirmed",
+      targetId: "user-1",
+      targetType: "profile",
+    })).rejects.toThrow("Unable to write audit log");
+  });
+});
 
 function createProfileLookup(profile: { id: string; email: string } | null) {
   const single = vi.fn(async () => ({ data: profile, error: profile ? null : new Error("not found") }));

@@ -3,6 +3,7 @@ import {
   BadgeCheck,
   Bell,
   ClipboardList,
+  CircleDollarSign,
   FileText,
   Gauge,
   Gift,
@@ -24,6 +25,7 @@ type AdminShellLabels = {
   auditLogs: string;
   backToAdmin: string;
   certificates: string;
+  contributionPricing: string;
   dashboard: string;
   donations: string;
   language: string;
@@ -52,6 +54,7 @@ function getAdminItems(labels: AdminShellLabels) {
   return [
     { href: "/admin", label: labels.dashboard, icon: Gauge },
     { href: "/admin/donations", label: labels.donations, icon: Gift },
+    { href: "/admin/contribution-pricing", label: labels.contributionPricing, icon: CircleDollarSign },
     { href: "/admin/certificates", label: labels.certificates, icon: BadgeCheck },
     { href: "/admin/releases", label: labels.releases, icon: Package },
     { href: "/admin/notifications", label: labels.notifications, icon: Bell },

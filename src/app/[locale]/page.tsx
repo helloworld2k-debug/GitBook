@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
 import { siteConfig, supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { optionalTimeout } from "@/lib/async/optional-timeout";
@@ -17,6 +16,12 @@ const downloadLinkClass =
   "flex min-h-12 items-center justify-center rounded-md px-5 py-3 text-sm font-semibold transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300";
 
 const featureKeys = ["One", "Two", "Three"] as const;
+const relatedItems = [
+  { href: "/versions", titleKey: "relatedVersionsTitle", textKey: "relatedVersionsText" },
+  { href: "/contributions", titleKey: "relatedContributionsTitle", textKey: "relatedContributionsText" },
+  { href: "/support", titleKey: "relatedSupportTitle", textKey: "relatedSupportText" },
+  { href: "/notifications", titleKey: "relatedNotificationsTitle", textKey: "relatedNotificationsText" },
+] as const;
 
 function formatReleaseDate(value: string, locale: string) {
   return new Intl.DateTimeFormat(locale, {
@@ -81,7 +86,6 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
 
   return (
     <>
-      <SiteHeader />
       <main className="tech-shell flex-1">
         <div aria-label="Animated code intelligence background" className="code-field" role="img">
           <div className="code-stream code-stream-one">
@@ -189,6 +193,25 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
               <p className="mt-3 text-sm leading-6 text-slate-300">{t(`feature${key}Text`)}</p>
             </article>
           ))}
+        </section>
+
+        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+          <div className="mb-6 max-w-2xl">
+            <h2 className="text-2xl font-semibold text-white">{t("relatedTitle")}</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">{t("relatedSubtitle")}</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-4">
+            {relatedItems.map((item) => (
+              <Link
+                className="glass-panel block rounded-lg p-5 transition-colors hover:border-cyan-300/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+                href={item.href}
+                key={item.href}
+              >
+                <h3 className="text-base font-semibold text-white">{t(item.titleKey)}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-300">{t(item.textKey)}</p>
+              </Link>
+            ))}
+          </div>
         </section>
       </main>
     </>

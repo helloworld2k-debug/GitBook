@@ -39,6 +39,7 @@ export async function getAdminShellProps(locale: Locale, currentPath: string) {
       auditLogs: shellT("auditLogs"),
       backToAdmin: shellT("backToAdmin"),
       certificates: shellT("certificates"),
+      contributionPricing: shellT("contributionPricing"),
       dashboard: shellT("dashboard"),
       donations: shellT("donations"),
       language: shellT("language"),

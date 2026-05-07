@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import { supportedLocales, type Locale } from "@/config/site";
@@ -52,7 +51,6 @@ export default async function SupportFeedbackThreadPage({ params, searchParams }
 
   return (
     <>
-      <SiteHeader showAccountMenu />
       <main className="tech-shell flex-1">
         <section className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
           <Link className="inline-flex min-h-10 items-center rounded-md border border-cyan-300/20 px-3 text-sm font-semibold text-cyan-100" href="/support">

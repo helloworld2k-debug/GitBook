@@ -3,7 +3,6 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BadgeCheck, Cloud, CreditCard, KeyRound, ShieldCheck, Sparkles, UserCircle } from "lucide-react";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
-import { SiteHeader } from "@/components/site-header";
 import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { requireUser } from "@/lib/auth/guards";
@@ -196,7 +195,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
 
   return (
     <>
-      <SiteHeader showAccountMenu />
       <main className="tech-shell flex-1">
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-12">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">

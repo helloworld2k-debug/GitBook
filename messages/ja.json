@@ -64,6 +64,16 @@
     "featureTwoText": "高速ダウンロード、予測しやすいリリース、証明書と支援履歴のダッシュボードを備えます。",
     "featureThreeTitle": "グローバル対応",
     "featureThreeText": "英語を中心に、中国語、日本語、韓国語ルートを国際ユーザー向けに提供します。",
+    "relatedTitle": "関連コンテンツ",
+    "relatedSubtitle": "リリース履歴、支援、アカウントツール、製品更新を続けて確認できます。",
+    "relatedVersionsTitle": "リリースアーカイブ",
+    "relatedVersionsText": "特定バージョンが必要なとき、過去の macOS / Windows ビルドを取得できます。",
+    "relatedContributionsTitle": "応援",
+    "relatedContributionsText": "一回限りの支援で継続開発を支え、証明書を受け取れます。",
+    "relatedSupportTitle": "サポート",
+    "relatedSupportText": "連絡チャンネル、フィードバック送信、サポート会話を確認できます。",
+    "relatedNotificationsTitle": "通知",
+    "relatedNotificationsText": "製品更新、サービス告知、アカウント関連のお知らせを確認できます。",
     "mockTitle": "ナレッジエンジン",
     "mockStatus": "オンライン",
     "mockLineOne": "コーディング章をインデックス中",
@@ -72,6 +82,13 @@
     "latestVersion": "最新バージョン {version} · {date}",
     "latestVersionPending": "最新バージョンを準備中",
     "olderVersions": "旧バージョン"
+  },
+  "footer": {
+    "tagline": "AI コーディング知識、ダウンロード、サポートを一か所に。",
+    "product": "製品",
+    "account": "アカウント",
+    "resources": "リソース",
+    "copyright": "独立したソフトウェアサポートサイトです。"
   },
   "donate": {
     "title": "GitBook AI に貢献する",
@@ -213,8 +230,8 @@
       "notificationsDescription": "アプリ内通知を公開・非公開にします。",
       "supportFeedbackTitle": "フィードバック",
       "supportFeedbackDescription": "アカウント問題とサポート依頼を確認します。",
-      "supportSettingsTitle": "応援価格設定",
-      "supportSettingsDescription": "Contributions ページの価格、割引、開発サポート文言、公開サポート連絡先を管理します。",
+      "supportSettingsTitle": "サポート設定",
+      "supportSettingsDescription": "Support ページに表示する公開サポート連絡先を管理します。",
       "licensesTitle": "ライセンス",
       "licensesDescription": "試用コード、権限、デスクトップのクラウド同期アクセスを管理します。",
       "usersTitle": "ユーザー",
@@ -224,7 +241,9 @@
       "activeTrialsMetric": "有効な試用コード",
       "pendingFeedbackMetric": "未対応フィードバック",
       "recentContributionsMetric": "最近の応援",
-      "description": "応援、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。"
+      "description": "応援、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。",
+      "contributionPricingTitle": "応援価格設定",
+      "contributionPricingDescription": "Contributions ページの価格、割引、開発サポート文言を管理します。"
     },
     "donations": {
       "eyebrow": "管理画面",
@@ -242,12 +261,12 @@
       "reason": "理由",
       "submitManualDonation": "手動応援を追加",
       "empty": "応援履歴はまだありません。",
-        "providers": {
-          "stripe": "Stripe",
-          "paypal": "PayPal",
-          "manual": "手動",
-          "dodo": "Dodo Payments"
-        },
+      "providers": {
+        "stripe": "Stripe",
+        "paypal": "PayPal",
+        "manual": "手動",
+        "dodo": "Dodo Payments"
+      },
       "statuses": {
         "pending": "保留中",
         "paid": "支払い済み",
@@ -372,8 +391,8 @@
     },
     "supportSettings": {
       "eyebrow": "管理画面",
-      "title": "応援価格とサポート設定",
-      "description": "Contributions ページに表示する開発サポートプランと、サポートページの公開連絡先を管理します。",
+      "title": "サポート設定",
+      "description": "Support ページに表示する公開連絡先を管理します。",
       "channel": "チャネル名",
       "value": "連絡先",
       "status": "表示状態",
@@ -390,16 +409,6 @@
       "save": "チャネルを保存",
       "rowSaved": "保存済み",
       "rowSavedDescription": "このチャネル設定は正常に更新されました。",
-      "tiersTitle": "開発サポートプラン",
-      "tiersDescription": "Contributions ページに表示する価格と文言を更新します。",
-      "tierLabel": "プラン名",
-      "tierDescription": "説明",
-      "tierPrice": "価格",
-      "tierDiscountPercent": "適用割引（%）",
-      "tierActive": "有効",
-      "tierInactive": "無効",
-      "tierStatusHelp": "無効なプランは Contributions ページに表示されません。",
-      "tierSaved": "プランを保存しました",
       "guidanceTitle": "設定ガイド",
       "guidanceBody": "有効化したチャネルだけがサポートページに公開表示されます。Telegram と Discord は完全な URL、QQ と WeChat は識別子、Email は公開用のサポートアドレスを入力してください。",
       "emailHelp": "これはユーザー向けに公開表示するサポート用メールアドレスです。ログイン用メール設定とは別です。",
@@ -608,8 +617,26 @@
       "returnToSite": "サイトへ戻る",
       "signOut": "サインアウト",
       "supportFeedback": "フィードバック",
-      "supportSettings": "応援価格設定",
-      "users": "ユーザー"
+      "supportSettings": "サポート設定",
+      "users": "ユーザー",
+      "contributionPricing": "応援価格設定"
+    },
+    "contributionPricing": {
+      "eyebrow": "Admin",
+      "title": "応援価格設定",
+      "description": "Contributions ページの価格、割引、開発サポート文言を管理します。",
+      "tiersTitle": "開発サポートプラン",
+      "tiersDescription": "Contributions ページに表示する価格と文言を更新します。",
+      "tierLabel": "プラン名",
+      "tierDescription": "説明",
+      "tierPrice": "価格",
+      "tierDiscountPercent": "割引率 (%)",
+      "status": "表示状態",
+      "tierActive": "有効",
+      "tierInactive": "無効",
+      "tierStatusHelp": "無効なプランは Contributions ページで非表示になります。",
+      "save": "プランを保存",
+      "tierSaved": "プランを保存しました"
     }
   },
   "certificate": {

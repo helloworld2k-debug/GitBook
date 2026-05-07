@@ -64,6 +64,16 @@
     "featureTwoText": "빠른 다운로드, 예측 가능한 릴리스, 인증서와 지원 내역 대시보드를 제공합니다.",
     "featureThreeTitle": "글로벌 접근",
     "featureThreeText": "영어 우선이며 국제 사용자를 위해 중국어, 일본어, 한국어 경로를 제공합니다.",
+    "relatedTitle": "관련 콘텐츠",
+    "relatedSubtitle": "릴리스 기록, 지원, 계정 도구, 제품 업데이트를 이어서 확인하세요.",
+    "relatedVersionsTitle": "릴리스 아카이브",
+    "relatedVersionsText": "특정 버전이 필요할 때 이전 macOS 및 Windows 빌드를 다운로드하세요.",
+    "relatedContributionsTitle": "지원",
+    "relatedContributionsText": "일회성 지원으로 지속적인 개발을 돕고 인증서를 받을 수 있습니다.",
+    "relatedSupportTitle": "지원",
+    "relatedSupportText": "연락 채널을 확인하고 피드백을 보내며 지원 대화를 따라가세요.",
+    "relatedNotificationsTitle": "알림",
+    "relatedNotificationsText": "제품 업데이트, 서비스 공지, 계정 안내를 읽어보세요.",
     "mockTitle": "지식 엔진",
     "mockStatus": "온라인",
     "mockLineOne": "코딩 챕터 색인 중",
@@ -72,6 +82,13 @@
     "latestVersion": "최신 버전 {version} · {date}",
     "latestVersionPending": "최신 버전 준비 중",
     "olderVersions": "이전 버전"
+  },
+  "footer": {
+    "tagline": "AI 코딩 지식, 다운로드, 지원을 한곳에서 제공합니다.",
+    "product": "제품",
+    "account": "계정",
+    "resources": "리소스",
+    "copyright": "독립 소프트웨어 지원 사이트입니다."
   },
   "donate": {
     "title": "GitBook AI에 기여하기",
@@ -213,8 +230,8 @@
       "notificationsDescription": "앱 내 공지를 게시하거나 내립니다.",
       "supportFeedbackTitle": "피드백",
       "supportFeedbackDescription": "계정 문제와 지원 요청을 확인합니다.",
-      "supportSettingsTitle": "지원 가격 설정",
-      "supportSettingsDescription": "Contributions 페이지의 가격, 할인, 개발 지원 문구와 공개 지원 연락 채널을 관리합니다.",
+      "supportSettingsTitle": "지원 설정",
+      "supportSettingsDescription": "Support 페이지에 표시할 공개 지원 연락 채널을 관리합니다.",
       "licensesTitle": "라이선스",
       "licensesDescription": "체험 코드, 권한, 데스크톱 클라우드 동기화 접속을 관리합니다.",
       "usersTitle": "사용자",
@@ -224,7 +241,9 @@
       "activeTrialsMetric": "활성 체험 코드",
       "pendingFeedbackMetric": "미처리 피드백",
       "recentContributionsMetric": "최근 지원",
-      "description": "지원, 인증서, 릴리스, 라이선스, 사용자, 감사 활동을 관리합니다."
+      "description": "지원, 인증서, 릴리스, 라이선스, 사용자, 감사 활동을 관리합니다.",
+      "contributionPricingTitle": "지원 가격 설정",
+      "contributionPricingDescription": "Contributions 페이지의 가격, 할인, 개발 지원 문구를 관리합니다."
     },
     "donations": {
       "eyebrow": "관리",
@@ -242,12 +261,12 @@
       "reason": "사유",
       "submitManualDonation": "수동 지원 추가",
       "empty": "지원 내역이 없습니다.",
-        "providers": {
-          "stripe": "Stripe",
-          "paypal": "PayPal",
-          "manual": "수동",
-          "dodo": "Dodo Payments"
-        },
+      "providers": {
+        "stripe": "Stripe",
+        "paypal": "PayPal",
+        "manual": "수동",
+        "dodo": "Dodo Payments"
+      },
       "statuses": {
         "pending": "대기 중",
         "paid": "결제 완료",
@@ -372,8 +391,8 @@
     },
     "supportSettings": {
       "eyebrow": "관리",
-      "title": "지원 가격 및 지원 설정",
-      "description": "Contributions 페이지에 표시되는 개발 지원 플랜과 지원 페이지의 공개 연락 채널을 관리합니다.",
+      "title": "지원 설정",
+      "description": "Support 페이지에 표시할 공개 연락 방법을 관리합니다.",
       "channel": "채널 이름",
       "value": "연락처 값",
       "status": "노출 상태",
@@ -390,16 +409,6 @@
       "save": "채널 저장",
       "rowSaved": "방금 저장됨",
       "rowSavedDescription": "이 채널 설정이 정상적으로 업데이트되었습니다.",
-      "tiersTitle": "개발 지원 플랜",
-      "tiersDescription": "Contributions 페이지에 표시되는 가격과 문구를 수정합니다.",
-      "tierLabel": "플랜 이름",
-      "tierDescription": "설명",
-      "tierPrice": "가격",
-      "tierDiscountPercent": "적용 할인율(%)",
-      "tierActive": "활성",
-      "tierInactive": "비활성",
-      "tierStatusHelp": "비활성 플랜은 Contributions 페이지에 표시되지 않습니다.",
-      "tierSaved": "플랜 저장됨",
       "guidanceTitle": "설정 안내",
       "guidanceBody": "활성화된 채널만 지원 페이지에 공개됩니다. Telegram과 Discord는 전체 URL, QQ와 WeChat은 계정 식별자, Email은 공개용 지원 메일 주소를 입력하세요.",
       "emailHelp": "이 주소는 사용자에게 공개되는 지원용 이메일입니다. 로그인 이메일 설정과는 별개입니다.",
@@ -608,8 +617,26 @@
       "returnToSite": "사이트로 돌아가기",
       "signOut": "로그아웃",
       "supportFeedback": "피드백",
-      "supportSettings": "지원 가격 설정",
-      "users": "사용자"
+      "supportSettings": "지원 설정",
+      "users": "사용자",
+      "contributionPricing": "지원 가격 설정"
+    },
+    "contributionPricing": {
+      "eyebrow": "Admin",
+      "title": "지원 가격 설정",
+      "description": "Contributions 페이지의 가격, 할인, 개발 지원 문구를 관리합니다.",
+      "tiersTitle": "개발 지원 티어",
+      "tiersDescription": "Contributions 페이지에 표시되는 가격과 문구를 업데이트합니다.",
+      "tierLabel": "티어 이름",
+      "tierDescription": "설명",
+      "tierPrice": "가격",
+      "tierDiscountPercent": "할인율 (%)",
+      "status": "표시 상태",
+      "tierActive": "활성",
+      "tierInactive": "비활성",
+      "tierStatusHelp": "비활성 티어는 Contributions 페이지에서 숨겨집니다.",
+      "save": "티어 저장",
+      "tierSaved": "티어가 저장되었습니다"
     }
   },
   "certificate": {

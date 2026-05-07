@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { jsonOk } from "@/lib/api/responses";
 import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
 import { readCloudSyncLeaseStatus } from "@/lib/license/cloud-sync-leases";
 import { readBearerToken, validateDesktopSession } from "@/lib/license/desktop-session";
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const feature = url.searchParams.get("feature") || CLOUD_SYNC_FEATURE;
 
   if (feature !== CLOUD_SYNC_FEATURE) {
-    return NextResponse.json({
+    return jsonOk({
       authenticated: false,
       feature,
       allowed: false,
@@ -23,14 +23,14 @@ export async function GET(request: Request) {
   const token = readBearerToken(request);
 
   if (!token) {
-    return NextResponse.json(
+    return jsonOk(
       {
         authenticated: false,
         feature,
         allowed: false,
         reason: "not_authenticated",
       },
-      { status: 401 },
+      401,
     );
   }
 
@@ -39,14 +39,14 @@ export async function GET(request: Request) {
     const session = await validateDesktopSession(client, token);
 
     if (!session) {
-      return NextResponse.json(
+      return jsonOk(
         {
           authenticated: false,
           feature,
           allowed: false,
           reason: "not_authenticated",
         },
-        { status: 401 },
+        401,
       );
     }
 
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
       });
 
       if (!leaseStatus.ok) {
-        return NextResponse.json({
+        return jsonOk({
           authenticated: true,
           feature,
           allowed: false,
@@ -74,20 +74,20 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json({
+    return jsonOk({
       authenticated: true,
       ...status,
       activeDeviceId: session.device_id,
     });
   } catch {
-    return NextResponse.json(
+    return jsonOk(
       {
         authenticated: false,
         feature,
         allowed: false,
         reason: "internal_error",
       },
-      { status: 500 },
+      500,
     );
   }
 }

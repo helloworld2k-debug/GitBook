@@ -9,7 +9,7 @@ import { Link } from "@/i18n/routing";
 const navLinkClass =
   "flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-slate-300 transition-colors hover:text-cyan-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300";
 
-export async function SiteHeader({ showAccountMenu = false }: { showAccountMenu?: boolean } = {}) {
+export async function SiteHeader({ showAccountMenu = true }: { showAccountMenu?: boolean } = {}) {
   const t = await getTranslations("nav");
   const localeValue = await getLocale();
   const currentLocale = supportedLocales.includes(localeValue as Locale) ? (localeValue as Locale) : "en";
@@ -22,7 +22,7 @@ export async function SiteHeader({ showAccountMenu = false }: { showAccountMenu?
   };
 
   return (
-    <header className="relative z-50 border-b border-cyan-300/10 bg-slate-950/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-cyan-300/10 bg-slate-950/90 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between">
         <Link
           href="/"

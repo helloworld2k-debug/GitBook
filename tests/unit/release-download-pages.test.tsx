@@ -44,6 +44,16 @@ vi.mock("next-intl/server", () => ({
         featureTwoText: "Two",
         featureThreeTitle: "Three",
         featureThreeText: "Three",
+        relatedTitle: "Related content",
+        relatedSubtitle: "Keep going with releases, support, and account tools.",
+        relatedVersionsTitle: "Release archive",
+        relatedVersionsText: "Download previous versions.",
+        relatedContributionsTitle: "Contributions",
+        relatedContributionsText: "Support continued development.",
+        relatedSupportTitle: "Support",
+        relatedSupportText: "Send feedback and get help.",
+        relatedNotificationsTitle: "Notifications",
+        relatedNotificationsText: "Read product updates.",
         mockTitle: "Knowledge engine",
         mockStatus: "Online",
         mockLineOne: "Line 1",
@@ -106,6 +116,18 @@ describe("release download pages", () => {
     expect(screen.getByRole("link", { name: "Download for Windows" })).toHaveAttribute("href", "https://downloads.example/win-primary.exe");
     expect(screen.getByRole("link", { name: "macOS Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
     expect(screen.getByRole("link", { name: "Windows Backup" })).toHaveAttribute("href", "https://mirror.example/win-backup.exe");
+  });
+
+  it("shows related content links on the homepage", async () => {
+    mocks.getCachedLatestPublishedRelease.mockResolvedValue(null);
+
+    render(await HomePage({ params: Promise.resolve({ locale: "en" }) }));
+
+    expect(screen.getByRole("heading", { name: "Related content" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Release archive Download previous versions/ })).toHaveAttribute("href", "/versions");
+    expect(screen.getByRole("link", { name: /Contributions Support continued development/ })).toHaveAttribute("href", "/contributions");
+    expect(screen.getByRole("link", { name: /Support Send feedback and get help/ })).toHaveAttribute("href", "/support");
+    expect(screen.getByRole("link", { name: /Notifications Read product updates/ })).toHaveAttribute("href", "/notifications");
   });
 
   it("shows paired platform actions for linked releases on the versions page", async () => {

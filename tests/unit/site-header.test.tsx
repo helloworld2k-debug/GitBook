@@ -48,14 +48,36 @@ describe("SiteHeader", () => {
     createSupabaseServerClientMock.mockReset();
   });
 
-  it("renders public navigation without querying Supabase", async () => {
+  it("renders public navigation and queries the account menu by default", async () => {
+    createSupabaseServerClientMock.mockResolvedValue({
+      auth: { getUser: vi.fn(async () => ({ data: { user: { id: "user-1", email: "user@example.com" } } })) },
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn(async () => ({
+              data: { display_name: "Ada Lovelace", email: "ada@example.com" },
+              error: null,
+            })),
+          })),
+        })),
+      })),
+    });
+
     render(await SiteHeader());
 
     expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Contributions" })).toHaveAttribute("href", "/contributions");
-    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
-    expect(screen.queryByRole("link", { name: "Dashboard" })).not.toBeInTheDocument();
-    expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
+    expect(createSupabaseServerClientMock).toHaveBeenCalled();
+  });
+
+  it("stays fixed at the top while the page scrolls", async () => {
+    createSupabaseServerClientMock.mockResolvedValue({
+      auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
+    });
+
+    render(await SiteHeader());
+
+    expect(screen.getByRole("banner")).toHaveClass("sticky", "top-0");
   });
 
   it("can opt into the dynamic account menu for authenticated areas", async () => {

@@ -1,7 +1,5 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { SiteHeader } from "@/components/site-header";
-import { supportedLocales, type Locale } from "@/config/site";
+import { getTranslations } from "next-intl/server";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { markNotificationRead } from "./actions";
@@ -20,13 +18,8 @@ function priorityClass(priority: string) {
 }
 
 export default async function NotificationsPage({ params }: NotificationsPageProps) {
-  const { locale } = await params;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
+  const { locale: localeParam } = await params;
+  const locale = resolvePageLocale(localeParam);
   const t = await getTranslations("notifications");
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
@@ -53,7 +46,6 @@ export default async function NotificationsPage({ params }: NotificationsPagePro
 
   return (
     <>
-      <SiteHeader showAccountMenu />
       <main className="tech-shell flex-1">
         <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
           <p className="inline-flex min-h-8 items-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-3 text-sm font-semibold uppercase text-cyan-200">

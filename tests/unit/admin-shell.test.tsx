@@ -18,6 +18,7 @@ const adminLabels = {
   auditLogs: "Audit Logs",
   backToAdmin: "Back to admin",
   certificates: "Certificates",
+  contributionPricing: "Contribution pricing",
   dashboard: "Overview",
   donations: "Donations",
   language: "Language",
@@ -46,6 +47,7 @@ describe("AdminShell", () => {
     expect(within(sidebar).getByRole("link", { name: /Users/ })).toHaveAttribute("href", "/admin/users");
     expect(within(sidebar).getByRole("link", { name: /Notifications/ })).toHaveAttribute("href", "/admin/notifications");
     expect(within(sidebar).getByRole("link", { name: /Feedback/ })).toHaveAttribute("href", "/admin/support-feedback");
+    expect(within(sidebar).getByRole("link", { name: /Contribution pricing/ })).toHaveAttribute("href", "/admin/contribution-pricing");
     expect(within(sidebar).getByRole("link", { name: /Support settings/ })).toHaveAttribute("href", "/admin/support-settings");
     expect(screen.getByRole("navigation", { name: "Admin mobile" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Return to site/ })).toHaveAttribute("href", "/");
