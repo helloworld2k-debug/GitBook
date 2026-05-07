@@ -138,7 +138,7 @@ describe("admin license actions", () => {
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
-  it("bulk updates selected license code status, channel metadata, and audits the action", async () => {
+  it("bulk deactivates selected license codes without changing channel metadata", async () => {
     const inFilter = vi.fn(async () => ({ error: null }));
     const update = vi.fn(() => ({ in: inFilter }));
     const auditInsert = vi.fn(async () => ({ error: null }));
@@ -159,10 +159,12 @@ describe("admin license actions", () => {
     await expect(bulkUpdateLicenseCodes(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=license-codes-bulk-updated");
 
     expect(update).toHaveBeenCalledWith(expect.objectContaining({
-      channel_type: "xianyu",
       is_active: false,
       updated_at: expect.any(String),
       updated_by: "admin-1",
+    }));
+    expect(update).toHaveBeenCalledWith(expect.not.objectContaining({
+      channel_type: expect.any(String),
     }));
     expect(inFilter).toHaveBeenCalledWith("id", ["code-1", "code-2"]);
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
@@ -170,6 +172,70 @@ describe("admin license actions", () => {
       target_id: "code-1,code-2",
       target_type: "trial_code",
     }));
+  });
+
+  it("bulk updates selected license code channel metadata separately", async () => {
+    const inFilter = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ in: inFilter }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") return { update };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.append("license_code_ids", "code-1");
+    formData.append("license_code_ids", "code-2");
+    formData.set("bulk_action", "metadata");
+    formData.set("channel_type", "xianyu");
+
+    await expect(bulkUpdateLicenseCodes(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=license-codes-bulk-updated");
+
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      channel_type: "xianyu",
+      updated_at: expect.any(String),
+      updated_by: "admin-1",
+    }));
+    expect(update).toHaveBeenCalledWith(expect.not.objectContaining({
+      deleted_at: expect.any(String),
+      is_active: expect.any(Boolean),
+    }));
+    expect(inFilter).toHaveBeenCalledWith("id", ["code-1", "code-2"]);
+  });
+
+  it("bulk deletes selected license codes without changing channel metadata", async () => {
+    const inFilter = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ in: inFilter }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") return { update };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.append("license_code_ids", "code-1");
+    formData.append("license_code_ids", "code-2");
+    formData.set("bulk_action", "delete");
+    formData.set("channel_type", "taobao");
+
+    await expect(bulkUpdateLicenseCodes(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=license-codes-bulk-updated");
+
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      deleted_at: expect.any(String),
+      is_active: false,
+      updated_at: expect.any(String),
+      updated_by: "admin-1",
+    }));
+    expect(update).toHaveBeenCalledWith(expect.not.objectContaining({
+      channel_type: expect.any(String),
+    }));
+    expect(inFilter).toHaveBeenCalledWith("id", ["code-1", "code-2"]);
   });
 
   it("rejects bulk edits over 50 license codes", async () => {

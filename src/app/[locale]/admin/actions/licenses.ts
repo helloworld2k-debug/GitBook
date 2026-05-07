@@ -58,12 +58,10 @@ function getBulkLicenseCodeUpdate(formData: FormData, adminId: string): TrialCod
   } else if (action === "delete") {
     update.deleted_at = now;
     update.is_active = false;
-  } else if (action && action !== "metadata") {
-    throw new Error("Bulk action is invalid");
-  }
-
-  if (formData.has("channel_type")) {
+  } else if (action === "metadata") {
     update.channel_type = getLicenseCodeChannelType(formData);
+  } else if (action) {
+    throw new Error("Bulk action is invalid");
   }
 
   if (Object.keys(update).length <= 2) {

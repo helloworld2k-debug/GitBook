@@ -41,6 +41,10 @@ function setHiddenFormValue(form: HTMLFormElement, name: string, value: string) 
   form.append(input);
 }
 
+function removeHiddenFormValue(form: HTMLFormElement, name: string) {
+  form.querySelector<HTMLInputElement>(`input[type="hidden"][name="${name}"]`)?.remove();
+}
+
 function syncSelectedToForm(form: HTMLFormElement, formId: string) {
   form.querySelectorAll<HTMLInputElement>('input[data-bulk-generated="true"][name="license_code_ids"]').forEach((input) => input.remove());
 
@@ -71,7 +75,11 @@ function submitBulkAction(formId: string, action: string) {
 
   setHiddenFormValue(form, "bulk_action", action);
   syncSelectedToForm(form, formId);
-  syncMetadataToForm(form, formId);
+  if (action === "metadata") {
+    syncMetadataToForm(form, formId);
+  } else {
+    removeHiddenFormValue(form, "channel_type");
+  }
   form.requestSubmit();
 }
 
