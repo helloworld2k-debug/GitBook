@@ -5,6 +5,7 @@ import DashboardPage from "@/app/[locale]/dashboard/page";
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
   requireUser: vi.fn(),
+  setupUserPage: vi.fn(),
 }));
 
 vi.mock("@/components/site-header", () => ({
@@ -13,6 +14,10 @@ vi.mock("@/components/site-header", () => ({
 
 vi.mock("@/lib/auth/guards", () => ({
   requireUser: mocks.requireUser,
+}));
+
+vi.mock("@/lib/auth/page-guards", () => ({
+  setupUserPage: mocks.setupUserPage,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -137,14 +142,22 @@ describe("dashboard page", () => {
   beforeEach(() => {
     mocks.createSupabaseServerClient.mockReset();
     mocks.requireUser.mockReset();
-  });
-
-  it("moves donation certificates into the matching donation history row", async () => {
-    mocks.requireUser.mockResolvedValue({
+    mocks.requireUser.mockReset().mockResolvedValue({
       email: "ada@example.com",
       id: "user-1",
       user_metadata: { name: "Ada Lovelace" },
     });
+    mocks.setupUserPage.mockReset().mockResolvedValue({
+      locale: "en",
+      user: {
+        email: "ada@example.com",
+        id: "user-1",
+        user_metadata: { name: "Ada Lovelace" },
+      },
+    });
+  });
+
+  it("moves donation certificates into the matching donation history row", async () => {
 
     const donationCountQuery = createThenableQuery({ count: 1, error: null });
     const certificateCountQuery = createThenableQuery({ count: 1, error: null });
@@ -209,6 +222,7 @@ describe("dashboard page", () => {
       "/dashboard/certificates/certificate-1",
     );
     expect(within(donationHistory as HTMLElement).getByText("GBAI-2026-D-000001")).toBeInTheDocument();
+    expect(mocks.setupUserPage).toHaveBeenCalledWith("en", "/en/dashboard");
   });
 
   it("shows a contribution success banner after Dodo returns", async () => {

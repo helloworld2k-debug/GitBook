@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
-import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
-import { requireUser } from "@/lib/auth/guards";
+import { setupUserPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { replySupportFeedback } from "../../actions";
@@ -15,15 +14,10 @@ type SupportFeedbackThreadPageProps = {
 };
 
 export default async function SupportFeedbackThreadPage({ params, searchParams }: SupportFeedbackThreadPageProps) {
-  const { id, locale } = await params;
+  const { id, locale: localeParam } = await params;
   const status = await searchParams;
 
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  const user = await requireUser(locale, `/${locale}/support/feedback/${id}`);
+  const { locale, user } = await setupUserPage(localeParam, `/${localeParam}/support/feedback/${id}`);
   const t = await getTranslations("support");
   const supabase = createSupabaseAdminClient();
   const { data: feedback, error } = await supabase

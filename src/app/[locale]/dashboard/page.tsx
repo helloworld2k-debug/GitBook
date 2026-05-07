@@ -1,11 +1,9 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { BadgeCheck, Cloud, CreditCard, KeyRound, ShieldCheck, Sparkles, UserCircle } from "lucide-react";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
-import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
-import { requireUser } from "@/lib/auth/guards";
+import { setupUserPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
@@ -71,7 +69,7 @@ function DashboardCard({ children, className = "" }: { children: React.ReactNode
 }
 
 export default async function DashboardPage({ params, searchParams }: DashboardPageProps) {
-  const { locale } = await params;
+  const { locale: localeParam } = await params;
   const statusParams = await searchParams;
   const paymentStatus = statusParams?.payment;
   const profileStatus = statusParams?.profile;
@@ -79,12 +77,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
   const trialStatus = statusParams?.trial;
   const welcomeStatus = statusParams?.welcome;
 
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  const user = await requireUser(locale, `/${locale}/dashboard`);
+  const { locale, user } = await setupUserPage(localeParam, `/${localeParam}/dashboard`);
   const t = await getTranslations("dashboard");
   const supabase = await createSupabaseServerClient();
 

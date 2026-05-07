@@ -1,7 +1,5 @@
-import { notFound, redirect } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
-import { supportedLocales, type Locale } from "@/config/site";
-import { requireUser } from "@/lib/auth/guards";
+import { redirect } from "next/navigation";
+import { setupUserPage } from "@/lib/auth/page-guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type LatestCertificatePageProps = {
@@ -15,15 +13,10 @@ type LatestCertificatePageProps = {
 };
 
 export default async function LatestCertificatePage({ params, searchParams }: LatestCertificatePageProps) {
-  const { locale } = await params;
+  const { locale: localeParam } = await params;
   const status = await searchParams;
 
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  const user = await requireUser(locale, `/${locale}/dashboard/certificates/latest`);
+  const { locale, user } = await setupUserPage(localeParam, `/${localeParam}/dashboard/certificates/latest`);
   const supabase = await createSupabaseServerClient();
 
   async function findCertificateForDonation(donationId: string) {

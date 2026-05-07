@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { supportedLocales, type Locale } from "@/config/site";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
+import { setupUserPage } from "@/lib/auth/page-guards";
 import { CertificateView, formatCertificateAmount, getCertificateTypeLabel } from "@/lib/certificates/render";
 import { getCertificateTemplate } from "@/lib/certificates/templates";
 import { getDonationDetailsForCertificate } from "@/lib/certificates/tier";
-import { requireUser } from "@/lib/auth/guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type CertificatePageProps = {
@@ -15,7 +14,9 @@ type CertificatePageProps = {
   }>;
 };
 
-function getRecipientName(user: Awaited<ReturnType<typeof requireUser>>, fallbackRecipient: string) {
+type AuthenticatedUser = Awaited<ReturnType<typeof setupUserPage>>["user"];
+
+function getRecipientName(user: AuthenticatedUser, fallbackRecipient: string) {
   const displayName = user.user_metadata?.name ?? user.user_metadata?.full_name;
 
   if (typeof displayName === "string" && displayName.trim()) {
@@ -26,14 +27,8 @@ function getRecipientName(user: Awaited<ReturnType<typeof requireUser>>, fallbac
 }
 
 export default async function CertificatePage({ params }: CertificatePageProps) {
-  const { id, locale } = await params;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  const user = await requireUser(locale, `/${locale}/dashboard/certificates/${id}`);
+  const { id, locale: localeParam } = await params;
+  const { locale, user } = await setupUserPage(localeParam, `/${localeParam}/dashboard/certificates/${id}`);
   const t = await getTranslations("certificate");
   const supabase = await createSupabaseServerClient();
 
