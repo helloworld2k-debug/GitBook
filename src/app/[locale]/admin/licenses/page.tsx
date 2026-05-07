@@ -136,6 +136,32 @@ function channelLabel(channel: string, t: Awaited<ReturnType<typeof getTranslati
   return t(`licenses.channels.${channel}`);
 }
 
+function isLicenseCodeBatchSchemaError(error: { code?: string; message?: string } | null) {
+  const code = error?.code;
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    code === "PGRST200" ||
+    code === "PGRST204" ||
+    code === "42P01" ||
+    message.includes("license_code_batches") ||
+    message.includes("schema cache")
+  );
+}
+
+function isLicenseCodeMetadataSchemaError(error: { code?: string; message?: string } | null) {
+  const code = error?.code;
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    code === "PGRST204" ||
+    code === "42703" ||
+    message.includes("channel_type") ||
+    message.includes("channel_note") ||
+    message.includes("schema cache")
+  );
+}
+
 export default async function AdminLicensesPage({ params, searchParams }: AdminLicensesPageProps) {
   const { locale: localeParam } = await params;
   const feedback = await searchParams;
@@ -167,14 +193,36 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
     supabase.from("cloud_sync_leases").select("id,user_id,desktop_session_id,device_id,last_heartbeat_at,expires_at,revoked_at,updated_at").order("updated_at", { ascending: false }).limit(50),
   ]);
 
-  for (const result of [cooldownSettingResult, batchesResult, codesResult, trialRedemptionsResult, entitlementsResult, sessionsResult, leasesResult]) {
-    if (result.error) {
-      throw result.error;
+  if (cooldownSettingResult.error) throw cooldownSettingResult.error;
+  if (batchesResult.error && !isLicenseCodeBatchSchemaError(batchesResult.error)) throw batchesResult.error;
+  if (codesResult.error && !isLicenseCodeMetadataSchemaError(codesResult.error)) throw codesResult.error;
+  if (trialRedemptionsResult.error) throw trialRedemptionsResult.error;
+  if (entitlementsResult.error) throw entitlementsResult.error;
+  if (sessionsResult.error) throw sessionsResult.error;
+  if (leasesResult.error) throw leasesResult.error;
+
+  let fallbackCodes: LicenseCodeRow[] | null = null;
+
+  if (codesResult.error && isLicenseCodeMetadataSchemaError(codesResult.error)) {
+    const fallbackCodesResult = await supabase
+      .from("trial_codes")
+      .select("id,batch_id,label,trial_days,duration_kind,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by,created_by")
+      .order("created_at", { ascending: false })
+      .limit(300);
+
+    if (fallbackCodesResult.error) {
+      throw fallbackCodesResult.error;
     }
+
+    fallbackCodes = ((fallbackCodesResult.data ?? []) as Omit<LicenseCodeRow, "channel_note" | "channel_type">[]).map((code) => ({
+      ...code,
+      channel_note: null,
+      channel_type: "internal",
+    }));
   }
 
-  const batches = (batchesResult.data ?? []) as LicenseBatchRow[];
-  const codes = (codesResult.data ?? []) as LicenseCodeRow[];
+  const batches = (batchesResult.error ? [] : (batchesResult.data ?? [])) as LicenseBatchRow[];
+  const codes = fallbackCodes ?? ((codesResult.data ?? []) as LicenseCodeRow[]);
   const filteredCodes = filterCodes(codes, feedback);
   const codesByBatch = new Map<string, LicenseCodeRow[]>();
   const redemptionsByCode = new Map<string, number>();

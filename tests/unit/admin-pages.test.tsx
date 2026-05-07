@@ -1247,6 +1247,52 @@ describe("admin pages", () => {
     expect(screen.getAllByRole("columnheader", { name: "Action" }).some((header) => header.className.includes("sticky") && header.className.includes("right-0"))).toBe(true);
   });
 
+  it("keeps license management available when the batch table migration has not reached Supabase yet", async () => {
+    const batchesQuery = createAdminListQuery(null, {
+      code: "42P01",
+      message: "relation public.license_code_batches does not exist",
+    } as Error);
+    const codesQuery = createAdminListQuery([
+      {
+        id: "license-code-1",
+        label: "Existing trial",
+        trial_days: 3,
+        duration_kind: "trial_3_day",
+        channel_type: null,
+        channel_note: null,
+        code_mask: "T3AB-****-****-MNOP",
+        batch_id: null,
+        max_redemptions: 1,
+        redemption_count: 0,
+        is_active: true,
+        updated_by: null,
+        created_by: "admin-1",
+        created_at: "2026-05-01T10:00:00.000Z",
+        deleted_at: null,
+      },
+    ]);
+    const emptyQuery = createAdminListQuery([]);
+    const cooldownSettingQuery = createAdminListQuery({
+      key: "cloud_sync_device_switch_cooldown_minutes",
+      value: "180",
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "cloud_sync_settings") return cooldownSettingQuery;
+      if (table === "license_code_batches") return batchesQuery;
+      if (table === "trial_codes") return codesQuery;
+      return emptyQuery;
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+
+    const element = await AdminLicensesPage({ params: Promise.resolve({ locale: "en" }) });
+
+    render(element);
+
+    expect(screen.getByRole("heading", { name: "License management" })).toBeInTheDocument();
+    expect(screen.getByText("T3AB-****-****-MNOP")).toBeInTheDocument();
+    expect(screen.getByText("No license batches found.")).toBeInTheDocument();
+  });
+
   it("shows role editing controls on the users page only to owner admins", async () => {
     const profilesQuery = createAdminListQuery([
       {
