@@ -1,11 +1,9 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
-import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { requireAdmin } from "@/lib/auth/guards";
+import { setupAdminPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { updateSupportFeedbackStatus } from "../actions";
@@ -24,17 +22,12 @@ function statusTone(status: FeedbackStatus) {
 }
 
 export default async function AdminSupportFeedbackPage({ params, searchParams }: AdminSupportFeedbackPageProps) {
-  const { locale } = await params;
+  const { locale: localeParam } = await params;
   const feedbackState = await searchParams;
 
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  await requireAdmin(locale, `/${locale}/admin/support-feedback`);
+  const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/support-feedback`);
   const t = await getTranslations("admin");
-  const shellProps = await getAdminShellProps(locale as Locale, "/admin/support-feedback");
+  const shellProps = await getAdminShellProps(locale, "/admin/support-feedback");
   const { data: feedback, error } = await (await createSupabaseServerClient())
     .from("support_feedback")
     .select("id,email,contact,subject,message,status,created_at")

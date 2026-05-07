@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { AdminUserDeleteDangerZone } from "@/components/admin/admin-user-delete-danger-zone";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
-import { supportedLocales, type Locale } from "@/config/site";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { isOwnerProfile, requireAdmin } from "@/lib/auth/guards";
+import { isOwnerProfile } from "@/lib/auth/guards";
+import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   addManualDonation,
@@ -76,18 +76,13 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
 }
 
 export default async function AdminUserDetailPage({ params, searchParams }: AdminUserDetailPageProps) {
-  const { id, locale } = await params;
+  const { id, locale: localeParam } = await params;
   const feedback = await searchParams;
 
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  const admin = await requireAdmin(locale, `/${locale}/admin/users/${id}`);
+  const { locale, user: admin } = await setupAdminPage(localeParam, `/${localeParam}/admin/users/${id}`);
   const t = await getTranslations("admin.users");
   const adminT = await getTranslations("admin");
-  const shellProps = await getAdminShellProps(locale as Locale, "/admin/users");
+  const shellProps = await getAdminShellProps(locale, "/admin/users");
   const supabase = createSupabaseAdminClient();
 
   const [

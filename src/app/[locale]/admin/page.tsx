@@ -1,10 +1,8 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminPageHeader, AdminShell } from "@/components/admin/admin-shell";
-import { supportedLocales, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { requireAdmin } from "@/lib/auth/guards";
+import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type AdminPageProps = {
@@ -14,16 +12,10 @@ type AdminPageProps = {
 };
 
 export default async function AdminPage({ params }: AdminPageProps) {
-  const { locale } = await params;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  await requireAdmin(locale, `/${locale}/admin`);
+  const { locale: localeParam } = await params;
+  const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin`);
   const t = await getTranslations("admin");
-  const shellProps = await getAdminShellProps(locale as Locale, "/admin");
+  const shellProps = await getAdminShellProps(locale, "/admin");
   let usersCount = 0;
   let activeTrialsCount = 0;
   let feedbackCount = 0;

@@ -1,11 +1,9 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
-import { supportedLocales, type Locale } from "@/config/site";
 import { getDefaultSupportChannelsConfig, normalizeSupportChannels, toSupportChannelRows } from "@/config/support";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { requireAdmin } from "@/lib/auth/guards";
+import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { updateSupportContactChannel } from "../actions";
 
@@ -28,17 +26,12 @@ async function getSupportContactRows(supabase: Awaited<ReturnType<typeof createS
 }
 
 export default async function AdminSupportSettingsPage({ params, searchParams }: AdminSupportSettingsPageProps) {
-  const { locale } = await params;
+  const { locale: localeParam } = await params;
   const feedback = await searchParams;
 
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-  await requireAdmin(locale, `/${locale}/admin/support-settings`);
+  const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/support-settings`);
   const t = await getTranslations("admin");
-  const shellProps = await getAdminShellProps(locale as Locale, "/admin/support-settings");
+  const shellProps = await getAdminShellProps(locale, "/admin/support-settings");
   const supabase = await createSupabaseServerClient();
   const defaults = getDefaultSupportChannelsConfig();
   const rows = await getSupportContactRows(supabase);
