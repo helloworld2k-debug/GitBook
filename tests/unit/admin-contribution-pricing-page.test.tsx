@@ -119,6 +119,10 @@ describe("AdminContributionPricingPage", () => {
     expect(screen.getByDisplayValue("0")).toBeInTheDocument();
     expect(screen.queryByText("Channel settings")).not.toBeInTheDocument();
     expect(screen.queryByDisplayValue("Telegram")).not.toBeInTheDocument();
+
+    const tierForm = screen.getByDisplayValue("Monthly Support").closest("form");
+    expect(tierForm).toHaveClass("sm:grid-cols-2", "xl:grid-cols-12");
+    expect(tierForm?.className).not.toContain("lg:grid-cols-[minmax(0,0.8fr)");
   });
 
   it("renders donation tiers when the original price column has not been migrated yet", async () => {

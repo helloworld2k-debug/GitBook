@@ -48,18 +48,18 @@ export default async function AdminContributionPricingPage({ params, searchParam
         />
         <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
 
-        <AdminCard>
+        <AdminCard className="overflow-hidden">
           <div className="border-b border-slate-200 px-5 py-4">
             <h2 className="text-base font-semibold text-slate-950">{t("contributionPricing.tiersTitle")}</h2>
             <p className="mt-2 text-sm text-slate-600">{t("contributionPricing.tiersDescription")}</p>
           </div>
-          <div className="divide-y divide-slate-200">
+          <div className="grid gap-4 bg-slate-50/60 p-4 sm:p-5">
             {donationTierRows.map((tier) => (
               <form
                 action={updateDonationTier}
-                className={`grid gap-4 px-5 py-5 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)_150px_170px_170px_150px] ${
+                className={`grid gap-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-5 xl:grid-cols-12 ${
                   feedback?.notice === "donation-tier-updated" && feedback?.channel === tier.id
-                    ? "bg-emerald-50/60"
+                    ? "border-emerald-200 bg-emerald-50/60"
                     : ""
                 }`}
                 key={tier.id}
@@ -67,19 +67,19 @@ export default async function AdminContributionPricingPage({ params, searchParam
                 <input name="locale" type="hidden" value={locale} />
                 <input name="return_to" type="hidden" value={`/admin/contribution-pricing?channel=${tier.id}`} />
                 <input name="tier_id" type="hidden" value={tier.id} />
-                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700 sm:col-span-2 xl:col-span-3">
                   {t("contributionPricing.tierLabel")}
-                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={tier.label} name="label" required />
+                  <input className="min-h-11 min-w-0 rounded-md border border-slate-300 px-3 text-sm" defaultValue={tier.label} name="label" required />
                   <span className="font-mono text-xs text-slate-500">{tier.code}</span>
                 </label>
-                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700 sm:col-span-2 xl:col-span-5">
                   {t("contributionPricing.tierDescription")}
-                  <textarea className="min-h-24 rounded-md border border-slate-300 px-3 py-2 text-sm" defaultValue={tier.description} name="description" required />
+                  <textarea className="min-h-28 min-w-0 resize-y rounded-md border border-slate-300 px-3 py-2 text-sm leading-6" defaultValue={tier.description} name="description" required />
                 </label>
-                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700 sm:col-span-1 xl:col-span-2">
                   {t("contributionPricing.tierPrice")}
                   <input
-                    className="min-h-11 rounded-md border border-slate-300 px-3 text-sm"
+                    className="min-h-11 min-w-0 rounded-md border border-slate-300 px-3 text-sm"
                     defaultValue={formatDollarInput(tier.compareAtAmount ?? tier.amount)}
                     min="0.01"
                     name="price"
@@ -88,10 +88,10 @@ export default async function AdminContributionPricingPage({ params, searchParam
                     type="number"
                   />
                 </label>
-                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700 sm:col-span-1 xl:col-span-2">
                   {t("contributionPricing.tierDiscountPercent")}
                   <input
-                    className="min-h-11 rounded-md border border-slate-300 px-3 text-sm"
+                    className="min-h-11 min-w-0 rounded-md border border-slate-300 px-3 text-sm"
                     defaultValue={getDiscountPercent(tier.amount, tier.compareAtAmount)}
                     max="99"
                     min="0"
@@ -101,9 +101,9 @@ export default async function AdminContributionPricingPage({ params, searchParam
                     type="number"
                   />
                 </label>
-                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700 sm:col-span-1 xl:col-span-3">
                   {t("contributionPricing.status")}
-                  <span className="inline-flex min-h-11 items-center justify-between rounded-md border border-slate-300 px-3">
+                  <span className="inline-flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-md border border-slate-300 px-3">
                     <span className="text-sm text-slate-700">{tier.isActive ? t("contributionPricing.tierActive") : t("contributionPricing.tierInactive")}</span>
                     <span className={`relative ml-3 inline-flex h-6 w-11 items-center rounded-full transition-colors ${tier.isActive ? "bg-slate-950" : "bg-slate-300"}`}>
                       <span className={`absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform ${tier.isActive ? "translate-x-5" : "translate-x-0"}`} />
@@ -112,9 +112,9 @@ export default async function AdminContributionPricingPage({ params, searchParam
                   </span>
                   <span className="text-xs text-slate-500">{t("contributionPricing.tierStatusHelp")}</span>
                 </label>
-                <div className="flex items-end">
-                  <div className="flex w-full flex-col gap-2">
-                    <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" pendingLabel={t("common.saving")}>
+                <div className="flex min-w-0 items-end sm:col-span-1 xl:col-span-9 xl:justify-end">
+                  <div className="flex w-full flex-col gap-2 sm:max-w-56">
+                    <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800" pendingLabel={t("common.saving")}>
                       {t("contributionPricing.save")}
                     </AdminSubmitButton>
                     {feedback?.notice === "donation-tier-updated" && feedback?.channel === tier.id ? (

@@ -120,7 +120,7 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
   const items = getAdminItems(labels);
 
   return (
-    <main className="min-h-dvh bg-slate-100 text-slate-950">
+    <main className="min-h-dvh overflow-x-hidden bg-slate-100 text-slate-950">
       <div className="mx-auto flex min-h-dvh w-full max-w-[1800px]">
         <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white lg:block" aria-label="Admin sidebar">
           <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
@@ -141,7 +141,7 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
-            <div className="flex min-h-16 flex-col items-stretch gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex min-h-16 flex-col items-stretch gap-3 px-4 py-3 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <details className="group relative lg:hidden">
                   <summary
@@ -170,7 +170,7 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
                   <span className="truncate">{labels.returnToSite}</span>
                 </Link>
               </div>
-              <div className="flex min-w-0 flex-wrap items-center gap-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3 xl:justify-end">
                 <LanguageSwitcher currentLocale={locale} label={labels.language} variant="admin" />
                 <form action={signOutAction.bind(null, locale)}>
                   <button
@@ -181,14 +181,14 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
                     {labels.signOut}
                   </button>
                 </form>
-                <div className="hidden min-h-10 max-w-52 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 sm:flex">
+                <div className="hidden min-h-10 max-w-full items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 sm:flex xl:max-w-52">
                   <FileText aria-hidden="true" className="size-4 shrink-0 text-slate-400" />
                   <span className="truncate">{adminLabel}</span>
                 </div>
               </div>
             </div>
           </header>
-          <div className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+          <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</div>
         </div>
       </div>
     </main>
@@ -325,7 +325,7 @@ export function AdminTableShell({
       ) : null}
       <div
         aria-label={label}
-        className={`${mobileCards ? "hidden md:block" : ""} overflow-x-auto overscroll-x-contain rounded-b-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950`}
+        className={`${mobileCards ? "hidden md:block" : ""} max-w-full overflow-x-auto overscroll-x-contain rounded-b-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950`}
         data-testid="admin-table-shell"
         role="region"
         tabIndex={0}
