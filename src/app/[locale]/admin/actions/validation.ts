@@ -1,4 +1,4 @@
-import { supportedLocales, type Locale } from "@/config/site";
+import { getActionLocale } from "@/lib/i18n/action-locale";
 
 export const MAX_REASON_LENGTH = 500;
 export const MAX_MANUAL_REFERENCE_LENGTH = 120;
@@ -15,9 +15,7 @@ export const feedbackStatuses = ["open", "reviewing", "closed"] as const;
 export const supportContactChannelIds = ["telegram", "discord", "qq", "email", "wechat"] as const;
 
 export function getSafeLocale(locale: FormDataEntryValue | null) {
-  const value = String(locale ?? "en");
-
-  return supportedLocales.includes(value as Locale) ? value : "en";
+  return getActionLocale(locale);
 }
 
 export function getRequiredString(formData: FormData, key: string, message: string) {
