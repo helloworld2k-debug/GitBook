@@ -20,6 +20,7 @@ import { siteConfig, type Locale } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { isAdminFeedbackKey, type AdminFeedbackKey, type AdminFeedbackTone } from "@/lib/admin/feedback";
 import { signOutAction } from "@/app/[locale]/dashboard/actions";
+import { AdminFeedbackToast } from "./admin-feedback-toast";
 
 type AdminShellLabels = {
   auditLogs: string;
@@ -288,16 +289,7 @@ export function AdminFeedbackBanner({
     return null;
   }
 
-  const toneClass =
-    tone === "error"
-      ? "border-red-200 bg-red-50 text-red-800"
-      : "border-emerald-200 bg-emerald-50 text-emerald-800";
-
-  return (
-    <div className={`mb-5 rounded-md border px-4 py-3 text-sm font-medium ${toneClass}`} role={tone === "error" ? "alert" : "status"}>
-      {adminFeedbackMessages[key]}
-    </div>
-  );
+  return <AdminFeedbackToast key={`${tone}-${key}`} message={adminFeedbackMessages[key]} tone={tone} />;
 }
 
 export function AdminCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {

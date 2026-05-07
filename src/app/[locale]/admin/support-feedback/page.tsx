@@ -163,15 +163,15 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                 </div>
               }
             >
-                <table aria-label={t("supportFeedback.title")} className="min-w-[1260px] table-fixed text-left text-sm">
+                <table aria-label={t("supportFeedback.title")} className="min-w-[1540px] table-fixed text-left text-sm">
                 <colgroup>
-                  <col className="w-[230px]" />
-                  <col className="w-[120px]" />
-                  <col className="w-[240px]" />
+                  <col className="w-[220px]" />
+                  <col className="w-[110px]" />
+                  <col className="w-[260px]" />
                   <col className="w-[320px]" />
                   <col className="w-[140px]" />
+                  <col className="w-[270px]" />
                   <col className="w-[220px]" />
-                  <col className="w-[240px]" />
                 </colgroup>
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                   <tr>
@@ -181,7 +181,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                     <th className="px-5 py-3">{t("supportFeedback.message")}</th>
                     <th className="px-5 py-3">{t("supportFeedback.status")}</th>
                     <th className="px-5 py-3">{t("supportFeedback.createdAt")}</th>
-                    <th className="sticky right-0 z-10 w-[240px] border-l border-slate-200 bg-slate-50 px-5 py-3 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">{t("licenses.action")}</th>
+                    <th className="border-l border-slate-200 px-5 py-3">{t("licenses.action")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
@@ -216,21 +216,21 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                       <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                         {formatDateTimeWithSeconds(item.created_at, locale)}
                       </td>
-                      <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
-                        <form action={updateSupportFeedbackStatus} className="flex min-w-[200px] flex-wrap justify-end gap-2">
+                      <td className="border-l border-slate-200 px-5 py-4">
+                        <form action={updateSupportFeedbackStatus} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
                           <input name="locale" type="hidden" value={locale} />
                           <input name="return_to" type="hidden" value="/admin/support-feedback" />
                           <input name="feedback_id" type="hidden" value={item.id} />
-                          <select className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="status" defaultValue={item.status}>
+                          <select className="min-h-10 min-w-0 rounded-md border border-slate-300 px-2 text-sm" name="status" defaultValue={item.status}>
                             <option value="open">{t("supportFeedback.statuses.open")}</option>
                             <option value="reviewing">{t("supportFeedback.statuses.reviewing")}</option>
                             <option value="closed">{t("supportFeedback.statuses.closed")}</option>
                           </select>
-                          <AdminSubmitButton className="min-h-10 whitespace-nowrap rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={t("common.saving")}>
+                          <AdminSubmitButton className="min-h-10 whitespace-nowrap rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700" pendingLabel={t("common.saving")}>
                             {t("supportFeedback.save")}
                           </AdminSubmitButton>
                         </form>
-                        <Link className="mt-2 inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/support-feedback/${item.id}`}>
+                        <Link className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/support-feedback/${item.id}`}>
                           {t("supportFeedback.view")}
                         </Link>
                       </td>

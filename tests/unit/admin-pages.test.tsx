@@ -923,7 +923,8 @@ describe("admin pages", () => {
     render(element);
 
     expect(from).toHaveBeenCalledWith("support_feedback");
-    expect(screen.getByRole("table", { name: "Support feedback" })).toHaveClass("min-w-[1260px]", "table-fixed");
+    expect(screen.getByRole("table", { name: "Support feedback" })).toHaveClass("min-w-[1540px]", "table-fixed");
+    expect(screen.getByRole("columnheader", { name: "Action" })).not.toHaveClass("sticky");
     expect(screen.getAllByText("Unread").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Unread feedback" })).toHaveAttribute("href", "/admin/support-feedback?filter=unread");
     expect(screen.getByTestId("admin-mobile-cards")).toHaveTextContent("Cannot redeem trial");
