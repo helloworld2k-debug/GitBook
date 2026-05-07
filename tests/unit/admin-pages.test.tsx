@@ -235,6 +235,7 @@ const testMessages = {
         cooldownReasonPlaceholder: "Reason for this operational change",
         reason: "Reason",
         trialDays: "Trial days",
+        fixedPaidDurationsHelp: "Monthly codes use a fixed 30-day duration. Quarterly uses 90 days; yearly uses 365 days.",
         label: "Label",
         batchGenerateTitle: "Batch generate license codes",
         batchGenerateDescription: "Generate trial, monthly, quarterly, or yearly license codes.",
@@ -1233,6 +1234,7 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "License management" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Batch generate license codes" })).toBeInTheDocument();
     expect(screen.getAllByLabelText("Trial days")[0]).toHaveAttribute("max", "7");
+    expect(screen.getByText("Monthly codes use a fixed 30-day duration. Quarterly uses 90 days; yearly uses 365 days.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Generate codes" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Apply filters" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "License batches" })).toBeInTheDocument();

@@ -554,7 +554,8 @@
         "xianyu": "Xianyu",
         "partner": "Partner",
         "other": "Other"
-      }
+      },
+      "fixedPaidDurationsHelp": "Monthly codes use a fixed 30-day duration. Quarterly uses 90 days; yearly uses 365 days."
     },
     "users": {
       "eyebrow": "Admin",

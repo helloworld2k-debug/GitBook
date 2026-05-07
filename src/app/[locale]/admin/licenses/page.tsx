@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { AdminLicenseBulkToolbar, AdminLicenseSelectAllCheckbox } from "@/components/admin/admin-license-bulk-toolbar";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { LicenseDurationFields } from "@/components/admin/license-duration-fields";
 import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
@@ -290,6 +291,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           <div>
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.batchGenerateTitle")}</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.batchGenerateDescription")}</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.fixedPaidDurationsHelp")}</p>
           </div>
           <form action={generateLicenseCodeBatch} className="mt-4 grid gap-4">
             <input name="locale" type="hidden" value={locale} />
@@ -299,22 +301,20 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                 {t("licenses.label")}
                 <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10" maxLength={120} name="label" required />
               </label>
-              <label className="grid gap-1 text-sm font-medium text-slate-700">
-                {t("licenses.duration")}
-                <select className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10" defaultValue="trial_3_day" name="duration_kind">
-                  <option value="trial_3_day">{t("licenses.durationTrial")}</option>
-                  <option value="month_1">{t("licenses.durationMonth1")}</option>
-                  <option value="month_3">{t("licenses.durationMonth3")}</option>
-                  <option value="year_1">{t("licenses.durationYear1")}</option>
-                </select>
-              </label>
+              <LicenseDurationFields
+                labels={{
+                  duration: t("licenses.duration"),
+                  durationMonth1: t("licenses.durationMonth1"),
+                  durationMonth3: t("licenses.durationMonth3"),
+                  durationTrial: t("licenses.durationTrial"),
+                  durationYear1: t("licenses.durationYear1"),
+                  fixedPaidDurationsHelp: t("licenses.fixedPaidDurationsHelp"),
+                  trialDays: t("licenses.trialDays"),
+                }}
+              />
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("licenses.quantity")}
                 <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10" defaultValue="1" max="10" min="1" name="quantity" required type="number" />
-              </label>
-              <label className="grid gap-1 text-sm font-medium text-slate-700">
-                {t("licenses.trialDays")}
-                <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10" defaultValue="3" max="7" min="1" name="trial_days" type="number" />
               </label>
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("licenses.channel")}

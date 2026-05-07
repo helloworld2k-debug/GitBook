@@ -542,7 +542,8 @@
         "xianyu": "셴위",
         "partner": "협력사",
         "other": "기타"
-      }
+      },
+      "fixedPaidDurationsHelp": "월간 코드는 30일, 분기 코드는 90일, 연간 코드는 365일로 고정됩니다. 일수 설정은 체험 코드에만 적용됩니다."
     },
     "users": {
       "eyebrow": "관리",

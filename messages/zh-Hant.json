@@ -542,7 +542,8 @@
         "xianyu": "閒魚",
         "partner": "合作商",
         "other": "其它"
-      }
+      },
+      "fixedPaidDurationsHelp": "月度授權碼固定為 30 天，季度固定為 90 天，年度固定為 365 天，只有試用碼可設定 1 至 7 天。"
     },
     "users": {
       "eyebrow": "管理後台",
