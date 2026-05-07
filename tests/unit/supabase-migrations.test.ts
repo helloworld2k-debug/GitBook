@@ -25,4 +25,18 @@ describe("Supabase migrations", () => {
     expect(pricingSettingsMigration).toContain("amount = 2430");
     expect(pricingSettingsMigration).toContain("compare_at_amount = 10800");
   });
+
+  it("adds archived multi-duration license code batches and a unified redemption RPC", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0020_license_code_batches.sql"), "utf8");
+
+    expect(migration).toContain("create type license_code_channel_type as enum ('internal', 'taobao', 'xianyu', 'partner', 'other')");
+    expect(migration).toContain("create table public.license_code_batches");
+    expect(migration).toContain("code_count integer not null check (code_count >= 1 and code_count <= 10)");
+    expect(migration).toContain("alter table public.trial_codes");
+    expect(migration).toContain("add column if not exists channel_type license_code_channel_type not null default 'internal'");
+    expect(migration).toContain("create or replace function public.redeem_license_code");
+    expect(migration).toContain("input_machine_code_hash text default null");
+    expect(migration).toContain("duplicate_trial_code_machine");
+    expect(migration).toContain("grant execute on function public.redeem_license_code(uuid, text, text, timestamptz) to service_role");
+  });
 });

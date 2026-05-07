@@ -7,6 +7,7 @@ export type Database = {
       certificate_type: "donation" | "honor";
       donation_provider: "stripe" | "paypal" | "manual" | "dodo";
       donation_status: "pending" | "paid" | "cancelled" | "failed" | "refunded";
+      license_code_channel_type: "internal" | "taobao" | "xianyu" | "partner" | "other";
       license_code_duration_kind: "trial_3_day" | "month_1" | "month_3" | "year_1";
       license_entitlement_status: "active" | "expired" | "revoked";
       license_feature_code: "cloud_sync";
@@ -285,6 +286,66 @@ export type Database = {
           },
         ];
       };
+      license_code_batches: {
+        Row: {
+          id: string;
+          label: string;
+          channel_type: Database["public"]["Enums"]["license_code_channel_type"];
+          channel_note: string | null;
+          duration_kind: Database["public"]["Enums"]["license_code_duration_kind"];
+          trial_days: number;
+          code_count: number;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          label: string;
+          channel_type?: Database["public"]["Enums"]["license_code_channel_type"];
+          channel_note?: string | null;
+          duration_kind: Database["public"]["Enums"]["license_code_duration_kind"];
+          trial_days: number;
+          code_count: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          label?: string;
+          channel_type?: Database["public"]["Enums"]["license_code_channel_type"];
+          channel_note?: string | null;
+          duration_kind?: Database["public"]["Enums"]["license_code_duration_kind"];
+          trial_days?: number;
+          code_count?: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "license_code_batches_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "license_code_batches_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       trial_codes: {
         Row: {
           id: string;
@@ -305,6 +366,8 @@ export type Database = {
           encrypted_code_tag: string | null;
           encrypted_code_algorithm: string;
           batch_id: string | null;
+          channel_type: Database["public"]["Enums"]["license_code_channel_type"];
+          channel_note: string | null;
           deleted_at: string | null;
           updated_by: string | null;
           created_at: string;
@@ -329,6 +392,8 @@ export type Database = {
           encrypted_code_tag?: string | null;
           encrypted_code_algorithm?: string;
           batch_id?: string | null;
+          channel_type?: Database["public"]["Enums"]["license_code_channel_type"];
+          channel_note?: string | null;
           deleted_at?: string | null;
           updated_by?: string | null;
           created_at?: string;
@@ -353,12 +418,21 @@ export type Database = {
           encrypted_code_tag?: string | null;
           encrypted_code_algorithm?: string;
           batch_id?: string | null;
+          channel_type?: Database["public"]["Enums"]["license_code_channel_type"];
+          channel_note?: string | null;
           deleted_at?: string | null;
           updated_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "trial_codes_batch_id_fkey";
+            columns: ["batch_id"];
+            isOneToOne: false;
+            referencedRelation: "license_code_batches";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "trial_codes_created_by_fkey";
             columns: ["created_by"];
@@ -1328,6 +1402,19 @@ export type Database = {
       redeem_trial_code: {
         Args: {
           input_code_hash: string;
+          input_now: string;
+          input_user_id: string;
+        };
+        Returns: {
+          ok: boolean;
+          reason: string;
+          valid_until: string | null;
+        }[];
+      };
+      redeem_license_code: {
+        Args: {
+          input_code_hash: string;
+          input_machine_code_hash: string | null;
           input_now: string;
           input_user_id: string;
         };

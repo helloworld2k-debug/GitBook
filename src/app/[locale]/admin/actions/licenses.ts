@@ -5,12 +5,20 @@ import { redirectWithAdminFeedback } from "@/lib/admin/feedback";
 import { requireAdmin } from "@/lib/auth/guards";
 import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
 import { hashDesktopSecret } from "@/lib/license/hash";
-import { decryptLicenseCode, encryptLicenseCode, generateLicenseCode, getLicenseCodeEncryptionKey, maskLicenseCode, type EncryptedLicenseCode } from "@/lib/license/license-codes";
+import { decryptLicenseCode, encryptLicenseCode, generateLicenseCode, generateLicenseCodeForDuration, getLicenseCodeEncryptionKey, getLicenseDurationDays, maskLicenseCode, type EncryptedLicenseCode } from "@/lib/license/license-codes";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { insertAdminAuditLog } from "./audit";
-import { getRequiredString, getSafeLocale, getTrialDays, MAX_TRIAL_LABEL_LENGTH } from "./validation";
+import { getBoundedString, getLicenseBatchQuantity, getLicenseCodeChannelType, getLicenseCodeDurationKind, getRequiredString, getSafeLocale, getTrialDays, MAX_REASON_LENGTH, MAX_TRIAL_LABEL_LENGTH } from "./validation";
 
 const CLOUD_SYNC_COOLDOWN_SETTING_KEY = "cloud_sync_device_switch_cooldown_minutes";
+type TrialCodeUpdate = {
+  channel_note?: string | null;
+  channel_type?: "internal" | "taobao" | "xianyu" | "partner" | "other";
+  deleted_at?: string;
+  is_active?: boolean;
+  updated_at: string;
+  updated_by: string;
+};
 
 function getOptionalReason(formData: FormData, fallback: string) {
   return String(formData.get("reason") ?? "").trim() || fallback;
@@ -24,6 +32,60 @@ function getCooldownMinutes(formData: FormData) {
   }
 
   return raw;
+}
+
+function getOptionalNote(formData: FormData) {
+  const note = String(formData.get("channel_note") ?? "").trim() || null;
+
+  if (note && note.length > MAX_REASON_LENGTH) {
+    throw new Error("Channel note must be 500 characters or fewer");
+  }
+
+  return note;
+}
+
+function getSelectedLicenseCodeIds(formData: FormData) {
+  const ids = [...new Set(formData.getAll("license_code_ids").map((value) => String(value).trim()).filter(Boolean))];
+
+  if (ids.length < 1 || ids.length > 50) {
+    throw new Error("Select 1 to 50 license codes");
+  }
+
+  return ids;
+}
+
+function getBulkLicenseCodeUpdate(formData: FormData, adminId: string): TrialCodeUpdate {
+  const action = String(formData.get("bulk_action") ?? "").trim();
+  const now = new Date().toISOString();
+  const update: TrialCodeUpdate = {
+    updated_at: now,
+    updated_by: adminId,
+  };
+
+  if (action === "activate") {
+    update.is_active = true;
+  } else if (action === "deactivate") {
+    update.is_active = false;
+  } else if (action === "delete") {
+    update.deleted_at = now;
+    update.is_active = false;
+  } else if (action && action !== "metadata") {
+    throw new Error("Bulk action is invalid");
+  }
+
+  if (formData.has("channel_type")) {
+    update.channel_type = getLicenseCodeChannelType(formData);
+  }
+
+  if (formData.has("channel_note")) {
+    update.channel_note = getOptionalNote(formData);
+  }
+
+  if (Object.keys(update).length <= 2) {
+    throw new Error("Bulk action is required");
+  }
+
+  return update;
 }
 
 export async function createTrialCode(formData: FormData) {
@@ -91,8 +153,134 @@ export async function createTrialCode(formData: FormData) {
 
 export async function generateLicenseCodeBatch(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  await requireAdmin(locale);
-  throw new Error("Batch license code generation is disabled. Create one trial code at a time.");
+  const admin = await requireAdmin(locale);
+  const label = getBoundedString(formData, "label", "Label is required", MAX_TRIAL_LABEL_LENGTH);
+  const durationKind = getLicenseCodeDurationKind(formData);
+  const trialDays = durationKind === "trial_3_day" ? getTrialDays(formData) : getLicenseDurationDays(durationKind);
+  const quantity = getLicenseBatchQuantity(formData);
+  const channelType = getLicenseCodeChannelType(formData);
+  const channelNote = getOptionalNote(formData);
+  const supabase = createSupabaseAdminClient();
+  const { data: batch, error: batchError } = await supabase.from("license_code_batches").insert({
+    channel_note: channelNote,
+    channel_type: channelType,
+    code_count: quantity,
+    created_by: admin.id,
+    duration_kind: durationKind,
+    label,
+    trial_days: trialDays,
+  }).select("id,label,duration_kind,trial_days,code_count,channel_type,channel_note").single();
+
+  if (batchError || !batch) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/licenses",
+      formData,
+      key: "license-code-batch-create-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const encryptionKey = getLicenseCodeEncryptionKey();
+  const rows = await Promise.all(Array.from({ length: quantity }, async () => {
+    const code = generateLicenseCodeForDuration(durationKind, trialDays);
+    const encryptedCode = encryptLicenseCode(code, encryptionKey);
+
+    return {
+      batch_id: batch.id,
+      channel_note: channelNote,
+      channel_type: channelType,
+      code_hash: await hashDesktopSecret(code, "trial_code"),
+      code_mask: maskLicenseCode(code),
+      created_by: admin.id,
+      duration_kind: durationKind,
+      encrypted_code_algorithm: encryptedCode.algorithm,
+      encrypted_code_ciphertext: encryptedCode.ciphertext,
+      encrypted_code_iv: encryptedCode.iv,
+      encrypted_code_tag: encryptedCode.tag,
+      feature_code: CLOUD_SYNC_FEATURE,
+      is_active: true,
+      label,
+      max_redemptions: 1,
+      trial_days: trialDays,
+    };
+  }));
+  const { data: codes, error: codeError } = await supabase.from("trial_codes").insert(rows).select("id,code_mask");
+
+  if (codeError || !codes) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/licenses",
+      formData,
+      key: "license-code-batch-create-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "generate_license_code_batch",
+    adminUserId: admin.id,
+    after: {
+      channel_note: channelNote,
+      channel_type: channelType,
+      code_count: quantity,
+      code_masks: codes.map((code) => code.code_mask),
+      duration_kind: durationKind,
+      label,
+      trial_days: trialDays,
+    },
+    reason: "Generated license code batch",
+    targetId: batch.id,
+    targetType: "license_code_batch",
+  });
+
+  revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/licenses",
+    formData,
+    key: "license-code-batch-created",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function bulkUpdateLicenseCodes(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const ids = getSelectedLicenseCodeIds(formData);
+  const update = getBulkLicenseCodeUpdate(formData, admin.id);
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("trial_codes").update(update).in("id", ids);
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/licenses",
+      formData,
+      key: "license-codes-bulk-update-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "bulk_update_license_codes",
+    adminUserId: admin.id,
+    after: update,
+    reason: "Bulk updated license codes",
+    targetId: ids.join(","),
+    targetType: "trial_code",
+  });
+
+  revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/licenses",
+    formData,
+    key: "license-codes-bulk-updated",
+    locale,
+    tone: "notice",
+  });
 }
 
 export async function revealLicenseCode(formData: FormData) {

@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  bulkUpdateLicenseCodes,
   createTrialCode,
   deleteTrialCode,
+  generateLicenseCodeBatch,
   grantCloudSyncCooldownOverride,
   revealLicenseCode,
   revokeCloudSyncLease,
@@ -55,6 +57,137 @@ describe("admin license actions", () => {
     mocks.revalidatePath.mockClear();
   });
 
+  it("generates an archived batch of up to 10 prefixed license codes", async () => {
+    const batchSingle = vi.fn(async () => ({
+      data: {
+        channel_note: "May shop campaign",
+        channel_type: "taobao",
+        code_count: 3,
+        duration_kind: "month_1",
+        id: "batch-1",
+        label: "Taobao May monthly",
+        trial_days: 30,
+      },
+      error: null,
+    }));
+    const batchSelect = vi.fn(() => ({ single: batchSingle }));
+    const batchInsert = vi.fn(() => ({ select: batchSelect }));
+    const codeSelect = vi.fn(async () => ({
+      data: [
+        { code_mask: "1MAB-****-****-LMNP", id: "code-1" },
+        { code_mask: "1MCD-****-****-QRST", id: "code-2" },
+        { code_mask: "1MEF-****-****-WXYZ", id: "code-3" },
+      ],
+      error: null,
+    }));
+    const codeInsert = vi.fn(() => ({ select: codeSelect }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "license_code_batches") return { insert: batchInsert };
+      if (table === "trial_codes") return { insert: codeInsert };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("label", "Taobao May monthly");
+    formData.set("duration_kind", "month_1");
+    formData.set("quantity", "3");
+    formData.set("channel_type", "taobao");
+    formData.set("channel_note", "May shop campaign");
+
+    await expect(generateLicenseCodeBatch(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=license-code-batch-created");
+
+    expect(batchInsert).toHaveBeenCalledWith(expect.objectContaining({
+      channel_note: "May shop campaign",
+      channel_type: "taobao",
+      code_count: 3,
+      created_by: "admin-1",
+      duration_kind: "month_1",
+      label: "Taobao May monthly",
+      trial_days: 30,
+    }));
+    const insertedCodes = (codeInsert.mock.calls as unknown as [[Array<Record<string, unknown>>]])[0][0];
+    expect(insertedCodes).toHaveLength(3);
+    expect(insertedCodes[0]).toEqual(expect.objectContaining({
+      batch_id: "batch-1",
+      code_hash: expect.any(String),
+      code_mask: expect.stringMatching(/^1M[A-Z2-9]{2}-\*\*\*\*-\*\*\*\*-[A-Z2-9]{4}$/),
+      duration_kind: "month_1",
+      max_redemptions: 1,
+      trial_days: 30,
+    }));
+    expect(JSON.stringify(insertedCodes)).not.toContain("encrypted_code_plaintext");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "generate_license_code_batch",
+      target_id: "batch-1",
+      target_type: "license_code_batch",
+    }));
+  });
+
+  it("rejects license code batches larger than 10 before writing", async () => {
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("label", "Too many");
+    formData.set("duration_kind", "year_1");
+    formData.set("quantity", "11");
+
+    await expect(generateLicenseCodeBatch(formData)).rejects.toThrow("License code batch quantity must be between 1 and 10");
+
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
+  });
+
+  it("bulk updates selected license code status, channel metadata, and audits the action", async () => {
+    const inFilter = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ in: inFilter }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") return { update };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.append("license_code_ids", "code-1");
+    formData.append("license_code_ids", "code-2");
+    formData.set("bulk_action", "deactivate");
+    formData.set("channel_type", "xianyu");
+    formData.set("channel_note", "Moved to Xianyu partner");
+
+    await expect(bulkUpdateLicenseCodes(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=license-codes-bulk-updated");
+
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      channel_note: "Moved to Xianyu partner",
+      channel_type: "xianyu",
+      is_active: false,
+      updated_at: expect.any(String),
+      updated_by: "admin-1",
+    }));
+    expect(inFilter).toHaveBeenCalledWith("id", ["code-1", "code-2"]);
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "bulk_update_license_codes",
+      target_id: "code-1,code-2",
+      target_type: "trial_code",
+    }));
+  });
+
+  it("rejects bulk edits over 50 license codes", async () => {
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("bulk_action", "activate");
+    for (let index = 0; index < 51; index += 1) {
+      formData.append("license_code_ids", `code-${index}`);
+    }
+
+    await expect(bulkUpdateLicenseCodes(formData)).rejects.toThrow("Select 1 to 50 license codes");
+
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
+  });
+
   it("creates one auto-generated trial code with a hashed code and never persists the raw code", async () => {
     const single = vi.fn(async () => ({
       data: {
@@ -88,7 +221,7 @@ describe("admin license actions", () => {
 
     await expect(createTrialCode(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=trial-code-created");
 
-    const inserted = insert.mock.calls[0]?.[0];
+    const inserted = (insert.mock.calls as unknown as [[Record<string, unknown>]])[0][0];
     expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
     expect(inserted).toEqual(expect.objectContaining({
       code_hash: expect.any(String),
@@ -105,7 +238,7 @@ describe("admin license actions", () => {
       max_redemptions: 1,
       trial_days: 3,
     }));
-    expect((inserted as { code_hash: string }).code_hash).not.toBe(await hashDesktopSecret("ABCD-EFGH-IJKL-MNOP", "trial_code"));
+    expect(inserted.code_hash).not.toBe(await hashDesktopSecret("ABCD-EFGH-IJKL-MNOP", "trial_code"));
     expect(inserted).not.toHaveProperty("starts_at");
     expect(inserted).not.toHaveProperty("ends_at");
     expect(JSON.stringify(inserted)).not.toContain("ABCD-EFGH-IJKL-MNOP");

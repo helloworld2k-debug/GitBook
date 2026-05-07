@@ -42,6 +42,10 @@ export type AdminFeedbackKey =
   | "support-contact-update-failed"
   | "trial-code-created"
   | "trial-code-create-failed"
+  | "license-code-batch-created"
+  | "license-code-batch-create-failed"
+  | "license-codes-bulk-updated"
+  | "license-codes-bulk-update-failed"
   | "trial-code-deleted"
   | "trial-code-delete-failed"
   | "trial-code-status-updated"
@@ -93,6 +97,10 @@ const adminFeedbackKeys = new Set<string>([
   "support-contact-update-failed",
   "trial-code-created",
   "trial-code-create-failed",
+  "license-code-batch-created",
+  "license-code-batch-create-failed",
+  "license-codes-bulk-updated",
+  "license-codes-bulk-update-failed",
   "trial-code-deleted",
   "trial-code-delete-failed",
   "trial-code-status-updated",

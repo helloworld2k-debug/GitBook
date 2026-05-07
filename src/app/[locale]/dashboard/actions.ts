@@ -60,6 +60,7 @@ export async function updateDashboardPassword(locale: string, formData: FormData
 }
 
 const trialStatusByReason: Record<TrialRedeemFailure, "invalid" | "inactive" | "limit" | "duplicate"> = {
+  duplicate_trial_code_machine: "duplicate",
   duplicate_trial_code_user: "duplicate",
   trial_code_inactive: "inactive",
   trial_code_invalid: "invalid",

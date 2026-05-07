@@ -17,7 +17,7 @@ export const licenseDurationOptions: { days: number; kind: LicenseDurationKind; 
 ];
 
 const LICENSE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const LICENSE_CODE_PATTERN = /^[A-Z2-9]{4}(-[A-Z2-9]{4}){3}$/;
+const LICENSE_CODE_PATTERN = /^[A-Z0-9]{4}(-[A-Z0-9]{4}){3}$/;
 
 export function getLicenseDurationDays(kind: LicenseDurationKind) {
   const option = licenseDurationOptions.find((entry) => entry.kind === kind);
@@ -58,6 +58,30 @@ export function generateLicenseCode() {
   const raw = Array.from(bytes, (byte) => LICENSE_ALPHABET[byte % LICENSE_ALPHABET.length]).join("");
 
   return formatLicenseCode(raw);
+}
+
+export function getLicenseDurationPrefix(kind: LicenseDurationKind, trialDays: number) {
+  if (kind === "trial_3_day") {
+    if (!Number.isInteger(trialDays) || trialDays < 1 || trialDays > 7) {
+      throw new Error("Trial license codes must use 1 to 7 trial days");
+    }
+
+    return `T${trialDays}`;
+  }
+
+  if (kind === "month_1") return "1M";
+  if (kind === "month_3") return "3M";
+  if (kind === "year_1") return "1Y";
+
+  throw new Error("Unsupported license duration");
+}
+
+export function generateLicenseCodeForDuration(kind: LicenseDurationKind, trialDays: number) {
+  const prefix = getLicenseDurationPrefix(kind, trialDays);
+  const bytes = randomBytes(14);
+  const suffix = Array.from(bytes, (byte) => LICENSE_ALPHABET[byte % LICENSE_ALPHABET.length]).join("");
+
+  return formatLicenseCode(`${prefix}${suffix}`);
 }
 
 export function maskLicenseCode(value: string) {

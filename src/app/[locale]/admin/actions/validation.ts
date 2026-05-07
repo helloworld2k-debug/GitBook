@@ -5,6 +5,7 @@ export const MAX_MANUAL_REFERENCE_LENGTH = 120;
 export const MAX_RELEASE_NOTES_LENGTH = 4000;
 export const MAX_TRIAL_LABEL_LENGTH = 120;
 export const MAX_TRIAL_DAYS = 7;
+export const MAX_LICENSE_BATCH_QUANTITY = 10;
 export const MAX_NOTIFICATION_TITLE_LENGTH = 160;
 export const MAX_NOTIFICATION_BODY_LENGTH = 4000;
 export const MAX_DONATION_TIER_LABEL_LENGTH = 120;
@@ -13,6 +14,8 @@ export const notificationAudiences = ["all", "authenticated", "admins"] as const
 export const notificationPriorities = ["info", "success", "warning", "critical"] as const;
 export const feedbackStatuses = ["open", "reviewing", "closed"] as const;
 export const supportContactChannelIds = ["telegram", "discord", "qq", "email", "wechat"] as const;
+export const licenseCodeDurationKinds = ["trial_3_day", "month_1", "month_3", "year_1"] as const;
+export const licenseCodeChannelTypes = ["internal", "taobao", "xianyu", "partner", "other"] as const;
 
 export function getSafeLocale(locale: FormDataEntryValue | null) {
   return getActionLocale(locale);
@@ -75,6 +78,36 @@ export function getTrialDays(formData: FormData) {
 
   if (value > MAX_TRIAL_DAYS) {
     throw new Error("Trial days must be between 1 and 7");
+  }
+
+  return value;
+}
+
+export function getLicenseCodeDurationKind(formData: FormData) {
+  const value = String(formData.get("duration_kind") ?? "").trim();
+
+  if (!licenseCodeDurationKinds.includes(value as (typeof licenseCodeDurationKinds)[number])) {
+    throw new Error("License code duration is required");
+  }
+
+  return value as (typeof licenseCodeDurationKinds)[number];
+}
+
+export function getLicenseCodeChannelType(formData: FormData) {
+  const value = String(formData.get("channel_type") ?? "internal").trim() || "internal";
+
+  if (!licenseCodeChannelTypes.includes(value as (typeof licenseCodeChannelTypes)[number])) {
+    throw new Error("License code channel is invalid");
+  }
+
+  return value as (typeof licenseCodeChannelTypes)[number];
+}
+
+export function getLicenseBatchQuantity(formData: FormData) {
+  const value = getPositiveInteger(formData, "quantity", "License code batch quantity must be between 1 and 10");
+
+  if (value > MAX_LICENSE_BATCH_QUANTITY) {
+    throw new Error("License code batch quantity must be between 1 and 10");
   }
 
   return value;

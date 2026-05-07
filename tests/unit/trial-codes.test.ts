@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { hashDesktopSecret } from "@/lib/license/hash";
-import { redeemTrialCode } from "@/lib/license/trial-codes";
+import { redeemLicenseCode, redeemTrialCode } from "@/lib/license/trial-codes";
 
 function createTrialClient(row: { ok: boolean; reason: string; valid_until: string | null } | null, error: unknown = null) {
   return {
@@ -9,6 +9,49 @@ function createTrialClient(row: { ok: boolean; reason: string; valid_until: stri
 }
 
 describe("redeemTrialCode", () => {
+  it("redeems a general license code through the unified RPC", async () => {
+    const client = createTrialClient({
+      ok: true,
+      reason: "redeemed",
+      valid_until: "2026-06-01T00:00:00.000Z",
+    });
+    const now = new Date("2026-05-01T00:00:00.000Z");
+
+    const result = await redeemLicenseCode(client, {
+      userId: "user-1",
+      code: "1MAB-CDEF-GHJK-LMNP",
+      now,
+    });
+
+    expect(result).toEqual({ ok: true, validUntil: "2026-06-01T00:00:00.000Z" });
+    expect(client.rpc).toHaveBeenCalledWith("redeem_license_code", {
+      input_code_hash: await hashDesktopSecret("1MAB-CDEF-GHJK-LMNP", "trial_code"),
+      input_machine_code_hash: null,
+      input_now: "2026-05-01T00:00:00.000Z",
+      input_user_id: "user-1",
+    });
+  });
+
+  it("passes machine hashes to support account-or-device trial abuse checks", async () => {
+    const client = createTrialClient({
+      ok: false,
+      reason: "duplicate_trial_code_machine",
+      valid_until: null,
+    });
+
+    const result = await redeemLicenseCode(client, {
+      userId: "user-1",
+      code: "T3AB-CDEF-GHJK-LMNP",
+      machineCodeHash: "machine-hash-1",
+      now: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    expect(result).toEqual({ ok: false, reason: "duplicate_trial_code_machine" });
+    expect(client.rpc).toHaveBeenCalledWith("redeem_license_code", expect.objectContaining({
+      input_machine_code_hash: "machine-hash-1",
+    }));
+  });
+
   it("returns a valid redemption and calls the account-first RPC with a hashed code", async () => {
     const client = createTrialClient({
       ok: true,
@@ -24,8 +67,9 @@ describe("redeemTrialCode", () => {
     });
 
     expect(result).toEqual({ ok: true, validUntil: "2026-05-04T00:00:00.000Z" });
-    expect(client.rpc).toHaveBeenCalledWith("redeem_trial_code", {
+    expect(client.rpc).toHaveBeenCalledWith("redeem_license_code", {
       input_code_hash: await hashDesktopSecret("SPRING-2026", "trial_code"),
+      input_machine_code_hash: null,
       input_now: "2026-05-01T00:00:00.000Z",
       input_user_id: "user-1",
     });
