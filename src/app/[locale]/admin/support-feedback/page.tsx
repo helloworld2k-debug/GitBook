@@ -22,12 +22,26 @@ type AdminFeedbackRow = FeedbackUnreadSource & {
   message: string;
   status: FeedbackStatus;
   subject: string;
+  updated_at: string;
 };
 
 function statusTone(status: FeedbackStatus) {
   if (status === "closed") return "success";
   if (status === "reviewing") return "warning";
   return "neutral";
+}
+
+function isUnreadTrackingSchemaError(error: { code?: string; message?: string } | null) {
+  const code = error?.code;
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    code === "PGRST200" ||
+    code === "PGRST204" ||
+    code === "42P01" ||
+    message.includes("support_feedback_admin_reads") ||
+    message.includes("schema cache")
+  );
 }
 
 export default async function AdminSupportFeedbackPage({ params, searchParams }: AdminSupportFeedbackPageProps) {
@@ -37,17 +51,43 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
   const { locale, user } = await setupAdminPage(localeParam, `/${localeParam}/admin/support-feedback`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, "/admin/support-feedback");
-  const { data: feedback, error } = await (await createSupabaseServerClient())
+  const supabase = await createSupabaseServerClient();
+  const feedbackResult = await supabase
     .from("support_feedback")
     .select("id,email,contact,subject,message,status,created_at,updated_at,support_feedback_admin_reads(admin_user_id,read_at),support_feedback_messages(author_role,created_at)")
     .order("updated_at", { ascending: false })
     .limit(100);
 
-  if (error) {
-    throw error;
+  let feedback = (feedbackResult.data ?? []) as AdminFeedbackRow[];
+  let unreadTrackingAvailable = true;
+
+  if (feedbackResult.error) {
+    if (!isUnreadTrackingSchemaError(feedbackResult.error)) {
+      throw feedbackResult.error;
+    }
+
+    const fallbackResult = await supabase
+      .from("support_feedback")
+      .select("id,email,contact,subject,message,status,created_at,updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(100);
+
+    if (fallbackResult.error) {
+      throw fallbackResult.error;
+    }
+
+    unreadTrackingAvailable = false;
+    feedback = (fallbackResult.data ?? []) as AdminFeedbackRow[];
   }
-  const filter = feedbackState?.filter === "unread" ? "unread" : "all";
-  const feedbackWithUnreadState = enrichFeedbackUnreadState((feedback ?? []) as AdminFeedbackRow[], user.id)
+  const filter = unreadTrackingAvailable && feedbackState?.filter === "unread" ? "unread" : "all";
+  const feedbackWithUnreadState = (unreadTrackingAvailable
+    ? enrichFeedbackUnreadState(feedback, user.id)
+    : feedback.map((item) => ({
+        ...item,
+        adminReadAt: null,
+        isUnread: false,
+        latestUserMessageAt: item.updated_at ?? item.created_at,
+      })))
     .sort((a, b) => {
       if (a.isUnread !== b.isUnread) {
         return a.isUnread ? -1 : 1;

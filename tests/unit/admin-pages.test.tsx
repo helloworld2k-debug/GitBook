@@ -930,6 +930,45 @@ describe("admin pages", () => {
     expect(screen.getAllByRole("link", { name: "Open thread" })[0]).toHaveAttribute("href", "/admin/support-feedback/feedback-1");
   });
 
+  it("opens support feedback when unread tracking relation is unavailable", async () => {
+    const unreadRelationError = {
+      code: "PGRST200",
+      message: "Could not find a relationship between support_feedback and support_feedback_admin_reads in the schema cache",
+    } as Error;
+    const enhancedFeedbackQuery = createAdminListQuery(null, unreadRelationError);
+    const basicFeedbackQuery = createAdminListQuery([
+      {
+        id: "feedback-1",
+        email: "ada@example.com",
+        contact: "telegram",
+        subject: "Cannot redeem trial",
+        message: "The redeem button fails on mobile.",
+        status: "open",
+        created_at: "2026-05-01T10:00:00.000Z",
+        updated_at: "2026-05-01T10:00:00.000Z",
+      },
+    ]);
+    const from = vi.fn((table: string) => {
+      if (table !== "support_feedback") return createAdminListQuery([]);
+
+      return from.mock.calls.filter(([name]) => name === "support_feedback").length === 1
+        ? enhancedFeedbackQuery
+        : basicFeedbackQuery;
+    });
+    createSupabaseServerClientMock.mockResolvedValue({ from });
+
+    const element = await AdminSupportFeedbackPage({ params: Promise.resolve({ locale: "en" }) });
+
+    render(element);
+
+    expect(enhancedFeedbackQuery.select).toHaveBeenCalledWith(
+      "id,email,contact,subject,message,status,created_at,updated_at,support_feedback_admin_reads(admin_user_id,read_at),support_feedback_messages(author_role,created_at)",
+    );
+    expect(basicFeedbackQuery.select).toHaveBeenCalledWith("id,email,contact,subject,message,status,created_at,updated_at");
+    expect(screen.getAllByText("Cannot redeem trial").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Unread")).toHaveLength(1);
+  });
+
   it("filters support feedback to unread threads", async () => {
     const feedbackQuery = createAdminListQuery([
       {
