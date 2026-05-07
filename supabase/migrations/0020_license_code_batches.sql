@@ -19,6 +19,16 @@ alter table public.trial_codes
   add column if not exists channel_type license_code_channel_type not null default 'internal',
   add column if not exists channel_note text;
 
+update public.trial_codes
+set batch_id = null,
+    updated_at = now()
+where batch_id is not null
+  and not exists (
+    select 1
+    from public.license_code_batches batch
+    where batch.id = trial_codes.batch_id
+  );
+
 alter table public.trial_codes
   drop constraint if exists trial_codes_batch_id_fkey,
   add constraint trial_codes_batch_id_fkey

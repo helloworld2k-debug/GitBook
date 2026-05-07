@@ -211,7 +211,7 @@
       "refunded": "Refunded"
     },
     "eyebrow": "AI account workspace",
-    "subtitle": "Manage cloud sync access, trial codes, contribution history, certificates, and account security in one place.",
+    "subtitle": "Manage cloud sync access, license codes, contribution history, certificates, and account security in one place.",
     "cloudSync": "Cloud sync",
     "cloudSyncActive": "Active",
     "cloudSyncInactive": "Not active",
@@ -219,7 +219,7 @@
     "accessValidUntil": "Available until",
     "accessNotActive": "No active cloud sync access yet",
     "notAvailable": "Not available",
-    "trialRedeemedAt": "Trial redeemed at",
+    "trialRedeemedAt": "Last code redeemed at",
     "memberFallback": "GitBook AI member"
   },
   "admin": {

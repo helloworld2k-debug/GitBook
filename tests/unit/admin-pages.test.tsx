@@ -1246,6 +1246,7 @@ describe("admin pages", () => {
 
     const licenseCodesTable = screen.getByRole("table", { name: "License codes" });
     expect(licenseCodesTable).toHaveClass("min-w-[1560px]", "table-fixed");
+    expect(screen.getAllByRole("table", { name: "License codes" })).toHaveLength(1);
     expect(screen.getAllByTestId("admin-table-shell")[0]).toHaveClass("overflow-x-auto", "overscroll-x-contain");
     expect(screen.getAllByRole("columnheader", { name: "Action" }).some((header) => header.className.includes("sticky") && header.className.includes("right-0"))).toBe(true);
   });

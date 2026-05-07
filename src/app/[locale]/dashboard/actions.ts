@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/guards";
 import { getActionLocale } from "@/lib/i18n/action-locale";
-import { redeemTrialCode, type TrialRedeemFailure } from "@/lib/license/trial-codes";
+import { redeemLicenseCode, type TrialRedeemFailure } from "@/lib/license/trial-codes";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -67,16 +67,16 @@ const trialStatusByReason: Record<TrialRedeemFailure, "invalid" | "inactive" | "
   trial_code_limit_reached: "limit",
 };
 
-export async function redeemDashboardTrialCode(locale: string, formData: FormData) {
+export async function redeemDashboardLicenseCode(locale: string, formData: FormData) {
   const safeLocale = getActionLocale(locale);
   const user = await requireUser(safeLocale, `/${safeLocale}/dashboard`);
-  const code = String(formData.get("trial_code") ?? "").trim();
+  const code = String(formData.get("license_code") ?? formData.get("trial_code") ?? "").trim();
 
   if (!code) {
     redirect(getDashboardPath(safeLocale, { trial: "invalid" }));
   }
 
-  const result = await redeemTrialCode(createSupabaseAdminClient(), {
+  const result = await redeemLicenseCode(createSupabaseAdminClient(), {
     userId: user.id,
     code,
   }).catch(() => null);
@@ -92,6 +92,8 @@ export async function redeemDashboardTrialCode(locale: string, formData: FormDat
 
   redirect(getDashboardPath(safeLocale, { trial: trialStatusByReason[result.reason] }));
 }
+
+export const redeemDashboardTrialCode = redeemDashboardLicenseCode;
 
 export async function signOutAction(locale: string) {
   const safeLocale = getActionLocale(locale);

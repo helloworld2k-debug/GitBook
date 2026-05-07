@@ -163,6 +163,16 @@ async function safeClick(page, locator) {
   await waitForPageSettled(page);
 }
 
+async function expectVisibleOrDump(page, locator, label) {
+  try {
+    await expect(locator).toBeVisible({ timeout: 10000 });
+  } catch (error) {
+    const statusText = await page.locator('[role="status"], [role="alert"]').allTextContents().catch(() => []);
+    const headingText = await page.locator("h1,h2").allTextContents().catch(() => []);
+    throw new Error(`${label} was not visible after navigation to ${page.url()}. Status text: ${statusText.join(" | ")}. Headings: ${headingText.join(" | ")}. ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 async function submitConfirm(page, locator) {
   await expect(locator).toBeVisible({ timeout: 10000 });
   await locator.click();
@@ -205,7 +215,7 @@ async function main() {
   const supportAdminReply = `${marker} admin reply`;
   const notificationTitle = `${marker} notification`;
   const releaseVersion = `codex-${Date.now()}`;
-  const trialLabel = `${marker} trial`;
+  const licenseBatchLabel = `${marker} monthly license`;
   const profileName = `${marker} user`;
   const donationReference = `${marker}-manual-${randomUUID().slice(0, 8)}`;
   const userId = createAuthTestUser(userEmail, userPassword, profileName);
@@ -278,16 +288,19 @@ async function main() {
   expect(scalar(`select is_published from public.software_releases where version=${sqlLiteral(releaseVersion)} limit 1`)).toBe(true);
 
   await goto(page, "/en/admin/licenses");
-  await fillByLabel(page, "Label", trialLabel);
-  await fillByLabel(page, "Trial days", "3");
-  await safeClick(page, page.getByRole("button", { name: "Create trial code" }));
-  const trialId = scalar(`select id from public.trial_codes where label=${sqlLiteral(trialLabel)} order by created_at desc limit 1`);
-  expect(trialId).toBeTruthy();
-  const trialRow = page.locator("tbody tr").first();
-  await expect(trialRow.locator("input[name='label']")).toHaveValue(trialLabel);
-  await safeClick(page, trialRow.getByRole("button", { name: "Reveal" }));
-  const trialCode = (await trialRow.locator("code").innerText()).trim();
-  expect(trialCode.length).toBeGreaterThan(8);
+  await fillByLabel(page, "Batch name", licenseBatchLabel);
+  await page.locator('select[name="duration_kind"]').selectOption("month_1");
+  await fillByLabel(page, "Quantity", "1");
+  await page.locator('form:has(input[name="label"]) select[name="channel_type"]').selectOption("partner");
+  await safeClick(page, page.getByRole("button", { name: "Generate codes" }));
+  const licenseBatchId = scalar(`select id from public.license_code_batches where label=${sqlLiteral(licenseBatchLabel)} order by created_at desc limit 1`);
+  expect(licenseBatchId).toBeTruthy();
+  const licenseId = scalar(`select id from public.trial_codes where batch_id=${sqlLiteral(licenseBatchId)} and duration_kind='month_1' and trial_days=30 order by created_at desc limit 1`);
+  expect(licenseId).toBeTruthy();
+  const licenseRow = page.getByRole("row").filter({ hasText: licenseBatchLabel }).last();
+  await safeClick(page, licenseRow.getByRole("button", { name: "Reveal" }));
+  const licenseCode = (await licenseRow.locator("code").innerText()).trim();
+  expect(licenseCode).toMatch(/^1M/);
 
   await goto(page, "/en/admin/donations");
   await fillByLabel(page, "Email or user ID", userEmail);
@@ -329,10 +342,11 @@ async function main() {
 
   await context.clearCookies();
   await login(page, userEmail, userPassword);
-  await fillByLabel(page, "Code", trialCode);
-  await safeClick(page, page.getByRole("button", { name: "Redeem trial" }));
-  await expect(page.getByText("Trial redeemed.")).toBeVisible();
-  expect(Number(scalar(`select count(*) from public.trial_code_redemptions where trial_code_id=${sqlLiteral(trialId)} and user_id=${sqlLiteral(userId)}`))).toBe(1);
+  await fillByLabel(page, "License code", licenseCode);
+  await safeClick(page, page.getByRole("button", { name: "Redeem code" }));
+  await expectVisibleOrDump(page, page.getByText("License code redeemed."), "License redemption success message");
+  expect(Number(scalar(`select count(*) from public.trial_code_redemptions where trial_code_id=${sqlLiteral(licenseId)} and user_id=${sqlLiteral(userId)}`))).toBe(1);
+  expect(String(scalar(`select status from public.license_entitlements where user_id=${sqlLiteral(userId)} and feature_code='cloud_sync' limit 1`))).toBe("active");
   await expect(page.getByText(certificateNumber).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "View certificate" }).first()).toBeVisible();
 
@@ -357,7 +371,8 @@ async function main() {
     marker,
     notificationId,
     releaseVersion,
-    trialId,
+    licenseBatchId,
+    licenseId,
     userEmail,
   }, null, 2));
 }

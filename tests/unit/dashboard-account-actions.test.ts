@@ -1,10 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { redeemDashboardTrialCode, signOutAction, updateAccountProfile, updateDashboardPassword } from "@/app/[locale]/dashboard/actions";
+import { redeemDashboardLicenseCode, signOutAction, updateAccountProfile, updateDashboardPassword } from "@/app/[locale]/dashboard/actions";
 
 const createSupabaseServerClientMock = vi.hoisted(() => vi.fn());
 const createSupabaseAdminClientMock = vi.hoisted(() => vi.fn());
 const requireUserMock = vi.hoisted(() => vi.fn());
-const redeemTrialCodeMock = vi.hoisted(() => vi.fn());
+const redeemLicenseCodeMock = vi.hoisted(() => vi.fn());
 const revalidatePathMock = vi.hoisted(() => vi.fn());
 const redirectMock = vi.hoisted(() => vi.fn((path: string) => {
   throw new Error(`NEXT_REDIRECT:${path}`);
@@ -23,7 +23,7 @@ vi.mock("@/lib/auth/guards", () => ({
 }));
 
 vi.mock("@/lib/license/trial-codes", () => ({
-  redeemTrialCode: redeemTrialCodeMock,
+  redeemLicenseCode: redeemLicenseCodeMock,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -39,7 +39,7 @@ describe("dashboard account actions", () => {
     createSupabaseServerClientMock.mockReset();
     createSupabaseAdminClientMock.mockReset().mockReturnValue({ admin: true });
     requireUserMock.mockReset().mockResolvedValue({ id: "user-1", email: "user@example.com" });
-    redeemTrialCodeMock.mockReset().mockResolvedValue({ ok: true, validUntil: "2026-05-04T00:00:00.000Z" });
+    redeemLicenseCodeMock.mockReset().mockResolvedValue({ ok: true, validUntil: "2026-05-04T00:00:00.000Z" });
     revalidatePathMock.mockClear();
     redirectMock.mockClear();
   });
@@ -86,18 +86,18 @@ describe("dashboard account actions", () => {
     expect(updateUser).toHaveBeenCalledWith({ password: "new-password-1" });
   });
 
-  it("redeems trials at the account level without requiring a desktop session", async () => {
+  it("redeems license codes at the account level without requiring a desktop session", async () => {
     const formData = new FormData();
-    formData.set("trial_code", "SPRING-2026");
+    formData.set("license_code", "1MAB-CDEF-GHJK-LMNP");
 
-    await expect(redeemDashboardTrialCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=saved");
+    await expect(redeemDashboardLicenseCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=saved");
 
     expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
-    expect(redeemTrialCodeMock).toHaveBeenCalledWith(
+    expect(redeemLicenseCodeMock).toHaveBeenCalledWith(
       { admin: true },
       {
         userId: "user-1",
-        code: "SPRING-2026",
+        code: "1MAB-CDEF-GHJK-LMNP",
       },
     );
   });

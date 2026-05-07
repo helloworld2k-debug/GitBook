@@ -199,7 +199,7 @@
     "passwordMismatch": "비밀번호가 일치하지 않습니다.",
     "passwordError": "비밀번호를 업데이트할 수 없습니다.",
     "eyebrow": "AI 계정 워크스페이스",
-    "subtitle": "클라우드 동기화 권한, 체험 코드, 지원 내역, 인증서, 계정 보안을 한곳에서 관리합니다.",
+    "subtitle": "클라우드 동기화 권한, 라이선스 코드, 지원 내역, 인증서, 계정 보안을 한곳에서 관리합니다.",
     "cloudSync": "클라우드 동기화",
     "cloudSyncActive": "활성",
     "cloudSyncInactive": "비활성",
@@ -207,7 +207,7 @@
     "accessValidUntil": "사용 가능 기한",
     "accessNotActive": "아직 활성 클라우드 동기화 권한이 없습니다",
     "notAvailable": "사용 불가",
-    "trialRedeemedAt": "체험 적용 시간",
+    "trialRedeemedAt": "마지막 코드 교환 시간",
     "memberFallback": "GitBook AI 멤버"
   },
   "admin": {

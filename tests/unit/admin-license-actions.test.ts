@@ -138,6 +138,82 @@ describe("admin license actions", () => {
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
+  it.each([
+    {
+      durationKind: "trial_3_day",
+      expectedCodePrefix: /^T7[A-Z2-9]{2}-\*\*\*\*-\*\*\*\*-[A-Z2-9]{4}$/,
+      expectedTrialDays: 7,
+      trialDays: "7",
+    },
+    {
+      durationKind: "month_1",
+      expectedCodePrefix: /^1M[A-Z2-9]{2}-\*\*\*\*-\*\*\*\*-[A-Z2-9]{4}$/,
+      expectedTrialDays: 30,
+      trialDays: "7",
+    },
+    {
+      durationKind: "month_3",
+      expectedCodePrefix: /^3M[A-Z2-9]{2}-\*\*\*\*-\*\*\*\*-[A-Z2-9]{4}$/,
+      expectedTrialDays: 90,
+      trialDays: "7",
+    },
+    {
+      durationKind: "year_1",
+      expectedCodePrefix: /^1Y[A-Z2-9]{2}-\*\*\*\*-\*\*\*\*-[A-Z2-9]{4}$/,
+      expectedTrialDays: 365,
+      trialDays: "7",
+    },
+  ])("generates $durationKind batches with the expected fixed duration and prefix", async ({ durationKind, expectedCodePrefix, expectedTrialDays, trialDays }) => {
+    const batchSingle = vi.fn(async () => ({
+      data: {
+        channel_note: null,
+        channel_type: "partner",
+        code_count: 1,
+        duration_kind: durationKind,
+        id: "batch-1",
+        label: `${durationKind} batch`,
+        trial_days: expectedTrialDays,
+      },
+      error: null,
+    }));
+    const batchSelect = vi.fn(() => ({ single: batchSingle }));
+    const batchInsert = vi.fn(() => ({ select: batchSelect }));
+    const codeSelect = vi.fn(async () => ({
+      data: [{ code_mask: "MASK-****-****-CODE", id: "code-1" }],
+      error: null,
+    }));
+    const codeInsert = vi.fn(() => ({ select: codeSelect }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "license_code_batches") return { insert: batchInsert };
+      if (table === "trial_codes") return { insert: codeInsert };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("label", `${durationKind} batch`);
+    formData.set("duration_kind", durationKind);
+    formData.set("quantity", "1");
+    formData.set("trial_days", trialDays);
+    formData.set("channel_type", "partner");
+
+    await expect(generateLicenseCodeBatch(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=license-code-batch-created");
+
+    expect(batchInsert).toHaveBeenCalledWith(expect.objectContaining({
+      duration_kind: durationKind,
+      trial_days: expectedTrialDays,
+    }));
+    const insertedCodes = (codeInsert.mock.calls as unknown as [[Array<Record<string, unknown>>]])[0][0];
+    expect(insertedCodes[0]).toEqual(expect.objectContaining({
+      code_mask: expect.stringMatching(expectedCodePrefix),
+      duration_kind: durationKind,
+      trial_days: expectedTrialDays,
+    }));
+  });
+
   it("bulk deactivates selected license codes without changing channel metadata", async () => {
     const inFilter = vi.fn(async () => ({ error: null }));
     const update = vi.fn(() => ({ in: inFilter }));

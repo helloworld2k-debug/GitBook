@@ -82,22 +82,22 @@ vi.mock("next-intl/server", () => ({
         savePassword: "Update password",
         saveProfile: "Save profile",
         status: "Status",
-        subtitle: "Manage cloud sync access, trial codes, donation history, certificates, and account security in one place.",
+        subtitle: "Manage cloud sync access, license codes, donation history, certificates, and account security in one place.",
         title: "Personal center",
         trial: {
-          bindingHelp: "The trial starts immediately after redemption.",
+          bindingHelp: "License code access starts immediately after redemption.",
           code: "Code",
-          description: "Redeem a team-provided code to start a trial.",
+          description: "Redeem a team-provided license code for trial, monthly, quarterly, or yearly cloud sync access.",
           duplicate: "Duplicate trial.",
-          error: "Could not redeem the trial code.",
-          inactive: "Inactive trial.",
-          invalid: "Invalid trial.",
-          limit: "Trial limit reached.",
-          saved: "Trial redeemed.",
-          submit: "Redeem trial",
-          title: "Trial code",
+          error: "Could not redeem the license code.",
+          inactive: "Inactive license code.",
+          invalid: "Invalid license code.",
+          limit: "License code limit reached.",
+          saved: "License code redeemed.",
+          submit: "Redeem code",
+          title: "License code",
         },
-        trialRedeemedAt: "Trial redeemed at",
+        trialRedeemedAt: "Last code redeemed at",
         type: "Type",
         viewCertificate: "View certificate",
       },
@@ -223,6 +223,56 @@ describe("dashboard page", () => {
     );
     expect(within(donationHistory as HTMLElement).getByText("GBAI-2026-D-000001")).toBeInTheDocument();
     expect(mocks.setupUserPage).toHaveBeenCalledWith("en", "/en/dashboard");
+  });
+
+  it("renders the personal center redemption box as a general license code flow", async () => {
+    const emptyQuery = createThenableQuery({ data: [], error: null });
+    const countQuery = createThenableQuery({ count: 0, error: null });
+    const profileQuery = createThenableQuery({
+      data: {
+        display_name: "Ada Lovelace",
+        email: "ada@example.com",
+      },
+      error: null,
+    });
+    const entitlementQuery = createThenableQuery({
+      data: {
+        status: "active",
+        valid_until: "2026-06-01T00:00:00.000Z",
+      },
+      error: null,
+    });
+    const trialQuery = createThenableQuery({
+      data: {
+        bound_at: null,
+        redeemed_at: "2026-05-01T00:00:00.000Z",
+        trial_valid_until: "2026-06-01T00:00:00.000Z",
+      },
+      error: null,
+    });
+    const tableQueues = {
+      certificates: [countQuery],
+      donations: [countQuery, emptyQuery],
+      license_entitlements: [entitlementQuery],
+      profiles: [profileQuery],
+      trial_code_redemptions: [trialQuery],
+    };
+    const from = vi.fn((table: keyof typeof tableQueues) => tableQueues[table].shift());
+
+    mocks.createSupabaseServerClient.mockResolvedValue({ from });
+
+    render(
+      await DashboardPage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({ trial: "saved" }),
+      }),
+    );
+
+    expect(screen.getByRole("heading", { name: "License code" })).toBeInTheDocument();
+    expect(screen.getByText("Redeem a team-provided license code for trial, monthly, quarterly, or yearly cloud sync access.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("License code redeemed.");
+    expect(screen.getByRole("button", { name: "Redeem code" })).toBeInTheDocument();
+    expect(screen.getByText(/Last code redeemed at/)).toBeInTheDocument();
   });
 
   it("shows a contribution success banner after Dodo returns", async () => {

@@ -34,6 +34,9 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("code_count integer not null check (code_count >= 1 and code_count <= 10)");
     expect(migration).toContain("alter table public.trial_codes");
     expect(migration).toContain("add column if not exists channel_type license_code_channel_type not null default 'internal'");
+    expect(migration).toContain("where batch_id is not null");
+    expect(migration).toContain("not exists (");
+    expect(migration).toContain("from public.license_code_batches batch");
     expect(migration).toContain("create or replace function public.redeem_license_code");
     expect(migration).toContain("input_machine_code_hash text default null");
     expect(migration).toContain("duplicate_trial_code_machine");

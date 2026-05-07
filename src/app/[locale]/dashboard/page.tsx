@@ -7,7 +7,7 @@ import { setupUserPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
-  redeemDashboardTrialCode,
+  redeemDashboardLicenseCode,
   updateAccountProfile,
   updateDashboardPassword,
 } from "./actions";
@@ -165,7 +165,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
 
   const updateProfile = updateAccountProfile.bind(null, locale);
   const updatePassword = updateDashboardPassword.bind(null, locale);
-  const redeemTrial = redeemDashboardTrialCode.bind(null, locale);
+  const redeemLicense = redeemDashboardLicenseCode.bind(null, locale);
   const accountLabel = profile?.display_name || profile?.email || user.email || t("memberFallback");
   const cloudSyncValidUntil = entitlement?.valid_until ?? trialRedemption?.trial_valid_until ?? null;
   const hasCloudSyncAccess = isDateInFuture(cloudSyncValidUntil);
@@ -263,7 +263,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                   <p className="mt-1 text-sm leading-6 text-slate-400">{t("trial.description")}</p>
                 </div>
                 <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.55fr)]">
-                  <form action={redeemTrial} className="space-y-4">
+                  <form action={redeemLicense} className="space-y-4">
                     {trialMessage && trialStatus === "saved" ? <FormStatusBanner message={trialMessage} /> : null}
                     {trialMessage && trialStatus !== "saved" ? <FormStatusBanner message={trialMessage} tone="error" /> : null}
                     <p className="rounded-md border border-cyan-300/15 bg-cyan-300/10 px-3 py-3 text-sm leading-6 text-cyan-50">
@@ -273,7 +273,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                       {t("trial.code")}
                       <input
                         className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-sm text-white shadow-sm outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
-                        name="trial_code"
+                        name="license_code"
                         required
                       />
                     </label>
