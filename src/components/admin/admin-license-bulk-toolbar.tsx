@@ -56,14 +56,9 @@ function syncSelectedToForm(form: HTMLFormElement, formId: string) {
 
 function syncMetadataToForm(form: HTMLFormElement, formId: string) {
   const channelType = document.getElementById(`${formId}-channel-type`);
-  const channelNote = document.getElementById(`${formId}-channel-note`);
 
   if (channelType instanceof HTMLSelectElement) {
     setHiddenFormValue(form, "channel_type", channelType.value);
-  }
-
-  if (channelNote instanceof HTMLInputElement) {
-    setHiddenFormValue(form, "channel_note", channelNote.value);
   }
 }
 
@@ -121,7 +116,6 @@ export function AdminLicenseBulkToolbar({
     activate: string;
     applyMetadata: string;
     channel: string;
-    channelNote: string;
     clearSelection: string;
     deactivate: string;
     delete: string;
@@ -168,10 +162,6 @@ export function AdminLicenseBulkToolbar({
               <option value="partner">{labels.partner}</option>
               <option value="other">{labels.other}</option>
             </select>
-          </label>
-          <label className="grid gap-1 text-xs font-medium text-white/80" htmlFor={`${formId}-channel-note`}>
-            {labels.channelNote}
-            <input className="min-h-9 rounded-md border border-white/20 bg-slate-900 px-2 text-sm text-white" id={`${formId}-channel-note`} maxLength={500} />
           </label>
           <button className="inline-flex min-h-9 items-center rounded-md border border-white/20 px-3 text-sm font-medium transition-colors hover:bg-white/10" onClick={() => submitBulkAction(formId, "metadata")} type="button">
             {labels.applyMetadata}

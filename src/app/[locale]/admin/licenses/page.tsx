@@ -326,10 +326,6 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                   <option value="other">{t("licenses.channels.other")}</option>
                 </select>
               </label>
-              <label className="grid gap-1 text-sm font-medium text-slate-700">
-                {t("licenses.channelNote")}
-                <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10" maxLength={500} name="channel_note" />
-              </label>
             </div>
             <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 sm:w-fit" pendingLabel={t("common.processing")}>
               {t("licenses.generateBatch")}
@@ -498,7 +494,6 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             activate: t("licenses.activate"),
             applyMetadata: t("licenses.applyMetadata"),
             channel: t("licenses.channel"),
-            channelNote: t("licenses.channelNote"),
             clearSelection: t("licenses.clearSelection"),
             deactivate: t("licenses.deactivate"),
             delete: t("licenses.delete"),

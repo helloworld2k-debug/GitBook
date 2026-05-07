@@ -236,7 +236,7 @@ const testMessages = {
         reason: "Reason",
         trialDays: "Trial days",
         fixedPaidDurationsHelp: "Monthly codes use a fixed 30-day duration. Quarterly uses 90 days; yearly uses 365 days.",
-        label: "Label",
+        label: "Batch name",
         batchGenerateTitle: "Batch generate license codes",
         batchGenerateDescription: "Generate trial, monthly, quarterly, or yearly license codes.",
         generateBatch: "Generate codes",
@@ -258,8 +258,7 @@ const testMessages = {
         createdTo: "Created to",
         applyFilters: "Apply filters",
         resetFilters: "Reset filters",
-        applyMetadata: "Apply metadata",
-        channelNote: "Channel note",
+        applyMetadata: "Apply channel",
         clearSelection: "Clear selection",
         selectedCount: "{count} selected",
         selectAll: "Select all license codes",
@@ -1182,7 +1181,7 @@ describe("admin pages", () => {
         id: "batch-1",
         label: "Taobao May monthly",
         channel_type: "taobao",
-        channel_note: "May campaign",
+        channel_note: null,
         duration_kind: "month_1",
         trial_days: 30,
         code_count: 1,
@@ -1199,7 +1198,7 @@ describe("admin pages", () => {
         trial_days: 30,
         duration_kind: "month_1",
         channel_type: "taobao",
-        channel_note: "May campaign",
+        channel_note: null,
         code_mask: "1MAB-****-****-MNOP",
         batch_id: "batch-1",
         max_redemptions: 1,
@@ -1233,6 +1232,8 @@ describe("admin pages", () => {
     expect(codesQuery.select).toHaveBeenCalledWith("id,batch_id,label,trial_days,duration_kind,channel_type,channel_note,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by,created_by");
     expect(screen.getByRole("heading", { name: "License management" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Batch generate license codes" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Batch name")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Channel note")).not.toBeInTheDocument();
     expect(screen.getAllByLabelText("Trial days")[0]).toHaveAttribute("max", "7");
     expect(screen.getByText("Monthly codes use a fixed 30-day duration. Quarterly uses 90 days; yearly uses 365 days.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Generate codes" })).toBeInTheDocument();

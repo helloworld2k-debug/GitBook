@@ -60,7 +60,7 @@ describe("admin license actions", () => {
   it("generates an archived batch of up to 10 prefixed license codes", async () => {
     const batchSingle = vi.fn(async () => ({
       data: {
-        channel_note: "May shop campaign",
+        channel_note: null,
         channel_type: "taobao",
         code_count: 3,
         duration_kind: "month_1",
@@ -96,12 +96,11 @@ describe("admin license actions", () => {
     formData.set("duration_kind", "month_1");
     formData.set("quantity", "3");
     formData.set("channel_type", "taobao");
-    formData.set("channel_note", "May shop campaign");
 
     await expect(generateLicenseCodeBatch(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=license-code-batch-created");
 
     expect(batchInsert).toHaveBeenCalledWith(expect.objectContaining({
-      channel_note: "May shop campaign",
+      channel_note: null,
       channel_type: "taobao",
       code_count: 3,
       created_by: "admin-1",
@@ -156,12 +155,10 @@ describe("admin license actions", () => {
     formData.append("license_code_ids", "code-2");
     formData.set("bulk_action", "deactivate");
     formData.set("channel_type", "xianyu");
-    formData.set("channel_note", "Moved to Xianyu partner");
 
     await expect(bulkUpdateLicenseCodes(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=license-codes-bulk-updated");
 
     expect(update).toHaveBeenCalledWith(expect.objectContaining({
-      channel_note: "Moved to Xianyu partner",
       channel_type: "xianyu",
       is_active: false,
       updated_at: expect.any(String),

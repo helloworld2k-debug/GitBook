@@ -8,11 +8,10 @@ import { hashDesktopSecret } from "@/lib/license/hash";
 import { decryptLicenseCode, encryptLicenseCode, generateLicenseCode, generateLicenseCodeForDuration, getLicenseCodeEncryptionKey, getLicenseDurationDays, maskLicenseCode, type EncryptedLicenseCode } from "@/lib/license/license-codes";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { insertAdminAuditLog } from "./audit";
-import { getBoundedString, getLicenseBatchQuantity, getLicenseCodeChannelType, getLicenseCodeDurationKind, getRequiredString, getSafeLocale, getTrialDays, MAX_REASON_LENGTH, MAX_TRIAL_LABEL_LENGTH } from "./validation";
+import { getBoundedString, getLicenseBatchQuantity, getLicenseCodeChannelType, getLicenseCodeDurationKind, getRequiredString, getSafeLocale, getTrialDays, MAX_TRIAL_LABEL_LENGTH } from "./validation";
 
 const CLOUD_SYNC_COOLDOWN_SETTING_KEY = "cloud_sync_device_switch_cooldown_minutes";
 type TrialCodeUpdate = {
-  channel_note?: string | null;
   channel_type?: "internal" | "taobao" | "xianyu" | "partner" | "other";
   deleted_at?: string;
   is_active?: boolean;
@@ -32,16 +31,6 @@ function getCooldownMinutes(formData: FormData) {
   }
 
   return raw;
-}
-
-function getOptionalNote(formData: FormData) {
-  const note = String(formData.get("channel_note") ?? "").trim() || null;
-
-  if (note && note.length > MAX_REASON_LENGTH) {
-    throw new Error("Channel note must be 500 characters or fewer");
-  }
-
-  return note;
 }
 
 function getSelectedLicenseCodeIds(formData: FormData) {
@@ -75,10 +64,6 @@ function getBulkLicenseCodeUpdate(formData: FormData, adminId: string): TrialCod
 
   if (formData.has("channel_type")) {
     update.channel_type = getLicenseCodeChannelType(formData);
-  }
-
-  if (formData.has("channel_note")) {
-    update.channel_note = getOptionalNote(formData);
   }
 
   if (Object.keys(update).length <= 2) {
@@ -159,10 +144,9 @@ export async function generateLicenseCodeBatch(formData: FormData) {
   const trialDays = durationKind === "trial_3_day" ? getTrialDays(formData) : getLicenseDurationDays(durationKind);
   const quantity = getLicenseBatchQuantity(formData);
   const channelType = getLicenseCodeChannelType(formData);
-  const channelNote = getOptionalNote(formData);
   const supabase = createSupabaseAdminClient();
   const { data: batch, error: batchError } = await supabase.from("license_code_batches").insert({
-    channel_note: channelNote,
+    channel_note: null,
     channel_type: channelType,
     code_count: quantity,
     created_by: admin.id,
@@ -188,7 +172,7 @@ export async function generateLicenseCodeBatch(formData: FormData) {
 
     return {
       batch_id: batch.id,
-      channel_note: channelNote,
+      channel_note: null,
       channel_type: channelType,
       code_hash: await hashDesktopSecret(code, "trial_code"),
       code_mask: maskLicenseCode(code),
@@ -221,7 +205,7 @@ export async function generateLicenseCodeBatch(formData: FormData) {
     action: "generate_license_code_batch",
     adminUserId: admin.id,
     after: {
-      channel_note: channelNote,
+      channel_note: null,
       channel_type: channelType,
       code_count: quantity,
       code_masks: codes.map((code) => code.code_mask),
