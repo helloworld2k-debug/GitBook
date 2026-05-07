@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { jsonPayload } from "@/lib/api/responses";
 import { readBearerToken, validateDesktopSession } from "@/lib/license/desktop-session";
 import type { LicenseStatus } from "@/lib/license/status";
 import { getLicenseStatus } from "@/lib/license/status";
@@ -27,7 +27,7 @@ function mapEntitlementReason(status: LicenseStatus) {
 }
 
 function errorResponse(code: string, message: string, status: number) {
-  return NextResponse.json({ error: { code, message } }, { status });
+  return jsonPayload({ error: { code, message } }, status);
 }
 
 export async function GET(request: Request) {
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     });
     const now = new Date();
 
-    return NextResponse.json({
+    return jsonPayload({
       user: {
         id: session.user_id,
       },

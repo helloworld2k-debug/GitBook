@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { jsonPayload } from "@/lib/api/responses";
 import { readBearerToken, revokeDesktopSession, validateDesktopSession } from "@/lib/license/desktop-session";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -8,14 +8,14 @@ export async function POST(request: Request) {
   const token = readBearerToken(request);
 
   if (!token) {
-    return NextResponse.json(
+    return jsonPayload(
       {
         error: {
           code: "session_revoked",
           message: "Desktop session is not active.",
         },
       },
-      { status: 401 },
+      401,
     );
   }
 
@@ -24,29 +24,29 @@ export async function POST(request: Request) {
     const session = await validateDesktopSession(client, token);
 
     if (!session) {
-      return NextResponse.json(
+      return jsonPayload(
         {
           error: {
             code: "session_revoked",
             message: "Desktop session is not active.",
           },
         },
-        { status: 401 },
+        401,
       );
     }
 
     const result = await revokeDesktopSession(client, { desktopSessionId: session.id });
 
-    return NextResponse.json(result);
+    return jsonPayload(result);
   } catch {
-    return NextResponse.json(
+    return jsonPayload(
       {
         error: {
           code: "internal_error",
           message: "Unable to log out desktop session.",
         },
       },
-      { status: 500 },
+      500,
     );
   }
 }

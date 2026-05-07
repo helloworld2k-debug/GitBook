@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { jsonError, jsonOk } from "@/lib/api/responses";
 import { generateCertificatesForDonation } from "@/lib/certificates/service";
 import { buildDonationRecord } from "@/lib/donations/record";
 import type { Json } from "@/lib/database.types";
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   try {
     event = verifyDodoWebhook(body, request.headers);
   } catch {
-    return NextResponse.json({ error: "Invalid Dodo signature" }, { status: 400 });
+    return jsonError("Invalid Dodo signature");
   }
 
   if (event.type === "payment.succeeded") {
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       (productId && productId !== expectedProductId) ||
       (!productId && expectedAmount !== null && amount !== expectedAmount)
     ) {
-      return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
+      return jsonError("Missing required metadata");
     }
 
     const supabase = createSupabaseAdminClient();
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error || !donation) {
-      return NextResponse.json({ error: "Unable to save donation" }, { status: 500 });
+      return jsonError("Unable to save donation", 500);
     }
 
     await generateCertificatesForDonation(donation.id);
@@ -112,5 +112,5 @@ export async function POST(request: Request) {
     });
   }
 
-  return NextResponse.json({ received: true });
+  return jsonOk({ received: true });
 }

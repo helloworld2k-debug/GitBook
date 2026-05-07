@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { supportedLocales, type Locale } from "@/config/site";
+import { jsonError } from "@/lib/api/responses";
 import { createDesktopAuthCode } from "@/lib/license/desktop-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -33,7 +34,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
   const { locale } = await params;
 
   if (!supportedLocales.includes(locale as Locale)) {
-    return NextResponse.json({ error: "Unsupported locale" }, { status: 404 });
+    return jsonError("Unsupported locale", 404);
   }
 
   const url = new URL(request.url);
@@ -44,7 +45,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
   });
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Missing desktop authorization parameters" }, { status: 400 });
+    return jsonError("Missing desktop authorization parameters");
   }
 
   const { deviceSessionId, returnUrl, state } = parsed.data;

@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { jsonPayload } from "@/lib/api/responses";
 import { InvalidDesktopSessionError, refreshDesktopSession } from "@/lib/license/desktop-session";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -14,21 +14,21 @@ export async function POST(request: Request) {
   const parsed = refreshSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json(
+    return jsonPayload(
       {
         error: {
           code: "invalid_request",
           message: "Invalid desktop refresh request.",
         },
       },
-      { status: 400 },
+      400,
     );
   }
 
   try {
     const result = await refreshDesktopSession(createSupabaseAdminClient(), parsed.data);
 
-    return NextResponse.json({
+    return jsonPayload({
       token: result.sessionToken,
       expiresAt: result.expiresAt,
       userId: result.userId,
@@ -36,25 +36,25 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (error instanceof InvalidDesktopSessionError) {
-      return NextResponse.json(
+      return jsonPayload(
         {
           error: {
             code: "device_replaced",
             message: "Desktop session has been replaced or revoked.",
           },
         },
-        { status: 401 },
+        401,
       );
     }
 
-    return NextResponse.json(
+    return jsonPayload(
       {
         error: {
           code: "internal_error",
           message: "Unable to refresh desktop session.",
         },
       },
-      { status: 500 },
+      500,
     );
   }
 }
