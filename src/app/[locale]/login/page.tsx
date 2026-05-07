@@ -1,8 +1,7 @@
-import { notFound } from "next/navigation";
 import Script from "next/script";
 import { getTranslations } from "next-intl/server";
-import { supportedLocales, type Locale } from "@/config/site";
 import { getLocaleDashboardPath, sanitizeNextPath } from "@/lib/auth/guards";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { LoginForm, type LoginFormMessages } from "./login-form";
 
 type LoginPageProps = {
@@ -33,11 +32,8 @@ function getPasswordResetCallbackUrl(locale: string) {
 }
 
 export default async function LoginPage({ params, searchParams }: LoginPageProps) {
-  const { locale } = await params;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
+  const { locale: localeParam } = await params;
+  const locale = resolvePageLocale(localeParam);
 
   const query = await searchParams;
   const t = await getTranslations("login");

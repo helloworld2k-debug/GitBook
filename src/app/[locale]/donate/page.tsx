@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { supportedLocales, type Locale } from "@/config/site";
+import { getActionLocale } from "@/lib/i18n/action-locale";
 
 type DonatePageProps = {
   params: Promise<{
@@ -9,7 +9,7 @@ type DonatePageProps = {
 
 export default async function DonatePage({ params }: DonatePageProps) {
   const { locale } = await params;
-  const safeLocale = supportedLocales.includes(locale as Locale) ? locale : "en";
+  const safeLocale = getActionLocale(locale);
 
   redirect(`/${safeLocale}/contributions`);
 }

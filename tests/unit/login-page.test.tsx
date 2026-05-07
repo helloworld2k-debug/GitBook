@@ -68,6 +68,7 @@ vi.mock("next-intl/server", () => ({
 
     return messages[key] ?? key;
   }),
+  setRequestLocale: vi.fn(),
 }));
 
 describe("LoginPage", () => {

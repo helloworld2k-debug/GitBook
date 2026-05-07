@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { siteConfig, supportedLocales, type Locale } from "@/config/site";
+import { getTranslations } from "next-intl/server";
+import { siteConfig, supportedLocales } from "@/config/site";
 import { Link } from "@/i18n/routing";
 import { optionalTimeout } from "@/lib/async/optional-timeout";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { getCachedLatestPublishedRelease } from "@/lib/releases/public-cache";
 import { getPlatformDelivery, type ReleasePlatform, type SoftwareRelease } from "@/lib/releases/software-releases";
 
@@ -40,13 +40,8 @@ export function generateStaticParams() {
 }
 
 export default async function LocalizedHome({ params }: LocalizedPageProps) {
-  const { locale } = await params;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
+  const { locale: localeParam } = await params;
+  const locale = resolvePageLocale(localeParam);
   const t = await getTranslations("home");
   const nav = await getTranslations("nav");
   let latestRelease: SoftwareRelease | null = null;
