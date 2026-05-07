@@ -1,6 +1,6 @@
 {
   "nav": {
-    "download": "ダウンロード",
+    "download": "ホーム",
     "donate": "応援",
     "dashboard": "ダッシュボード",
     "notifications": "通知",
@@ -84,10 +84,10 @@
     "olderVersions": "旧バージョン"
   },
   "footer": {
-    "tagline": "AI コーディング知識、ダウンロード、サポートを一か所に。",
-    "product": "製品",
-    "account": "アカウント",
-    "resources": "リソース",
+    "tagline": "AI コーディング知識、安全なダウンロード、アカウントサポートを一つのワークスペースに集約します。",
+    "status": "安全なダウンロードとアカウントサポート",
+    "availability": "macOS / Windows リリース",
+    "contact": "サポートはログイン済みのフィードバックスレッドで対応します",
     "copyright": "独立したソフトウェアサポートサイトです。"
   },
   "donate": {
@@ -262,7 +262,7 @@
       "submitManualDonation": "手動応援を追加",
       "empty": "応援履歴はまだありません。",
       "providers": {
-        "stripe": "Stripe",
+        "stripe": "旧 Stripe",
         "paypal": "PayPal",
         "manual": "手動",
         "dodo": "Dodo Payments"
@@ -619,7 +619,8 @@
       "supportFeedback": "フィードバック",
       "supportSettings": "サポート設定",
       "users": "ユーザー",
-      "contributionPricing": "応援価格設定"
+      "contributionPricing": "応援価格設定",
+      "supportFeedbackUnread": "{count} 件のフィードバックに対応が必要です"
     },
     "contributionPricing": {
       "eyebrow": "Admin",

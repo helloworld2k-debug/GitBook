@@ -14,11 +14,25 @@ export async function getAdminShellProps(locale: Locale, currentPath: string) {
   }
   const currentLocale = supportedLocales.includes(localeValue as Locale) ? (localeValue as Locale) : locale;
   let adminLabel = "Admin";
+  let unreadFeedbackCount = 0;
 
   try {
     const supabase = await createSupabaseServerClient();
-    const authResult = await optionalTimeout(supabase.auth.getUser(), 900);
+    const [authResult, feedbackResult] = await Promise.all([
+      optionalTimeout(supabase.auth.getUser(), 900),
+      optionalTimeout(
+        Promise.resolve(
+          supabase
+            .from("support_feedback")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "open")
+            .limit(0),
+        ),
+        900,
+      ),
+    ]);
     const user = authResult?.data.user;
+    unreadFeedbackCount = feedbackResult?.count ?? 0;
 
     if (user) {
       const profileResult = await optionalTimeout(
@@ -50,9 +64,11 @@ export async function getAdminShellProps(locale: Locale, currentPath: string) {
       returnToSite: shellT("returnToSite"),
       signOut: shellT("signOut"),
       supportFeedback: shellT("supportFeedback"),
+      supportFeedbackUnread: (count: number) => shellT("supportFeedbackUnread", { count }),
       supportSettings: shellT("supportSettings"),
       users: shellT("users"),
     },
     locale: currentLocale,
+    unreadFeedbackCount,
   };
 }

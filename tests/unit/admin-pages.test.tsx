@@ -156,7 +156,7 @@ const testMessages = {
         submitManualDonation: "Add manual contribution",
         empty: "No contributions found.",
         providers: {
-          stripe: "Stripe",
+          stripe: "Legacy Stripe",
           paypal: "PayPal",
           manual: "Manual",
           dodo: "Dodo Payments",
@@ -464,7 +464,7 @@ const testMessages = {
         submitManualDonation: "新增人工支持記錄",
         empty: "尚無支持記錄。",
         providers: {
-          stripe: "Stripe",
+          stripe: "舊版 Stripe",
           paypal: "PayPal",
           manual: "人工登錄",
           dodo: "Dodo Payments",
@@ -586,7 +586,7 @@ const testMessages = {
         submitManualDonation: "手動応援記録を追加",
         empty: "応援記録はまだありません。",
         providers: {
-          stripe: "Stripe",
+          stripe: "旧 Stripe",
           paypal: "PayPal",
           manual: "手動",
           dodo: "Dodo Payments",
@@ -708,7 +708,7 @@ const testMessages = {
         submitManualDonation: "수동 후원 추가",
         empty: "후원 기록이 없습니다.",
         providers: {
-          stripe: "Stripe",
+          stripe: "이전 Stripe",
           paypal: "PayPal",
           manual: "수동",
           dodo: "Dodo Payments",
@@ -879,7 +879,7 @@ describe("admin pages", () => {
     expect(screen.getByLabelText("電子郵件或使用者 ID")).toBeRequired();
     expect(screen.getByLabelText("原因")).toBeRequired();
     expect(screen.getByRole("button", { name: "新增人工支持記錄" })).toBeInTheDocument();
-    expect(screen.getAllByText("Stripe").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("舊版 Stripe").length).toBeGreaterThan(0);
     expect(screen.getAllByText("人工登錄").length).toBeGreaterThan(0);
     expect(screen.queryByText("stripe")).not.toBeInTheDocument();
     expect(screen.queryByText("manual")).not.toBeInTheDocument();

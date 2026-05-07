@@ -7,20 +7,10 @@ vi.mock("next-intl/server", () => ({
     const tables: Record<string, Record<string, string>> = {
       footer: {
         tagline: "AI coding knowledge, downloads, and support in one place.",
-        product: "Product",
-        account: "Account",
-        resources: "Resources",
+        status: "Secure downloads and account support",
+        availability: "macOS and Windows releases",
+        contact: "Support follows signed-in feedback threads",
         copyright: "Independent software support site.",
-      },
-      nav: {
-        dashboard: "Dashboard",
-        donate: "Contributions",
-        download: "Download",
-        notifications: "Notifications",
-        support: "Support",
-      },
-      home: {
-        olderVersions: "Older versions",
       },
     };
 
@@ -37,13 +27,11 @@ vi.mock("@/i18n/routing", () => ({
 }));
 
 describe("SiteFooter", () => {
-  it("renders footer content and related site links", async () => {
+  it("renders footer content without navigation links", async () => {
     render(await SiteFooter());
 
     expect(screen.getByRole("contentinfo")).toHaveTextContent("AI coding knowledge, downloads, and support in one place.");
-    expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Older versions" })).toHaveAttribute("href", "/versions");
-    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/dashboard");
-    expect(screen.getByRole("link", { name: "Support" })).toHaveAttribute("href", "/support");
+    expect(screen.getByText("Secure downloads and account support")).toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 });

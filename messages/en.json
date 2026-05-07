@@ -1,6 +1,6 @@
 {
   "nav": {
-    "download": "Download",
+    "download": "Home",
     "donate": "Contributions",
     "dashboard": "Dashboard",
     "notifications": "Notifications",
@@ -84,10 +84,10 @@
     "mockLineThree": "Ready for download"
   },
   "footer": {
-    "tagline": "AI coding knowledge, downloads, and support in one place.",
-    "product": "Product",
-    "account": "Account",
-    "resources": "Resources",
+    "tagline": "AI coding knowledge, secure downloads, and account support in one focused workspace.",
+    "status": "Secure downloads and account support",
+    "availability": "macOS and Windows releases",
+    "contact": "Support follows signed-in feedback threads",
     "copyright": "Independent software support site."
   },
   "versions": {
@@ -304,7 +304,7 @@
       "submitManualDonation": "Add manual contribution",
       "empty": "No contributions found.",
       "providers": {
-        "stripe": "Stripe",
+        "stripe": "Legacy Stripe",
         "paypal": "PayPal",
         "manual": "Manual",
         "dodo": "Dodo Payments"
@@ -631,7 +631,8 @@
       "supportSettings": "Support settings",
       "returnToSite": "Return to site",
       "users": "Users",
-      "contributionPricing": "Contribution pricing"
+      "contributionPricing": "Contribution pricing",
+      "supportFeedbackUnread": "You have {count} feedback threads needing follow-up"
     },
     "contributionPricing": {
       "eyebrow": "Admin",

@@ -27,6 +27,7 @@ const adminLabels = {
   notifications: "Notifications",
   signOut: "Sign out",
   supportFeedback: "Feedback",
+  supportFeedbackUnread: (count: number) => `${count} feedback threads need follow-up`,
   supportSettings: "Support settings",
   releases: "Releases",
   returnToSite: "Return to site",
@@ -54,6 +55,22 @@ describe("AdminShell", () => {
     expect(screen.getByRole("button", { name: /Sign out/ })).toBeInTheDocument();
     expect(screen.getByText("admin@example.com")).toBeInTheDocument();
     expect(screen.getByText("Admin content")).toBeInTheDocument();
+  });
+
+  it("shows a follow-up marker on feedback when there are unread threads", () => {
+    render(
+      <AdminShell
+        adminLabel="admin@example.com"
+        currentPath="/admin"
+        labels={adminLabels}
+        locale="en"
+        unreadFeedbackCount={3}
+      >
+        <p>Admin content</p>
+      </AdminShell>,
+    );
+
+    expect(screen.getAllByLabelText("3 feedback threads need follow-up").length).toBeGreaterThan(0);
   });
 });
 

@@ -1,6 +1,6 @@
 {
   "nav": {
-    "download": "下載",
+    "download": "首頁",
     "donate": "支持",
     "dashboard": "儀表板",
     "notifications": "通知",
@@ -84,10 +84,10 @@
     "olderVersions": "舊版本"
   },
   "footer": {
-    "tagline": "AI 編程知識、下載與支援集中在一處。",
-    "product": "產品",
-    "account": "帳戶",
-    "resources": "資源",
+    "tagline": "AI 編程知識、安全下載與帳戶支援集中在同一工作區。",
+    "status": "安全下載與帳戶支援",
+    "availability": "macOS 與 Windows 版本",
+    "contact": "支援會跟進已登入帳戶的回饋對話",
     "copyright": "獨立軟體支援網站。"
   },
   "donate": {
@@ -262,7 +262,7 @@
       "submitManualDonation": "新增人工支持記錄",
       "empty": "尚無支持記錄。",
       "providers": {
-        "stripe": "Stripe",
+        "stripe": "舊版 Stripe",
         "paypal": "PayPal",
         "manual": "人工登錄",
         "dodo": "Dodo Payments"
@@ -619,7 +619,8 @@
       "supportFeedback": "回饋",
       "supportSettings": "支援設定",
       "users": "使用者",
-      "contributionPricing": "支持價格設定"
+      "contributionPricing": "支持價格設定",
+      "supportFeedbackUnread": "有 {count} 則回饋需要跟進"
     },
     "contributionPricing": {
       "eyebrow": "Admin",

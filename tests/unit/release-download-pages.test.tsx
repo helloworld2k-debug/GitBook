@@ -118,16 +118,13 @@ describe("release download pages", () => {
     expect(screen.getByRole("link", { name: "Windows Backup" })).toHaveAttribute("href", "https://mirror.example/win-backup.exe");
   });
 
-  it("shows related content links on the homepage", async () => {
+  it("does not show related content links on the homepage", async () => {
     mocks.getCachedLatestPublishedRelease.mockResolvedValue(null);
 
     render(await HomePage({ params: Promise.resolve({ locale: "en" }) }));
 
-    expect(screen.getByRole("heading", { name: "Related content" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Release archive Download previous versions/ })).toHaveAttribute("href", "/versions");
-    expect(screen.getByRole("link", { name: /Contributions Support continued development/ })).toHaveAttribute("href", "/contributions");
-    expect(screen.getByRole("link", { name: /Support Send feedback and get help/ })).toHaveAttribute("href", "/support");
-    expect(screen.getByRole("link", { name: /Notifications Read product updates/ })).toHaveAttribute("href", "/notifications");
+    expect(screen.queryByRole("heading", { name: "Related content" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Release archive Download previous versions/ })).not.toBeInTheDocument();
   });
 
   it("shows paired platform actions for linked releases on the versions page", async () => {

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import LocaleLayout from "@/app/[locale]/layout";
 
 const nextIntlClientProviderMock = vi.hoisted(() =>
@@ -7,9 +7,14 @@ const nextIntlClientProviderMock = vi.hoisted(() =>
     <div data-message-count={Object.keys(messages ?? {}).length}>{children}</div>
   )),
 );
+const usePathnameMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next-intl", () => ({
   NextIntlClientProvider: nextIntlClientProviderMock,
+}));
+
+vi.mock("next/navigation", () => ({
+  usePathname: usePathnameMock,
 }));
 
 vi.mock("@/components/site-header", () => ({
@@ -21,6 +26,11 @@ vi.mock("@/components/site-footer", () => ({
 }));
 
 describe("LocaleLayout", () => {
+  beforeEach(() => {
+    nextIntlClientProviderMock.mockClear();
+    usePathnameMock.mockReset().mockReturnValue("/en");
+  });
+
   it("wraps localized pages with global navigation and footer", async () => {
     render(await LocaleLayout({ children: <main>Page body</main> }));
 
@@ -31,5 +41,15 @@ describe("LocaleLayout", () => {
       expect.objectContaining({ messages: null }),
       undefined,
     );
+  });
+
+  it("hides public navigation and footer for admin pages", async () => {
+    usePathnameMock.mockReturnValue("/en/admin/users");
+
+    render(await LocaleLayout({ children: <main>Admin body</main> }));
+
+    expect(screen.queryByText("Site header")).not.toBeInTheDocument();
+    expect(screen.getByText("Admin body")).toBeInTheDocument();
+    expect(screen.queryByText("Site footer")).not.toBeInTheDocument();
   });
 });

@@ -36,6 +36,7 @@ type AdminShellLabels = {
   returnToSite: string;
   signOut: string;
   supportFeedback: string;
+  supportFeedbackUnread: (count: number) => string;
   supportSettings: string;
   users: string;
 };
@@ -46,6 +47,7 @@ type AdminShellProps = {
   currentPath: string;
   labels: AdminShellLabels;
   locale: Locale;
+  unreadFeedbackCount?: number;
 };
 
 const navIconClass = "size-4 shrink-0";
@@ -70,12 +72,23 @@ function isActive(currentPath: string, href: string) {
   return href === "/admin" ? currentPath === href : currentPath.startsWith(href);
 }
 
-function AdminNavList({ currentPath, items }: { currentPath: string; items: ReturnType<typeof getAdminItems> }) {
+function AdminNavList({
+  currentPath,
+  items,
+  supportFeedbackUnread,
+  unreadFeedbackCount = 0,
+}: {
+  currentPath: string;
+  items: ReturnType<typeof getAdminItems>;
+  supportFeedbackUnread: (count: number) => string;
+  unreadFeedbackCount?: number;
+}) {
   return (
     <>
       {items.map((item) => {
         const Icon = item.icon;
         const active = isActive(currentPath, item.href);
+        const showUnreadBadge = item.href === "/admin/support-feedback" && unreadFeedbackCount > 0;
         return (
           <Link
             className={`flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 ${
@@ -85,7 +98,17 @@ function AdminNavList({ currentPath, items }: { currentPath: string; items: Retu
             key={item.href}
           >
             <Icon aria-hidden="true" className={navIconClass} />
-            {item.label}
+            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+            {showUnreadBadge ? (
+              <span
+                aria-label={supportFeedbackUnread(unreadFeedbackCount)}
+                className={`ml-auto inline-flex min-h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold ${
+                  active ? "bg-white text-slate-950" : "bg-rose-100 text-rose-700"
+                }`}
+              >
+                {unreadFeedbackCount}
+              </span>
+            ) : null}
           </Link>
         );
       })}
@@ -93,7 +116,7 @@ function AdminNavList({ currentPath, items }: { currentPath: string; items: Retu
   );
 }
 
-export function AdminShell({ adminLabel, children, currentPath, labels, locale }: AdminShellProps) {
+export function AdminShell({ adminLabel, children, currentPath, labels, locale, unreadFeedbackCount = 0 }: AdminShellProps) {
   const items = getAdminItems(labels);
 
   return (
@@ -108,7 +131,12 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale }
             </div>
           </div>
           <nav aria-label="Admin" className="space-y-1 px-3 py-4">
-            <AdminNavList currentPath={currentPath} items={items} />
+            <AdminNavList
+              currentPath={currentPath}
+              items={items}
+              supportFeedbackUnread={labels.supportFeedbackUnread}
+              unreadFeedbackCount={unreadFeedbackCount}
+            />
           </nav>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -126,7 +154,12 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale }
                     aria-label="Admin mobile"
                     className="absolute left-0 top-12 z-50 w-[min(82vw,20rem)] space-y-1 rounded-md border border-slate-200 bg-white p-2 shadow-xl"
                   >
-                    <AdminNavList currentPath={currentPath} items={items} />
+                    <AdminNavList
+                      currentPath={currentPath}
+                      items={items}
+                      supportFeedbackUnread={labels.supportFeedbackUnread}
+                      unreadFeedbackCount={unreadFeedbackCount}
+                    />
                   </nav>
                 </details>
                 <Link

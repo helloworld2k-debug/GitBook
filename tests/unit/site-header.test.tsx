@@ -32,7 +32,7 @@ const navMessages: Record<string, string> = {
   accountMenu: "Account menu",
   dashboard: "Dashboard",
   donate: "Contributions",
-  download: "Download",
+  download: "Home",
   language: "Language",
   notifications: "Notifications",
   signIn: "Sign in",
@@ -65,7 +65,7 @@ describe("SiteHeader", () => {
 
     render(await SiteHeader());
 
-    expect(screen.getByRole("link", { name: "Download" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Contributions" })).toHaveAttribute("href", "/contributions");
     expect(createSupabaseServerClientMock).toHaveBeenCalled();
   });

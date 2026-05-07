@@ -1,6 +1,6 @@
 {
   "nav": {
-    "download": "다운로드",
+    "download": "홈",
     "donate": "지원",
     "dashboard": "대시보드",
     "notifications": "알림",
@@ -84,10 +84,10 @@
     "olderVersions": "이전 버전"
   },
   "footer": {
-    "tagline": "AI 코딩 지식, 다운로드, 지원을 한곳에서 제공합니다.",
-    "product": "제품",
-    "account": "계정",
-    "resources": "리소스",
+    "tagline": "AI 코딩 지식, 안전한 다운로드, 계정 지원을 하나의 작업 공간에서 제공합니다.",
+    "status": "안전한 다운로드와 계정 지원",
+    "availability": "macOS 및 Windows 릴리스",
+    "contact": "지원은 로그인된 피드백 대화에서 이어집니다",
     "copyright": "독립 소프트웨어 지원 사이트입니다."
   },
   "donate": {
@@ -262,7 +262,7 @@
       "submitManualDonation": "수동 지원 추가",
       "empty": "지원 내역이 없습니다.",
       "providers": {
-        "stripe": "Stripe",
+        "stripe": "이전 Stripe",
         "paypal": "PayPal",
         "manual": "수동",
         "dodo": "Dodo Payments"
@@ -619,7 +619,8 @@
       "supportFeedback": "피드백",
       "supportSettings": "지원 설정",
       "users": "사용자",
-      "contributionPricing": "지원 가격 설정"
+      "contributionPricing": "지원 가격 설정",
+      "supportFeedbackUnread": "후속 조치가 필요한 피드백 {count}건이 있습니다"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
