@@ -4,9 +4,7 @@ import { getCertificateExportFilename, renderCertificateSvg } from "@/lib/certif
 
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
-  cookies: vi.fn(),
   donationMaybeSingle: vi.fn(),
-  getUser: vi.fn(),
   maybeSingle: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("notFound");
@@ -14,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   redirect: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`);
   }),
+  setupUserPage: vi.fn(),
   tierMaybeSingle: vi.fn(),
 }));
 
@@ -22,8 +21,8 @@ vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
 
-vi.mock("next/headers", () => ({
-  cookies: mocks.cookies,
+vi.mock("@/lib/auth/page-guards", () => ({
+  setupUserPage: mocks.setupUserPage,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -70,14 +69,6 @@ vi.mock("next-intl/server", () => ({
   setRequestLocale: vi.fn(),
 }));
 
-function createAuthClient(user: unknown) {
-  return {
-    auth: {
-      getUser: mocks.getUser.mockResolvedValue({ data: { user } }),
-    },
-  };
-}
-
 function createCertificateClient() {
   const certificateQuery = {
     eq: vi.fn(() => certificateQuery),
@@ -118,37 +109,33 @@ function params(format = "svg") {
 describe("certificate export route", () => {
   beforeEach(() => {
     mocks.createSupabaseServerClient.mockReset();
-    mocks.cookies.mockReset();
-    mocks.cookies.mockResolvedValue({
-      getAll: vi.fn(() => [{ name: "sb-test-auth-token", value: "token" }]),
-    });
     mocks.donationMaybeSingle.mockReset();
-    mocks.getUser.mockReset();
     mocks.maybeSingle.mockReset();
     mocks.notFound.mockClear();
     mocks.redirect.mockClear();
+    mocks.setupUserPage.mockReset().mockResolvedValue({
+      locale: "ja",
+      user: { id: "user-1", email: "ada@example.com", user_metadata: {} },
+    });
     mocks.tierMaybeSingle.mockReset();
   });
 
   it("redirects unauthenticated users to localized login with the certificate download path", async () => {
-    mocks.createSupabaseServerClient.mockResolvedValue(createAuthClient(null));
+    mocks.setupUserPage.mockRejectedValueOnce(
+      new Error("redirect:/ja/login?next=%2Fja%2Fdashboard%2Fcertificates%2Fcert-1%2Fdownload%2Fsvg"),
+    );
 
     await expect(
       GET(new Request("https://gitbookai.example/ja/dashboard/certificates/cert-1/download/svg"), {
         params: params(),
       }),
     ).rejects.toThrow("redirect:/ja/login?next=%2Fja%2Fdashboard%2Fcertificates%2Fcert-1%2Fdownload%2Fsvg");
-
-    expect(mocks.redirect).toHaveBeenCalledWith(
-      "/ja/login?next=%2Fja%2Fdashboard%2Fcertificates%2Fcert-1%2Fdownload%2Fsvg",
-    );
+    expect(mocks.createSupabaseServerClient).not.toHaveBeenCalled();
   });
 
   it("returns 404 when the active certificate does not belong to the current user", async () => {
     const certificateClient = createCertificateClient();
-    mocks.createSupabaseServerClient
-      .mockResolvedValueOnce(createAuthClient({ id: "user-1", email: "ada@example.com", user_metadata: {} }))
-      .mockResolvedValueOnce(certificateClient);
+    mocks.createSupabaseServerClient.mockResolvedValueOnce(certificateClient);
     mocks.maybeSingle.mockResolvedValue({ data: null, error: null });
 
     await expect(
@@ -165,15 +152,15 @@ describe("certificate export route", () => {
 
   it("downloads a localized SVG certificate with attachment headers", async () => {
     const certificateClient = createCertificateClient();
-    mocks.createSupabaseServerClient
-      .mockResolvedValueOnce(
-        createAuthClient({
+    mocks.setupUserPage.mockResolvedValueOnce({
+      locale: "ja",
+      user: {
           id: "user-1",
           email: "ada@example.com",
           user_metadata: { full_name: "Ada Lovelace" },
-        }),
-      )
-      .mockResolvedValueOnce(certificateClient);
+      },
+    });
+    mocks.createSupabaseServerClient.mockResolvedValueOnce(certificateClient);
     mocks.maybeSingle.mockResolvedValue({
       data: {
         certificate_number: "GBAI-2026-D-000001",

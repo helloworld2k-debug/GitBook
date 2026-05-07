@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { supportedLocales, type Locale } from "@/config/site";
-import { requireUser } from "@/lib/auth/guards";
+import { getTranslations } from "next-intl/server";
+import { setupUserPage } from "@/lib/auth/page-guards";
 import { getCertificateTemplateBackgroundDataUri } from "@/lib/certificates/backgrounds";
 import { getCertificateExportFilename, renderCertificateSvg } from "@/lib/certificates/export";
 import { formatCertificateAmount, getCertificateTypeLabel } from "@/lib/certificates/render";
@@ -17,7 +16,9 @@ type CertificateDownloadRouteContext = {
   }>;
 };
 
-function getRecipientName(user: Awaited<ReturnType<typeof requireUser>>, fallbackRecipient: string) {
+type AuthenticatedUser = Awaited<ReturnType<typeof setupUserPage>>["user"];
+
+function getRecipientName(user: AuthenticatedUser, fallbackRecipient: string) {
   const displayName = user.user_metadata?.name ?? user.user_metadata?.full_name;
 
   if (typeof displayName === "string" && displayName.trim()) {
@@ -28,19 +29,13 @@ function getRecipientName(user: Awaited<ReturnType<typeof requireUser>>, fallbac
 }
 
 export async function GET(_request: Request, { params }: CertificateDownloadRouteContext) {
-  const { format, id, locale } = await params;
-
-  if (!supportedLocales.includes(locale as Locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
+  const { format, id, locale: localeParam } = await params;
 
   if (format !== "svg") {
     notFound();
   }
 
-  const user = await requireUser(locale, `/${locale}/dashboard/certificates/${id}/download/${format}`);
+  const { locale, user } = await setupUserPage(localeParam, `/${localeParam}/dashboard/certificates/${id}/download/${format}`);
 
   const t = await getTranslations("certificate");
   const supabase = await createSupabaseServerClient();
