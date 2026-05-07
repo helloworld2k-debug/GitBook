@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { supportedLocales, type Locale } from "@/config/site";
+import type { Locale } from "@/config/site";
+import { getActionLocale } from "@/lib/i18n/action-locale";
 
 export type AdminFeedbackTone = "error" | "notice";
 
@@ -103,7 +104,7 @@ export function isAdminFeedbackKey(value: string | null | undefined): value is A
 }
 
 export function sanitizeAdminReturnTo(locale: Locale | string, returnTo: FormDataEntryValue | null, fallbackPath: string) {
-  const safeLocale = supportedLocales.includes(locale as Locale) ? locale : "en";
+  const safeLocale = getActionLocale(locale);
   const fallback = fallbackPath.startsWith("/admin") ? fallbackPath : "/admin";
   const value = String(returnTo ?? "").trim();
 

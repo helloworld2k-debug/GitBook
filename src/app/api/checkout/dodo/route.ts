@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { supportedLocales, type Locale } from "@/config/site";
 import { jsonError } from "@/lib/api/responses";
+import { getActionLocale } from "@/lib/i18n/action-locale";
 import { createDodoCheckoutSession, getDodoProductId } from "@/lib/payments/dodo";
 import { findActiveDonationTier } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -17,16 +17,10 @@ function getSiteOrigin() {
   return origin;
 }
 
-function getSafeLocale(value: FormDataEntryValue | null) {
-  const locale = String(value ?? "en");
-
-  return supportedLocales.includes(locale as Locale) ? locale : "en";
-}
-
 export async function POST(request: Request) {
   const formData = await request.formData();
   const origin = getSiteOrigin();
-  const locale = getSafeLocale(formData.get("locale"));
+  const locale = getActionLocale(formData.get("locale"));
   const checkoutStartedAt = new Date().toISOString();
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
