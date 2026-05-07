@@ -12,6 +12,7 @@ import {
   revokeCloudSyncLease,
   revokeDesktopSession,
   setTrialCodeActive,
+  updateCloudSyncCooldownSetting,
   updateTrialCode,
 } from "../actions";
 
@@ -54,7 +55,12 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   const shellProps = await getAdminShellProps(locale, "/admin/licenses");
   const supabase = createSupabaseAdminClient();
 
-  const [trialCodesResult, deletedTrialCodesResult, trialRedemptionsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
+  const [cooldownSettingResult, trialCodesResult, deletedTrialCodesResult, trialRedemptionsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
+    supabase
+      .from("cloud_sync_settings")
+      .select("key,value")
+      .eq("key", "cloud_sync_device_switch_cooldown_minutes")
+      .single(),
     supabase
       .from("trial_codes")
       .select("id,label,trial_days,duration_kind,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by")
@@ -91,6 +97,10 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
       .limit(50),
   ]);
 
+  if (cooldownSettingResult.error) {
+    throw cooldownSettingResult.error;
+  }
+
   if (trialCodesResult.error) {
     throw trialCodesResult.error;
   }
@@ -116,6 +126,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   }
 
   const trialCodes = trialCodesResult.data ?? [];
+  const cooldownMinutes = Number.parseInt(cooldownSettingResult.data?.value ?? "180", 10);
   const deletedTrialCodes = deletedTrialCodesResult.data ?? [];
   const trialRedemptions = trialRedemptionsResult.data ?? [];
   const entitlements = entitlementsResult.data ?? [];
@@ -135,6 +146,43 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
 
           <AdminCard className="p-5">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950">{t("licenses.cloudSyncCooldownTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.cloudSyncCooldownDescription")}</p>
+            </div>
+            <form action={updateCloudSyncCooldownSetting} className="mt-4 grid gap-4 lg:grid-cols-[minmax(12rem,16rem)_minmax(18rem,1fr)_auto] lg:items-end">
+              <input name="locale" type="hidden" value={locale} />
+              <input name="return_to" type="hidden" value="/admin/licenses" />
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("licenses.cooldownMinutes")}
+                <input
+                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  defaultValue={Number.isFinite(cooldownMinutes) ? cooldownMinutes : 180}
+                  max="10080"
+                  min="0"
+                  name="cooldown_minutes"
+                  required
+                  type="number"
+                />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                {t("licenses.reason")}
+                <input
+                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  name="reason"
+                  placeholder={t("licenses.cooldownReasonPlaceholder")}
+                />
+              </label>
+              <AdminSubmitButton
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 lg:w-fit"
+                pendingLabel={t("common.processing")}
+              >
+                {t("licenses.save")}
+              </AdminSubmitButton>
+            </form>
+          </AdminCard>
+
+          <AdminCard className="mt-6 p-5">
             <div>
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.createTrialTitle")}</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.createTrialDescription")}</p>

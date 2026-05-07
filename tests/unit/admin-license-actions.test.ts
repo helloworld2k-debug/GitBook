@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createTrialCode,
   deleteTrialCode,
+  grantCloudSyncCooldownOverride,
   revealLicenseCode,
   revokeCloudSyncLease,
   revokeDesktopSession,
   setTrialCodeActive,
+  updateCloudSyncCooldownSetting,
   unbindTrialMachine,
   updateTrialCode,
   updateUserAccountStatus,
@@ -333,6 +335,81 @@ describe("admin license actions", () => {
     expect(eq).toHaveBeenCalledWith("id", "lease-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh-Hant/admin/licenses");
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "revoke_cloud_sync_lease" }));
+  });
+
+  it("updates the global cloud sync cooldown setting with audit logging", async () => {
+    const single = vi.fn(async () => ({
+      data: { key: "cloud_sync_device_switch_cooldown_minutes", value: "180" },
+      error: null,
+    }));
+    const selectEq = vi.fn(() => ({ single }));
+    const select = vi.fn(() => ({ eq: selectEq }));
+    const upsert = vi.fn(async () => ({ error: null }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "cloud_sync_settings") return { select, upsert };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("cooldown_minutes", "240");
+    formData.set("reason", "Operational support window");
+
+    await expect(updateCloudSyncCooldownSetting(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=cloud-sync-cooldown-updated");
+
+    expect(upsert).toHaveBeenCalledWith({
+      key: "cloud_sync_device_switch_cooldown_minutes",
+      updated_at: expect.any(String),
+      updated_by: "admin-1",
+      value: "240",
+    });
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "update_cloud_sync_cooldown_setting",
+      after: { value: "240" },
+      before: { key: "cloud_sync_device_switch_cooldown_minutes", value: "180" },
+      reason: "Operational support window",
+      target_id: "cloud_sync_device_switch_cooldown_minutes",
+      target_type: "cloud_sync_setting",
+    }));
+  });
+
+  it("grants a user cooldown override with an expiry and audit logging", async () => {
+    const single = vi.fn(async () => ({
+        data: { id: "override-1", expires_at: "2026-12-01T06:00:00.000Z", user_id: "user-1" },
+      error: null,
+    }));
+    const select = vi.fn(() => ({ single }));
+    const insert = vi.fn(() => ({ select }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "cloud_sync_cooldown_overrides") return { insert };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("user_id", "user-1");
+    formData.set("expires_at", "2026-12-01T06:00:00.000Z");
+    formData.set("reason", "Support-approved emergency device switch");
+
+    await expect(grantCloudSyncCooldownOverride(formData)).rejects.toThrow("redirect:/en/admin/users/user-1?notice=cloud-sync-override-granted");
+
+    expect(insert).toHaveBeenCalledWith({
+      created_by: "admin-1",
+      expires_at: "2026-12-01T06:00:00.000Z",
+      reason: "Support-approved emergency device switch",
+      user_id: "user-1",
+    });
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "grant_cloud_sync_cooldown_override",
+      target_id: "override-1",
+      target_type: "cloud_sync_cooldown_override",
+    }));
   });
 
   it("lets operators update user account status without reading passwords", async () => {

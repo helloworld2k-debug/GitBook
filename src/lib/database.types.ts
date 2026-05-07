@@ -635,6 +635,8 @@ export type Database = {
           last_heartbeat_at: string;
           expires_at: string;
           revoked_at: string | null;
+          released_at: string | null;
+          cooldown_until: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -648,6 +650,8 @@ export type Database = {
           last_heartbeat_at?: string;
           expires_at: string;
           revoked_at?: string | null;
+          released_at?: string | null;
+          cooldown_until?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -661,6 +665,8 @@ export type Database = {
           last_heartbeat_at?: string;
           expires_at?: string;
           revoked_at?: string | null;
+          released_at?: string | null;
+          cooldown_until?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -674,6 +680,83 @@ export type Database = {
           },
           {
             foreignKeyName: "cloud_sync_leases_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cloud_sync_settings: {
+        Row: {
+          key: string;
+          value: string;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value: string;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          value?: string;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cloud_sync_settings_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cloud_sync_cooldown_overrides: {
+        Row: {
+          id: string;
+          user_id: string;
+          expires_at: string;
+          consumed_at: string | null;
+          reason: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          expires_at: string;
+          consumed_at?: string | null;
+          reason: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          expires_at?: string;
+          consumed_at?: string | null;
+          reason?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cloud_sync_cooldown_overrides_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cloud_sync_cooldown_overrides_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -1161,10 +1244,13 @@ export type Database = {
         };
         Returns: {
           active_device_id: string | null;
+          available_after: string | null;
           expires_at: string | null;
           lease_id: string | null;
           ok: boolean;
+          override_id: string | null;
           reason: string;
+          remaining_seconds: number | null;
         }[];
       };
       heartbeat_cloud_sync_lease: {
@@ -1189,6 +1275,24 @@ export type Database = {
           input_user_id: string;
         };
         Returns: boolean;
+      };
+      get_cloud_sync_cooldown_minutes: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
+      has_active_cloud_sync_cooldown_override: {
+        Args: {
+          input_now: string;
+          input_user_id: string;
+        };
+        Returns: string | null;
+      };
+      mark_cloud_sync_released_leases: {
+        Args: {
+          input_now: string;
+          input_user_id: string;
+        };
+        Returns: undefined;
       };
       revoke_desktop_session_with_leases: {
         Args: {

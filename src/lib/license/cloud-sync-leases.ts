@@ -33,10 +33,13 @@ type CloudSyncLeaseRpcClient = {
 
 export type CloudSyncLeaseActivation = {
   ok: boolean;
-  reason: "active" | "invalid_session";
+  reason: "active" | "active_on_another_device" | "cooldown_waiting" | "invalid_session";
   leaseId: string | null;
   expiresAt: string | null;
   activeDeviceId: string | null;
+  availableAfter: string | null;
+  remainingSeconds: number | null;
+  overrideId: string | null;
 };
 
 export type CloudSyncLeaseHeartbeat = {
@@ -67,7 +70,7 @@ function getLeaseTimes(nowInput?: Date) {
 }
 
 function isActivationReason(reason: string): reason is CloudSyncLeaseActivation["reason"] {
-  return reason === "active" || reason === "invalid_session";
+  return reason === "active" || reason === "active_on_another_device" || reason === "cooldown_waiting" || reason === "invalid_session";
 }
 
 function isHeartbeatReason(reason: string): reason is CloudSyncLeaseHeartbeat["reason"] {
@@ -109,10 +112,13 @@ export async function activateCloudSyncLease(
 
   return {
     activeDeviceId: row.active_device_id,
+    availableAfter: row.available_after,
     expiresAt: row.expires_at,
     leaseId: row.lease_id,
     ok: row.ok,
+    overrideId: row.override_id,
     reason: row.reason,
+    remainingSeconds: row.remaining_seconds,
   };
 }
 

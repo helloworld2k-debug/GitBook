@@ -8,6 +8,17 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { insertAdminAuditLog } from "./audit";
 import { getRequiredString, getSafeLocale, getUserIds } from "./validation";
 
+function getRequiredFutureDate(formData: FormData, name: string) {
+  const value = getRequiredString(formData, name, "Expiry is required");
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime()) || date <= new Date()) {
+    throw new Error("Expiry must be a future date");
+  }
+
+  return date.toISOString();
+}
+
 export async function updateAdminUserProfile(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);
@@ -141,6 +152,57 @@ export async function revokeCloudSyncLease(formData: FormData) {
     fallbackPath: "/admin/licenses",
     formData,
     key: "cloud-sync-lease-revoked",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function grantCloudSyncCooldownOverride(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const userId = getRequiredString(formData, "user_id", "User is required");
+  const expiresAt = getRequiredFutureDate(formData, "expires_at");
+  const reason = getRequiredString(formData, "reason", "Reason is required");
+  const supabase = createSupabaseAdminClient();
+  const { data: override, error } = await supabase
+    .from("cloud_sync_cooldown_overrides")
+    .insert({
+      created_by: admin.id,
+      expires_at: expiresAt,
+      reason,
+      user_id: userId,
+    })
+    .select("id,user_id,expires_at")
+    .single();
+
+  if (error || !override) {
+    redirectWithAdminFeedback({
+      fallbackPath: `/admin/users/${userId}`,
+      formData,
+      key: "cloud-sync-override-grant-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "grant_cloud_sync_cooldown_override",
+    adminUserId: admin.id,
+    after: {
+      expires_at: override.expires_at,
+      user_id: override.user_id,
+    },
+    reason,
+    targetId: override.id,
+    targetType: "cloud_sync_cooldown_override",
+  });
+
+  revalidatePath(`/${locale}/admin/users/${userId}`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: `/admin/users/${userId}`,
+    formData,
+    key: "cloud-sync-override-granted",
     locale,
     tone: "notice",
   });

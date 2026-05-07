@@ -27,6 +27,10 @@ describe("desktop license migration", () => {
     expect(migration).toContain("unique (machine_code_hash, feature_code)");
     expect(migration).toContain("unique (source_donation_id, feature_code)");
     expect(migration).toContain("cloud_sync_leases_one_active_per_user");
+    expect(migration).toContain("create table public.cloud_sync_settings");
+    expect(migration).toContain("create table public.cloud_sync_cooldown_overrides");
+    expect(migration).toContain("cloud_sync_device_switch_cooldown_minutes");
+    expect(migration).toContain("values ('cloud_sync_device_switch_cooldown_minutes', '180')");
   });
 
   it("creates an atomic paid entitlement grant function", () => {
@@ -45,6 +49,8 @@ describe("desktop license migration", () => {
   });
 
   it("creates a service-role-only atomic desktop auth exchange function", () => {
+    const exchange = getFunctionSql("exchange_desktop_auth_code");
+
     expect(migration).toContain("create or replace function public.exchange_desktop_auth_code");
     expect(migration).toContain("returns table(user_id uuid, desktop_session_id uuid)");
     expect(migration).toContain("input_state text");
@@ -55,8 +61,8 @@ describe("desktop license migration", () => {
     expect(migration).toContain("and used_at is null");
     expect(migration).toContain("and expires_at > input_now");
     expect(migration).toContain("perform pg_advisory_xact_lock(hashtextextended(claimed_user_id::text, 0))");
-    expect(migration).toContain("where user_id = claimed_user_id");
-    expect(migration).toContain("and revoked_at is null");
+    expect(exchange).not.toContain("update public.desktop_sessions");
+    expect(exchange).not.toContain("update public.cloud_sync_leases");
     expect(migration).toContain("insert into public.desktop_devices");
     expect(migration).toContain("insert into public.desktop_sessions");
     expect(migration).toContain(
@@ -88,10 +94,13 @@ describe("desktop license migration", () => {
     expect(migration).toContain("create or replace function public.heartbeat_cloud_sync_lease");
     expect(migration).toContain("create or replace function public.read_cloud_sync_lease_status");
     expect(migration).toContain("create or replace function public.release_cloud_sync_lease");
-    expect(migration).toContain("returns table(ok boolean, reason text, lease_id uuid, expires_at timestamptz, active_device_id text)");
+    expect(migration).toContain("available_after timestamptz");
+    expect(migration).toContain("remaining_seconds integer");
     expect(migration).toContain("perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0))");
     expect(migration).toContain("and revoked_at is null");
     expect(migration).toContain("'active_on_another_device'::text");
+    expect(migration).toContain("'cooldown_waiting'::text");
+    expect(migration).toContain("public.has_active_cloud_sync_cooldown_override");
     expect(migration).toContain("cloud_sync_active_until = input_expires_at");
     expect(migration).toContain(
       "revoke execute on function public.activate_cloud_sync_lease(uuid, uuid, text, text, timestamptz, timestamptz) from public",

@@ -123,6 +123,48 @@ describe("cloud sync lease service", () => {
     });
   });
 
+  it("returns cooldown metadata when activation is waiting for a released device", async () => {
+    const { activateCloudSyncLease } =
+      await vi.importActual<typeof import("@/lib/license/cloud-sync-leases")>("@/lib/license/cloud-sync-leases");
+    const rpc = vi.fn(async () => ({
+      data: [
+        {
+          active_device_id: "device-a",
+          available_after: "2026-05-01T03:00:00.000Z",
+          expires_at: null,
+          lease_id: null,
+          ok: false,
+          override_id: null,
+          reason: "cooldown_waiting",
+          remaining_seconds: 7200,
+        },
+      ],
+      error: null,
+    }));
+
+    await expect(
+      activateCloudSyncLease(
+        { rpc },
+        {
+          userId: "user-1",
+          desktopSessionId: "session-b",
+          deviceId: "device-b",
+          machineCodeHash: "machine-hash-b",
+          now: new Date("2026-05-01T01:00:00.000Z"),
+        },
+      ),
+    ).resolves.toEqual({
+      activeDeviceId: "device-a",
+      availableAfter: "2026-05-01T03:00:00.000Z",
+      expiresAt: null,
+      leaseId: null,
+      ok: false,
+      overrideId: null,
+      reason: "cooldown_waiting",
+      remainingSeconds: 7200,
+    });
+  });
+
   it("extends the current session lease on heartbeat", async () => {
     const { heartbeatCloudSyncLease } =
       await vi.importActual<typeof import("@/lib/license/cloud-sync-leases")>("@/lib/license/cloud-sync-leases");
@@ -317,6 +359,64 @@ describe("cloud sync lease routes", () => {
       machineCodeHash: "machine-hash-a",
       userId: "user-1",
     });
+  });
+
+  it("returns 409 with cooldown details when activation is still cooling down", async () => {
+    const { POST } = await import("@/app/api/license/cloud-sync/activate/route");
+
+    routeMocks.activateCloudSyncLease.mockResolvedValueOnce({
+      activeDeviceId: "device-a",
+      availableAfter: "2026-05-01T03:00:00.000Z",
+      expiresAt: null,
+      leaseId: null,
+      ok: false,
+      overrideId: null,
+      reason: "cooldown_waiting",
+      remainingSeconds: 7200,
+    });
+
+    const response = await POST(
+      new Request("https://gitbookai.example/api/license/cloud-sync/activate", {
+        headers: { authorization: "Bearer desktop-token" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      activeDeviceId: "device-a",
+      allowed: false,
+      availableAfter: "2026-05-01T03:00:00.000Z",
+      reason: "cooldown_waiting",
+      remainingSeconds: 7200,
+    });
+  });
+
+  it("does not let a cooldown override bypass an expired entitlement", async () => {
+    const { POST } = await import("@/app/api/license/cloud-sync/activate/route");
+
+    routeMocks.getLicenseStatus.mockResolvedValueOnce({
+      allowed: false,
+      feature: "cloud_sync",
+      reason: "expired",
+      remainingDays: 0,
+      validUntil: "2026-05-01T00:00:00.000Z",
+    });
+
+    const response = await POST(
+      new Request("https://gitbookai.example/api/license/cloud-sync/activate", {
+        headers: { authorization: "Bearer desktop-token" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      allowed: false,
+      reason: "expired",
+      validUntil: "2026-05-01T00:00:00.000Z",
+    });
+    expect(routeMocks.activateCloudSyncLease).not.toHaveBeenCalled();
   });
 
   it("rejects activation when the desktop token is missing or invalid", async () => {

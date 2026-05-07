@@ -10,6 +10,22 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { insertAdminAuditLog } from "./audit";
 import { getRequiredString, getSafeLocale, getTrialDays, MAX_TRIAL_LABEL_LENGTH } from "./validation";
 
+const CLOUD_SYNC_COOLDOWN_SETTING_KEY = "cloud_sync_device_switch_cooldown_minutes";
+
+function getOptionalReason(formData: FormData, fallback: string) {
+  return String(formData.get("reason") ?? "").trim() || fallback;
+}
+
+function getCooldownMinutes(formData: FormData) {
+  const raw = Number.parseInt(String(formData.get("cooldown_minutes") ?? ""), 10);
+
+  if (!Number.isInteger(raw) || raw < 0 || raw > 10080) {
+    throw new Error("Cooldown minutes must be between 0 and 10080");
+  }
+
+  return raw;
+}
+
 export async function createTrialCode(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);
@@ -279,6 +295,56 @@ export async function updateTrialCode(formData: FormData) {
     fallbackPath: "/admin/licenses",
     formData,
     key: "trial-code-updated",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function updateCloudSyncCooldownSetting(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const cooldownMinutes = getCooldownMinutes(formData);
+  const reason = getOptionalReason(formData, "Updated cloud sync device switch cooldown");
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("cloud_sync_settings")
+    .select("key,value")
+    .eq("key", CLOUD_SYNC_COOLDOWN_SETTING_KEY)
+    .single();
+  const now = new Date().toISOString();
+  const { error } = await supabase.from("cloud_sync_settings").upsert({
+    key: CLOUD_SYNC_COOLDOWN_SETTING_KEY,
+    updated_at: now,
+    updated_by: admin.id,
+    value: String(cooldownMinutes),
+  });
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/licenses",
+      formData,
+      key: "cloud-sync-cooldown-update-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "update_cloud_sync_cooldown_setting",
+    adminUserId: admin.id,
+    after: { value: String(cooldownMinutes) },
+    before: before ?? null,
+    reason,
+    targetId: CLOUD_SYNC_COOLDOWN_SETTING_KEY,
+    targetType: "cloud_sync_setting",
+  });
+
+  revalidatePath(`/${locale}/admin/licenses`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/licenses",
+    formData,
+    key: "cloud-sync-cooldown-updated",
     locale,
     tone: "notice",
   });

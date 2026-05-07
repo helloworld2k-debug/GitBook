@@ -117,8 +117,33 @@ create table public.cloud_sync_leases (
   last_heartbeat_at timestamptz not null default now(),
   expires_at timestamptz not null,
   revoked_at timestamptz,
+  released_at timestamptz,
+  cooldown_until timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
+);
+
+create table public.cloud_sync_settings (
+  key text primary key,
+  value text not null,
+  updated_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+insert into public.cloud_sync_settings (key, value)
+values ('cloud_sync_device_switch_cooldown_minutes', '180')
+on conflict (key) do nothing;
+
+create table public.cloud_sync_cooldown_overrides (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  expires_at timestamptz not null,
+  consumed_at timestamptz,
+  reason text not null,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  check (expires_at > created_at)
 );
 
 -- One active cloud sync lease is allowed per user. Activation code revokes
@@ -146,6 +171,8 @@ alter table public.desktop_auth_codes enable row level security;
 alter table public.desktop_devices enable row level security;
 alter table public.desktop_sessions enable row level security;
 alter table public.cloud_sync_leases enable row level security;
+alter table public.cloud_sync_settings enable row level security;
+alter table public.cloud_sync_cooldown_overrides enable row level security;
 
 create policy "license_entitlements_select_own_or_admin"
   on public.license_entitlements for select
@@ -183,6 +210,20 @@ create policy "desktop_sessions_select_own_or_admin"
 create policy "cloud_sync_leases_select_own_or_admin"
   on public.cloud_sync_leases for select
   using (user_id = auth.uid() or public.is_admin());
+
+create policy "cloud_sync_settings_admin_all"
+  on public.cloud_sync_settings for all
+  using (public.is_admin())
+  with check (public.is_admin());
+
+create policy "cloud_sync_cooldown_overrides_select_own_or_admin"
+  on public.cloud_sync_cooldown_overrides for select
+  using (user_id = auth.uid() or public.is_admin());
+
+create policy "cloud_sync_cooldown_overrides_admin_all"
+  on public.cloud_sync_cooldown_overrides for all
+  using (public.is_admin())
+  with check (public.is_admin());
 
 create or replace function public.grant_cloud_sync_entitlement_for_donation(
   input_user_id uuid,
@@ -451,19 +492,6 @@ begin
 
   perform pg_advisory_xact_lock(hashtextextended(claimed_user_id::text, 0));
 
-  update public.desktop_sessions
-  set revoked_at = input_now,
-      cloud_sync_active_until = null,
-      last_seen_at = input_now
-  where user_id = claimed_user_id
-    and revoked_at is null;
-
-  update public.cloud_sync_leases
-  set revoked_at = input_now,
-      updated_at = input_now
-  where user_id = claimed_user_id
-    and revoked_at is null;
-
   insert into public.desktop_devices (
     user_id,
     device_id,
@@ -548,6 +576,92 @@ revoke execute on function public.refresh_desktop_session(text, text, timestampt
 revoke execute on function public.refresh_desktop_session(text, text, timestamptz, timestamptz) from authenticated;
 grant execute on function public.refresh_desktop_session(text, text, timestamptz, timestamptz) to service_role;
 
+create or replace function public.get_cloud_sync_cooldown_minutes()
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  select greatest(
+    0,
+    least(
+      10080,
+      coalesce(
+        (
+          select nullif(value, '')::integer
+          from public.cloud_sync_settings
+          where key = 'cloud_sync_device_switch_cooldown_minutes'
+        ),
+        180
+      )
+    )
+  );
+$$;
+
+revoke execute on function public.get_cloud_sync_cooldown_minutes() from public;
+revoke execute on function public.get_cloud_sync_cooldown_minutes() from anon;
+revoke execute on function public.get_cloud_sync_cooldown_minutes() from authenticated;
+grant execute on function public.get_cloud_sync_cooldown_minutes() to service_role;
+
+create or replace function public.has_active_cloud_sync_cooldown_override(
+  input_user_id uuid,
+  input_now timestamptz
+)
+returns uuid
+language sql
+security definer
+set search_path = public
+as $$
+  select id
+  from public.cloud_sync_cooldown_overrides
+  where user_id = input_user_id
+    and consumed_at is null
+    and expires_at > input_now
+  order by created_at asc
+  limit 1;
+$$;
+
+revoke execute on function public.has_active_cloud_sync_cooldown_override(uuid, timestamptz) from public;
+revoke execute on function public.has_active_cloud_sync_cooldown_override(uuid, timestamptz) from anon;
+revoke execute on function public.has_active_cloud_sync_cooldown_override(uuid, timestamptz) from authenticated;
+grant execute on function public.has_active_cloud_sync_cooldown_override(uuid, timestamptz) to service_role;
+
+create or replace function public.mark_cloud_sync_released_leases(
+  input_user_id uuid,
+  input_now timestamptz
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  cooldown_interval interval;
+begin
+  cooldown_interval := make_interval(mins => public.get_cloud_sync_cooldown_minutes());
+
+  update public.cloud_sync_leases
+  set revoked_at = coalesce(revoked_at, expires_at),
+      released_at = coalesce(released_at, expires_at),
+      cooldown_until = coalesce(cooldown_until, expires_at + cooldown_interval),
+      updated_at = input_now
+  where user_id = input_user_id
+    and revoked_at is null
+    and expires_at <= input_now;
+
+  update public.desktop_sessions
+  set cloud_sync_active_until = null
+  where user_id = input_user_id
+    and cloud_sync_active_until is not null
+    and cloud_sync_active_until <= input_now;
+end;
+$$;
+
+revoke execute on function public.mark_cloud_sync_released_leases(uuid, timestamptz) from public;
+revoke execute on function public.mark_cloud_sync_released_leases(uuid, timestamptz) from anon;
+revoke execute on function public.mark_cloud_sync_released_leases(uuid, timestamptz) from authenticated;
+grant execute on function public.mark_cloud_sync_released_leases(uuid, timestamptz) to service_role;
+
 create or replace function public.activate_cloud_sync_lease(
   input_user_id uuid,
   input_desktop_session_id uuid,
@@ -556,7 +670,7 @@ create or replace function public.activate_cloud_sync_lease(
   input_expires_at timestamptz,
   input_now timestamptz
 )
-returns table(ok boolean, reason text, lease_id uuid, expires_at timestamptz, active_device_id text)
+returns table(ok boolean, reason text, lease_id uuid, expires_at timestamptz, active_device_id text, available_after timestamptz, remaining_seconds integer, override_id uuid)
 language plpgsql
 security definer
 set search_path = public
@@ -564,6 +678,9 @@ as $$
 declare
   inserted_lease public.cloud_sync_leases%rowtype;
   session_row public.desktop_sessions%rowtype;
+  active_lease public.cloud_sync_leases%rowtype;
+  cooldown_lease public.cloud_sync_leases%rowtype;
+  active_override_id uuid;
 begin
   perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0));
 
@@ -579,41 +696,82 @@ begin
   for update;
 
   if not found then
-    return query select false, 'invalid_session'::text, null::uuid, null::timestamptz, null::text;
+    return query select false, 'invalid_session'::text, null::uuid, null::timestamptz, null::text, null::timestamptz, null::integer, null::uuid;
     return;
   end if;
 
-  update public.cloud_sync_leases
-  set revoked_at = input_now,
-      updated_at = input_now
-  where user_id = input_user_id
-    and revoked_at is null;
+  perform public.mark_cloud_sync_released_leases(input_user_id, input_now);
 
-  update public.desktop_sessions
-  set cloud_sync_active_until = null
+  select *
+  into active_lease
+  from public.cloud_sync_leases
   where user_id = input_user_id
-    and cloud_sync_active_until is not null;
+    and revoked_at is null
+  order by created_at desc
+  limit 1;
 
-  insert into public.cloud_sync_leases (
-    user_id,
-    desktop_session_id,
-    device_id,
-    machine_code_hash,
-    lease_started_at,
-    last_heartbeat_at,
-    expires_at
-  )
-  values (
-    session_row.user_id,
-    session_row.id,
-    session_row.device_id,
-    session_row.machine_code_hash,
-    input_now,
-    input_now,
-    input_expires_at
-  )
-  returning *
-  into inserted_lease;
+  if found and active_lease.desktop_session_id <> input_desktop_session_id then
+    return query select false, 'active_on_another_device'::text, null::uuid, null::timestamptz, active_lease.device_id, null::timestamptz, null::integer, null::uuid;
+    return;
+  end if;
+
+  active_override_id := public.has_active_cloud_sync_cooldown_override(input_user_id, input_now);
+
+  if active_override_id is null then
+    select *
+    into cooldown_lease
+    from public.cloud_sync_leases
+    where user_id = input_user_id
+      and revoked_at is not null
+      and cooldown_until is not null
+      and cooldown_until > input_now
+      and desktop_session_id <> input_desktop_session_id
+    order by cooldown_until desc
+    limit 1;
+
+    if found then
+      return query select false, 'cooldown_waiting'::text, null::uuid, null::timestamptz, cooldown_lease.device_id, cooldown_lease.cooldown_until, ceil(extract(epoch from (cooldown_lease.cooldown_until - input_now)))::integer, null::uuid;
+      return;
+    end if;
+  end if;
+
+  if active_lease.id is not null and active_lease.desktop_session_id = input_desktop_session_id then
+    update public.cloud_sync_leases
+    set last_heartbeat_at = input_now,
+        expires_at = input_expires_at,
+        updated_at = input_now
+    where id = active_lease.id
+    returning *
+    into inserted_lease;
+  else
+
+    insert into public.cloud_sync_leases (
+      user_id,
+      desktop_session_id,
+      device_id,
+      machine_code_hash,
+      lease_started_at,
+      last_heartbeat_at,
+      expires_at
+    )
+    values (
+      session_row.user_id,
+      session_row.id,
+      session_row.device_id,
+      session_row.machine_code_hash,
+      input_now,
+      input_now,
+      input_expires_at
+    )
+    returning *
+    into inserted_lease;
+  end if;
+
+  if active_override_id is not null then
+    update public.cloud_sync_cooldown_overrides
+    set consumed_at = input_now
+    where id = active_override_id;
+  end if;
 
   update public.desktop_sessions
   set cloud_sync_active_until = input_expires_at,
@@ -621,7 +779,7 @@ begin
   where id = input_desktop_session_id
     and user_id = input_user_id;
 
-  return query select true, 'active'::text, inserted_lease.id, inserted_lease.expires_at, inserted_lease.device_id;
+  return query select true, 'active'::text, inserted_lease.id, inserted_lease.expires_at, inserted_lease.device_id, null::timestamptz, null::integer, active_override_id;
 end;
 $$;
 
@@ -661,18 +819,7 @@ begin
     return;
   end if;
 
-  update public.cloud_sync_leases
-  set revoked_at = input_now,
-      updated_at = input_now
-  where user_id = input_user_id
-    and revoked_at is null
-    and expires_at <= input_now;
-
-  update public.desktop_sessions
-  set cloud_sync_active_until = null
-  where user_id = input_user_id
-    and cloud_sync_active_until is not null
-    and cloud_sync_active_until <= input_now;
+  perform public.mark_cloud_sync_released_leases(input_user_id, input_now);
 
   select *
   into active_lease
@@ -730,18 +877,7 @@ declare
 begin
   perform pg_advisory_xact_lock(hashtextextended(input_user_id::text, 0));
 
-  update public.cloud_sync_leases
-  set revoked_at = input_now,
-      updated_at = input_now
-  where user_id = input_user_id
-    and revoked_at is null
-    and expires_at <= input_now;
-
-  update public.desktop_sessions
-  set cloud_sync_active_until = null
-  where user_id = input_user_id
-    and cloud_sync_active_until is not null
-    and cloud_sync_active_until <= input_now;
+  perform public.mark_cloud_sync_released_leases(input_user_id, input_now);
 
   select *
   into active_lease
@@ -785,6 +921,8 @@ begin
 
   update public.cloud_sync_leases
   set revoked_at = input_now,
+      released_at = coalesce(released_at, input_now),
+      cooldown_until = coalesce(cooldown_until, input_now + make_interval(mins => public.get_cloud_sync_cooldown_minutes())),
       updated_at = input_now
   where user_id = input_user_id
     and desktop_session_id = input_desktop_session_id
@@ -846,6 +984,8 @@ begin
 
   update public.cloud_sync_leases
   set revoked_at = input_now,
+      released_at = coalesce(released_at, input_now),
+      cooldown_until = coalesce(cooldown_until, input_now + make_interval(mins => public.get_cloud_sync_cooldown_minutes())),
       updated_at = input_now
   where desktop_session_id = input_desktop_session_id
     and revoked_at is null;

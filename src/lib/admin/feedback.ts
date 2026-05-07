@@ -11,8 +11,12 @@ export type AdminFeedbackKey =
   | "bulk-user-status-updated"
   | "bulk-user-status-update-failed"
   | "certificate-revoked"
+  | "cloud-sync-cooldown-updated"
+  | "cloud-sync-cooldown-update-failed"
   | "cloud-sync-lease-revoked"
   | "cloud-sync-lease-revoke-failed"
+  | "cloud-sync-override-granted"
+  | "cloud-sync-override-grant-failed"
   | "desktop-session-revoked"
   | "desktop-session-revoke-failed"
   | "donation-tier-updated"
@@ -58,8 +62,12 @@ const adminFeedbackKeys = new Set<string>([
   "bulk-user-status-updated",
   "bulk-user-status-update-failed",
   "certificate-revoked",
+  "cloud-sync-cooldown-updated",
+  "cloud-sync-cooldown-update-failed",
   "cloud-sync-lease-revoked",
   "cloud-sync-lease-revoke-failed",
+  "cloud-sync-override-granted",
+  "cloud-sync-override-grant-failed",
   "desktop-session-revoked",
   "desktop-session-revoke-failed",
   "donation-tier-updated",

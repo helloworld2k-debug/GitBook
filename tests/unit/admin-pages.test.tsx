@@ -231,6 +231,11 @@ const testMessages = {
         description: "Manage short cloud sync trial codes, trial bindings, entitlements, desktop sessions, and cloud sync leases.",
         createTrialTitle: "Create trial code",
         createTrialDescription: "Create one auto-generated website trial code. Trials default to 3 days and can be set up to 7 days.",
+        cloudSyncCooldownTitle: "Cloud sync device switch cooldown",
+        cloudSyncCooldownDescription: "Set how long a newly logged-in device must wait after another device releases cloud sync.",
+        cooldownMinutes: "Cooldown minutes",
+        cooldownReasonPlaceholder: "Reason for this operational change",
+        reason: "Reason",
         trialDays: "Trial days",
         label: "Label",
         createTrial: "Create trial code",
@@ -373,6 +378,14 @@ const testMessages = {
         timelineEntitlement: "Entitlement",
         timelineLease: "Cloud sync lease",
         timelineFeedback: "Support feedback",
+        releasedAt: "Released at",
+        cooldownUntil: "Cooldown until",
+        overrideExpiresAt: "Override expires",
+        overrideReason: "Override reason",
+        grantOverride: "Grant cooldown override",
+        overrideActive: "Temporary override active",
+        overrideConsumed: "Temporary override used",
+        overrideConsumedAt: "Used at",
         unbind: "Unbind machine",
         addDonation: "Add manual donation",
         emptyTrials: "No trials",
@@ -1155,7 +1168,12 @@ describe("admin pages", () => {
       },
     ]);
     const emptyQuery = createAdminListQuery([]);
+    const cooldownSettingQuery = createAdminListQuery({
+      key: "cloud_sync_device_switch_cooldown_minutes",
+      value: "180",
+    });
     const from = vi.fn((table: string) => {
+      if (table === "cloud_sync_settings") return cooldownSettingQuery;
       if (table === "trial_codes") {
         return from.mock.calls.filter(([name]) => name === "trial_codes").length === 1
           ? trialCodesQuery
@@ -1347,6 +1365,7 @@ describe("admin pages", () => {
         created_at: "2026-04-30T10:05:00.000Z",
       },
     ]);
+    const cooldownOverridesQuery = createAdminListQuery([]);
     const from = vi.fn((table: string) => {
       if (table === "profiles") return profileQuery;
       if (table === "donations") return donationsQuery;
@@ -1355,6 +1374,7 @@ describe("admin pages", () => {
       if (table === "desktop_sessions") return sessionsQuery;
       if (table === "license_entitlements") return entitlementsQuery;
       if (table === "cloud_sync_leases") return leasesQuery;
+      if (table === "cloud_sync_cooldown_overrides") return cooldownOverridesQuery;
       if (table === "support_feedback") return supportFeedbackQuery;
       throw new Error(`Unexpected table: ${table}`);
     });
@@ -1497,7 +1517,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length <= 2 ? profileQuery : ownerQuery;
       }
 
-      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "support_feedback"].includes(table)) {
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_cooldown_overrides", "support_feedback"].includes(table)) {
         return emptyQuery;
       }
 

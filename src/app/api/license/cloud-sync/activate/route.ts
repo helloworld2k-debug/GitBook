@@ -44,8 +44,21 @@ export async function POST(request: Request) {
       userId: session.user_id,
     });
 
-    if (!lease.ok) {
+    if (!lease.ok && lease.reason === "invalid_session") {
       return jsonOk({ allowed: false, reason: "not_authenticated" }, 401);
+    }
+
+    if (!lease.ok) {
+      return jsonOk(
+        {
+          activeDeviceId: lease.activeDeviceId,
+          allowed: false,
+          availableAfter: lease.availableAfter,
+          reason: lease.reason,
+          remainingSeconds: lease.remainingSeconds,
+        },
+        409,
+      );
     }
 
     return jsonOk({
@@ -54,6 +67,7 @@ export async function POST(request: Request) {
       leaseId: lease.leaseId,
       expiresAt: lease.expiresAt,
       activeDeviceId: lease.activeDeviceId,
+      overrideId: lease.overrideId,
     });
   } catch {
     return jsonOk({ allowed: false, reason: "internal_error" }, 500);

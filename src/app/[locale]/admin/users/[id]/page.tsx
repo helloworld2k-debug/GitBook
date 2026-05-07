@@ -11,6 +11,7 @@ import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   addManualDonation,
+  grantCloudSyncCooldownOverride,
   permanentlyDeleteUser,
   revokeCloudSyncLease,
   revokeDesktopSession,
@@ -93,6 +94,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
     sessionsResult,
     entitlementsResult,
     leasesResult,
+    cooldownOverridesResult,
     supportFeedbackResult,
     adminProfileResult,
   ] = await Promise.all([
@@ -133,10 +135,16 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .limit(50),
     supabase
       .from("cloud_sync_leases")
-      .select("id,desktop_session_id,device_id,last_heartbeat_at,expires_at,revoked_at,updated_at")
+      .select("id,desktop_session_id,device_id,last_heartbeat_at,expires_at,revoked_at,released_at,cooldown_until,updated_at")
       .eq("user_id", id)
       .order("updated_at", { ascending: false })
       .limit(50),
+    supabase
+      .from("cloud_sync_cooldown_overrides")
+      .select("id,expires_at,consumed_at,reason,created_at")
+      .eq("user_id", id)
+      .order("created_at", { ascending: false })
+      .limit(20),
     supabase
       .from("support_feedback")
       .select("id,subject,status,created_at")
@@ -160,6 +168,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   if (sessionsResult.error) throw sessionsResult.error;
   if (entitlementsResult.error) throw entitlementsResult.error;
   if (leasesResult.error) throw leasesResult.error;
+  if (cooldownOverridesResult.error) throw cooldownOverridesResult.error;
   if (supportFeedbackResult.error) throw supportFeedbackResult.error;
   if (adminProfileResult.error) throw adminProfileResult.error;
 
@@ -170,6 +179,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   const sessions = sessionsResult.data ?? [];
   const entitlements = entitlementsResult.data ?? [];
   const leases = leasesResult.data ?? [];
+  const cooldownOverrides = cooldownOverridesResult.data ?? [];
   const supportFeedback = supportFeedbackResult.data ?? [];
   const canManageRoles = isOwnerProfile(adminProfileResult.data);
   const timelineItems: TimelineItem[] = [
@@ -509,6 +519,48 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
 
           <AdminCard className="p-5">
             <h2 className="text-base font-semibold text-slate-950">{t("leases")}</h2>
+            <form action={grantCloudSyncCooldownOverride} className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+              <input name="locale" type="hidden" value={locale} />
+              <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
+              <input name="user_id" type="hidden" value={profile.id} />
+              <div className="grid gap-3">
+                <label className="grid gap-1 text-xs font-medium text-slate-700">
+                  {t("overrideExpiresAt")}
+                  <input
+                    className="min-h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                    name="expires_at"
+                    required
+                    type="datetime-local"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs font-medium text-slate-700">
+                  {t("overrideReason")}
+                  <input
+                    className="min-h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                    name="reason"
+                    required
+                  />
+                </label>
+                <AdminSubmitButton
+                  className="inline-flex min-h-10 items-center justify-center rounded-md bg-slate-950 px-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                  pendingLabel={adminT("common.processing")}
+                >
+                  {t("grantOverride")}
+                </AdminSubmitButton>
+              </div>
+            </form>
+            {cooldownOverrides.length > 0 ? (
+              <div className="mt-4 space-y-2">
+                {cooldownOverrides.map((override) => (
+                  <div key={override.id} className="rounded-md border border-slate-200 p-3 text-xs text-slate-600">
+                    <p className="font-medium text-slate-950">{override.consumed_at ? t("overrideConsumed") : t("overrideActive")}</p>
+                    <p className="mt-1">{t("validUntil")}: {formatDateTime(override.expires_at, locale)}</p>
+                    {override.consumed_at ? <p className="mt-1">{t("overrideConsumedAt")}: {formatDateTime(override.consumed_at, locale)}</p> : null}
+                    <p className="mt-1 break-words">{override.reason}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
             {leases.length > 0 ? (
               <div className="mt-4 space-y-3">
                 {leases.map((lease) => (
@@ -516,6 +568,8 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                     <p className="font-medium text-slate-950">{lease.device_id}</p>
                     <p className="mt-1 text-xs text-slate-600">{adminT("licenses.lastHeartbeat")}: {formatDateTime(lease.last_heartbeat_at, locale)}</p>
                     <p className="mt-1 text-xs text-slate-600">{adminT("licenses.expiresAt")}: {formatDateTime(lease.expires_at, locale)}</p>
+                    <p className="mt-1 text-xs text-slate-600">{t("releasedAt")}: {formatDateTime(lease.released_at, locale)}</p>
+                    <p className="mt-1 text-xs text-slate-600">{t("cooldownUntil")}: {formatDateTime(lease.cooldown_until, locale)}</p>
                     <p className="mt-1 font-mono text-xs text-slate-600">{shortId(lease.desktop_session_id)}</p>
                     {lease.revoked_at ? (
                       <p className="mt-2 text-xs font-medium text-slate-500">{formatDateTime(lease.revoked_at, locale)}</p>
