@@ -225,7 +225,7 @@ async function main() {
   await expect(page.getByRole("heading", { name: "Personal center" })).toBeVisible();
   await fillByLabel(page, "Display name", profileName);
   await safeClick(page, page.getByRole("button", { name: "Save profile" }));
-  await expect(page.getByText("Profile saved.")).toBeVisible();
+  await expect(page).toHaveURL(/profile=saved/);
   const updatedName = scalar(`select display_name from public.profiles where id=${sqlLiteral(userId)}`);
   expect(updatedName).toBe(profileName);
 
@@ -303,8 +303,8 @@ async function main() {
   expect(certificateNumber).toBeTruthy();
 
   await goto(page, `/en/admin/users?query=${encodeURIComponent(userEmail)}`);
-  await expect(page.getByText(userEmail).first()).toBeVisible();
   const userCheckbox = page.getByLabel(`Select ${userEmail}`);
+  await expect(userCheckbox).toBeVisible();
   await userCheckbox.check();
   await expect(page.getByText("1 selected")).toBeVisible();
   await safeClick(page, page.getByRole("button", { name: "Bulk disable" }));
