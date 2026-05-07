@@ -545,6 +545,11 @@
       "selectAll": "Select all license codes",
       "applyMetadata": "Apply channel",
       "clearSelection": "Clear selection",
+      "securitySignalsTitle": "Security signals",
+      "securitySignalsDescription": "Review recent license code redemption failures, blocks, and suspicious IP activity.",
+      "failedAttempts": "Failed attempts",
+      "blockedAttempts": "Blocked attempts",
+      "topRiskIp": "Top risk IP",
       "redeemed": "Redeemed",
       "unredeemed": "Unredeemed",
       "channels": {

@@ -67,6 +67,17 @@ type LicenseBatchRow = {
   updated_by: string | null;
 };
 
+type LicenseRedeemAttemptRow = {
+  id: string;
+  user_id: string | null;
+  ip_address: string | null;
+  code_hash: string | null;
+  result: "success" | "failure" | "blocked";
+  reason: string;
+  user_agent: string | null;
+  created_at: string;
+};
+
 function formatDateTime(value: string, locale: string) {
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
@@ -163,6 +174,13 @@ function isLicenseCodeMetadataSchemaError(error: { code?: string; message?: stri
   );
 }
 
+function isLicenseSecuritySchemaError(error: { code?: string; message?: string } | null) {
+  const code = error?.code;
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return code === "42P01" || code === "PGRST204" || message.includes("license_code_redeem_attempts") || message.includes("schema cache");
+}
+
 export default async function AdminLicensesPage({ params, searchParams }: AdminLicensesPageProps) {
   const { locale: localeParam } = await params;
   const feedback = await searchParams;
@@ -172,7 +190,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   const supabase = createSupabaseAdminClient();
   const bulkFormId = "license-codes-bulk-action-form";
 
-  const [cooldownSettingResult, batchesResult, codesResult, trialRedemptionsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
+  const [cooldownSettingResult, batchesResult, codesResult, trialRedemptionsResult, redeemAttemptsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
     supabase.from("cloud_sync_settings").select("key,value").eq("key", "cloud_sync_device_switch_cooldown_minutes").single(),
     supabase
       .from("license_code_batches")
@@ -189,6 +207,11 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
       .select("id,user_id,machine_code_hash,device_id,redeemed_at,trial_valid_until,bound_at,trial_code_id")
       .order("redeemed_at", { ascending: false })
       .limit(100),
+    supabase
+      .from("license_code_redeem_attempts")
+      .select("id,user_id,ip_address,code_hash,result,reason,user_agent,created_at")
+      .order("created_at", { ascending: false })
+      .limit(100),
     supabase.from("license_entitlements").select("id,user_id,feature_code,valid_until,status,source_donation_id,updated_at").order("valid_until", { ascending: false }).limit(50),
     supabase.from("desktop_sessions").select("id,user_id,device_id,machine_code_hash,platform,app_version,last_seen_at,cloud_sync_active_until,expires_at,revoked_at").order("last_seen_at", { ascending: false }).limit(50),
     supabase.from("cloud_sync_leases").select("id,user_id,desktop_session_id,device_id,last_heartbeat_at,expires_at,revoked_at,updated_at").order("updated_at", { ascending: false }).limit(50),
@@ -198,6 +221,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   if (batchesResult.error && !isLicenseCodeBatchSchemaError(batchesResult.error)) throw batchesResult.error;
   if (codesResult.error && !isLicenseCodeMetadataSchemaError(codesResult.error)) throw codesResult.error;
   if (trialRedemptionsResult.error) throw trialRedemptionsResult.error;
+  if (redeemAttemptsResult.error && !isLicenseSecuritySchemaError(redeemAttemptsResult.error)) throw redeemAttemptsResult.error;
   if (entitlementsResult.error) throw entitlementsResult.error;
   if (sessionsResult.error) throw sessionsResult.error;
   if (leasesResult.error) throw leasesResult.error;
@@ -229,6 +253,10 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   const redemptionsByCode = new Map<string, number>();
   const cooldownMinutes = Number.parseInt(cooldownSettingResult.data?.value ?? "180", 10);
   const trialRedemptions = trialRedemptionsResult.data ?? [];
+  const redeemAttempts = (redeemAttemptsResult.error ? [] : (redeemAttemptsResult.data ?? [])) as LicenseRedeemAttemptRow[];
+  const failedRedeemAttempts = redeemAttempts.filter((attempt) => attempt.result !== "success");
+  const blockedRedeemAttempts = redeemAttempts.filter((attempt) => attempt.result === "blocked");
+  const topRiskIp = failedRedeemAttempts.find((attempt) => attempt.ip_address)?.ip_address ?? "-";
   const entitlements = entitlementsResult.data ?? [];
   const sessions = sessionsResult.data ?? [];
   const leases = leasesResult.data ?? [];
@@ -401,6 +429,55 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <a className="inline-flex min-h-11 items-center rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700" href={`/${locale}/admin/licenses`}>{t("licenses.resetFilters")}</a>
           </div>
         </form>
+
+        <AdminCard className="mt-6 p-5">
+          <div>
+            <h2 className="text-base font-semibold text-slate-950">{t("licenses.securitySignalsTitle")}</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.securitySignalsDescription")}</p>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase text-slate-500">{t("licenses.failedAttempts")}</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{failedRedeemAttempts.length} failed attempts</p>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase text-slate-500">{t("licenses.blockedAttempts")}</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{blockedRedeemAttempts.length}</p>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase text-slate-500">{t("licenses.topRiskIp")}</p>
+              <p className="mt-2 break-all font-mono text-sm font-semibold text-slate-950">{topRiskIp}</p>
+            </div>
+          </div>
+          {redeemAttempts.length > 0 ? (
+            <div className="mt-4 overflow-x-auto rounded-md border border-slate-200">
+              <table className="min-w-[920px] table-fixed text-left text-sm">
+                <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">{t("licenses.generatedAt")}</th>
+                    <th className="px-4 py-3">{t("licenses.user")}</th>
+                    <th className="px-4 py-3">{t("licenses.status")}</th>
+                    <th className="px-4 py-3">{t("licenses.reason")}</th>
+                    <th className="px-4 py-3">IP</th>
+                    <th className="px-4 py-3">{t("licenses.code")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {redeemAttempts.slice(0, 8).map((attempt) => (
+                    <tr key={attempt.id}>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">{formatDateTime(attempt.created_at, locale)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-700">{shortId(attempt.user_id)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">{attempt.result}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">{attempt.reason}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-slate-700">{attempt.ip_address ?? "-"}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-slate-700">{shortHash(attempt.code_hash)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </AdminCard>
 
         <AdminCard className="mt-6">
           <div className="border-b border-slate-200 px-5 py-4">

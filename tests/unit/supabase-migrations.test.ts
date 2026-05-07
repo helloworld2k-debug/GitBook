@@ -42,4 +42,14 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("duplicate_trial_code_machine");
     expect(migration).toContain("grant execute on function public.redeem_license_code(uuid, text, text, timestamptz) to service_role");
   });
+
+  it("adds persisted abuse tracking for registration and license redemption", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0021_license_redeem_security.sql"), "utf8");
+
+    expect(migration).toContain("create table public.license_code_redeem_attempts");
+    expect(migration).toContain("create table public.license_code_redeem_blocks");
+    expect(migration).toContain("create table public.registration_attempts");
+    expect(migration).toContain("license_code_redeem_attempts_user_idx");
+    expect(migration).toContain("registration_attempts_ip_idx");
+  });
 });

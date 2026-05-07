@@ -5,6 +5,8 @@ const createSupabaseServerClientMock = vi.hoisted(() => vi.fn());
 const createSupabaseAdminClientMock = vi.hoisted(() => vi.fn());
 const requireUserMock = vi.hoisted(() => vi.fn());
 const redeemLicenseCodeMock = vi.hoisted(() => vi.fn());
+const checkLicenseRedeemRiskMock = vi.hoisted(() => vi.fn());
+const recordLicenseRedeemAttemptMock = vi.hoisted(() => vi.fn());
 const revalidatePathMock = vi.hoisted(() => vi.fn());
 const redirectMock = vi.hoisted(() => vi.fn((path: string) => {
   throw new Error(`NEXT_REDIRECT:${path}`);
@@ -26,6 +28,18 @@ vi.mock("@/lib/license/trial-codes", () => ({
   redeemLicenseCode: redeemLicenseCodeMock,
 }));
 
+vi.mock("@/lib/license/redeem-security", () => ({
+  checkLicenseRedeemRisk: checkLicenseRedeemRiskMock,
+  recordLicenseRedeemAttempt: recordLicenseRedeemAttemptMock,
+}));
+
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => new Headers({
+    "user-agent": "Vitest",
+    "x-forwarded-for": "203.0.113.10",
+  })),
+}));
+
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
@@ -39,6 +53,8 @@ describe("dashboard account actions", () => {
     createSupabaseServerClientMock.mockReset();
     createSupabaseAdminClientMock.mockReset().mockReturnValue({ admin: true });
     requireUserMock.mockReset().mockResolvedValue({ id: "user-1", email: "user@example.com" });
+    checkLicenseRedeemRiskMock.mockReset().mockResolvedValue({ ok: true });
+    recordLicenseRedeemAttemptMock.mockReset().mockResolvedValue(undefined);
     redeemLicenseCodeMock.mockReset().mockResolvedValue({ ok: true, validUntil: "2026-05-04T00:00:00.000Z" });
     revalidatePathMock.mockClear();
     redirectMock.mockClear();
@@ -93,12 +109,63 @@ describe("dashboard account actions", () => {
     await expect(redeemDashboardLicenseCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=saved");
 
     expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
+    expect(checkLicenseRedeemRiskMock).toHaveBeenCalledWith(
+      { admin: true },
+      expect.objectContaining({
+        ipAddress: "203.0.113.10",
+        userId: "user-1",
+      }),
+    );
     expect(redeemLicenseCodeMock).toHaveBeenCalledWith(
       { admin: true },
       {
         userId: "user-1",
         code: "1MAB-CDEF-GHJK-LMNP",
       },
+    );
+    expect(recordLicenseRedeemAttemptMock).toHaveBeenCalledWith(
+      { admin: true },
+      expect.objectContaining({
+        reason: "redeemed",
+        result: "success",
+      }),
+    );
+  });
+
+  it("records blocked license redemption attempts and returns a generic error", async () => {
+    checkLicenseRedeemRiskMock.mockResolvedValueOnce({
+      ok: false,
+      reason: "user_rate_limited",
+      retryAfterSeconds: 1800,
+    });
+    const formData = new FormData();
+    formData.set("license_code", "1MAB-CDEF-GHJK-LMNP");
+
+    await expect(redeemDashboardLicenseCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=error");
+
+    expect(redeemLicenseCodeMock).not.toHaveBeenCalled();
+    expect(recordLicenseRedeemAttemptMock).toHaveBeenCalledWith(
+      { admin: true },
+      expect.objectContaining({
+        reason: "user_rate_limited",
+        result: "blocked",
+      }),
+    );
+  });
+
+  it("records detailed license redemption failures while returning a generic user error", async () => {
+    redeemLicenseCodeMock.mockResolvedValueOnce({ ok: false, reason: "trial_code_invalid" });
+    const formData = new FormData();
+    formData.set("license_code", "BAD-CODE");
+
+    await expect(redeemDashboardLicenseCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=error");
+
+    expect(recordLicenseRedeemAttemptMock).toHaveBeenCalledWith(
+      { admin: true },
+      expect.objectContaining({
+        reason: "trial_code_invalid",
+        result: "failure",
+      }),
     );
   });
 

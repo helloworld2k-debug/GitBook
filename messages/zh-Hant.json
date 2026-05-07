@@ -533,6 +533,11 @@
       "selectAll": "全選授權碼",
       "applyMetadata": "套用渠道",
       "clearSelection": "清除選取",
+      "securitySignalsTitle": "安全訊號",
+      "securitySignalsDescription": "查看近期授權碼兌換失敗、封鎖與可疑 IP 活動。",
+      "failedAttempts": "失敗嘗試",
+      "blockedAttempts": "已封鎖嘗試",
+      "topRiskIp": "最高風險 IP",
       "redeemed": "已兌換",
       "unredeemed": "未兌換",
       "channels": {

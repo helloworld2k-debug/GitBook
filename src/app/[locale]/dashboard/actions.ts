@@ -4,9 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/guards";
 import { getActionLocale } from "@/lib/i18n/action-locale";
-import { redeemLicenseCode, type TrialRedeemFailure } from "@/lib/license/trial-codes";
+import { redeemLicenseCode } from "@/lib/license/trial-codes";
+import { hashDesktopSecret } from "@/lib/license/hash";
+import { checkLicenseRedeemRisk, recordLicenseRedeemAttempt, type RedeemSecurityClient } from "@/lib/license/redeem-security";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 
 function getDashboardPath(
   locale: string,
@@ -59,13 +62,9 @@ export async function updateDashboardPassword(locale: string, formData: FormData
   redirect(getDashboardPath(safeLocale, { password: "saved" }));
 }
 
-const trialStatusByReason: Record<TrialRedeemFailure, "invalid" | "inactive" | "limit" | "duplicate"> = {
-  duplicate_trial_code_machine: "duplicate",
-  duplicate_trial_code_user: "duplicate",
-  trial_code_inactive: "inactive",
-  trial_code_invalid: "invalid",
-  trial_code_limit_reached: "limit",
-};
+function getIpAddress(headerStore: Headers) {
+  return headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() || headerStore.get("x-real-ip")?.trim() || null;
+}
 
 export async function redeemDashboardLicenseCode(locale: string, formData: FormData) {
   const safeLocale = getActionLocale(locale);
@@ -76,21 +75,68 @@ export async function redeemDashboardLicenseCode(locale: string, formData: FormD
     redirect(getDashboardPath(safeLocale, { trial: "invalid" }));
   }
 
-  const result = await redeemLicenseCode(createSupabaseAdminClient(), {
+  const supabase = createSupabaseAdminClient();
+  const redeemSecurityClient = supabase as unknown as RedeemSecurityClient;
+  const headerStore = await headers();
+  const ipAddress = getIpAddress(headerStore);
+  const userAgent = headerStore.get("user-agent");
+  const codeHash = await hashDesktopSecret(code, "trial_code");
+  const risk = await checkLicenseRedeemRisk(redeemSecurityClient, {
+    ipAddress,
+    userId: user.id,
+  }).catch(() => ({ ok: true as const }));
+
+  if (!risk.ok) {
+    await recordLicenseRedeemAttempt(redeemSecurityClient, {
+      codeHash,
+      ipAddress,
+      reason: risk.reason,
+      result: "blocked",
+      userAgent,
+      userId: user.id,
+    }).catch(() => undefined);
+    redirect(getDashboardPath(safeLocale, { trial: "error" }));
+  }
+
+  const result = await redeemLicenseCode(supabase, {
     userId: user.id,
     code,
   }).catch(() => null);
 
   if (!result) {
+    await recordLicenseRedeemAttempt(redeemSecurityClient, {
+      codeHash,
+      ipAddress,
+      reason: "unexpected_error",
+      result: "failure",
+      userAgent,
+      userId: user.id,
+    }).catch(() => undefined);
     redirect(getDashboardPath(safeLocale, { trial: "error" }));
   }
 
   if (result.ok) {
+    await recordLicenseRedeemAttempt(redeemSecurityClient, {
+      codeHash,
+      ipAddress,
+      reason: "redeemed",
+      result: "success",
+      userAgent,
+      userId: user.id,
+    }).catch(() => undefined);
     revalidatePath(`/${safeLocale}/dashboard`);
     redirect(getDashboardPath(safeLocale, { trial: "saved" }));
   }
 
-  redirect(getDashboardPath(safeLocale, { trial: trialStatusByReason[result.reason] }));
+  await recordLicenseRedeemAttempt(redeemSecurityClient, {
+    codeHash,
+    ipAddress,
+    reason: result.reason,
+    result: "failure",
+    userAgent,
+    userId: user.id,
+  }).catch(() => undefined);
+  redirect(getDashboardPath(safeLocale, { trial: "error" }));
 }
 
 export const redeemDashboardTrialCode = redeemDashboardLicenseCode;

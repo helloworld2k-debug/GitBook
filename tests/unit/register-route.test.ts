@@ -3,6 +3,7 @@ import { POST } from "@/app/api/auth/register/route";
 
 const mocks = vi.hoisted(() => ({
   checkRegisterRateLimit: vi.fn(),
+  createSupabaseAdminClient: vi.fn(),
   registerWithEmailPassword: vi.fn(),
   verifyTurnstileToken: vi.fn(),
 }));
@@ -19,10 +20,15 @@ vi.mock("@/lib/auth/turnstile", () => ({
   verifyTurnstileToken: mocks.verifyTurnstileToken,
 }));
 
+vi.mock("@/lib/supabase/admin", () => ({
+  createSupabaseAdminClient: mocks.createSupabaseAdminClient,
+}));
+
 describe("register route", () => {
   beforeEach(() => {
     process.env.TURNSTILE_SECRET_KEY = "turnstile_secret";
-    mocks.checkRegisterRateLimit.mockReset().mockReturnValue({ ok: true });
+    mocks.checkRegisterRateLimit.mockReset().mockResolvedValue({ ok: true });
+    mocks.createSupabaseAdminClient.mockReset().mockReturnValue({ admin: true });
     mocks.registerWithEmailPassword.mockReset().mockResolvedValue({ error: null });
     mocks.verifyTurnstileToken.mockReset().mockResolvedValue({ ok: true });
   });
@@ -87,6 +93,13 @@ describe("register route", () => {
     expect(response.status).toBe(429);
     await expect(response.json()).resolves.toEqual({ error: "rate_limited" });
     expect(response.headers.get("retry-after")).toBe("60");
+    expect(mocks.checkRegisterRateLimit).toHaveBeenCalledWith(
+      { admin: true },
+      expect.objectContaining({
+        email: "new@example.com",
+        ip: "203.0.113.10",
+      }),
+    );
     expect(mocks.verifyTurnstileToken).not.toHaveBeenCalled();
     expect(mocks.registerWithEmailPassword).not.toHaveBeenCalled();
   });

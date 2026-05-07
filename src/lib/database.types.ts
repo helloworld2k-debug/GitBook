@@ -346,6 +346,112 @@ export type Database = {
           },
         ];
       };
+      license_code_redeem_attempts: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          ip_address: string | null;
+          code_hash: string | null;
+          result: "success" | "failure" | "blocked";
+          reason: string;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          ip_address?: string | null;
+          code_hash?: string | null;
+          result: "success" | "failure" | "blocked";
+          reason: string;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          ip_address?: string | null;
+          code_hash?: string | null;
+          result?: "success" | "failure" | "blocked";
+          reason?: string;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "license_code_redeem_attempts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      license_code_redeem_blocks: {
+        Row: {
+          id: string;
+          scope: "user" | "ip";
+          scope_value: string;
+          reason: string;
+          blocked_until: string;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          scope: "user" | "ip";
+          scope_value: string;
+          reason: string;
+          blocked_until: string;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          scope?: "user" | "ip";
+          scope_value?: string;
+          reason?: string;
+          blocked_until?: string;
+          created_at?: string;
+          created_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "license_code_redeem_blocks_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      registration_attempts: {
+        Row: {
+          id: string;
+          email_normalized: string;
+          email_domain: string;
+          ip_address: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email_normalized: string;
+          email_domain: string;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email_normalized?: string;
+          email_domain?: string;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       trial_codes: {
         Row: {
           id: string;

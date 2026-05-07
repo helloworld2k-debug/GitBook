@@ -533,6 +533,11 @@
       "selectAll": "ライセンスコードをすべて選択",
       "applyMetadata": "チャネルを適用",
       "clearSelection": "選択解除",
+      "securitySignalsTitle": "セキュリティシグナル",
+      "securitySignalsDescription": "最近のライセンスコード引き換え失敗、ブロック、不審な IP 活動を確認します。",
+      "failedAttempts": "失敗試行",
+      "blockedAttempts": "ブロック試行",
+      "topRiskIp": "高リスク IP",
       "redeemed": "引き換え済み",
       "unredeemed": "未引き換え",
       "channels": {

@@ -533,6 +533,11 @@
       "selectAll": "모든 라이선스 코드 선택",
       "applyMetadata": "채널 적용",
       "clearSelection": "선택 해제",
+      "securitySignalsTitle": "보안 신호",
+      "securitySignalsDescription": "최근 라이선스 코드 교환 실패, 차단, 의심 IP 활동을 확인합니다.",
+      "failedAttempts": "실패 시도",
+      "blockedAttempts": "차단된 시도",
+      "topRiskIp": "최고 위험 IP",
       "redeemed": "교환됨",
       "unredeemed": "미교환",
       "channels": {

@@ -1,7 +1,8 @@
 import { jsonError, jsonOk } from "@/lib/api/responses";
-import { checkRegisterRateLimit } from "@/lib/auth/register-rate-limit";
+import { checkRegisterRateLimit, type RegisterLimitClient } from "@/lib/auth/register-rate-limit";
 import { registerWithEmailPassword } from "@/lib/auth/register";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type RegisterRequestBody = {
   callbackUrl?: string;
@@ -14,6 +15,10 @@ function getIpAddress(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for");
 
   return forwardedFor?.split(",")[0]?.trim() ?? null;
+}
+
+function getUserAgent(request: Request) {
+  return request.headers.get("user-agent")?.trim() ?? null;
 }
 
 export async function POST(request: Request) {
@@ -32,7 +37,12 @@ export async function POST(request: Request) {
   }
 
   const ip = getIpAddress(request);
-  const limit = checkRegisterRateLimit({ email, ip });
+  const supabase = createSupabaseAdminClient() as unknown as RegisterLimitClient;
+  const limit = await checkRegisterRateLimit(supabase, {
+    email,
+    ip,
+    userAgent: getUserAgent(request),
+  });
 
   if (!limit.ok) {
     return jsonError(
