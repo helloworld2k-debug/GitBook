@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { DonationTierCard } from "@/components/donation-tier-card";
 import { PaymentStatusBanner } from "@/components/payment-status-banner";
 import { donationTiers, supportedLocales } from "@/config/site";
+import { optionalTimeout } from "@/lib/async/optional-timeout";
 import { getLoginRedirectPath } from "@/lib/auth/guards";
 import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { getActiveDonationTiers } from "@/lib/payments/tier";
@@ -26,7 +27,8 @@ export default async function ContributionsPage({ params }: ContributionsPagePro
   const fallbackTiers = donationTiers.map((tier, index) => ({ ...tier, sortOrder: index + 1 }));
   const supabase = await createSupabaseServerClient().catch(() => null);
   const tiers = supabase ? await getActiveDonationTiers(supabase) : fallbackTiers;
-  const user = supabase ? await supabase.auth.getUser().then((result) => result.data.user).catch(() => null) : null;
+  const authResult = supabase ? await optionalTimeout(supabase.auth.getUser(), 900).catch(() => null) : null;
+  const user = authResult?.data.user ?? null;
   const isAuthenticated = Boolean(user);
   const loginHref = getLoginRedirectPath(locale, `/${locale}/contributions`);
 

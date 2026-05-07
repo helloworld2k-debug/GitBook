@@ -141,6 +141,49 @@ describe("ContributionsPage", () => {
     expect(screen.getByText("Quarterly Support 2430 2700 authenticated")).toBeInTheDocument();
   });
 
+  it("treats slow auth lookup as anonymous so payment buttons do not appear while signed out is shown", async () => {
+    vi.useFakeTimers();
+    mocks.createSupabaseServerClient.mockResolvedValueOnce({
+      auth: {
+        getUser: () => new Promise(() => {}),
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            order: async () => ({
+              data: [
+                {
+                  amount: 900,
+                  code: "monthly",
+                  compare_at_amount: null,
+                  currency: "usd",
+                  description: "Monthly support",
+                  id: "tier-monthly",
+                  label: "Monthly Support",
+                  sort_order: 1,
+                },
+              ],
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    });
+
+    const page = ContributionsPage({
+      params: Promise.resolve({ locale: "en" }),
+    } as {
+      params: Promise<{ locale: string }>;
+    });
+
+    await vi.advanceTimersByTimeAsync(900);
+
+    render(await page);
+
+    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
   it("still renders tiers when production has not migrated original prices yet", async () => {
     const select = vi
       .fn()

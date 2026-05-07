@@ -51,9 +51,10 @@ export async function SiteHeader({ showAccountMenu = true }: { showAccountMenu?:
           {showAccountMenu ? (
             <Suspense
               fallback={
-                <Link href="/login" className={navLinkClass}>
-                  {t("signIn")}
-                </Link>
+                <div
+                  aria-hidden="true"
+                  className="min-h-11 w-20 rounded-md border border-cyan-300/15 bg-cyan-300/10"
+                />
               }
             >
               <HeaderUserMenu currentLocale={currentLocale} labels={userMenuLabels} />

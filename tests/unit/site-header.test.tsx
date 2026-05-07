@@ -80,15 +80,14 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("banner")).toHaveClass("sticky", "top-0");
   });
 
-  it("can opt into the dynamic account menu for authenticated areas", async () => {
+  it("uses an account menu placeholder instead of a signed-out state while resolving auth", async () => {
     createSupabaseServerClientMock.mockResolvedValue({
       auth: { getUser: vi.fn(async () => ({ data: { user: null } })) },
     });
 
     render(await SiteHeader({ showAccountMenu: true }));
 
-    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
-    expect(createSupabaseServerClientMock).toHaveBeenCalled();
+    expect(screen.queryByRole("link", { name: "Sign in" })).not.toBeInTheDocument();
   });
 
   it("shows sign in and no dashboard link for signed-out visitors in the user menu slot", async () => {
