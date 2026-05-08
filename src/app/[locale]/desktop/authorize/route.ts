@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { supportedLocales, type Locale } from "@/config/site";
 import { jsonError } from "@/lib/api/responses";
+import { isSupabaseAuthCookieName } from "@/lib/auth/supabase-cookies";
 import { createDesktopAuthCode } from "@/lib/license/desktop-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const authorizeSchema = z.object({
   deviceSessionId: z.string().trim().min(1).max(200),
@@ -65,6 +65,56 @@ function desktopCallbackResponse(callbackUrl: string) {
   });
 }
 
+function decodeBase64Url(value: string) {
+  const padded = value.replaceAll("-", "+").replaceAll("_", "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+
+  return Buffer.from(padded, "base64").toString("utf8");
+}
+
+function readAccessTokenFromAuthCookie(request: Request) {
+  const cookieHeader = request.headers.get("cookie") ?? "";
+  const cookies = cookieHeader.split(";").map((item) => item.trim()).filter(Boolean);
+
+  for (const cookie of cookies) {
+    const separatorIndex = cookie.indexOf("=");
+
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    let name: string;
+    let value: string;
+
+    try {
+      name = decodeURIComponent(cookie.slice(0, separatorIndex));
+      value = decodeURIComponent(cookie.slice(separatorIndex + 1));
+    } catch {
+      continue;
+    }
+
+    if (!isSupabaseAuthCookieName(name) || !value) {
+      continue;
+    }
+
+    let parsed: { access_token?: string } | [string, string];
+
+    try {
+      const rawPayload = value.startsWith("base64-") ? decodeBase64Url(value.slice("base64-".length)) : value;
+      parsed = JSON.parse(rawPayload) as { access_token?: string } | [string, string];
+    } catch {
+      continue;
+    }
+
+    if (Array.isArray(parsed)) {
+      return parsed[0] ?? null;
+    }
+
+    return parsed.access_token ?? null;
+  }
+
+  return null;
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
 
@@ -85,10 +135,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
 
   const { deviceSessionId, returnUrl, state } = parsed.data;
 
-  const supabase = await createSupabaseServerClient();
+  const accessToken = readAccessTokenFromAuthCookie(request);
+
+  if (!accessToken) {
+    const next = `/${locale}/desktop/authorize?device_session_id=${encodeURIComponent(deviceSessionId)}&return_url=${encodeURIComponent(returnUrl)}&state=${encodeURIComponent(state)}`;
+
+    return NextResponse.redirect(new URL(`/${locale}/login?next=${encodeURIComponent(next)}`, request.url));
+  }
+
+  const adminClient = createSupabaseAdminClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await adminClient.auth.getUser(accessToken);
 
   if (!user) {
     const next = `/${locale}/desktop/authorize?device_session_id=${encodeURIComponent(deviceSessionId)}&return_url=${encodeURIComponent(returnUrl)}&state=${encodeURIComponent(state)}`;
@@ -96,7 +154,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
     return NextResponse.redirect(new URL(`/${locale}/login?next=${encodeURIComponent(next)}`, request.url));
   }
 
-  const { code } = await createDesktopAuthCode(createSupabaseAdminClient(), {
+  const { code } = await createDesktopAuthCode(adminClient, {
     userId: user.id,
     deviceSessionId,
     returnUrl,
