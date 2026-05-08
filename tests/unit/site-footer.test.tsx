@@ -35,7 +35,7 @@ describe("SiteFooter", () => {
     expect(screen.queryByText(/^AI$/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/en/policies/terms");
     expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/en/policies/privacy");
-    expect(screen.getByRole("link", { name: "Refund Policy" })).toHaveAttribute("href", "/en/policies/refund");
+    expect(screen.queryByRole("link", { name: "Refund Policy" })).not.toBeInTheDocument();
     expect(screen.queryByText("AI coding knowledge, downloads, and support in one place.")).not.toBeInTheDocument();
     expect(screen.queryByText("Secure downloads and account support")).not.toBeInTheDocument();
   });

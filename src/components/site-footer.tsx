@@ -19,9 +19,6 @@ export async function SiteFooter() {
           <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/en/policies/privacy">
             Privacy
           </Link>
-          <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/en/policies/refund">
-            Refund Policy
-          </Link>
         </nav>
       </div>
     </footer>
