@@ -31,6 +31,8 @@ export type AdminFeedbackKey =
   | "notification-published"
   | "notification-unpublished"
   | "operation-failed"
+  | "policy-page-updated"
+  | "policy-page-update-failed"
   | "profile-update-failed"
   | "release-created"
   | "release-updated"
@@ -86,6 +88,8 @@ const adminFeedbackKeys = new Set<string>([
   "notification-published",
   "notification-unpublished",
   "operation-failed",
+  "policy-page-updated",
+  "policy-page-update-failed",
   "profile-update-failed",
   "release-created",
   "release-updated",

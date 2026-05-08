@@ -27,13 +27,16 @@ vi.mock("@/i18n/routing", () => ({
 }));
 
 describe("SiteFooter", () => {
-  it("renders only the logo and copyright without navigation links", async () => {
+  it("renders left-aligned copyright and right-side policy links without the logo", async () => {
     render(await SiteFooter());
 
     expect(screen.getByRole("contentinfo")).toHaveTextContent("GitBook AI");
     expect(screen.getByRole("contentinfo")).toHaveTextContent("Independent software support site.");
+    expect(screen.queryByText(/^AI$/)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/en/policies/terms");
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/en/policies/privacy");
+    expect(screen.getByRole("link", { name: "Refund Policy" })).toHaveAttribute("href", "/en/policies/refund");
     expect(screen.queryByText("AI coding knowledge, downloads, and support in one place.")).not.toBeInTheDocument();
     expect(screen.queryByText("Secure downloads and account support")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 });

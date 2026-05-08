@@ -13,6 +13,7 @@ import {
   MessageSquareText,
   Menu,
   Package,
+  ScrollText,
   Users,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -33,6 +34,7 @@ type AdminShellLabels = {
   licenses: string;
   menu: string;
   notifications: string;
+  policies: string;
   releases: string;
   returnToSite: string;
   signOut: string;
@@ -61,6 +63,7 @@ function getAdminItems(labels: AdminShellLabels) {
     { href: "/admin/certificates", label: labels.certificates, icon: BadgeCheck },
     { href: "/admin/releases", label: labels.releases, icon: Package },
     { href: "/admin/notifications", label: labels.notifications, icon: Bell },
+    { href: "/admin/policies", label: labels.policies, icon: ScrollText },
     { href: "/admin/support-feedback", label: labels.supportFeedback, icon: MessageSquareText },
     { href: "/admin/support-settings", label: labels.supportSettings, icon: MessageSquareText },
     { href: "/admin/licenses", label: labels.licenses, icon: KeyRound },
@@ -252,6 +255,8 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "notification-published": "Notification published.",
   "notification-unpublished": "Notification unpublished.",
   "operation-failed": "Unable to complete this operation.",
+  "policy-page-updated": "Policy page updated.",
+  "policy-page-update-failed": "Unable to update policy page.",
   "profile-update-failed": "Unable to update user profile.",
   "release-created": "Release created.",
   "release-updated": "Release updated.",

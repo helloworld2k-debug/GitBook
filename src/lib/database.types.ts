@@ -104,6 +104,47 @@ export type Database = {
         };
         Relationships: [];
       };
+      policy_pages: {
+        Row: {
+          slug: "terms" | "privacy" | "refund";
+          title: string;
+          summary: string;
+          body: string;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          slug: "terms" | "privacy" | "refund";
+          title: string;
+          summary: string;
+          body: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          slug?: "terms" | "privacy" | "refund";
+          title?: string;
+          summary?: string;
+          body?: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "policy_pages_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       support_contact_channels: {
         Row: {
           id: "telegram" | "discord" | "qq" | "email" | "wechat";

@@ -243,7 +243,9 @@
       "recentContributionsMetric": "최근 지원",
       "description": "지원, 인증서, 릴리스, 라이선스, 사용자, 감사 활동을 관리합니다.",
       "contributionPricingTitle": "지원 가격 설정",
-      "contributionPricingDescription": "Contributions 페이지의 가격, 할인, 개발 지원 문구를 관리합니다."
+      "contributionPricingDescription": "Contributions 페이지의 가격, 할인, 개발 지원 문구를 관리합니다.",
+      "policyPagesTitle": "Policy pages",
+      "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer."
     },
     "donations": {
       "eyebrow": "관리",
@@ -677,7 +679,8 @@
       "supportSettings": "지원 설정",
       "users": "사용자",
       "contributionPricing": "지원 가격 설정",
-      "supportFeedbackUnread": "읽지 않은 피드백 {count}건이 있습니다"
+      "supportFeedbackUnread": "읽지 않은 피드백 {count}건이 있습니다",
+      "policies": "Policy pages"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
@@ -695,6 +698,17 @@
       "tierStatusHelp": "비활성 티어는 Contributions 페이지에서 숨겨집니다.",
       "save": "티어 저장",
       "tierSaved": "티어가 저장되었습니다"
+    },
+    "policies": {
+      "eyebrow": "Admin",
+      "title": "Policy pages",
+      "description": "Edit the English policy pages linked from the public footer.",
+      "titleLabel": "Title",
+      "summary": "Summary",
+      "body": "Body",
+      "save": "Save policy",
+      "viewPublic": "View public page",
+      "updatedAt": "Last updated {date}"
     }
   },
   "certificate": {

@@ -100,6 +100,11 @@ export default async function AdminPage({ params }: AdminPageProps) {
       description: t("overview.supportSettingsDescription"),
     },
     {
+      href: "/admin/policies",
+      title: t("overview.policyPagesTitle"),
+      description: t("overview.policyPagesDescription"),
+    },
+    {
       href: "/admin/licenses",
       title: t("overview.licensesTitle"),
       description: t("overview.licensesDescription"),

@@ -23,6 +23,7 @@ vi.mock("next-intl/server", () => ({
       licenses: "Licenses",
       menu: "Menu",
       notifications: "Notifications",
+      policies: "Policy pages",
       releases: "Releases",
       returnToSite: "Return to site",
       signOut: "Sign out",

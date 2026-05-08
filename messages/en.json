@@ -242,6 +242,8 @@
       "supportFeedbackDescription": "Review account issue reports and support requests.",
       "supportSettingsTitle": "Support settings",
       "supportSettingsDescription": "Manage public support contact channels shown on the Support page.",
+      "policyPagesTitle": "Policy pages",
+      "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer.",
       "licensesTitle": "Licenses",
       "licensesDescription": "Create trial codes, review entitlements, and revoke desktop cloud sync access.",
       "usersTitle": "Users",
@@ -397,6 +399,17 @@
       "publicPreviewTitle": "Public preview",
       "publicPreviewDescription": "This is how the enabled support channels will appear to visitors on the Support page.",
       "previewEmpty": "No support contact channels are enabled yet."
+    },
+    "policies": {
+      "eyebrow": "Admin",
+      "title": "Policy pages",
+      "description": "Edit the English policy pages linked from the public footer.",
+      "titleLabel": "Title",
+      "summary": "Summary",
+      "body": "Body",
+      "save": "Save policy",
+      "viewPublic": "View public page",
+      "updatedAt": "Last updated {date}"
     },
     "certificates": {
       "eyebrow": "Admin",
@@ -683,6 +696,7 @@
       "menu": "Menu",
       "releases": "Releases",
       "notifications": "Notifications",
+      "policies": "Policy pages",
       "signOut": "Sign out",
       "supportFeedback": "Feedback",
       "supportSettings": "Support settings",

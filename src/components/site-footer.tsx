@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { siteConfig } from "@/config/site";
+import { Link } from "@/i18n/routing";
 
 export async function SiteFooter() {
   const footer = await getTranslations("footer");
@@ -8,16 +9,20 @@ export async function SiteFooter() {
   return (
     <footer className="border-t border-cyan-300/10 bg-slate-950" role="contentinfo">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 sm:px-6 md:flex-row md:items-center md:justify-between">
-        <div className="inline-flex min-h-11 items-center gap-3 text-base font-semibold text-white">
-          <span className="flex size-9 items-center justify-center rounded-md border border-cyan-300/30 bg-cyan-300/10 text-sm font-semibold text-cyan-200">
-            AI
-          </span>
-          {siteConfig.name}
-        </div>
-
-        <p className="text-sm leading-6 text-slate-400 md:text-right">
+        <p className="text-sm leading-6 text-slate-400">
           © {year} {siteConfig.name}. {footer("copyright")}
         </p>
+        <nav aria-label="Policies" className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-slate-300">
+          <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/en/policies/terms">
+            Terms
+          </Link>
+          <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/en/policies/privacy">
+            Privacy
+          </Link>
+          <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/en/policies/refund">
+            Refund Policy
+          </Link>
+        </nav>
       </div>
     </footer>
   );

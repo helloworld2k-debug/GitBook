@@ -243,7 +243,9 @@
       "recentContributionsMetric": "最近の応援",
       "description": "応援、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。",
       "contributionPricingTitle": "応援価格設定",
-      "contributionPricingDescription": "Contributions ページの価格、割引、開発サポート文言を管理します。"
+      "contributionPricingDescription": "Contributions ページの価格、割引、開発サポート文言を管理します。",
+      "policyPagesTitle": "Policy pages",
+      "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer."
     },
     "donations": {
       "eyebrow": "管理画面",
@@ -677,7 +679,8 @@
       "supportSettings": "サポート設定",
       "users": "ユーザー",
       "contributionPricing": "応援価格設定",
-      "supportFeedbackUnread": "{count} 件の未読フィードバックがあります"
+      "supportFeedbackUnread": "{count} 件の未読フィードバックがあります",
+      "policies": "Policy pages"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
@@ -695,6 +698,17 @@
       "tierStatusHelp": "無効なプランは Contributions ページで非表示になります。",
       "save": "プランを保存",
       "tierSaved": "プランを保存しました"
+    },
+    "policies": {
+      "eyebrow": "Admin",
+      "title": "Policy pages",
+      "description": "Edit the English policy pages linked from the public footer.",
+      "titleLabel": "Title",
+      "summary": "Summary",
+      "body": "Body",
+      "save": "Save policy",
+      "viewPublic": "View public page",
+      "updatedAt": "Last updated {date}"
     }
   },
   "certificate": {

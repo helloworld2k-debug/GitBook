@@ -1,5 +1,6 @@
 export * from "./actions/donations";
 export * from "./actions/notifications";
+export * from "./actions/policies";
 export * from "./actions/pricing";
 export * from "./actions/support";
 export * from "./actions/releases";

@@ -243,7 +243,9 @@
       "recentContributionsMetric": "近期支持",
       "description": "管理支持記錄、證書、版本、授權、使用者與稽核活動。",
       "contributionPricingTitle": "支持價格設定",
-      "contributionPricingDescription": "管理 Contributions 頁面的價格、折扣與開發支持方案文案。"
+      "contributionPricingDescription": "管理 Contributions 頁面的價格、折扣與開發支持方案文案。",
+      "policyPagesTitle": "Policy pages",
+      "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer."
     },
     "donations": {
       "eyebrow": "管理後台",
@@ -677,7 +679,8 @@
       "supportSettings": "支援設定",
       "users": "使用者",
       "contributionPricing": "支持價格設定",
-      "supportFeedbackUnread": "有 {count} 則未讀回饋"
+      "supportFeedbackUnread": "有 {count} 則未讀回饋",
+      "policies": "Policy pages"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
@@ -695,6 +698,17 @@
       "tierStatusHelp": "停用的方案會從 Contributions 頁面隱藏。",
       "save": "儲存方案",
       "tierSaved": "方案已儲存"
+    },
+    "policies": {
+      "eyebrow": "Admin",
+      "title": "Policy pages",
+      "description": "Edit the English policy pages linked from the public footer.",
+      "titleLabel": "Title",
+      "summary": "Summary",
+      "body": "Body",
+      "save": "Save policy",
+      "viewPublic": "View public page",
+      "updatedAt": "Last updated {date}"
     }
   },
   "certificate": {

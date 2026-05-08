@@ -1,4 +1,5 @@
 import { getActionLocale } from "@/lib/i18n/action-locale";
+import { isPolicyPageSlug } from "@/lib/policies/defaults";
 
 export const MAX_REASON_LENGTH = 500;
 export const MAX_MANUAL_REFERENCE_LENGTH = 120;
@@ -10,6 +11,9 @@ export const MAX_NOTIFICATION_TITLE_LENGTH = 160;
 export const MAX_NOTIFICATION_BODY_LENGTH = 4000;
 export const MAX_DONATION_TIER_LABEL_LENGTH = 120;
 export const MAX_DONATION_TIER_DESCRIPTION_LENGTH = 500;
+export const MAX_POLICY_TITLE_LENGTH = 120;
+export const MAX_POLICY_SUMMARY_LENGTH = 400;
+export const MAX_POLICY_BODY_LENGTH = 8000;
 export const notificationAudiences = ["all", "authenticated", "admins"] as const;
 export const notificationPriorities = ["info", "success", "warning", "critical"] as const;
 export const feedbackStatuses = ["open", "reviewing", "closed"] as const;
@@ -240,6 +244,16 @@ export function getSupportContactChannelId(formData: FormData) {
   }
 
   return channelId as (typeof supportContactChannelIds)[number];
+}
+
+export function getPolicyPageSlug(formData: FormData) {
+  const slug = getRequiredString(formData, "slug", "Policy page is required");
+
+  if (!isPolicyPageSlug(slug)) {
+    throw new Error("Invalid policy page");
+  }
+
+  return slug;
 }
 
 export function validateSupportContactValue(channelId: (typeof supportContactChannelIds)[number], value: string) {

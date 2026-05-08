@@ -25,6 +25,7 @@ const adminLabels = {
   licenses: "Licenses",
   menu: "Menu",
   notifications: "Notifications",
+  policies: "Policy pages",
   signOut: "Sign out",
   supportFeedback: "Feedback",
   supportFeedbackUnread: (count: number) => `${count} feedback threads need follow-up`,
@@ -47,6 +48,7 @@ describe("AdminShell", () => {
     expect(within(sidebar).getByRole("link", { name: /Overview/ })).toHaveAttribute("href", "/admin");
     expect(within(sidebar).getByRole("link", { name: /Users/ })).toHaveAttribute("href", "/admin/users");
     expect(within(sidebar).getByRole("link", { name: /Notifications/ })).toHaveAttribute("href", "/admin/notifications");
+    expect(within(sidebar).getByRole("link", { name: /Policy pages/ })).toHaveAttribute("href", "/admin/policies");
     expect(within(sidebar).getByRole("link", { name: /Feedback/ })).toHaveAttribute("href", "/admin/support-feedback");
     expect(within(sidebar).getByRole("link", { name: /Contribution pricing/ })).toHaveAttribute("href", "/admin/contribution-pricing");
     expect(within(sidebar).getByRole("link", { name: /Support settings/ })).toHaveAttribute("href", "/admin/support-settings");

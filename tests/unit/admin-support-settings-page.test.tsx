@@ -52,6 +52,7 @@ vi.mock("next-intl/server", () => ({
       "admin.shell.certificates": "Certificates",
       "admin.shell.releases": "Releases",
       "admin.shell.notifications": "Notifications",
+      "admin.shell.policies": "Policy pages",
       "admin.shell.supportFeedback": "Feedback",
       "admin.shell.supportSettings": "Support settings",
       "admin.shell.licenses": "Licenses",
