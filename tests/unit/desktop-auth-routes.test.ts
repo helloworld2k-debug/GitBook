@@ -212,7 +212,7 @@ describe("desktop authorize route", () => {
     expect(mocks.createDesktopAuthCode).not.toHaveBeenCalled();
   });
 
-  it("creates an auth code for signed-in users and redirects to the callback", async () => {
+  it("creates an auth code for signed-in users and returns a browser deep-link bridge", async () => {
     const response = await GET(
       new Request(
         "https://gitbookai.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123",
@@ -222,7 +222,6 @@ describe("desktop authorize route", () => {
       },
     );
 
-    expect(response.status).toBe(307);
     expect(mocks.createSupabaseServerClient).toHaveBeenCalledTimes(1);
     expect(mocks.createSupabaseAdminClient).toHaveBeenCalledTimes(1);
     expect(mocks.createDesktopAuthCode).toHaveBeenCalledWith(adminClient, {
@@ -231,6 +230,8 @@ describe("desktop authorize route", () => {
       returnUrl: "gitbookai://auth/callback",
       state: "state-123",
     });
-    expect(response.headers.get("location")).toBe("gitbookai://auth/callback?code=raw-code&state=state-123");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
+    await expect(response.text()).resolves.toContain("gitbookai://auth/callback?code=raw-code&state=state-123");
   });
 });

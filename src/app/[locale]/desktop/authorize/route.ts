@@ -30,6 +30,41 @@ const authorizeSchema = z.object({
     }),
 });
 
+function htmlEscape(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function desktopCallbackResponse(callbackUrl: string) {
+  const escapedUrl = htmlEscape(callbackUrl);
+  const serializedUrl = JSON.stringify(callbackUrl);
+
+  return new Response(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Opening GitBook AI</title>
+  </head>
+  <body>
+    <p>Opening GitBook AI...</p>
+    <p><a href="${escapedUrl}">Open GitBook AI</a></p>
+    <script>
+      window.location.href = ${serializedUrl};
+    </script>
+  </body>
+</html>`, {
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": "text/html; charset=utf-8",
+    },
+  });
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
 
@@ -71,5 +106,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
   callback.searchParams.set("code", code);
   callback.searchParams.set("state", state);
 
-  return NextResponse.redirect(callback);
+  return desktopCallbackResponse(callback.toString());
 }
