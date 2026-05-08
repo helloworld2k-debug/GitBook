@@ -52,4 +52,13 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("license_code_redeem_attempts_user_idx");
     expect(migration).toContain("registration_attempts_ip_idx");
   });
+
+  it("repairs desktop auth state storage for production schema drift", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0022_desktop_auth_state_schema_repair.sql"), "utf8");
+
+    expect(migration).toContain("alter table public.desktop_auth_codes");
+    expect(migration).toContain("add column if not exists state text");
+    expect(migration).toContain("alter column state set not null");
+    expect(migration).toContain("drop function if exists public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz)");
+  });
 });

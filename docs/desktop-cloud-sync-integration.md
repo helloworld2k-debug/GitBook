@@ -77,6 +77,90 @@ Successful response:
 
 Store the token only in the operating system credential store, such as macOS Keychain or Windows Credential Manager.
 
+## Developer Configuration
+
+Software developers only need the public website API endpoint, the fixed cloud sync feature code, and the user's desktop session token. Do not give desktop developers Supabase service role keys, database connection strings, license code hashes, plaintext license code exports, or encryption secrets.
+
+Recommended configuration:
+
+```env
+LICENSE_STATUS_URL=https://example.com/api/license/status
+LICENSE_FEATURE=cloud_sync
+```
+
+Runtime credential:
+
+```text
+DESKTOP_SESSION_TOKEN=<desktop-session-token returned by /api/desktop/auth/exchange>
+```
+
+The desktop session token is user-specific and must be stored in the operating system credential store. Treat it like a password-equivalent bearer token.
+
+## License Validity Status
+
+To read the user's cloud sync validity time, call:
+
+```http
+GET /api/license/status?feature=cloud_sync
+Authorization: Bearer <desktop-session-token>
+```
+
+Successful paid entitlement response:
+
+```json
+{
+  "authenticated": true,
+  "feature": "cloud_sync",
+  "allowed": true,
+  "reason": "active",
+  "source": "paid",
+  "validUntil": "2026-05-31T00:00:00.000Z",
+  "remainingDays": 23,
+  "activeDeviceId": "device-a"
+}
+```
+
+Successful trial entitlement response:
+
+```json
+{
+  "authenticated": true,
+  "feature": "cloud_sync",
+  "allowed": true,
+  "reason": "trial_active",
+  "source": "trial",
+  "validUntil": "2026-05-15T00:00:00.000Z",
+  "remainingDays": 7,
+  "activeDeviceId": "device-a"
+}
+```
+
+Expired or unavailable response:
+
+```json
+{
+  "authenticated": true,
+  "feature": "cloud_sync",
+  "allowed": false,
+  "reason": "expired",
+  "validUntil": "2026-04-30T00:00:00.000Z",
+  "remainingDays": 0,
+  "activeDeviceId": "device-a"
+}
+```
+
+Desktop apps should use these fields:
+
+- `authenticated`: whether the desktop session token is valid.
+- `allowed`: whether cloud sync may currently be used.
+- `validUntil`: cloud sync validity deadline in ISO 8601 UTC format, or `null` if no entitlement exists.
+- `remainingDays`: server-calculated remaining days.
+- `reason`: status reason, such as `active`, `trial_active`, `expired`, `revoked`, `trial_code_required`, or `trial_expired`.
+- `source`: entitlement source when allowed, either `paid` or `trial`.
+- `activeDeviceId`: the current desktop device id known by the server.
+
+Do not calculate entitlement validity from the local computer clock. Display `validUntil` and `remainingDays` from the server response, and re-check status when the app starts, when opening settings, before enabling cloud sync, and after payment or license redemption flows.
+
 ## Entitlement Check
 
 The cloud sync switch must default to off. Before allowing the user to turn it on, call:
