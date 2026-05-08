@@ -11,7 +11,7 @@ export async function refreshSupabaseSession(request: NextRequest, response: Nex
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet, headers) {
+      setAll(cookiesToSet, headers = {}) {
         cookiesToSet.forEach(({ name, value }) => {
           request.cookies.set(name, value);
         });
