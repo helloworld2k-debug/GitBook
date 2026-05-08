@@ -90,7 +90,7 @@ export async function getLicenseStatus(client: LicenseStatusClient, input: Licen
     };
   }
 
-  const from = client.from as LicenseStatusFrom;
+  const from = (table: "machine_trial_claims") => (client.from as LicenseStatusFrom).call(client, table);
   const { data, error } = await from("machine_trial_claims")
     .select("trial_valid_until")
     .eq("machine_code_hash", input.machineCodeHash)

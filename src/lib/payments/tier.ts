@@ -92,7 +92,7 @@ async function readDonationTiers(
     | "id,code,label,description,amount,currency,sort_order,is_active",
   onlyActive: boolean,
 ) {
-  const from = client.from as DonationTierFrom;
+  const from = (table: "donation_tiers") => (client.from as DonationTierFrom).call(client, table);
   const orderedQuery = onlyActive ? from("donation_tiers").select(columns).eq("is_active", true) : from("donation_tiers").select(columns);
   let { data, error } = await orderedQuery.order("sort_order", { ascending: true });
 

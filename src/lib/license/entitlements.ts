@@ -83,7 +83,7 @@ export async function getCloudSyncEntitlementStatus(
   userId: string,
   now = new Date(),
 ): Promise<EntitlementStatus> {
-  const from = client.from as EntitlementFrom;
+  const from = (table: "license_entitlements") => (client.from as EntitlementFrom).call(client, table);
   const { data, error } = await from("license_entitlements")
     .select("valid_until,status")
     .eq("user_id", userId)

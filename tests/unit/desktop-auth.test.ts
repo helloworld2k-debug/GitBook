@@ -37,6 +37,30 @@ describe("desktop auth", () => {
     });
   });
 
+  it("keeps the Supabase client as this when creating auth codes", async () => {
+    const insertSingle = vi.fn(async () => ({ data: { id: "code-1" }, error: null }));
+    const select = vi.fn(() => ({ single: insertSingle }));
+    const insert = vi.fn(() => ({ select }));
+    const client = {
+      rest: {
+        from: vi.fn(() => ({ insert })),
+      },
+      from(table: string) {
+        return this.rest.from(table);
+      },
+    };
+
+    await createDesktopAuthCode(client, {
+      userId: "user-1",
+      deviceSessionId: "desktop-flow-1",
+      returnUrl: "gitbookai://auth/callback",
+      state: "state-123",
+      now: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    expect(client.rest.from).toHaveBeenCalledWith("desktop_auth_codes");
+  });
+
   it("exchanges a valid code for a desktop session token and records device metadata", async () => {
     const now = new Date("2026-05-01T00:01:00.000Z");
     const rpc = vi.fn(async () => ({

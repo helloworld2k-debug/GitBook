@@ -87,7 +87,7 @@ export async function validateDesktopSession(
   }
 
   const tokenHash = await hashDesktopSecret(token, "desktop_token");
-  const from = client.from as DesktopSessionFrom;
+  const from = (table: "desktop_sessions") => (client.from as DesktopSessionFrom).call(client, table);
   const { data, error } = await from("desktop_sessions")
     .select("id,user_id,device_id,machine_code_hash,platform,app_version,expires_at,revoked_at")
     .eq("token_hash", tokenHash)

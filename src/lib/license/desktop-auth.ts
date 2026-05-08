@@ -71,7 +71,7 @@ export async function createDesktopAuthCode(client: CreateClient, input: CreateD
   const code = generateDesktopSecret();
   const codeHash = await hashDesktopSecret(code, "auth_code");
   const expiresAt = addSeconds(now, DESKTOP_AUTH_CODE_TTL_SECONDS).toISOString();
-  const from = client.from as CreateDesktopAuthCodeFrom;
+  const from = (table: "desktop_auth_codes") => (client.from as CreateDesktopAuthCodeFrom).call(client, table);
 
   const { data, error } = await from("desktop_auth_codes")
     .insert({
