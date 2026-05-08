@@ -37,6 +37,8 @@ export async function POST(request: Request) {
       return jsonError("Invalid or expired desktop auth code", 401);
     }
 
+    console.error("Unable to exchange desktop auth code", error);
+
     return jsonError("Unable to exchange desktop auth code", 500);
   }
 }

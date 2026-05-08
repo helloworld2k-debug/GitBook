@@ -115,7 +115,7 @@ export async function exchangeDesktopAuthCode(client: ExchangeClient, input: Exc
   });
 
   if (error) {
-    throw new Error("Unable to exchange desktop auth code");
+    throw new Error("Unable to exchange desktop auth code", { cause: error });
   }
 
   const row = data?.[0];
