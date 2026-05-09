@@ -6,7 +6,9 @@ const mocks = vi.hoisted(() => ({
   createDesktopAuthCode: vi.fn(),
   exchangeDesktopAuthCode: vi.fn(),
   createSupabaseAdminClient: vi.fn(),
+  createSupabaseServerClient: vi.fn(),
   getUser: vi.fn(),
+  serverGetUser: vi.fn(),
 }));
 
 vi.mock("@/lib/license/desktop-auth", () => ({
@@ -22,6 +24,10 @@ vi.mock("@/lib/license/desktop-auth", () => ({
 
 vi.mock("@/lib/supabase/admin", () => ({
   createSupabaseAdminClient: mocks.createSupabaseAdminClient,
+}));
+
+vi.mock("@/lib/supabase/server", () => ({
+  createSupabaseServerClient: mocks.createSupabaseServerClient,
 }));
 
 describe("desktop auth exchange route", () => {
@@ -121,14 +127,10 @@ describe("desktop auth exchange route", () => {
 describe("desktop authorize route", () => {
   const adminClient = { auth: { getUser: mocks.getUser }, from: vi.fn() };
 
-  function authCookieHeader(accessToken = "access-token") {
-    const payload = Buffer.from(JSON.stringify({ access_token: accessToken })).toString("base64url");
-
-    return `sb-dzsnhbszojdaghvolcnq-auth-token=base64-${payload}`;
-  }
-
   beforeEach(() => {
     mocks.getUser.mockReset().mockResolvedValue({ data: { user: { id: "user-1" } } });
+    mocks.serverGetUser.mockReset().mockResolvedValue({ data: { user: null } });
+    mocks.createSupabaseServerClient.mockReset().mockResolvedValue({ auth: { getUser: mocks.serverGetUser } });
     adminClient.from.mockReset();
     mocks.createSupabaseAdminClient.mockReset().mockReturnValue(adminClient);
     mocks.createDesktopAuthCode.mockReset().mockResolvedValue({
@@ -206,21 +208,17 @@ describe("desktop authorize route", () => {
     expect(response.headers.get("location")).toBe(
       "https://gitbookai.example/ja/login?next=%2Fja%2Fdesktop%2Fauthorize%3Fdevice_session_id%3Dsession-1%26return_url%3Dgitbookai%253A%252F%252Fauth%252Fcallback%26state%3Dstate-123",
     );
+    expect(mocks.createSupabaseServerClient).toHaveBeenCalledTimes(1);
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
     expect(mocks.createDesktopAuthCode).not.toHaveBeenCalled();
   });
 
-  it("redirects users with invalid auth cookies to locale login", async () => {
-    mocks.getUser.mockResolvedValueOnce({ data: { user: null } });
+  it("redirects users without a valid server session to locale login", async () => {
+    mocks.serverGetUser.mockResolvedValueOnce({ data: { user: null } });
 
     const response = await GET(
       new Request(
         "https://gitbookai.example/ja/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123",
-        {
-          headers: {
-            cookie: authCookieHeader("invalid-token"),
-          },
-        },
       ),
       {
         params: Promise.resolve({ locale: "ja" }),
@@ -228,44 +226,24 @@ describe("desktop authorize route", () => {
     );
 
     expect(response.status).toBe(307);
-    expect(mocks.createSupabaseAdminClient).toHaveBeenCalledTimes(1);
-    expect(mocks.createDesktopAuthCode).not.toHaveBeenCalled();
-  });
-
-  it("redirects users with malformed auth cookies to locale login", async () => {
-    const response = await GET(
-      new Request(
-        "https://gitbookai.example/ja/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123",
-        {
-          headers: {
-            cookie: "sb-dzsnhbszojdaghvolcnq-auth-token=base64-not-json",
-          },
-        },
-      ),
-      {
-        params: Promise.resolve({ locale: "ja" }),
-      },
-    );
-
-    expect(response.status).toBe(307);
+    expect(mocks.createSupabaseServerClient).toHaveBeenCalledTimes(1);
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
     expect(mocks.createDesktopAuthCode).not.toHaveBeenCalled();
   });
 
   it("creates an auth code for signed-in users and returns a browser deep-link bridge", async () => {
+    mocks.serverGetUser.mockResolvedValueOnce({ data: { user: { id: "user-1" } } });
+
     const response = await GET(
-      new Request("https://gitbookai.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123", {
-        headers: {
-          cookie: authCookieHeader("verified-token"),
-        },
-      }),
+      new Request("https://gitbookai.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123"),
       {
         params: Promise.resolve({ locale: "en" }),
       },
     );
 
+    expect(mocks.createSupabaseServerClient).toHaveBeenCalledTimes(1);
     expect(mocks.createSupabaseAdminClient).toHaveBeenCalledTimes(1);
-    expect(mocks.getUser).toHaveBeenCalledWith("verified-token");
+    expect(mocks.getUser).not.toHaveBeenCalled();
     expect(mocks.createDesktopAuthCode).toHaveBeenCalledWith(adminClient, {
       userId: "user-1",
       deviceSessionId: "session-1",
