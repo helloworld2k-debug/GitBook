@@ -24,13 +24,28 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await exchangeDesktopAuthCode(createSupabaseAdminClient(), parsed.data);
+    const client = createSupabaseAdminClient();
+    const result = await exchangeDesktopAuthCode(client, parsed.data);
+    const {
+      data: { user },
+    } = await client.auth.admin.getUserById(result.userId);
+    const metadata = user?.user_metadata;
+    const name = typeof metadata?.full_name === "string"
+      ? metadata.full_name
+      : typeof metadata?.name === "string"
+        ? metadata.name
+        : null;
 
     return jsonOk({
       token: result.sessionToken,
       expiresAt: result.expiresAt,
       userId: result.userId,
       desktopSessionId: result.desktopSessionId,
+      user: {
+        id: result.userId,
+        email: user?.email ?? null,
+        name,
+      },
     });
   } catch (error) {
     if (error instanceof InvalidDesktopAuthCodeError) {

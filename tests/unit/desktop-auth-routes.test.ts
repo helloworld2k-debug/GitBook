@@ -31,8 +31,19 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 describe("desktop auth exchange route", () => {
+  const adminClient = { auth: { admin: { getUserById: vi.fn() } }, from: vi.fn() };
+
   beforeEach(() => {
-    mocks.createSupabaseAdminClient.mockReset().mockReturnValue({ from: vi.fn() });
+    adminClient.auth.admin.getUserById.mockReset().mockResolvedValue({
+      data: {
+        user: {
+          id: "user-1",
+          email: "dev@example.com",
+          user_metadata: { full_name: "Dev User", name: "Developer" },
+        },
+      },
+    });
+    mocks.createSupabaseAdminClient.mockReset().mockReturnValue(adminClient);
     mocks.exchangeDesktopAuthCode.mockReset().mockResolvedValue({
       sessionToken: "desktop-token",
       expiresAt: "2026-05-31T00:00:00.000Z",
@@ -120,6 +131,11 @@ describe("desktop auth exchange route", () => {
       expiresAt: "2026-05-31T00:00:00.000Z",
       userId: "user-1",
       desktopSessionId: "session-1",
+      user: {
+        id: "user-1",
+        email: "dev@example.com",
+        name: "Dev User",
+      },
     });
   });
 });
