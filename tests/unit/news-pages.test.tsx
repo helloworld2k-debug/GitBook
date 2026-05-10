@@ -87,6 +87,19 @@ describe("News pages", () => {
     );
   });
 
+  it("falls back to seeded news articles when the database is unavailable", async () => {
+    mocks.createSupabaseServerClient.mockRejectedValue(new Error("relation news_articles does not exist"));
+
+    render(await NewsPage({ params: Promise.resolve({ locale: "en" }) }));
+
+    expect(screen.getByRole("heading", { name: "News" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Vision Foundation Models Enter the Field/ })).toHaveAttribute(
+      "href",
+      "/news/vision-foundation-models-enter-the-field",
+    );
+    expect(screen.getByRole("link", { name: /Scientific Imaging Discovers Hidden Patterns/ })).toBeInTheDocument();
+  });
+
   it("renders a published news article as plain text paragraphs", async () => {
     mocks.createSupabaseServerClient.mockResolvedValue({
       from: (table: string) => {
@@ -128,6 +141,18 @@ describe("News pages", () => {
     expect(screen.getByRole("heading", { name: "Vision Foundation Models Enter the Field" })).toBeInTheDocument();
     expect(screen.getByText("First paragraph about AI vision.")).toBeInTheDocument();
     expect(screen.getByText("Second paragraph about scientific recognition.")).toBeInTheDocument();
+    expect(screen.getByText("AI-created")).toBeInTheDocument();
+  });
+
+  it("falls back to a seeded article detail when the database is unavailable", async () => {
+    mocks.createSupabaseServerClient.mockRejectedValue(new Error("Missing NEXT_PUBLIC_SUPABASE_URL"));
+
+    render(await NewsArticlePage({
+      params: Promise.resolve({ locale: "en", slug: "scientific-imaging-discovers-hidden-patterns" }),
+    }));
+
+    expect(screen.getByRole("heading", { name: "Scientific Imaging Discovers Hidden Patterns" })).toBeInTheDocument();
+    expect(screen.getByText(/AI-supported visual analysis is helping researchers/)).toBeInTheDocument();
     expect(screen.getByText("AI-created")).toBeInTheDocument();
   });
 

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Link } from "@/i18n/routing";
 import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { formatNewsDate, splitNewsBody } from "@/lib/news/format";
+import { seedNewsArticles } from "@/lib/news/seed";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type NewsArticlePageProps = {
@@ -24,22 +25,46 @@ type NewsArticle = {
   published_at: string;
 };
 
-async function getPublishedNewsArticle(slug: string) {
-  const supabase = await createSupabaseServerClient();
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from("news_articles")
-    .select("slug,title,summary,body,cover_image_path,image_alt,topic,is_ai_generated,published_at")
-    .eq("slug", slug)
-    .not("published_at", "is", null)
-    .lte("published_at", now)
-    .single();
+function getSeedNewsArticle(slug: string): NewsArticle | null {
+  const article = seedNewsArticles.find((item) => item.slug === slug);
 
-  if (error || !data) {
+  if (!article) {
     return null;
   }
 
-  return data as NewsArticle;
+  return {
+    body: article.body,
+    cover_image_path: article.coverImagePath,
+    image_alt: article.imageAlt,
+    is_ai_generated: true,
+    published_at: article.publishedAt,
+    slug: article.slug,
+    summary: article.summary,
+    title: article.title,
+    topic: article.topic,
+  };
+}
+
+async function getPublishedNewsArticle(slug: string) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from("news_articles")
+      .select("slug,title,summary,body,cover_image_path,image_alt,topic,is_ai_generated,published_at")
+      .eq("slug", slug)
+      .not("published_at", "is", null)
+      .lte("published_at", now)
+      .single();
+
+    if (error || !data) {
+      return getSeedNewsArticle(slug);
+    }
+
+    return data as NewsArticle;
+  } catch {
+    return getSeedNewsArticle(slug);
+  }
 }
 
 export default async function NewsArticlePage({ params }: NewsArticlePageProps) {

@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { formatNewsDate } from "@/lib/news/format";
+import { seedNewsArticles } from "@/lib/news/seed";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type NewsPageProps = {
@@ -20,22 +21,42 @@ type NewsArticleListItem = {
   published_at: string;
 };
 
+function getSeedNewsArticles(): NewsArticleListItem[] {
+  return seedNewsArticles
+    .map((article) => ({
+      cover_image_path: article.coverImagePath,
+      id: article.slug,
+      image_alt: article.imageAlt,
+      is_ai_generated: true,
+      published_at: article.publishedAt,
+      slug: article.slug,
+      summary: article.summary,
+      title: article.title,
+      topic: article.topic,
+    }))
+    .sort((first, second) => second.published_at.localeCompare(first.published_at));
+}
+
 async function getPublishedNewsArticles() {
-  const supabase = await createSupabaseServerClient();
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from("news_articles")
-    .select("id,slug,title,summary,cover_image_path,image_alt,topic,is_ai_generated,published_at")
-    .not("published_at", "is", null)
-    .lte("published_at", now)
-    .order("published_at", { ascending: false })
-    .limit(50);
+  try {
+    const supabase = await createSupabaseServerClient();
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from("news_articles")
+      .select("id,slug,title,summary,cover_image_path,image_alt,topic,is_ai_generated,published_at")
+      .not("published_at", "is", null)
+      .lte("published_at", now)
+      .order("published_at", { ascending: false })
+      .limit(50);
 
-  if (error) {
-    throw error;
+    if (error) {
+      return getSeedNewsArticles();
+    }
+
+    return (data ?? []) as NewsArticleListItem[];
+  } catch {
+    return getSeedNewsArticles();
   }
-
-  return (data ?? []) as NewsArticleListItem[];
 }
 
 export default async function NewsPage({ params }: NewsPageProps) {
