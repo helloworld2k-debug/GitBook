@@ -11,6 +11,12 @@ type RegisterRequestBody = {
   turnstileToken?: string;
 };
 
+type AuthSignupError = {
+  code?: string;
+  message?: string;
+  status?: number;
+};
+
 function getIpAddress(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for");
 
@@ -19,6 +25,22 @@ function getIpAddress(request: Request) {
 
 function getUserAgent(request: Request) {
   return request.headers.get("user-agent")?.trim() ?? null;
+}
+
+function isTurnstileConfigured() {
+  return Boolean(process.env.TURNSTILE_SECRET_KEY);
+}
+
+function isAlreadyRegisteredError(error: AuthSignupError | null | undefined) {
+  const code = error?.code?.toLowerCase();
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    code === "user_already_exists" ||
+    code === "email_exists" ||
+    message.includes("user already registered") ||
+    message.includes("already registered")
+  );
 }
 
 export async function POST(request: Request) {
@@ -32,7 +54,9 @@ export async function POST(request: Request) {
     return jsonError("invalid_request");
   }
 
-  if (!turnstileToken) {
+  const requireTurnstile = isTurnstileConfigured();
+
+  if (requireTurnstile && !turnstileToken) {
     return jsonError("captcha_required");
   }
 
@@ -54,10 +78,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const turnstile = await verifyTurnstileToken(turnstileToken, ip);
+  if (requireTurnstile) {
+    const turnstile = await verifyTurnstileToken(turnstileToken, ip);
 
-  if (!turnstile.ok) {
-    return jsonError("captcha_invalid");
+    if (!turnstile.ok) {
+      return jsonError("captcha_invalid");
+    }
   }
 
   const result = await registerWithEmailPassword({
@@ -65,6 +91,10 @@ export async function POST(request: Request) {
     email,
     password,
   });
+
+  if (isAlreadyRegisteredError(result.error)) {
+    return jsonOk({ ok: true });
+  }
 
   if (result.error) {
     return jsonError("register_failed");

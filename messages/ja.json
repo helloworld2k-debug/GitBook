@@ -32,7 +32,7 @@
     "signingUp": "アカウント作成中...",
     "humanVerificationError": "人間による確認を完了してから、もう一度お試しください。",
     "humanVerificationLabel": "人間確認",
-    "registrationSuccess": "サインインする前に、メールを確認してアカウントを認証してください。",
+    "registrationSuccess": "新しいアカウントの場合は、メールを確認して認証してください。このメールが登録済みの場合は、サインインするかパスワードをリセットしてください。",
     "registrationRateLimited": "登録試行が多すぎます。しばらくしてからもう一度お試しください。",
     "signInError": "サインインできませんでした。メールとパスワードを確認してください。",
     "signUpError": "アカウントを作成できませんでした。メールとパスワードを確認してください。",

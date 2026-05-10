@@ -1571,7 +1571,7 @@ describe("admin pages", () => {
     expect(moreActions).not.toHaveAttribute("open");
     expect(screen.getAllByRole("button", { name: "More actions" }).length).toBeGreaterThan(0);
     expect(moreActions).toContainElement(screen.getAllByRole("button", { name: "Soft delete" })[0]);
-    expect(screen.getByText("Detailed account, contributions, certificates, and devices")).toBeInTheDocument();
+    expect(screen.queryByText("Detailed account, contributions, certificates, and devices")).not.toBeInTheDocument();
     expect(screen.getByTestId("admin-mobile-cards")).toHaveTextContent("alice@example.com");
   });
 

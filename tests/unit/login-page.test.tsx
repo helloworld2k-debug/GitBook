@@ -45,7 +45,7 @@ vi.mock("next-intl/server", () => ({
       privacyNote: "We only use your account for contribution records and certificates.",
       providersLabel: "Other sign-in options",
       registerTab: "Register",
-      registrationSuccess: "Check your email to verify your account before signing in.",
+      registrationSuccess: "If this is a new account, check your email to verify it. If this email is already registered, sign in or reset your password.",
       registrationRateLimited: "Too many registration attempts. Please try again later.",
       sending: "Sending...",
       signInError: "Could not sign in.",

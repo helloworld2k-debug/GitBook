@@ -376,7 +376,6 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                             <p className="break-all font-medium text-slate-950">{profile.email}</p>
                             <p className="mt-1 text-slate-600">{profile.display_name ?? "-"}</p>
                             <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
-                            <p className="mt-2 text-xs text-slate-500">{t("detailEntryHint")}</p>
                           </td>
                         <td className="px-5 py-4 align-top">
                           {canManageRoles ? (

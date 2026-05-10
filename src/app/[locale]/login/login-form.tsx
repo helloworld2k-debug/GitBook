@@ -172,7 +172,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
         return;
       }
 
-      if (!turnstileToken) {
+      if (turnstileSiteKey && !turnstileToken) {
         setStatus("error");
         return;
       }
@@ -182,7 +182,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
           callbackUrl,
           email,
           password,
-          turnstileToken,
+          ...(turnstileSiteKey ? { turnstileToken } : {}),
         }),
         headers: {
           "Content-Type": "application/json",
@@ -277,7 +277,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
   const errorMessage =
     status === "password-mismatch"
       ? messages.passwordMismatch
-      : isRegistering && !turnstileToken
+      : isRegistering && turnstileSiteKey && !turnstileToken
         ? messages.humanVerificationError
         : isRegistering
           ? messages.signUpError
@@ -358,7 +358,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
               ) : null}
             </>
           )}
-          {isRegistering ? (
+          {isRegistering && turnstileSiteKey ? (
             <div className="mt-4 grid gap-2">
               <p className="text-sm font-medium text-slate-200">{messages.humanVerificationLabel}</p>
               <div

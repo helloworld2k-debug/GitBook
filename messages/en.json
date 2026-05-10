@@ -32,7 +32,7 @@
     "signingUp": "Creating account...",
     "humanVerificationError": "Verify that you are human and try again.",
     "humanVerificationLabel": "Human verification",
-    "registrationSuccess": "Check your email to verify your account before signing in.",
+    "registrationSuccess": "If this is a new account, check your email to verify it. If this email is already registered, sign in or reset your password.",
     "registrationRateLimited": "Too many registration attempts. Please try again later.",
     "signInError": "Could not sign in. Check your email and password.",
     "signUpError": "Could not create the account. Check your email and password.",

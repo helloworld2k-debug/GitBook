@@ -37,7 +37,7 @@ const messages: LoginFormMessages = {
   },
   providersLabel: "Quick sign-in options",
   registerTab: "Register",
-  registrationSuccess: "Check your email to verify your account before signing in.",
+  registrationSuccess: "If this is a new account, check your email to verify it. If this email is already registered, sign in or reset your password.",
   registrationRateLimited: "Too many registration attempts. Please try again later.",
   signInSubmit: "Sign in with email",
   signInTab: "Sign in",
@@ -49,14 +49,14 @@ const messages: LoginFormMessages = {
   title: "Email and password",
 };
 
-function renderLoginForm() {
+function renderLoginForm(options: { turnstileSiteKey?: string } = { turnstileSiteKey: "turnstile_site_key" }) {
   render(
     <LoginForm
       callbackUrl="https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions"
       messages={messages}
       nextPath="/en/contributions"
       passwordResetCallbackUrl="https://gitbookai.example/auth/callback?next=%2Fen%2Freset-password"
-      turnstileSiteKey="turnstile_site_key"
+      turnstileSiteKey={options.turnstileSiteKey}
     />,
   );
 }
@@ -170,8 +170,31 @@ describe("LoginForm", () => {
         method: "POST",
       }));
     });
-    expect(await screen.findByRole("status")).toHaveTextContent("Check your email to verify your account before signing in.");
+    expect(await screen.findByRole("status")).toHaveTextContent("If this is a new account, check your email to verify it. If this email is already registered, sign in or reset your password.");
     expect(signUpMock).not.toHaveBeenCalled();
+  });
+
+  it("registers without a Turnstile token when captcha is not configured", async () => {
+    renderLoginForm({ turnstileSiteKey: undefined });
+
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    expect(screen.queryByTestId("turnstile-placeholder")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "new@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "new-password" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "new-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/auth/register", expect.objectContaining({
+        body: JSON.stringify({
+          callbackUrl: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
+          email: "new@example.com",
+          password: "new-password",
+        }),
+        method: "POST",
+      }));
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent("If this is a new account, check your email to verify it. If this email is already registered, sign in or reset your password.");
   });
 
   it("does not register when passwords do not match", async () => {
