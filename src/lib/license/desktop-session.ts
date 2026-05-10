@@ -35,6 +35,7 @@ type DesktopSessionRow = {
   machine_code_hash: string;
   platform: string;
   app_version: string | null;
+  last_seen_at: string | null;
   expires_at: string;
   revoked_at: string | null;
 };
@@ -56,6 +57,18 @@ type RevokeDesktopSessionInput = {
 
 function addDays(date: Date, days: number) {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+const LAST_SEEN_TOUCH_INTERVAL_MS = 5 * 60 * 1000;
+
+function shouldTouchLastSeen(lastSeenAt: string | null, now: Date) {
+  if (!lastSeenAt) {
+    return true;
+  }
+
+  const lastSeenMs = new Date(lastSeenAt).getTime();
+
+  return Number.isNaN(lastSeenMs) || now.getTime() - lastSeenMs >= LAST_SEEN_TOUCH_INTERVAL_MS;
 }
 
 export class InvalidDesktopSessionError extends Error {
@@ -89,7 +102,7 @@ export async function validateDesktopSession(
   const tokenHash = await hashDesktopSecret(token, "desktop_token");
   const from = (table: "desktop_sessions") => (client.from as DesktopSessionFrom).call(client, table);
   const { data, error } = await from("desktop_sessions")
-    .select("id,user_id,device_id,machine_code_hash,platform,app_version,expires_at,revoked_at")
+    .select("id,user_id,device_id,machine_code_hash,platform,app_version,last_seen_at,expires_at,revoked_at")
     .eq("token_hash", tokenHash)
     .maybeSingle();
 
@@ -103,10 +116,12 @@ export async function validateDesktopSession(
     return null;
   }
 
-  try {
-    await from("desktop_sessions").update({ last_seen_at: now.toISOString() }).eq("id", row.id);
-  } catch {
-    // last_seen_at is telemetry; a valid session should not fail auth because touch failed.
+  if (shouldTouchLastSeen(row.last_seen_at, now)) {
+    try {
+      await from("desktop_sessions").update({ last_seen_at: now.toISOString() }).eq("id", row.id);
+    } catch {
+      // last_seen_at is telemetry; a valid session should not fail auth because touch failed.
+    }
   }
 
   return {

@@ -568,7 +568,7 @@ describe("cloud sync lease routes", () => {
     });
   });
 
-  it("rejects heartbeat when entitlement has expired", async () => {
+  it("keeps heartbeat lightweight and does not re-check entitlement", async () => {
     const { POST } = await import("@/app/api/license/cloud-sync/heartbeat/route");
 
     routeMocks.getLicenseStatus.mockResolvedValueOnce({
@@ -586,13 +586,19 @@ describe("cloud sync lease routes", () => {
       }),
     );
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
-      allowed: false,
-      reason: "trial_expired",
-      validUntil: "2026-05-01T00:00:00.000Z",
+      activeDeviceId: "device-a",
+      allowed: true,
+      expiresAt: "2026-05-01T00:03:00.000Z",
+      leaseId: "lease-a",
+      reason: "active",
     });
-    expect(routeMocks.heartbeatCloudSyncLease).not.toHaveBeenCalled();
+    expect(routeMocks.getLicenseStatus).not.toHaveBeenCalled();
+    expect(routeMocks.heartbeatCloudSyncLease).toHaveBeenCalledWith(adminClient, {
+      desktopSessionId: "session-a",
+      userId: "user-1",
+    });
   });
 
   it("releases the current session lease without checking entitlement", async () => {

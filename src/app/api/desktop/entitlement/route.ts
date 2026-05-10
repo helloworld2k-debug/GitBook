@@ -1,3 +1,4 @@
+import { createRequestId, elapsedMs, logSlowDesktopApi, nowMs } from "@/lib/api/performance";
 import { jsonPayload } from "@/lib/api/responses";
 import { readBearerToken, validateDesktopSession } from "@/lib/license/desktop-session";
 import type { LicenseStatus } from "@/lib/license/status";
@@ -31,25 +32,46 @@ function errorResponse(code: string, message: string, status: number) {
 }
 
 export async function GET(request: Request) {
+  const requestId = createRequestId();
+  const totalStart = nowMs();
+  let entitlementMs: number | undefined;
+  let sessionMs: number | undefined;
+  const logSlow = (reason: string) =>
+    logSlowDesktopApi({
+      entitlementMs,
+      reason,
+      requestId,
+      route: "/api/desktop/entitlement",
+      sessionMs,
+      totalMs: elapsedMs(totalStart),
+    });
   const token = readBearerToken(request);
 
   if (!token) {
+    logSlow("session_revoked");
     return errorResponse("session_revoked", "Desktop session is not active.", 401);
   }
 
   try {
     const client = createSupabaseAdminClient();
+    const sessionStart = nowMs();
     const session = await validateDesktopSession(client, token);
+    sessionMs = elapsedMs(sessionStart);
 
     if (!session) {
+      logSlow("session_revoked");
       return errorResponse("session_revoked", "Desktop session is not active.", 401);
     }
 
+    const entitlementStart = nowMs();
     const status = await getLicenseStatus(client, {
       machineCodeHash: session.machine_code_hash,
       userId: session.user_id,
     });
+    entitlementMs = elapsedMs(entitlementStart);
     const now = new Date();
+    const reason = mapEntitlementReason(status);
+    logSlow(reason);
 
     return jsonPayload({
       user: {
@@ -64,11 +86,12 @@ export async function GET(request: Request) {
         cloud_sync_available: status.allowed,
         support_active: status.allowed,
         support_expires_at: status.validUntil,
-        reason: mapEntitlementReason(status),
+        reason,
         check_after: addHours(now, status.allowed ? 6 : 1).toISOString(),
       },
     });
   } catch {
+    logSlow("internal_error");
     return errorResponse("internal_error", "Unable to read desktop entitlement.", 500);
   }
 }

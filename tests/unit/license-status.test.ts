@@ -343,6 +343,7 @@ describe("desktop session helpers", () => {
         machine_code_hash: "machine-hash-1",
         platform: "macos",
         app_version: "1.0.0",
+        last_seen_at: "2026-04-30T23:40:00.000Z",
         expires_at: "2026-05-02T00:00:00.000Z",
         revoked_at: null,
       },
@@ -366,6 +367,33 @@ describe("desktop session helpers", () => {
     });
   });
 
+  it("does not update last_seen_at for recently touched desktop sessions", async () => {
+    const now = new Date("2026-05-01T00:00:00.000Z");
+    const client = createMaybeSingleClient({
+      desktop_sessions: {
+        id: "session-1",
+        user_id: "user-1",
+        device_id: "device-a",
+        machine_code_hash: "machine-hash-1",
+        platform: "macos",
+        app_version: "1.0.0",
+        last_seen_at: "2026-04-30T23:57:00.000Z",
+        expires_at: "2026-05-02T00:00:00.000Z",
+        revoked_at: null,
+      },
+    });
+
+    await expect(validateDesktopSession(client, "desktop-token", now)).resolves.toEqual({
+      id: "session-1",
+      user_id: "user-1",
+      device_id: "device-a",
+      machine_code_hash: "machine-hash-1",
+      platform: "macos",
+      app_version: "1.0.0",
+    });
+    expect(client.states.get("desktop_sessions")?.updatePayload).toBeNull();
+  });
+
   it("returns a valid desktop session when the last_seen_at update fails", async () => {
     const now = new Date("2026-05-01T00:00:00.000Z");
     const client = createMaybeSingleClient(
@@ -377,6 +405,7 @@ describe("desktop session helpers", () => {
           machine_code_hash: "machine-hash-1",
           platform: "macos",
           app_version: "1.0.0",
+          last_seen_at: "2026-04-30T23:40:00.000Z",
           expires_at: "2026-05-02T00:00:00.000Z",
           revoked_at: null,
         },

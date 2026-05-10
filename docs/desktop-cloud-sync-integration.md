@@ -13,10 +13,14 @@ Please read this section before implementing the API calls.
 - A website account may be signed in on more than one desktop device.
 - Signing in successfully does not mean cloud sync may be enabled.
 - Cloud sync is a single-device feature: only one desktop device may have cloud sync enabled for the same account at the same time.
+- Desktop device identity is not used to block account sign-in. It is used only to decide cloud sync lease ownership and whether a new desktop session is the same physical computer.
+- Many desktop sessions may exist for one account, but only one `machineCode` can own the active cloud sync lease at a time.
+- The server treats devices with the same stable `machineCode` as the same physical computer. Logging out and signing in again on the same computer creates a new desktop session, but it must not be treated as a device switch.
 - The cloud sync switch must default to off after desktop sign-in.
 - When the user turns cloud sync on, the desktop app must call `POST /api/license/cloud-sync/activate` before enabling any local sync process.
 - If another device is still actively syncing, activation fails with `active_on_another_device`. The app must keep cloud sync off and tell the user that another device is currently using cloud sync.
 - If the previous device has already released cloud sync, the new device still may need to wait for the configured cooldown period. During that period, activation fails with `cooldown_waiting` and includes `availableAfter` plus `remainingSeconds`.
+- The cooldown applies only when switching to a different physical computer. The same computer may reclaim its own active or recently released cloud sync lease after logout/relogin.
 - The default cooldown is 180 minutes, but it is configurable in the website admin system. Do not hard-code 180 minutes in the desktop app.
 - The desktop app must display the retry time from the server response. Do not calculate permission from the local computer clock.
 - User-level temporary admin overrides may skip only the device-switch cooldown. They do not bypass support entitlement, expired support, disabled accounts, revoked sessions, or other account checks.
@@ -28,6 +32,20 @@ Expected user-facing behavior:
 3. If the user tries to enable cloud sync on device B while device A is still syncing, show an "another device is currently using cloud sync" message.
 4. If device A has turned cloud sync off but the cooldown has not finished, show a "please try again after the displayed time" message using `availableAfter` or `remainingSeconds`.
 5. Only after activation returns `allowed: true` may device B turn on the local cloud sync process.
+6. If the user logs out on device A and signs in again on the same physical device A, activation should return `allowed: true` as long as the account and support entitlement are valid.
+
+## Stable Device Identity
+
+The desktop app sends both `deviceId` and `machineCode` during auth exchange and cloud sync activation.
+
+- `desktopSessionId` identifies one signed-in desktop session. It changes after a new login or token exchange and must not be used as the physical-computer identity.
+- `deviceId` identifies a desktop app installation for display, diagnostics, and admin tracking. It may change after reinstall or local data reset.
+- `machineCode` identifies the physical computer and is the key value for cloud sync lease ownership.
+- `machineCode` must be stable across app restarts, logout/relogin, token refresh, and normal OS patch updates.
+- Do not include volatile values in `machineCode`, such as app version, desktop session id, auth state, current username if the operating-system account can vary between launches, IP address, local time, browser session, or OS patch/build version.
+- Good inputs include a persisted app install id plus hardware or OS account identifiers that are stable for that physical computer. Hash the final value before sending it.
+- If the same physical computer logs out and signs in again, the app must send the same `machineCode`. The server can then rebind the existing cloud sync lease to the new `desktopSessionId`.
+- If `machineCode` changes accidentally, the server will treat the computer as a different physical device and may return `active_on_another_device` or `cooldown_waiting`.
 
 ## Login Flow
 
@@ -308,6 +326,12 @@ Successful activation:
 }
 ```
 
+Same-computer relogin behavior:
+
+- If an active cloud sync lease already exists for the same `userId + machineCode`, activation succeeds and the server rebinds the lease to the new `desktopSessionId`.
+- If a released lease for the same `userId + machineCode` is still in cooldown, activation still succeeds. Cooldown is only for switching to another physical computer.
+- The desktop app must not bypass server checks locally. It should simply call activation with the stable `machineCode` and follow the server response.
+
 ## Cloud Sync Heartbeat And Release
 
 After successful activation, the desktop app must keep the server lease alive while local cloud sync is enabled:
@@ -389,6 +413,9 @@ The updated desktop software should pass these tests before release:
 8. **No remember login:** with the option unchecked, verify the app does not create a long-lived local login.
 9. **Cloud sync status:** after login, call `GET /api/license/status?feature=cloud_sync` and display `validUntil` / `remainingDays` or a clear unavailable reason such as `trial_code_required`.
 10. **Cloud sync activation:** sign in on device B while device A owns cloud sync. Device B login must succeed, but cloud sync activation must fail with `active_on_another_device` or `cooldown_waiting` as appropriate.
+11. **Same computer relogin:** on device A, enable cloud sync, log out, sign in again on the same physical computer, and enable cloud sync. It must succeed without `active_on_another_device` or `cooldown_waiting`.
+12. **Same computer session takeover:** on device A, create a new desktop session while an older session from the same `machineCode` still owns cloud sync. Activation must succeed and heartbeat should continue from the new session.
+13. **Stable machine code:** restart the app, log out/in, and apply an OS patch-level update if practical. The app should keep sending the same `machineCode` for the same physical computer.
 
 ## Desktop App Requirements
 
@@ -398,6 +425,7 @@ The updated desktop software should pass these tests before release:
 - Accept both raw and URL-encoded `gitbookai://auth/callback?...` callback strings.
 - Include a checked-by-default "keep me signed in for 30 days" option on the login screen.
 - After sign-in, show the user's display name or email. Do not show a raw UUID unless the server did not provide name or email.
+- Send a stable `machineCode` for the physical computer on auth exchange and cloud sync activation. Do not derive it from session-specific or patch-version-specific values.
 - Store the desktop token in system secure storage.
 - Check entitlement when the app starts, when opening settings, before enabling cloud sync, and again according to `check_after`.
 - Display cloud sync validity using server-provided `validUntil` and `remainingDays`.
@@ -416,6 +444,7 @@ The updated desktop software should pass these tests before release:
 - If the browser already has a valid website session, `/[locale]/desktop/authorize` should create the desktop auth code directly and return `gitbookai://auth/callback?...`; it should not force the user through login again.
 - One user can have multiple active desktop sessions, but only one active cloud sync lease.
 - A new device cannot enable cloud sync while another device has an active lease.
+- A new desktop session from the same `machineCode` can reclaim its own active cloud sync lease and is excluded from device-switch cooldown checks.
 - When a device releases cloud sync, or a heartbeat expires and the server marks the lease released, a configurable cooldown starts. The default is 180 minutes.
 - Admin pages expose the global cooldown setting and can grant a temporary per-user cooldown override. Overrides bypass only the device-switch cooldown; they do not bypass support, subscription, disabled-account, or session checks.
 - Paid development support updates the cloud sync entitlement validity.
