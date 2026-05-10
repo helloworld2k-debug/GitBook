@@ -9,6 +9,11 @@ export const MAX_TRIAL_DAYS = 7;
 export const MAX_LICENSE_BATCH_QUANTITY = 10;
 export const MAX_NOTIFICATION_TITLE_LENGTH = 160;
 export const MAX_NOTIFICATION_BODY_LENGTH = 4000;
+export const MAX_NEWS_TITLE_LENGTH = 180;
+export const MAX_NEWS_SUMMARY_LENGTH = 360;
+export const MAX_NEWS_BODY_LENGTH = 7000;
+export const MAX_NEWS_TOPIC_LENGTH = 120;
+export const MAX_NEWS_IMAGE_ALT_LENGTH = 220;
 export const MAX_DONATION_TIER_LABEL_LENGTH = 120;
 export const MAX_DONATION_TIER_DESCRIPTION_LENGTH = 500;
 export const MAX_POLICY_TITLE_LENGTH = 120;
@@ -151,6 +156,26 @@ export function getBoundedString(formData: FormData, key: string, message: strin
   }
 
   return value;
+}
+
+export function getNewsSlug(formData: FormData) {
+  const slug = getRequiredString(formData, "slug", "Article slug is required").toLowerCase();
+
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 120) {
+    throw new Error("Article slug must use lowercase letters, numbers, and hyphens");
+  }
+
+  return slug;
+}
+
+export function getPublicImagePath(formData: FormData, key: string) {
+  const path = getRequiredString(formData, key, "Cover image path is required");
+
+  if (!path.startsWith("/news/") || path.includes("..") || path.includes("\\") || path.length > 240) {
+    throw new Error("Cover image path must reference a news image");
+  }
+
+  return path;
 }
 
 export function getManualReference(formData: FormData) {

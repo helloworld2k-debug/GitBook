@@ -60,6 +60,7 @@ export async function getAdminShellProps(locale: Locale, currentPath: string) {
       language: shellT("language"),
       licenses: shellT("licenses"),
       menu: shellT("menu"),
+      news: shellT("news"),
       notifications: shellT("notifications"),
       policies: shellT("policies"),
       releases: shellT("releases"),

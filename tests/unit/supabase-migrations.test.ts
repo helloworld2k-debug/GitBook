@@ -61,4 +61,17 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("alter column state set not null");
     expect(migration).toContain("drop function if exists public.exchange_desktop_auth_code(text, text, text, text, text, text, text, timestamptz, timestamptz)");
   });
+
+  it("adds editable public news articles with seed AI vision stories", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0028_news_articles.sql"), "utf8");
+
+    expect(migration).toContain("create table public.news_articles");
+    expect(migration).toContain("create unique index news_articles_slug_idx");
+    expect(migration).toContain("news_articles_public_read");
+    expect(migration).toContain("news_articles_admin_all");
+    expect(migration.match(/insert into public.news_articles/g)).toHaveLength(1);
+    expect(migration.match(/\.webp/g)?.length).toBeGreaterThanOrEqual(10);
+    expect(migration).toContain("vision-foundation-models-enter-the-field");
+    expect(migration).toContain("scientific-imaging-discovers-hidden-patterns");
+  });
 });

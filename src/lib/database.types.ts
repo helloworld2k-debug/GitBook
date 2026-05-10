@@ -145,6 +145,72 @@ export type Database = {
           },
         ];
       };
+      news_articles: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          summary: string;
+          body: string;
+          cover_image_path: string;
+          image_alt: string;
+          topic: string;
+          is_ai_generated: boolean;
+          published_at: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          title: string;
+          summary: string;
+          body: string;
+          cover_image_path: string;
+          image_alt: string;
+          topic: string;
+          is_ai_generated?: boolean;
+          published_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          slug?: string;
+          title?: string;
+          summary?: string;
+          body?: string;
+          cover_image_path?: string;
+          image_alt?: string;
+          topic?: string;
+          is_ai_generated?: boolean;
+          published_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "news_articles_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "news_articles_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       support_contact_channels: {
         Row: {
           id: "telegram" | "discord" | "qq" | "email" | "wechat";

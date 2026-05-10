@@ -24,6 +24,7 @@ const adminLabels = {
   language: "Language",
   licenses: "Licenses",
   menu: "Menu",
+  news: "News",
   notifications: "Notifications",
   policies: "Policy pages",
   signOut: "Sign out",
@@ -47,6 +48,7 @@ describe("AdminShell", () => {
     expect(sidebar).toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: /Overview/ })).toHaveAttribute("href", "/admin");
     expect(within(sidebar).getByRole("link", { name: /Users/ })).toHaveAttribute("href", "/admin/users");
+    expect(within(sidebar).getByRole("link", { name: /News/ })).toHaveAttribute("href", "/admin/news");
     expect(within(sidebar).getByRole("link", { name: /Notifications/ })).toHaveAttribute("href", "/admin/notifications");
     expect(within(sidebar).getByRole("link", { name: /Policy pages/ })).toHaveAttribute("href", "/admin/policies");
     expect(within(sidebar).getByRole("link", { name: /Feedback/ })).toHaveAttribute("href", "/admin/support-feedback");

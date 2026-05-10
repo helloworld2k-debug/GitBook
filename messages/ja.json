@@ -9,7 +9,8 @@
     "language": "言語",
     "userMenu": "ダッシュボードを開く",
     "accountMenu": "アカウントメニュー",
-    "signOut": "サインアウト"
+    "signOut": "サインアウト",
+    "news": "ニュース"
   },
   "login": {
     "eyebrow": "安全なアクセス",
@@ -245,7 +246,9 @@
       "contributionPricingTitle": "応援価格設定",
       "contributionPricingDescription": "Contributions ページの価格、割引、開発サポート文言を管理します。",
       "policyPagesTitle": "Policy pages",
-      "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer."
+      "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer.",
+      "newsTitle": "ニュース",
+      "newsDescription": "AI 生成ニュース記事の作成、編集、公開、非公開を管理します。"
     },
     "donations": {
       "eyebrow": "管理画面",
@@ -680,7 +683,8 @@
       "users": "ユーザー",
       "contributionPricing": "応援価格設定",
       "supportFeedbackUnread": "{count} 件の未読フィードバックがあります",
-      "policies": "Policy pages"
+      "policies": "Policy pages",
+      "news": "ニュース"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
@@ -709,6 +713,33 @@
       "save": "Save policy",
       "viewPublic": "View public page",
       "updatedAt": "Last updated {date}"
+    },
+    "news": {
+      "eyebrow": "管理",
+      "title": "ニュース",
+      "description": "AI 生成ニュース記事の作成、編集、公開、非公開を管理します。",
+      "createTitle": "記事を作成",
+      "editTitle": "記事を編集",
+      "slug": "Slug",
+      "titleLabel": "タイトル",
+      "summary": "概要",
+      "body": "本文",
+      "topic": "トピック",
+      "coverImagePath": "カバー画像パス",
+      "imageAlt": "画像の代替テキスト",
+      "publishNow": "今すぐ公開",
+      "create": "記事を作成",
+      "save": "記事を保存",
+      "status": "ステータス",
+      "published": "公開済み",
+      "draft": "下書き",
+      "publishedAt": "公開日時",
+      "updatedAt": "更新日時",
+      "viewPublic": "公開ページを見る",
+      "publish": "公開",
+      "unpublish": "非公開",
+      "empty": "ニュース記事はまだありません。",
+      "aiGenerated": "AI-created"
     }
   },
   "certificate": {

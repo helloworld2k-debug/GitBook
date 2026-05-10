@@ -14,6 +14,7 @@ import {
   Menu,
   Package,
   ScrollText,
+  Newspaper,
   Users,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -33,6 +34,7 @@ type AdminShellLabels = {
   language: string;
   licenses: string;
   menu: string;
+  news: string;
   notifications: string;
   policies: string;
   releases: string;
@@ -62,6 +64,7 @@ function getAdminItems(labels: AdminShellLabels) {
     { href: "/admin/contribution-pricing", label: labels.contributionPricing, icon: CircleDollarSign },
     { href: "/admin/certificates", label: labels.certificates, icon: BadgeCheck },
     { href: "/admin/releases", label: labels.releases, icon: Package },
+    { href: "/admin/news", label: labels.news, icon: Newspaper },
     { href: "/admin/notifications", label: labels.notifications, icon: Bell },
     { href: "/admin/policies", label: labels.policies, icon: ScrollText },
     { href: "/admin/support-feedback", label: labels.supportFeedback, icon: MessageSquareText },
@@ -251,6 +254,14 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "feedback-update-failed": "Unable to update feedback.",
   "manual-donation-added": "Manual donation added.",
   "manual-donation-failed": "Unable to add manual donation.",
+  "news-created": "News article created.",
+  "news-create-failed": "Unable to create news article.",
+  "news-published": "News article published.",
+  "news-publish-failed": "Unable to publish news article.",
+  "news-updated": "News article updated.",
+  "news-update-failed": "Unable to update news article.",
+  "news-unpublished": "News article unpublished.",
+  "news-unpublish-failed": "Unable to unpublish news article.",
   "notification-created": "Notification created.",
   "notification-published": "Notification published.",
   "notification-unpublished": "Notification unpublished.",

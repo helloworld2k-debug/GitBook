@@ -5,6 +5,7 @@ import AdminAuditLogsPage from "@/app/[locale]/admin/audit-logs/page";
 import AdminCertificatesPage from "@/app/[locale]/admin/certificates/page";
 import AdminDonationsPage from "@/app/[locale]/admin/donations/page";
 import AdminLicensesPage from "@/app/[locale]/admin/licenses/page";
+import AdminNewsPage from "@/app/[locale]/admin/news/page";
 import AdminSupportFeedbackPage from "@/app/[locale]/admin/support-feedback/page";
 import AdminUserDetailPage from "@/app/[locale]/admin/users/[id]/page";
 import AdminUsersPage from "@/app/[locale]/admin/users/page";
@@ -120,6 +121,8 @@ const testMessages = {
         releasesDescription: "Upload installers and manage releases.",
         notificationsTitle: "Notifications",
         notificationsDescription: "Publish and unpublish in-app announcements.",
+        newsTitle: "News",
+        newsDescription: "Create, edit, publish, and unpublish AI-generated news articles.",
         supportFeedbackTitle: "Feedback",
         supportFeedbackDescription: "Review account issue reports and support requests.",
         contributionPricingTitle: "Contribution pricing",
@@ -205,6 +208,33 @@ const testMessages = {
         createdAt: "Created",
         admin: "Admin",
         empty: "No audit logs found.",
+      },
+      news: {
+        eyebrow: "Admin",
+        title: "News",
+        description: "Create, edit, publish, and unpublish AI-generated news articles.",
+        createTitle: "Create article",
+        editTitle: "Edit articles",
+        slug: "Slug",
+        titleLabel: "Title",
+        summary: "Summary",
+        body: "Body",
+        topic: "Topic",
+        coverImagePath: "Cover image path",
+        imageAlt: "Image alt text",
+        publishNow: "Publish now",
+        create: "Create article",
+        save: "Save article",
+        status: "Status",
+        published: "Published",
+        draft: "Draft",
+        publishedAt: "Published",
+        updatedAt: "Updated",
+        viewPublic: "View public",
+        publish: "Publish",
+        unpublish: "Unpublish",
+        empty: "No news articles found.",
+        aiGenerated: "AI-created",
       },
       supportFeedback: {
         eyebrow: "Admin",
@@ -462,6 +492,7 @@ const testMessages = {
         language: "Language",
         licenses: "Licenses",
         menu: "Menu",
+        news: "News",
         notifications: "Notifications",
         policies: "Policy pages",
         releases: "Releases",
@@ -491,6 +522,8 @@ const testMessages = {
         releasesDescription: "上傳安裝包並管理版本。",
         notificationsTitle: "通知",
         notificationsDescription: "發布與下架站內通知。",
+        newsTitle: "新聞",
+        newsDescription: "建立、編輯、發布與下架 AI 生成新聞文章。",
         supportFeedbackTitle: "回饋",
         supportFeedbackDescription: "檢視帳號問題與支援請求。",
         contributionPricingTitle: "支持價格設定",
@@ -587,6 +620,7 @@ const testMessages = {
         language: "語言",
         licenses: "授權",
         menu: "選單",
+        news: "新聞",
         notifications: "通知",
         policies: "Policy pages",
         releases: "版本發布",
@@ -616,6 +650,8 @@ const testMessages = {
         releasesDescription: "インストーラーとリリースを管理します。",
         notificationsTitle: "通知",
         notificationsDescription: "アプリ内通知を公開・非公開にします。",
+        newsTitle: "ニュース",
+        newsDescription: "AI 生成ニュース記事の作成、編集、公開、非公開を管理します。",
         supportFeedbackTitle: "フィードバック",
         supportFeedbackDescription: "アカウント問題とサポート依頼を確認します。",
         contributionPricingTitle: "応援価格設定",
@@ -712,6 +748,7 @@ const testMessages = {
         language: "言語",
         licenses: "ライセンス",
         menu: "メニュー",
+        news: "ニュース",
         notifications: "通知",
         policies: "Policy pages",
         releases: "リリース",
@@ -741,6 +778,8 @@ const testMessages = {
         releasesDescription: "설치 파일과 릴리스를 관리합니다.",
         notificationsTitle: "알림",
         notificationsDescription: "앱 내 공지를 게시하거나 내립니다.",
+        newsTitle: "뉴스",
+        newsDescription: "AI 생성 뉴스 글을 만들고, 편집하고, 게시하거나 게시 해제합니다.",
         supportFeedbackTitle: "피드백",
         supportFeedbackDescription: "계정 문제와 지원 요청을 확인합니다.",
         contributionPricingTitle: "지원 가격 설정",
@@ -837,6 +876,7 @@ const testMessages = {
         language: "언어",
         licenses: "라이선스",
         menu: "메뉴",
+        news: "뉴스",
         notifications: "알림",
         policies: "Policy pages",
         releases: "릴리스",
@@ -888,6 +928,7 @@ describe("admin pages", () => {
     expect(screen.getAllByRole("link", { name: /donations/i }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
     expect(screen.getAllByRole("link", { name: /certificates/i }).some((link) => link.getAttribute("href") === "/admin/certificates")).toBe(true);
     expect(screen.getAllByRole("link", { name: /releases/i }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /news/i }).some((link) => link.getAttribute("href") === "/admin/news")).toBe(true);
     expect(screen.getAllByRole("link", { name: /audit logs/i }).some((link) => link.getAttribute("href") === "/admin/audit-logs")).toBe(true);
     expect(createSupabaseServerClientMock).toHaveBeenCalled();
     expect(createSupabaseAdminClientMock).toHaveBeenCalled();
@@ -910,6 +951,52 @@ describe("admin pages", () => {
     expect(screen.getAllByRole("link", { name: /版本發布/ }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
     expect(screen.getAllByRole("link", { name: /稽核紀錄/ }).some((link) => link.getAttribute("href") === "/admin/audit-logs")).toBe(true);
     expect(screen.getByText("檢視支持記錄、狀態與交易 ID。")).toBeInTheDocument();
+  });
+
+  it("renders the admin news publishing page with draft and published articles", async () => {
+    const newsQuery = createAdminListQuery([
+      {
+        id: "news-1",
+        slug: "vision-foundation-models-enter-the-field",
+        title: "Vision Foundation Models Enter the Field",
+        summary: "AI-generated visual systems are moving from labs into field workflows.",
+        topic: "vision foundation models",
+        cover_image_path: "/news/vision-foundation-models-enter-the-field.webp",
+        published_at: "2026-05-01T10:00:00.000Z",
+        updated_at: "2026-05-01T10:00:00.000Z",
+      },
+      {
+        id: "news-2",
+        slug: "draft-article",
+        title: "Draft Article",
+        summary: "A draft AI article.",
+        topic: "drafts",
+        cover_image_path: "/news/draft-article.webp",
+        published_at: null,
+        updated_at: "2026-05-02T10:00:00.000Z",
+      },
+    ]);
+
+    createSupabaseServerClientMock.mockResolvedValue({
+      from: (table: string) => {
+        if (table !== "news_articles") {
+          throw new Error(`Unexpected table: ${table}`);
+        }
+
+        return newsQuery;
+      },
+    });
+
+    render(await AdminNewsPage({ params: Promise.resolve({ locale: "en" }) }));
+
+    expect(requireAdminMock).toHaveBeenCalledWith("en", "/en/admin/news");
+    expect(screen.getByRole("heading", { name: "News" })).toBeInTheDocument();
+    expect(screen.getAllByText("Create article").length).toBeGreaterThan(0);
+    expect(screen.getByDisplayValue("vision-foundation-models-enter-the-field")).toBeInTheDocument();
+    expect(screen.getByText("Published")).toBeInTheDocument();
+    expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Unpublish" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument();
   });
 
   it("queries and renders donations for admins", async () => {

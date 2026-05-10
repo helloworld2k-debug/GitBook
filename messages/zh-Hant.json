@@ -9,7 +9,8 @@
     "language": "語言",
     "userMenu": "開啟儀表板",
     "accountMenu": "帳戶選單",
-    "signOut": "登出"
+    "signOut": "登出",
+    "news": "新聞"
   },
   "login": {
     "eyebrow": "安全存取",
@@ -245,7 +246,9 @@
       "contributionPricingTitle": "支持價格設定",
       "contributionPricingDescription": "管理 Contributions 頁面的價格、折扣與開發支持方案文案。",
       "policyPagesTitle": "Policy pages",
-      "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer."
+      "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer.",
+      "newsTitle": "新聞",
+      "newsDescription": "建立、編輯、發布與下架 AI 生成新聞文章。"
     },
     "donations": {
       "eyebrow": "管理後台",
@@ -680,7 +683,8 @@
       "users": "使用者",
       "contributionPricing": "支持價格設定",
       "supportFeedbackUnread": "有 {count} 則未讀回饋",
-      "policies": "Policy pages"
+      "policies": "Policy pages",
+      "news": "新聞"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
@@ -709,6 +713,33 @@
       "save": "Save policy",
       "viewPublic": "View public page",
       "updatedAt": "Last updated {date}"
+    },
+    "news": {
+      "eyebrow": "管理後台",
+      "title": "新聞",
+      "description": "建立、編輯、發布與下架 AI 生成新聞文章。",
+      "createTitle": "建立文章",
+      "editTitle": "編輯文章",
+      "slug": "Slug",
+      "titleLabel": "標題",
+      "summary": "摘要",
+      "body": "正文",
+      "topic": "主題",
+      "coverImagePath": "封面圖片路徑",
+      "imageAlt": "圖片替代文字",
+      "publishNow": "立即發布",
+      "create": "建立文章",
+      "save": "儲存文章",
+      "status": "狀態",
+      "published": "已發布",
+      "draft": "草稿",
+      "publishedAt": "發布時間",
+      "updatedAt": "更新時間",
+      "viewPublic": "查看前台",
+      "publish": "發布",
+      "unpublish": "下架",
+      "empty": "尚無新聞文章。",
+      "aiGenerated": "AI-created"
     }
   },
   "certificate": {

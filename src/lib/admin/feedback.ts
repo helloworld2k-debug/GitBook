@@ -27,6 +27,14 @@ export type AdminFeedbackKey =
   | "feedback-update-failed"
   | "manual-donation-added"
   | "manual-donation-failed"
+  | "news-created"
+  | "news-create-failed"
+  | "news-published"
+  | "news-publish-failed"
+  | "news-updated"
+  | "news-update-failed"
+  | "news-unpublished"
+  | "news-unpublish-failed"
   | "notification-created"
   | "notification-published"
   | "notification-unpublished"
@@ -84,6 +92,14 @@ const adminFeedbackKeys = new Set<string>([
   "feedback-update-failed",
   "manual-donation-added",
   "manual-donation-failed",
+  "news-created",
+  "news-create-failed",
+  "news-published",
+  "news-publish-failed",
+  "news-updated",
+  "news-update-failed",
+  "news-unpublished",
+  "news-unpublish-failed",
   "notification-created",
   "notification-published",
   "notification-unpublished",
