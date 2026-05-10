@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-import { Bell, Headset, Newspaper } from "lucide-react";
+import { Bell, Gift, Headset, House, Newspaper } from "lucide-react";
 import { HeaderUserMenu } from "@/components/header-user-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { siteConfig, supportedLocales, type Locale } from "@/config/site";
@@ -35,9 +35,11 @@ export async function SiteHeader({ showAccountMenu = true }: { showAccountMenu?:
         </Link>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <Link href="/" className={navLinkClass}>
+            <House aria-hidden="true" className="mr-1 size-4" />
             {t("download")}
           </Link>
           <Link href="/contributions" className={navLinkClass}>
+            <Gift aria-hidden="true" className="mr-1 size-4" />
             {t("donate")}
           </Link>
           <Link href="/support" className={navLinkClass}>
