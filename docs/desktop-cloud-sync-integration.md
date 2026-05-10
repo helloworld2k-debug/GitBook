@@ -71,11 +71,55 @@ Successful response:
   "token": "desktop-session-token",
   "expiresAt": "2026-05-31T00:00:00.000Z",
   "userId": "user_uuid",
-  "desktopSessionId": "session_uuid"
+  "desktopSessionId": "session_uuid",
+  "user": {
+    "id": "user_uuid",
+    "email": "user@example.com",
+    "name": "User Display Name"
+  }
 }
 ```
 
-Store the token only in the operating system credential store, such as macOS Keychain or Windows Credential Manager.
+Store the token only in the operating system credential store, such as macOS Keychain or Windows Credential Manager. Use `user.name` as the primary display name, fall back to `user.email`, and only fall back to `userId` if both are empty. Do not display a raw UUID as the normal username when `name` or `email` is available.
+
+### Automatic Browser Return
+
+The desktop app should not require the user to copy and paste the callback URL during normal login. Manual paste should remain available only as a fallback.
+
+Required behavior:
+
+1. The user clicks "Web sign in / Register" in the desktop app.
+2. The desktop app registers the `gitbookai://` custom URI scheme.
+3. The desktop app opens the authorize URL in the system browser.
+4. If the browser already has a valid website session, the website should immediately create a desktop auth code and show/trigger the `gitbookai://auth/callback?...` return page. It should not ask the user to sign in again.
+5. If the browser is not signed in, the website redirects to login, then returns to the authorize URL after successful login.
+6. The browser opens `gitbookai://auth/callback?...`; the operating system returns that URL to the desktop app.
+7. The desktop app verifies `state`, exchanges `code`, saves the desktop session, and updates the UI to show the signed-in user and cloud sync status.
+
+Platform notes:
+
+- **Windows:** register `gitbookai://` under the current user's URL protocol registry key. The command must pass the full callback URL to the running app or to a small helper process that writes the callback to the main app.
+- **macOS:** declare `gitbookai` in `CFBundleURLTypes`. A helper app or the main `.app` must handle the `kAEGetURL` Apple Event and read the URL from the direct object, then deliver it to the running desktop app.
+- **Packaged apps:** register the scheme in the packaged app's metadata (`Info.plist` on macOS, registry setup on Windows installer or first launch).
+- **Source/development runs:** a small helper app/process is acceptable, as long as it receives the callback and hands it to the running Python app.
+
+The desktop app must accept both raw and URL-encoded callback strings:
+
+```text
+gitbookai://auth/callback?code=abc&state=xyz
+gitbookai%3A%2F%2Fauth%2Fcallback%3Fcode%3Dabc%26state%3Dxyz
+```
+
+If automatic return fails, show a fallback button such as "Paste callback link". The user must paste the final `gitbookai://auth/callback?...` URL, not the HTTPS authorize page URL.
+
+### Remember Login For 30 Days
+
+The login screen should include a checked-by-default option similar to "Keep me signed in for 30 days".
+
+- When checked, keep the local desktop session for up to 30 days or until the server `expiresAt`, whichever expires first.
+- When unchecked, store only a short local session suitable for the current work session.
+- Always honor server revocation and refresh behavior. A local "remember me" flag must not override `session_revoked`, `device_replaced`, account disablement, or server token expiry.
+- The client should show a clear signed-in state after login, including the display name/email and cloud sync status.
 
 ## Developer Configuration
 
@@ -160,6 +204,17 @@ Desktop apps should use these fields:
 - `activeDeviceId`: the current desktop device id known by the server.
 
 Do not calculate entitlement validity from the local computer clock. Display `validUntil` and `remainingDays` from the server response, and re-check status when the app starts, when opening settings, before enabling cloud sync, and after payment or license redemption flows.
+
+Recommended desktop display copy:
+
+- `allowed: true`, `validUntil` present: `Cloud sync: valid until 2026-05-31 (23 days remaining)`.
+- `allowed: true`, `validUntil: null`: `Cloud sync: active`.
+- `reason: trial_code_required` or `support_required`: `Cloud sync: not activated`.
+- `reason: expired` or `trial_expired`: `Cloud sync: expired`.
+- `reason: revoked`: `Cloud sync: revoked`.
+- `reason: not_authenticated` or `session_revoked`: clear the desktop session and show sign-in again.
+
+The account header or settings page should show this status near the signed-in user identity. This lets the user distinguish "signed in successfully" from "cloud sync is available".
 
 ## Entitlement Check
 
@@ -320,12 +375,32 @@ The desktop app should handle these codes:
 - `account_disabled`: account is disabled; keep cloud sync off and show account support UI.
 - `internal_error`: temporary server failure; keep the last local switch state only for a short grace window.
 
+## Acceptance Tests For Desktop Vendors
+
+The updated desktop software should pass these tests before release:
+
+1. **macOS automatic return:** click web sign-in, complete browser login, approve opening the desktop app/helper, and verify the desktop app logs in without manual paste.
+2. **Windows automatic return:** click web sign-in, complete browser login, and verify the registered `gitbookai://` protocol returns to the desktop app without manual paste.
+3. **Existing browser session:** sign in to the website in the default browser first, then start desktop web sign-in. The browser should not ask for credentials again; it should authorize and return to the desktop app.
+4. **State protection:** start one login attempt, then paste or receive a callback with a different `state`. The app must reject it and ask the user to retry login.
+5. **Encoded callback:** verify the app accepts both raw `gitbookai://auth/callback?...` and URL-encoded callback text in the fallback paste flow.
+6. **User display:** after login, the desktop app should show `user.name` or `user.email`, not the raw `userId`, when those fields are present.
+7. **30-day login:** with "keep me signed in for 30 days" checked, restart the app and confirm it remains signed in while the server session is valid.
+8. **No remember login:** with the option unchecked, verify the app does not create a long-lived local login.
+9. **Cloud sync status:** after login, call `GET /api/license/status?feature=cloud_sync` and display `validUntil` / `remainingDays` or a clear unavailable reason such as `trial_code_required`.
+10. **Cloud sync activation:** sign in on device B while device A owns cloud sync. Device B login must succeed, but cloud sync activation must fail with `active_on_another_device` or `cooldown_waiting` as appropriate.
+
 ## Desktop App Requirements
 
 - Register the custom URI scheme used by the website callback.
+- Make browser login return automatically to the app on Windows and macOS. Do not require manual callback paste in the normal path.
 - Generate a high-entropy `state` per login attempt and verify it on callback.
+- Accept both raw and URL-encoded `gitbookai://auth/callback?...` callback strings.
+- Include a checked-by-default "keep me signed in for 30 days" option on the login screen.
+- After sign-in, show the user's display name or email. Do not show a raw UUID unless the server did not provide name or email.
 - Store the desktop token in system secure storage.
 - Check entitlement when the app starts, when opening settings, before enabling cloud sync, and again according to `check_after`.
+- Display cloud sync validity using server-provided `validUntil` and `remainingDays`.
 - Call the cloud sync activation endpoint before changing the local switch to on.
 - Send heartbeat while cloud sync is on.
 - Call the release endpoint when the user turns cloud sync off or disconnects the account.
@@ -337,6 +412,8 @@ The desktop app should handle these codes:
 
 - Desktop auth codes are single-use and expire quickly.
 - The auth code exchange verifies `state`.
+- The desktop auth exchange response should include `user.id`, `user.email`, and `user.name` when available so the desktop app can display a friendly signed-in user.
+- If the browser already has a valid website session, `/[locale]/desktop/authorize` should create the desktop auth code directly and return `gitbookai://auth/callback?...`; it should not force the user through login again.
 - One user can have multiple active desktop sessions, but only one active cloud sync lease.
 - A new device cannot enable cloud sync while another device has an active lease.
 - When a device releases cloud sync, or a heartbeat expires and the server marks the lease released, a configurable cooldown starts. The default is 180 minutes.
