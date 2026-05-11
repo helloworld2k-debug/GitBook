@@ -739,6 +739,7 @@
       "publish": "게시",
       "unpublish": "게시 해제",
       "empty": "뉴스 글이 없습니다.",
+      "loadFailed": "뉴스 글을 불러올 수 없습니다. 새 글은 계속 만들 수 있습니다.",
       "aiGenerated": "AI-created"
     }
   },

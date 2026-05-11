@@ -30,6 +30,24 @@ type AdminNewsArticle = {
   updated_at: string;
 };
 
+async function getAdminNewsArticles() {
+  try {
+    const { data: articles, error } = await (await createSupabaseServerClient())
+      .from("news_articles")
+      .select("id,slug,title,summary,body,cover_image_path,image_alt,topic,is_ai_generated,published_at,created_at,updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      return { articles: [] as AdminNewsArticle[], loadError: true };
+    }
+
+    return { articles: (articles ?? []) as AdminNewsArticle[], loadError: false };
+  } catch {
+    return { articles: [] as AdminNewsArticle[], loadError: true };
+  }
+}
+
 function TextInput({
   label,
   maxLength,
@@ -94,17 +112,7 @@ export default async function AdminNewsPage({ params, searchParams }: AdminNewsP
   const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/news`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, "/admin/news");
-  const { data: articles, error } = await (await createSupabaseServerClient())
-    .from("news_articles")
-    .select("id,slug,title,summary,body,cover_image_path,image_alt,topic,is_ai_generated,published_at,created_at,updated_at")
-    .order("updated_at", { ascending: false })
-    .limit(100);
-
-  if (error) {
-    throw error;
-  }
-
-  const newsArticles = (articles ?? []) as AdminNewsArticle[];
+  const { articles: newsArticles, loadError } = await getAdminNewsArticles();
 
   return (
     <AdminShell {...shellProps}>
@@ -117,6 +125,11 @@ export default async function AdminNewsPage({ params, searchParams }: AdminNewsP
           title={t("news.title")}
         />
         <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
+        {loadError ? (
+          <div className="mb-5 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {t("news.loadFailed")}
+          </div>
+        ) : null}
 
         <AdminCard className="p-5">
           <h2 className="text-base font-semibold text-slate-950">{t("news.createTitle")}</h2>

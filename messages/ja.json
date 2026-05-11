@@ -739,6 +739,7 @@
       "publish": "公開",
       "unpublish": "非公開",
       "empty": "ニュース記事はまだありません。",
+      "loadFailed": "ニュース記事を読み込めませんでした。新しい記事は引き続き作成できます。",
       "aiGenerated": "AI-created"
     }
   },

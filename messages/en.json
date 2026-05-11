@@ -369,6 +369,7 @@
       "publish": "Publish",
       "unpublish": "Unpublish",
       "empty": "No news articles found.",
+      "loadFailed": "News articles could not be loaded. You can still create a new article.",
       "aiGenerated": "AI-created"
     },
     "supportFeedback": {

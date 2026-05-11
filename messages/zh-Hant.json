@@ -739,6 +739,7 @@
       "publish": "發布",
       "unpublish": "下架",
       "empty": "尚無新聞文章。",
+      "loadFailed": "無法載入新聞文章。你仍可建立新文章。",
       "aiGenerated": "AI-created"
     }
   },
