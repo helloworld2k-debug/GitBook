@@ -94,16 +94,25 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
     return NextResponse.redirect(new URL(`/${locale}/desktop/login?next=${encodeURIComponent(next)}`, request.url));
   }
 
-  const adminClient = createSupabaseAdminClient();
-  const { code } = await createDesktopAuthCode(adminClient, {
-    userId: user.id,
-    deviceSessionId,
-    returnUrl,
-    state,
-  });
-  const callback = new URL(returnUrl);
-  callback.searchParams.set("code", code);
-  callback.searchParams.set("state", state);
+  try {
+    const adminClient = createSupabaseAdminClient();
+    const { code } = await createDesktopAuthCode(adminClient, {
+      userId: user.id,
+      deviceSessionId,
+      returnUrl,
+      state,
+    });
+    const callback = new URL(returnUrl);
+    callback.searchParams.set("code", code);
+    callback.searchParams.set("state", state);
 
-  return desktopCallbackResponse(callback.toString());
+    return desktopCallbackResponse(callback.toString());
+  } catch (error) {
+    console.error("Unable to create desktop auth code", error);
+    const loginUrl = new URL(`/${locale}/desktop/login`, request.url);
+    loginUrl.searchParams.set("next", next);
+    loginUrl.searchParams.set("error", "desktop_authorize_failed");
+
+    return NextResponse.redirect(loginUrl);
+  }
 }

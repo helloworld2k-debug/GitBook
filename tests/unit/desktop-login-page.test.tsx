@@ -48,6 +48,20 @@ describe("DesktopLoginPage", () => {
       "https://gitbookai.example/auth/callback?next=%2Fja%2Fdesktop%2Fauthorize",
     );
   });
+
+  it("shows an authorization error instead of leaving users on a browser 500 page", async () => {
+    const page = await DesktopLoginPage({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({
+        error: "desktop_authorize_failed",
+        next: "/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123",
+      }),
+    });
+
+    render(page);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Desktop authorization could not be prepared. Please sign in again.");
+  });
 });
 
 describe("sanitizeDesktopAuthorizeNextPath", () => {

@@ -6,6 +6,7 @@ type DesktopLoginPageProps = {
     locale: string;
   }>;
   searchParams: Promise<{
+    error?: string;
     next?: string | string[];
   }>;
 };
@@ -52,6 +53,7 @@ export default async function DesktopLoginPage({ params, searchParams }: Desktop
   const locale = resolvePageLocale(localeParam);
   const query = await searchParams;
   const nextPath = sanitizeDesktopAuthorizeNextPath(query.next, locale);
+  const hasAuthorizeError = query.error === "desktop_authorize_failed";
 
   return (
     <main className="tech-shell flex-1">
@@ -64,6 +66,11 @@ export default async function DesktopLoginPage({ params, searchParams }: Desktop
           <p className="mt-4 text-base leading-7 text-slate-300">
             After sign-in, this browser will return to the GitBook AI desktop app.
           </p>
+          {hasAuthorizeError ? (
+            <p className="mt-4 rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">
+              Desktop authorization could not be prepared. Please sign in again.
+            </p>
+          ) : null}
           <div className="mt-6">
             <DesktopLoginForm callbackUrl={getCallbackUrl(nextPath)} nextPath={nextPath} />
           </div>
