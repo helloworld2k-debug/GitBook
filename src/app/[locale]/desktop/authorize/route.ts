@@ -91,7 +91,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.redirect(new URL(`/${locale}/login?next=${encodeURIComponent(next)}`, request.url));
+    return NextResponse.redirect(new URL(`/${locale}/desktop/login?next=${encodeURIComponent(next)}`, request.url));
   }
 
   const adminClient = createSupabaseAdminClient();
