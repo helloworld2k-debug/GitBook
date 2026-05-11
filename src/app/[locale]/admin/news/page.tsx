@@ -7,7 +7,7 @@ import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createNewsArticle, publishNewsArticle, unpublishNewsArticle, updateNewsArticle } from "../actions";
 
 type AdminNewsPageProps = {
@@ -32,7 +32,7 @@ type AdminNewsArticle = {
 
 async function getAdminNewsArticles() {
   try {
-    const { data: articles, error } = await (await createSupabaseServerClient())
+    const { data: articles, error } = await createSupabaseAdminClient()
       .from("news_articles")
       .select("id,slug,title,summary,body,cover_image_path,image_alt,topic,is_ai_generated,published_at,created_at,updated_at")
       .order("updated_at", { ascending: false })

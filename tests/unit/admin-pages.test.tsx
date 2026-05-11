@@ -235,6 +235,7 @@ const testMessages = {
         unpublish: "Unpublish",
         empty: "No news articles found.",
         aiGenerated: "AI-created",
+        loadFailed: "News articles could not be loaded. You can still create a new article.",
       },
       supportFeedback: {
         eyebrow: "Admin",
@@ -977,7 +978,7 @@ describe("admin pages", () => {
       },
     ]);
 
-    createSupabaseServerClientMock.mockResolvedValue({
+    createSupabaseAdminClientMock.mockReturnValue({
       from: (table: string) => {
         if (table !== "news_articles") {
           throw new Error(`Unexpected table: ${table}`);

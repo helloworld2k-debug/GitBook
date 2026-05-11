@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import AdminNewsPage from "@/app/[locale]/admin/news/page";
 
 const mocks = vi.hoisted(() => ({
+  createSupabaseAdminClient: vi.fn(),
   createSupabaseServerClient: vi.fn(),
   requireAdmin: vi.fn(),
 }));
@@ -82,7 +83,70 @@ vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: mocks.createSupabaseServerClient,
 }));
 
+vi.mock("@/lib/supabase/admin", () => ({
+  createSupabaseAdminClient: mocks.createSupabaseAdminClient,
+}));
+
 describe("AdminNewsPage", () => {
+  it("loads editable news articles through the admin client after admin access is verified", async () => {
+    mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
+    mocks.createSupabaseServerClient.mockResolvedValue({
+      auth: {
+        getUser: async () => ({ data: { user: { id: "admin-1", email: "admin@example.com" } } }),
+      },
+      from: (table: string) => {
+        if (table === "support_feedback") {
+          return { select: () => ({ order: () => ({ limit: async () => ({ data: [], error: null }) }) }) };
+        }
+
+        if (table === "profiles") {
+          return { select: () => ({ eq: () => ({ single: async () => ({ data: { display_name: "Admin", email: "admin@example.com" }, error: null }) }) }) };
+        }
+
+        throw new Error(`Unexpected server table: ${table}`);
+      },
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({
+      from: (table: string) => {
+        if (table !== "news_articles") {
+          throw new Error(`Unexpected admin table: ${table}`);
+        }
+
+        return {
+          select: () => ({
+            order: () => ({
+              limit: async () => ({
+                data: [
+                  {
+                    body: "Editable body",
+                    cover_image_path: "/news/editable.webp",
+                    created_at: "2026-05-01T10:00:00.000Z",
+                    id: "news-1",
+                    image_alt: "Editable image",
+                    is_ai_generated: true,
+                    published_at: null,
+                    slug: "editable-ai-news",
+                    summary: "Editable summary",
+                    title: "Editable AI News",
+                    topic: "AI",
+                    updated_at: "2026-05-01T10:00:00.000Z",
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          }),
+        };
+      },
+    });
+
+    render(await AdminNewsPage({ params: Promise.resolve({ locale: "en" }), searchParams: Promise.resolve({}) }));
+
+    expect(mocks.createSupabaseAdminClient).toHaveBeenCalled();
+    expect(screen.getByDisplayValue("editable-ai-news")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Editable body")).toBeInTheDocument();
+  });
+
   it("opens the news admin page even when news articles cannot be loaded", async () => {
     mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
     mocks.createSupabaseServerClient.mockResolvedValue({
@@ -106,6 +170,21 @@ describe("AdminNewsPage", () => {
 
         if (table === "profiles") {
           return { select: () => ({ eq: () => ({ single: async () => ({ data: { display_name: "Admin", email: "admin@example.com" }, error: null }) }) }) };
+        }
+
+        throw new Error(`Unexpected table: ${table}`);
+      },
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({
+      from: (table: string) => {
+        if (table === "news_articles") {
+          return {
+            select: () => ({
+              order: () => ({
+                limit: async () => ({ data: null, error: new Error("relation news_articles does not exist") }),
+              }),
+            }),
+          };
         }
 
         throw new Error(`Unexpected table: ${table}`);
