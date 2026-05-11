@@ -13,10 +13,10 @@ export async function SiteFooter() {
           © {year} {siteConfig.name}. {footer("copyright")}
         </p>
         <nav aria-label="Policies" className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-slate-300">
-          <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/en/policies/terms">
+          <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/policies/terms">
             Terms
           </Link>
-          <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/en/policies/privacy">
+          <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/policies/privacy">
             Privacy
           </Link>
         </nav>

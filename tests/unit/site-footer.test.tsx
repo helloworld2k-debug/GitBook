@@ -33,8 +33,8 @@ describe("SiteFooter", () => {
     expect(screen.getByRole("contentinfo")).toHaveTextContent("GitBook AI");
     expect(screen.getByRole("contentinfo")).toHaveTextContent("Independent software support site.");
     expect(screen.queryByText(/^AI$/)).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/en/policies/terms");
-    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/en/policies/privacy");
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/policies/terms");
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/policies/privacy");
     expect(screen.queryByRole("link", { name: "Refund Policy" })).not.toBeInTheDocument();
     expect(screen.queryByText("AI coding knowledge, downloads, and support in one place.")).not.toBeInTheDocument();
     expect(screen.queryByText("Secure downloads and account support")).not.toBeInTheDocument();
