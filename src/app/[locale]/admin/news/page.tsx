@@ -193,13 +193,19 @@ export default async function AdminNewsPage({ params, searchParams }: AdminNewsP
                       <input name="locale" type="hidden" value={locale} />
                       <input name="return_to" type="hidden" value="/admin/news" />
                       <input name="article_id" type="hidden" value={article.id} />
-                      <ConfirmActionButton
-                        className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700"
-                        confirmLabel={article.published_at ? t("news.unpublish") : t("news.publish")}
-                        pendingLabel={t("common.processing")}
-                      >
-                        {article.published_at ? t("news.unpublish") : t("news.publish")}
-                      </ConfirmActionButton>
+                      {article.published_at ? (
+                        <ConfirmActionButton
+                          className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700"
+                          confirmLabel={t("news.unpublish")}
+                          pendingLabel={t("common.processing")}
+                        >
+                          {t("news.unpublish")}
+                        </ConfirmActionButton>
+                      ) : (
+                        <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={t("common.processing")}>
+                          {t("news.publish")}
+                        </AdminSubmitButton>
+                      )}
                     </form>
                   </div>
                 </div>

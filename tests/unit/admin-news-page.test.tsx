@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import AdminNewsPage from "@/app/[locale]/admin/news/page";
 
@@ -145,6 +145,81 @@ describe("AdminNewsPage", () => {
     expect(mocks.createSupabaseAdminClient).toHaveBeenCalled();
     expect(screen.getByDisplayValue("editable-ai-news")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Editable body")).toBeInTheDocument();
+  });
+
+  it("publishes draft news articles with one click while keeping unpublish confirmation", async () => {
+    mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
+    mocks.createSupabaseServerClient.mockResolvedValue({
+      auth: {
+        getUser: async () => ({ data: { user: { id: "admin-1", email: "admin@example.com" } } }),
+      },
+      from: (table: string) => {
+        if (table === "support_feedback") {
+          return { select: () => ({ order: () => ({ limit: async () => ({ data: [], error: null }) }) }) };
+        }
+
+        if (table === "profiles") {
+          return { select: () => ({ eq: () => ({ single: async () => ({ data: { display_name: "Admin", email: "admin@example.com" }, error: null }) }) }) };
+        }
+
+        throw new Error(`Unexpected server table: ${table}`);
+      },
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({
+      from: (table: string) => {
+        if (table !== "news_articles") {
+          throw new Error(`Unexpected admin table: ${table}`);
+        }
+
+        return {
+          select: () => ({
+            order: () => ({
+              limit: async () => ({
+                data: [
+                  {
+                    body: "Published body",
+                    cover_image_path: "/news/published.webp",
+                    created_at: "2026-05-01T10:00:00.000Z",
+                    id: "news-published",
+                    image_alt: "Published image",
+                    is_ai_generated: true,
+                    published_at: "2026-05-01T10:00:00.000Z",
+                    slug: "published-news",
+                    summary: "Published summary",
+                    title: "Published News",
+                    topic: "AI",
+                    updated_at: "2026-05-01T10:00:00.000Z",
+                  },
+                  {
+                    body: "Draft body",
+                    cover_image_path: "/news/draft.webp",
+                    created_at: "2026-05-01T10:00:00.000Z",
+                    id: "news-draft",
+                    image_alt: "Draft image",
+                    is_ai_generated: true,
+                    published_at: null,
+                    slug: "draft-news",
+                    summary: "Draft summary",
+                    title: "Draft News",
+                    topic: "AI",
+                    updated_at: "2026-05-01T10:00:00.000Z",
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          }),
+        };
+      },
+    });
+
+    render(await AdminNewsPage({ params: Promise.resolve({ locale: "en" }), searchParams: Promise.resolve({}) }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Publish" }));
+    expect(screen.queryByText("Click again to confirm this action.")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Unpublish" }));
+    expect(screen.getByText("Click again to confirm this action.")).toBeInTheDocument();
   });
 
   it("opens the news admin page even when news articles cannot be loaded", async () => {
