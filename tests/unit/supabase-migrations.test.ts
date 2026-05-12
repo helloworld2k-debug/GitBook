@@ -74,4 +74,14 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("vision-foundation-models-enter-the-field");
     expect(migration).toContain("scientific-imaging-discovers-hidden-patterns");
   });
+
+  it("adds admin-managed registration blocks for signup abuse response", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0029_registration_security_blocks.sql"), "utf8");
+
+    expect(migration).toContain("create table public.registration_blocks");
+    expect(migration).toContain("scope text not null check (scope in ('ip', 'email', 'domain'))");
+    expect(migration).toContain("blocked_until timestamptz not null");
+    expect(migration).toContain("registration_blocks_scope_idx");
+    expect(migration).toContain("registration_blocks_admin_all");
+  });
 });

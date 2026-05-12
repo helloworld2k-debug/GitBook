@@ -25,6 +25,7 @@ vi.mock("next-intl/server", () => ({
       news: "News",
       notifications: "Notifications",
       policies: "Policy pages",
+      registrationSecurity: "Registration security",
       releases: "Releases",
       returnToSite: "Return to site",
       signOut: "Sign out",
@@ -84,6 +85,7 @@ describe("getAdminShellProps", () => {
     expect(feedbackQuery.select).toHaveBeenCalledWith("id,created_at,support_feedback_admin_reads(admin_user_id,read_at),support_feedback_messages(author_role,created_at)");
     expect(props.unreadFeedbackCount).toBe(1);
     expect(props.labels.news).toBe("News");
+    expect(props.labels.registrationSecurity).toBe("Registration security");
     expect(props.labels.supportFeedbackUnread(1)).toBe("1 unread feedback threads");
   });
 });

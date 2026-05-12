@@ -33,7 +33,7 @@
     "signingUp": "建立帳戶中...",
     "humanVerificationError": "請先完成人類驗證後再試一次。",
     "humanVerificationLabel": "人類驗證",
-    "registrationSuccess": "如果這是新帳戶，請查看電子郵件並完成驗證；如果此信箱已註冊，請直接登入或重設密碼。",
+    "registrationSuccess": "如果這是新帳戶，請查看電子郵件並完成驗證；若沒有看到郵件，請檢查垃圾郵件或稍後再試。如果此信箱已註冊，請直接登入或重設密碼。",
     "registrationRateLimited": "註冊嘗試過於頻繁，請稍後再試。",
     "signInError": "無法登入。請檢查電子郵件與密碼。",
     "signUpError": "無法建立帳戶。請檢查電子郵件與密碼。",
@@ -248,7 +248,9 @@
       "policyPagesTitle": "Policy pages",
       "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer.",
       "newsTitle": "新聞",
-      "newsDescription": "建立、編輯、發布與下架 AI 生成新聞文章。"
+      "newsDescription": "建立、編輯、發布與下架 AI 生成新聞文章。",
+      "registrationSecurityTitle": "註冊安全",
+      "registrationSecurityDescription": "檢視註冊濫用訊號，在垃圾帳號造成壓力前封鎖可疑來源。"
     },
     "donations": {
       "eyebrow": "管理後台",
@@ -684,7 +686,8 @@
       "contributionPricing": "支持價格設定",
       "supportFeedbackUnread": "有 {count} 則未讀回饋",
       "policies": "Policy pages",
-      "news": "新聞"
+      "news": "新聞",
+      "registrationSecurity": "註冊安全"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
@@ -741,6 +744,30 @@
       "empty": "尚無新聞文章。",
       "loadFailed": "無法載入新聞文章。你仍可建立新文章。",
       "aiGenerated": "AI-created"
+    },
+    "registrationSecurity": {
+      "activeBlocks": "啟用中的封鎖",
+      "block": "封鎖",
+      "blockedUntil": "封鎖至",
+      "createBlock": "建立封鎖",
+      "description": "檢視註冊濫用模式、近期嘗試，並臨時封鎖可疑 IP、信箱或網域。",
+      "domain": "網域",
+      "domainSummary": "網域統計",
+      "email": "電子郵件",
+      "emptyBlocks": "目前沒有啟用中的封鎖。",
+      "emptyAttempts": "尚無註冊嘗試。",
+      "ip": "IP",
+      "ipSummary": "IP 統計",
+      "lastSeen": "最後出現",
+      "recentAttempts": "近期註冊嘗試",
+      "reason": "原因",
+      "revoke": "撤銷",
+      "scope": "範圍",
+      "scopeValue": "值",
+      "title": "註冊安全",
+      "totalAttempts": "嘗試次數",
+      "uniqueEmails": "不同信箱數",
+      "userAgent": "User-Agent"
     }
   },
   "certificate": {

@@ -33,7 +33,7 @@
     "signingUp": "Creating account...",
     "humanVerificationError": "Verify that you are human and try again.",
     "humanVerificationLabel": "Human verification",
-    "registrationSuccess": "If this is a new account, check your email to verify it. If this email is already registered, sign in or reset your password.",
+    "registrationSuccess": "If this is a new account, check your email to verify it. If you do not see the message, check spam or try again later. If this email is already registered, sign in or reset your password.",
     "registrationRateLimited": "Too many registration attempts. Please try again later.",
     "signInError": "Could not sign in. Check your email and password.",
     "signUpError": "Could not create the account. Check your email and password.",
@@ -260,7 +260,9 @@
       "recentContributionsMetric": "Recent contributions",
       "description": "Manage contributions, certificates, releases, licenses, users, and audit activity.",
       "contributionPricingTitle": "Contribution pricing",
-      "contributionPricingDescription": "Manage Contributions page prices, discounts, and support tier copy."
+      "contributionPricingDescription": "Manage Contributions page prices, discounts, and support tier copy.",
+      "registrationSecurityTitle": "Registration security",
+      "registrationSecurityDescription": "Review signup abuse patterns and block risky sources before they create load."
     },
     "releases": {
       "eyebrow": "Admin",
@@ -735,7 +737,8 @@
       "returnToSite": "Return to site",
       "users": "Users",
       "contributionPricing": "Contribution pricing",
-      "supportFeedbackUnread": "You have {count} unread feedback threads"
+      "supportFeedbackUnread": "You have {count} unread feedback threads",
+      "registrationSecurity": "Registration security"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
@@ -753,6 +756,30 @@
       "tierStatusHelp": "Inactive tiers are hidden from the Contributions page.",
       "save": "Save tier",
       "tierSaved": "Tier saved"
+    },
+    "registrationSecurity": {
+      "activeBlocks": "Active blocks",
+      "block": "Block",
+      "blockedUntil": "Blocked until",
+      "createBlock": "Create block",
+      "description": "Review signup abuse patterns, inspect recent attempts, and temporarily block risky IPs, emails, or domains.",
+      "domain": "Domain",
+      "domainSummary": "Domain summary",
+      "email": "Email",
+      "emptyBlocks": "No active blocks.",
+      "emptyAttempts": "No registration attempts yet.",
+      "ip": "IP",
+      "ipSummary": "IP summary",
+      "lastSeen": "Last seen",
+      "recentAttempts": "Recent attempts",
+      "reason": "Reason",
+      "revoke": "Revoke",
+      "scope": "Scope",
+      "scopeValue": "Value",
+      "title": "Registration security",
+      "totalAttempts": "Attempts",
+      "uniqueEmails": "Unique emails",
+      "userAgent": "User agent"
     }
   },
   "certificate": {

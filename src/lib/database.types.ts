@@ -559,6 +559,60 @@ export type Database = {
         };
         Relationships: [];
       };
+      registration_blocks: {
+        Row: {
+          id: string;
+          scope: "ip" | "email" | "domain";
+          scope_value: string;
+          reason: string;
+          blocked_until: string;
+          created_at: string;
+          created_by: string | null;
+          revoked_at: string | null;
+          revoked_by: string | null;
+          revoked_reason: string | null;
+        };
+        Insert: {
+          id?: string;
+          scope: "ip" | "email" | "domain";
+          scope_value: string;
+          reason: string;
+          blocked_until: string;
+          created_at?: string;
+          created_by?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          revoked_reason?: string | null;
+        };
+        Update: {
+          id?: string;
+          scope?: "ip" | "email" | "domain";
+          scope_value?: string;
+          reason?: string;
+          blocked_until?: string;
+          created_at?: string;
+          created_by?: string | null;
+          revoked_at?: string | null;
+          revoked_by?: string | null;
+          revoked_reason?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "registration_blocks_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "registration_blocks_revoked_by_fkey";
+            columns: ["revoked_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       trial_codes: {
         Row: {
           id: string;

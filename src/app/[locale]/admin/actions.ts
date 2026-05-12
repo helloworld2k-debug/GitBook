@@ -7,3 +7,4 @@ export * from "./actions/support";
 export * from "./actions/releases";
 export * from "./actions/licenses";
 export * from "./actions/users";
+export * from "./actions/registration-security";

@@ -15,6 +15,7 @@ import {
   Package,
   ScrollText,
   Newspaper,
+  ShieldAlert,
   Users,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -37,6 +38,7 @@ type AdminShellLabels = {
   news: string;
   notifications: string;
   policies: string;
+  registrationSecurity: string;
   releases: string;
   returnToSite: string;
   signOut: string;
@@ -71,6 +73,7 @@ function getAdminItems(labels: AdminShellLabels) {
     { href: "/admin/support-settings", label: labels.supportSettings, icon: MessageSquareText },
     { href: "/admin/licenses", label: labels.licenses, icon: KeyRound },
     { href: "/admin/users", label: labels.users, icon: Users },
+    { href: "/admin/registration-security", label: labels.registrationSecurity, icon: ShieldAlert },
     { href: "/admin/audit-logs", label: labels.auditLogs, icon: ClipboardList },
   ];
 }
@@ -269,6 +272,10 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "policy-page-updated": "Policy page updated.",
   "policy-page-update-failed": "Unable to update policy page.",
   "profile-update-failed": "Unable to update user profile.",
+  "registration-block-created": "Registration block created.",
+  "registration-block-create-failed": "Unable to create registration block.",
+  "registration-block-revoked": "Registration block revoked.",
+  "registration-block-revoke-failed": "Unable to revoke registration block.",
   "release-created": "Release created.",
   "release-updated": "Release updated.",
   "role-updated": "User role updated.",

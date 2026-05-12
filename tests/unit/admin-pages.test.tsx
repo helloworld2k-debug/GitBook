@@ -135,6 +135,8 @@ const testMessages = {
         licensesDescription: "Create trial codes, review entitlements, and revoke desktop cloud sync access.",
         usersTitle: "Users",
         usersDescription: "Review account roles, statuses, trial bindings, and desktop devices.",
+        registrationSecurityTitle: "Registration security",
+        registrationSecurityDescription: "Review signup abuse patterns and block risky sources.",
         auditLogsTitle: "Audit logs",
         auditLogsDescription: "Review admin corrections, revocations, and reasons.",
         metricsTitle: "Operations overview",
@@ -496,6 +498,7 @@ const testMessages = {
         news: "News",
         notifications: "Notifications",
         policies: "Policy pages",
+        registrationSecurity: "Registration security",
         releases: "Releases",
         returnToSite: "Return to site",
         signOut: "Sign out",
@@ -537,6 +540,8 @@ const testMessages = {
         licensesDescription: "建立試用兌換碼、檢視權益，並撤銷桌面雲端同步存取。",
         usersTitle: "使用者",
         usersDescription: "檢視帳號角色、狀態、試用綁定與桌面裝置。",
+        registrationSecurityTitle: "註冊安全",
+        registrationSecurityDescription: "檢視註冊濫用訊號並封鎖可疑來源。",
         auditLogsTitle: "稽核紀錄",
         auditLogsDescription: "檢視管理員修正、撤銷與原因。",
         metricsTitle: "營運概覽",
@@ -624,6 +629,7 @@ const testMessages = {
         news: "新聞",
         notifications: "通知",
         policies: "Policy pages",
+        registrationSecurity: "註冊安全",
         releases: "版本發布",
         returnToSite: "返回網站",
         signOut: "登出",
@@ -665,6 +671,8 @@ const testMessages = {
         licensesDescription: "試用コード、権限、デスクトップのクラウド同期アクセスを管理します。",
         usersTitle: "ユーザー",
         usersDescription: "アカウント権限、状態、トライアル紐付け、デスクトップ端末を確認します。",
+        registrationSecurityTitle: "登録セキュリティ",
+        registrationSecurityDescription: "登録の不正利用シグナルを確認し、不審な送信元をブロックします。",
         auditLogsTitle: "監査ログ",
         auditLogsDescription: "管理者の修正、取り消し、理由を確認します。",
         metricsTitle: "運用概要",
@@ -752,6 +760,7 @@ const testMessages = {
         news: "ニュース",
         notifications: "通知",
         policies: "Policy pages",
+        registrationSecurity: "登録セキュリティ",
         releases: "リリース",
         returnToSite: "サイトへ戻る",
         signOut: "サインアウト",
@@ -793,6 +802,8 @@ const testMessages = {
         licensesDescription: "체험 코드, 권한, 데스크톱 클라우드 동기화 접속을 관리합니다.",
         usersTitle: "사용자",
         usersDescription: "계정 역할, 상태, 체험 연결, 데스크톱 기기를 확인합니다.",
+        registrationSecurityTitle: "등록 보안",
+        registrationSecurityDescription: "가입 남용 신호를 확인하고 의심스러운 출처를 차단합니다.",
         auditLogsTitle: "감사 로그",
         auditLogsDescription: "관리자 수정, 폐기, 사유를 확인합니다.",
         metricsTitle: "운영 개요",
@@ -880,6 +891,7 @@ const testMessages = {
         news: "뉴스",
         notifications: "알림",
         policies: "Policy pages",
+        registrationSecurity: "등록 보안",
         releases: "릴리스",
         returnToSite: "사이트로 돌아가기",
         signOut: "로그아웃",
@@ -930,6 +942,7 @@ describe("admin pages", () => {
     expect(screen.getAllByRole("link", { name: /certificates/i }).some((link) => link.getAttribute("href") === "/admin/certificates")).toBe(true);
     expect(screen.getAllByRole("link", { name: /releases/i }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
     expect(screen.getAllByRole("link", { name: /news/i }).some((link) => link.getAttribute("href") === "/admin/news")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /registration security/i }).some((link) => link.getAttribute("href") === "/admin/registration-security")).toBe(true);
     expect(screen.getAllByRole("link", { name: /audit logs/i }).some((link) => link.getAttribute("href") === "/admin/audit-logs")).toBe(true);
     expect(createSupabaseServerClientMock).toHaveBeenCalled();
     expect(createSupabaseAdminClientMock).toHaveBeenCalled();

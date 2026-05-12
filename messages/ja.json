@@ -33,7 +33,7 @@
     "signingUp": "アカウント作成中...",
     "humanVerificationError": "人間による確認を完了してから、もう一度お試しください。",
     "humanVerificationLabel": "人間確認",
-    "registrationSuccess": "新しいアカウントの場合は、メールを確認して認証してください。このメールが登録済みの場合は、サインインするかパスワードをリセットしてください。",
+    "registrationSuccess": "新しいアカウントの場合は、メールを確認して認証してください。メールが見つからない場合は迷惑メールを確認するか、時間をおいて再試行してください。このメールが登録済みの場合は、サインインするかパスワードをリセットしてください。",
     "registrationRateLimited": "登録試行が多すぎます。しばらくしてからもう一度お試しください。",
     "signInError": "サインインできませんでした。メールとパスワードを確認してください。",
     "signUpError": "アカウントを作成できませんでした。メールとパスワードを確認してください。",
@@ -248,7 +248,9 @@
       "policyPagesTitle": "Policy pages",
       "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer.",
       "newsTitle": "ニュース",
-      "newsDescription": "AI 生成ニュース記事の作成、編集、公開、非公開を管理します。"
+      "newsDescription": "AI 生成ニュース記事の作成、編集、公開、非公開を管理します。",
+      "registrationSecurityTitle": "登録セキュリティ",
+      "registrationSecurityDescription": "登録の不正利用シグナルを確認し、負荷が広がる前に不審な送信元をブロックします。"
     },
     "donations": {
       "eyebrow": "管理画面",
@@ -684,7 +686,8 @@
       "contributionPricing": "応援価格設定",
       "supportFeedbackUnread": "{count} 件の未読フィードバックがあります",
       "policies": "Policy pages",
-      "news": "ニュース"
+      "news": "ニュース",
+      "registrationSecurity": "登録セキュリティ"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
@@ -741,6 +744,30 @@
       "empty": "ニュース記事はまだありません。",
       "loadFailed": "ニュース記事を読み込めませんでした。新しい記事は引き続き作成できます。",
       "aiGenerated": "AI-created"
+    },
+    "registrationSecurity": {
+      "activeBlocks": "有効なブロック",
+      "block": "ブロック",
+      "blockedUntil": "ブロック期限",
+      "createBlock": "ブロックを作成",
+      "description": "登録の不正利用パターン、最近の試行を確認し、不審な IP、メール、ドメインを一時的にブロックします。",
+      "domain": "ドメイン",
+      "domainSummary": "ドメイン集計",
+      "email": "メール",
+      "emptyBlocks": "有効なブロックはありません。",
+      "emptyAttempts": "登録試行はまだありません。",
+      "ip": "IP",
+      "ipSummary": "IP 集計",
+      "lastSeen": "最終確認",
+      "recentAttempts": "最近の登録試行",
+      "reason": "理由",
+      "revoke": "解除",
+      "scope": "範囲",
+      "scopeValue": "値",
+      "title": "登録セキュリティ",
+      "totalAttempts": "試行数",
+      "uniqueEmails": "一意のメール数",
+      "userAgent": "User-Agent"
     }
   },
   "certificate": {

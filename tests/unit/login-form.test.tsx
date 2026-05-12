@@ -37,7 +37,7 @@ const messages: LoginFormMessages = {
   },
   providersLabel: "Quick sign-in options",
   registerTab: "Register",
-  registrationSuccess: "If this is a new account, check your email to verify it. If this email is already registered, sign in or reset your password.",
+  registrationSuccess: "If this is a new account, check your email to verify it. If you do not see the message, check spam or try again later. If this email is already registered, sign in or reset your password.",
   registrationRateLimited: "Too many registration attempts. Please try again later.",
   signInSubmit: "Sign in with email",
   signInTab: "Sign in",
@@ -170,7 +170,7 @@ describe("LoginForm", () => {
         method: "POST",
       }));
     });
-    expect(await screen.findByRole("status")).toHaveTextContent("If this is a new account, check your email to verify it. If this email is already registered, sign in or reset your password.");
+    expect(await screen.findByRole("status")).toHaveTextContent("If this is a new account, check your email to verify it. If you do not see the message, check spam or try again later. If this email is already registered, sign in or reset your password.");
     expect(signUpMock).not.toHaveBeenCalled();
   });
 
@@ -194,7 +194,7 @@ describe("LoginForm", () => {
         method: "POST",
       }));
     });
-    expect(await screen.findByRole("status")).toHaveTextContent("If this is a new account, check your email to verify it. If this email is already registered, sign in or reset your password.");
+    expect(await screen.findByRole("status")).toHaveTextContent("If this is a new account, check your email to verify it. If you do not see the message, check spam or try again later. If this email is already registered, sign in or reset your password.");
   });
 
   it("does not register when passwords do not match", async () => {

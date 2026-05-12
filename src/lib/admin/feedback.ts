@@ -42,6 +42,10 @@ export type AdminFeedbackKey =
   | "policy-page-updated"
   | "policy-page-update-failed"
   | "profile-update-failed"
+  | "registration-block-created"
+  | "registration-block-create-failed"
+  | "registration-block-revoked"
+  | "registration-block-revoke-failed"
   | "release-created"
   | "release-updated"
   | "role-updated"
@@ -107,6 +111,10 @@ const adminFeedbackKeys = new Set<string>([
   "policy-page-updated",
   "policy-page-update-failed",
   "profile-update-failed",
+  "registration-block-created",
+  "registration-block-create-failed",
+  "registration-block-revoked",
+  "registration-block-revoke-failed",
   "release-created",
   "release-updated",
   "role-updated",
