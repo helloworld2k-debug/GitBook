@@ -559,6 +559,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      login_attempts: {
+        Row: {
+          id: string;
+          email_normalized: string;
+          email_domain: string;
+          ip_address: string | null;
+          result: "success" | "failure";
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email_normalized: string;
+          email_domain: string;
+          ip_address?: string | null;
+          result: "success" | "failure";
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email_normalized?: string;
+          email_domain?: string;
+          ip_address?: string | null;
+          result?: "success" | "failure";
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       registration_blocks: {
         Row: {
           id: string;

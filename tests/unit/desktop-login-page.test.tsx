@@ -3,10 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import DesktopLoginPage, { sanitizeDesktopAuthorizeNextPath } from "@/app/[locale]/desktop/login/page";
 
 vi.mock("@/app/[locale]/desktop/login/desktop-login-form", () => ({
-  DesktopLoginForm: ({ callbackUrl, nextPath }: { callbackUrl: string; nextPath: string }) => (
+  DesktopLoginForm: ({ callbackUrl, nextPath, turnstileSiteKey }: { callbackUrl: string; nextPath: string; turnstileSiteKey?: string }) => (
     <div data-testid="desktop-login-form">
       <span data-testid="desktop-login-callback">{callbackUrl}</span>
       <span data-testid="desktop-login-next">{nextPath}</span>
+      <span data-testid="desktop-login-turnstile">{turnstileSiteKey}</span>
     </div>
   ),
 }));
@@ -18,6 +19,7 @@ vi.mock("next-intl/server", () => ({
 describe("DesktopLoginPage", () => {
   it("passes a safe desktop authorize next path to the login form", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = "turnstile_site_key";
     const nextPath = "/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123";
     const page = await DesktopLoginPage({
       params: Promise.resolve({ locale: "en" }),
@@ -32,6 +34,7 @@ describe("DesktopLoginPage", () => {
     expect(screen.getByTestId("desktop-login-callback")).toHaveTextContent(
       "https://gitbookai.example/auth/callback?next=%2Fen%2Fdesktop%2Fauthorize%3Fdevice_session_id%3Dsession-1%26return_url%3Dgitbookai%253A%252F%252Fauth%252Fcallback%26state%3Dstate-123",
     );
+    expect(screen.getByTestId("desktop-login-turnstile")).toHaveTextContent("turnstile_site_key");
   });
 
   it("falls back to a harmless desktop authorize path when next is not a desktop authorize path", async () => {

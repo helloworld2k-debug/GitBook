@@ -84,4 +84,15 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("registration_blocks_scope_idx");
     expect(migration).toContain("registration_blocks_admin_all");
   });
+
+  it("adds login attempt tracking for risk-triggered Turnstile", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0030_login_turnstile_risk.sql"), "utf8");
+
+    expect(migration).toContain("create table public.login_attempts");
+    expect(migration).toContain("result text not null check (result in ('success', 'failure'))");
+    expect(migration).toContain("login_attempts_email_result_idx");
+    expect(migration).toContain("login_attempts_ip_result_idx");
+    expect(migration).toContain("login_attempts_email_ip_result_idx");
+    expect(migration).toContain("login_attempts_admin_all");
+  });
 });

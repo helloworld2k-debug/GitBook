@@ -106,7 +106,7 @@ describe("LoginForm", () => {
     });
   });
 
-  it("signs in with email and password", async () => {
+  it("signs in with email and password through the server login route", async () => {
     renderLoginForm();
 
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "friend@example.com" } });
@@ -114,16 +114,24 @@ describe("LoginForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Sign in with email" }));
 
     await waitFor(() => {
-      expect(signInWithPasswordMock).toHaveBeenCalledWith({
-        email: "friend@example.com",
-        password: "correct-password",
-      });
+      expect(fetchMock).toHaveBeenCalledWith("/api/auth/login", expect.objectContaining({
+        body: JSON.stringify({
+          email: "friend@example.com",
+          password: "correct-password",
+        }),
+        method: "POST",
+      }));
     });
+    expect(signInWithPasswordMock).not.toHaveBeenCalled();
     expect(locationAssign).toHaveBeenCalledWith("/en/contributions");
   });
 
   it("shows an error when password sign-in fails", async () => {
-    signInWithPasswordMock.mockResolvedValueOnce({ error: new Error("invalid credentials") });
+    fetchMock.mockResolvedValueOnce({
+      json: async () => ({ error: "invalid_credentials" }),
+      ok: false,
+      status: 401,
+    });
     renderLoginForm();
 
     fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "friend@example.com" } });
@@ -134,8 +142,8 @@ describe("LoginForm", () => {
   });
 
   it("disables the password submit button while a sign-in request is pending", async () => {
-    let resolveSignIn: ((value: { error: null }) => void) | null = null;
-    signInWithPasswordMock.mockReturnValueOnce(
+    let resolveSignIn: ((value: { json: () => Promise<{ ok: true }>; ok: true; status: 200 }) => void) | null = null;
+    fetchMock.mockReturnValueOnce(
       new Promise((resolve) => {
         resolveSignIn = resolve;
       }),
@@ -149,9 +157,38 @@ describe("LoginForm", () => {
 
     expect(screen.getByRole("button", { name: "Signing in..." })).toBeDisabled();
 
-    resolveSignIn?.({ error: null });
+    resolveSignIn?.({ json: async () => ({ ok: true }), ok: true, status: 200 });
     await waitFor(() => {
       expect(locationAssign).toHaveBeenCalledWith("/en/contributions");
+    });
+  });
+
+  it("shows Turnstile after the server requires captcha for risky sign-in", async () => {
+    fetchMock.mockResolvedValueOnce({
+      json: async () => ({ error: "captcha_required" }),
+      ok: false,
+      status: 400,
+    });
+    renderLoginForm();
+
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "friend@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in with email" }));
+
+    expect(await screen.findByTestId("turnstile-placeholder")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Verify that you are human and try again.");
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign in with email" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenLastCalledWith("/api/auth/login", expect.objectContaining({
+        body: JSON.stringify({
+          email: "friend@example.com",
+          password: "wrong-password",
+          turnstileToken: "turnstile-token",
+        }),
+        method: "POST",
+      }));
     });
   });
 

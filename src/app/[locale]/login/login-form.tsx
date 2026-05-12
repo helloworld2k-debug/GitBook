@@ -102,12 +102,13 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [activeProvider, setActiveProvider] = useState<OAuthProvider | null>(null);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (mode !== "register" || !turnstileSiteKey || !turnstileRef.current) {
+    if ((mode !== "register" && !captchaRequired) || !turnstileSiteKey || !turnstileRef.current) {
       return;
     }
 
@@ -145,7 +146,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
       }
       setTurnstileToken(null);
     };
-  }, [mode, turnstileSiteKey]);
+  }, [captchaRequired, mode, turnstileSiteKey]);
 
   async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -155,14 +156,6 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
-    let supabase: ReturnType<typeof createSupabaseBrowserClient>;
-
-    try {
-      supabase = createSupabaseBrowserClient();
-    } catch {
-      setStatus("error");
-      return;
-    }
 
     if (mode === "register") {
       const confirmPassword = String(formData.get("confirm-password") ?? "");
@@ -206,12 +199,32 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    if (captchaRequired && turnstileSiteKey && !turnstileToken) {
+      setStatus("error");
+      return;
+    }
 
-    if (error) {
+    const response = await fetch("/api/auth/login", {
+      body: JSON.stringify({
+        email,
+        password,
+        ...(captchaRequired && turnstileSiteKey ? { turnstileToken } : {}),
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+    const result = await response.json() as { error?: string; ok?: boolean };
+
+    if (result.error === "captcha_required") {
+      setCaptchaRequired(true);
+      setTurnstileToken(null);
+      setStatus("error");
+      return;
+    }
+
+    if (!response.ok || !result.ok) {
       setStatus("error");
       return;
     }
@@ -277,11 +290,13 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
   const errorMessage =
     status === "password-mismatch"
       ? messages.passwordMismatch
-      : isRegistering && turnstileSiteKey && !turnstileToken
+      : captchaRequired && turnstileSiteKey
         ? messages.humanVerificationError
-        : isRegistering
-          ? messages.signUpError
-          : messages.signInError;
+        : isRegistering && turnstileSiteKey && !turnstileToken
+          ? messages.humanVerificationError
+          : isRegistering
+            ? messages.signUpError
+            : messages.signInError;
 
   return (
     <div className="glass-panel rounded-lg p-5 sm:p-6">
@@ -295,6 +310,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
                 className="min-h-10 rounded-md px-3 text-sm font-semibold text-slate-300 transition-colors aria-pressed:bg-cyan-300/15 aria-pressed:text-cyan-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
                 onClick={() => {
                   setMode("sign-in");
+                  setCaptchaRequired(false);
                   setStatus("idle");
                 }}
                 type="button"
@@ -306,6 +322,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
                 className="min-h-10 rounded-md px-3 text-sm font-semibold text-slate-300 transition-colors aria-pressed:bg-cyan-300/15 aria-pressed:text-cyan-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
                 onClick={() => {
                   setMode("register");
+                  setCaptchaRequired(false);
                   setStatus("idle");
                 }}
                 type="button"
@@ -358,7 +375,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
               ) : null}
             </>
           )}
-          {isRegistering && turnstileSiteKey ? (
+          {(isRegistering || captchaRequired) && turnstileSiteKey ? (
             <div className="mt-4 grid gap-2">
               <p className="text-sm font-medium text-slate-200">{messages.humanVerificationLabel}</p>
               <div

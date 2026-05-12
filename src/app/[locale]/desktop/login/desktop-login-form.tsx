@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type OAuthProvider = "google" | "github";
@@ -9,7 +9,17 @@ type FormStatus = "idle" | "submitting" | "error" | "oauth-error";
 type DesktopLoginFormProps = {
   callbackUrl: string;
   nextPath: string;
+  turnstileSiteKey?: string;
 };
+
+declare global {
+  interface Window {
+    turnstile?: {
+      remove: (widgetId: string) => void;
+      render: (container: HTMLElement, options: { callback?: (token: string) => void; sitekey: string }) => string;
+    };
+  }
+}
 
 const providerOrder: OAuthProvider[] = ["google", "github"];
 
@@ -18,9 +28,54 @@ const providerLabels: Record<OAuthProvider, string> = {
   google: "Continue with Google",
 };
 
-export function DesktopLoginForm({ callbackUrl, nextPath }: DesktopLoginFormProps) {
+export function DesktopLoginForm({ callbackUrl, nextPath, turnstileSiteKey }: DesktopLoginFormProps) {
   const [status, setStatus] = useState<FormStatus>("idle");
   const [activeProvider, setActiveProvider] = useState<OAuthProvider | null>(null);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!captchaRequired || !turnstileSiteKey || !turnstileRef.current) {
+      return;
+    }
+
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const mountTurnstile = () => {
+      if (cancelled || !turnstileRef.current || turnstileWidgetId.current) {
+        return;
+      }
+
+      if (!window.turnstile) {
+        pollTimer = setTimeout(mountTurnstile, 250);
+        return;
+      }
+
+      turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+        callback: (token) => {
+          setTurnstileToken(token);
+        },
+        sitekey: turnstileSiteKey,
+      });
+    };
+
+    mountTurnstile();
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) {
+        clearTimeout(pollTimer);
+      }
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetId.current);
+        turnstileWidgetId.current = null;
+      }
+      setTurnstileToken(null);
+    };
+  }, [captchaRequired, turnstileSiteKey]);
 
   async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,10 +87,32 @@ export function DesktopLoginForm({ callbackUrl, nextPath }: DesktopLoginFormProp
     const password = String(formData.get("password") ?? "");
 
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (captchaRequired && turnstileSiteKey && !turnstileToken) {
+        setStatus("error");
+        return;
+      }
 
-      if (error) {
+      const response = await fetch("/api/auth/login", {
+        body: JSON.stringify({
+          email,
+          password,
+          ...(captchaRequired && turnstileSiteKey ? { turnstileToken } : {}),
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      const result = await response.json() as { error?: string; ok?: boolean };
+
+      if (result.error === "captcha_required") {
+        setCaptchaRequired(true);
+        setTurnstileToken(null);
+        setStatus("error");
+        return;
+      }
+
+      if (!response.ok || !result.ok) {
         setStatus("error");
         return;
       }
@@ -109,9 +186,19 @@ export function DesktopLoginForm({ callbackUrl, nextPath }: DesktopLoginFormProp
         >
           {isSubmitting && activeProvider === null ? "Signing in..." : "Sign in with email"}
         </button>
+        {captchaRequired && turnstileSiteKey ? (
+          <div className="grid gap-2">
+            <p className="text-sm font-medium text-slate-200">Human verification</p>
+            <div
+              className="min-h-16 rounded-md border border-cyan-300/20 bg-slate-950/70 p-3"
+              data-testid="turnstile-placeholder"
+              ref={turnstileRef}
+            />
+          </div>
+        ) : null}
         {status === "error" ? (
           <p className="rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">
-            Could not sign in. Check your email and password.
+            {captchaRequired ? "Verify that you are human and try again." : "Could not sign in. Check your email and password."}
           </p>
         ) : null}
       </form>
