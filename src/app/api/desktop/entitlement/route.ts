@@ -21,7 +21,7 @@ function mapEntitlementReason(status: LicenseStatus) {
   }
 
   if (status.reason === "revoked") {
-    return "session_revoked";
+    return "support_revoked";
   }
 
   return "support_required";

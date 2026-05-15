@@ -135,6 +135,34 @@ describe("desktop entitlement route", () => {
     });
   });
 
+  it("maps revoked support to support_revoked without invalidating the desktop session", async () => {
+    const { GET } = await import("@/app/api/desktop/entitlement/route");
+
+    mocks.getLicenseStatus.mockResolvedValueOnce({
+      allowed: false,
+      feature: "cloud_sync",
+      reason: "revoked",
+      remainingDays: 0,
+      validUntil: "2026-05-01T00:00:00.000Z",
+    });
+
+    const response = await GET(
+      new Request("https://gitbookai.example/api/desktop/entitlement", {
+        headers: { authorization: "Bearer desktop-token" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      entitlement: {
+        cloud_sync_available: false,
+        reason: "support_revoked",
+        support_active: false,
+        support_expires_at: "2026-05-01T00:00:00.000Z",
+      },
+    });
+  });
+
   it("returns session_revoked when the desktop token is invalid", async () => {
     const { GET } = await import("@/app/api/desktop/entitlement/route");
 
