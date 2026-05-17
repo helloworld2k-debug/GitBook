@@ -24,6 +24,17 @@ function isTurnstileConfigured() {
   return Boolean(process.env.TURNSTILE_SECRET_KEY);
 }
 
+async function recordLoginAttemptSafely(
+  client: LoginRiskClient,
+  input: Parameters<typeof recordLoginAttempt>[1],
+) {
+  try {
+    await recordLoginAttempt(client, input);
+  } catch {
+    // Login attempt tracking is supplemental; auth should still return the credential result.
+  }
+}
+
 export async function POST(request: Request) {
   const body = (await request.json()) as LoginRequestBody;
   const email = String(body.email ?? "").trim();
@@ -36,7 +47,13 @@ export async function POST(request: Request) {
 
   const ip = getIpAddress(request);
   const adminClient = createSupabaseAdminClient() as unknown as LoginRiskClient;
-  const risk = await checkLoginRisk(adminClient, { email, ip });
+  let risk: { captchaRequired: boolean };
+
+  try {
+    risk = await checkLoginRisk(adminClient, { email, ip });
+  } catch {
+    risk = { captchaRequired: false };
+  }
 
   if (risk.captchaRequired) {
     if (!isTurnstileConfigured() || !turnstileToken) {
@@ -57,7 +74,7 @@ export async function POST(request: Request) {
   });
 
   if (error) {
-    await recordLoginAttempt(adminClient, {
+    await recordLoginAttemptSafely(adminClient, {
       email,
       ip,
       result: "failure",
@@ -66,7 +83,7 @@ export async function POST(request: Request) {
     return jsonError("invalid_credentials", 401);
   }
 
-  await recordLoginAttempt(adminClient, {
+  await recordLoginAttemptSafely(adminClient, {
     email,
     ip,
     result: "success",

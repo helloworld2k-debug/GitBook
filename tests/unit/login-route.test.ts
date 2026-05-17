@@ -70,6 +70,26 @@ describe("login route", () => {
     }));
   });
 
+  it("still signs in when login risk tracking is unavailable", async () => {
+    mocks.checkLoginRisk.mockRejectedValueOnce(new Error("login_attempts table missing"));
+
+    const response = await POST(new Request("https://gitbookai.example/api/auth/login", {
+      body: JSON.stringify({
+        email: "friend@example.com",
+        password: "correct-password",
+      }),
+      headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10" },
+      method: "POST",
+    }));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+    expect(signInWithPassword).toHaveBeenCalledWith({
+      email: "friend@example.com",
+      password: "correct-password",
+    });
+  });
+
   it("requires captcha before Supabase sign-in when the attempt is risky", async () => {
     mocks.checkLoginRisk.mockResolvedValueOnce({ captchaRequired: true });
 
