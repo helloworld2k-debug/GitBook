@@ -105,7 +105,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
       .from("profiles")
       .select("email,display_name")
       .eq("id", user.id)
-      .single(),
+      .maybeSingle(),
     supabase
       .from("license_entitlements")
       .select("valid_until,status")

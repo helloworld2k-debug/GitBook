@@ -359,4 +359,43 @@ describe("dashboard page", () => {
       "Your email has been verified and your account is ready.",
     );
   });
+
+  it("renders with the authenticated user email when the profile row is missing", async () => {
+    const emptyQuery = createThenableQuery({ data: [], error: null });
+    const countQuery = createThenableQuery({ count: 0, error: null });
+    const profileQuery = {
+      eq: vi.fn(() => profileQuery),
+      select: vi.fn(() => profileQuery),
+      single: vi.fn(async () => ({
+        data: null,
+        error: {
+          code: "PGRST116",
+          message: "JSON object requested, multiple (or no) rows returned",
+        },
+      })),
+      maybeSingle: vi.fn(async () => ({ data: null, error: null })),
+    };
+    const entitlementQuery = createThenableQuery({ data: null, error: null });
+    const trialQuery = createThenableQuery({ data: null, error: null });
+    const tableQueues = {
+      certificates: [countQuery],
+      donations: [countQuery, emptyQuery],
+      license_entitlements: [entitlementQuery],
+      profiles: [profileQuery],
+      trial_code_redemptions: [trialQuery],
+    };
+    const from = vi.fn((table: keyof typeof tableQueues) => tableQueues[table].shift());
+
+    mocks.createSupabaseServerClient.mockResolvedValue({ from });
+
+    render(
+      await DashboardPage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({}),
+      }),
+    );
+
+    expect(screen.getAllByText("ada@example.com").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("Display name")).toHaveValue("");
+  });
 });
