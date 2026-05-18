@@ -112,14 +112,35 @@ describe("redeemTrialCode", () => {
   });
 
   it("throws when the RPC fails", async () => {
-    const client = createTrialClient(null, new Error("database unavailable"));
+    const rpcError = new Error("database unavailable");
+    const client = createTrialClient(null, rpcError);
+
+    const promise = redeemTrialCode(client, {
+      userId: "user-1",
+      code: "SPRING-2026",
+    });
+
+    await expect(promise).rejects.toThrow("Unable to redeem trial code");
+    await expect(promise).rejects.toMatchObject({
+      cause: rpcError,
+    });
+  });
+
+  it("keeps structured RPC error details as the thrown cause", async () => {
+    const rpcError = {
+      code: "42702",
+      message: "column reference is ambiguous",
+    };
+    const client = createTrialClient(null, rpcError);
 
     await expect(
       redeemTrialCode(client, {
         userId: "user-1",
         code: "SPRING-2026",
       }),
-    ).rejects.toThrow("Unable to redeem trial code");
+    ).rejects.toMatchObject({
+      cause: rpcError,
+    });
   });
 
   it("throws when the RPC reports success without a valid-until value", async () => {

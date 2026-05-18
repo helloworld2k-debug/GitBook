@@ -49,7 +49,7 @@ export async function redeemLicenseCode(
   });
 
   if (error) {
-    throw new Error("Unable to redeem trial code");
+    throw new Error("Unable to redeem trial code", { cause: error });
   }
 
   const row = data?.[0];
