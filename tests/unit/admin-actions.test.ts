@@ -475,7 +475,7 @@ describe("admin actions", () => {
     }));
   });
 
-  it("requires owner access before permanently deleting an elevated user account", async () => {
+  it("allows operators to permanently delete another operator account", async () => {
     const profileSingle = vi.fn(async () => ({
       data: { admin_role: "operator", email: "operator@example.com", is_admin: false },
       error: null,
@@ -505,12 +505,50 @@ describe("admin actions", () => {
     await expect(permanentlyDeleteUser(formData)).rejects.toThrow("redirect:/en/admin/users?notice=user-permanently-deleted");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
-    expect(mocks.requireOwner).toHaveBeenCalledWith("en");
-    expect(mocks.requireOwner.mock.invocationCallOrder[0]).toBeLessThan(deleteUser.mock.invocationCallOrder[0]);
+    expect(mocks.requireOwner).not.toHaveBeenCalled();
     expect(deleteUser).toHaveBeenCalledWith("operator-1", false);
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
-      admin_user_id: "owner-1",
+      admin_user_id: "admin-1",
       target_id: "operator-1",
+    }));
+  });
+
+  it("requires owner access before permanently deleting an owner account", async () => {
+    const profileSingle = vi.fn(async () => ({
+      data: { admin_role: "owner", email: "owner@example.com", is_admin: true },
+      error: null,
+    }));
+    const profileEq = vi.fn(() => ({ single: profileSingle }));
+    const profileSelect = vi.fn(() => ({ eq: profileEq }));
+    const deleteUser = vi.fn(async () => ({ data: { user: {} }, error: null }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return { select: profileSelect };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ auth: { admin: { deleteUser } }, from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("user_id", "owner-1");
+    formData.set("confirmation", "owner@example.com");
+
+    await expect(permanentlyDeleteUser(formData)).rejects.toThrow("redirect:/en/admin/users?notice=user-permanently-deleted");
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(mocks.requireOwner).toHaveBeenCalledWith("en");
+    expect(mocks.requireOwner.mock.invocationCallOrder[0]).toBeLessThan(deleteUser.mock.invocationCallOrder[0]);
+    expect(deleteUser).toHaveBeenCalledWith("owner-1", false);
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      admin_user_id: "owner-1",
+      target_id: "owner-1",
     }));
   });
 

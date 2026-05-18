@@ -2023,6 +2023,47 @@ describe("admin pages", () => {
     expect(screen.queryByRole("button", { name: "Permanent delete" })).not.toBeInTheDocument();
   });
 
+  it("shows the permanent delete danger zone to operators when viewing an operator account", async () => {
+    const profileQuery = createAdminListQuery({
+      id: "operator-target",
+      email: "target-operator@example.com",
+      display_name: "Target Operator",
+      public_display_name: "Target Operator",
+      public_supporter_enabled: true,
+      admin_role: "operator",
+      account_status: "active",
+      is_admin: false,
+      created_at: "2026-05-01T00:00:00.000Z",
+    });
+    const emptyQuery = createAdminListQuery([]);
+    const operatorQuery = createAdminListQuery({
+      admin_role: "operator",
+      is_admin: false,
+      account_status: "active",
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profileQuery : operatorQuery;
+      }
+
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback"].includes(table)) {
+        return emptyQuery;
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+    requireAdminMock.mockResolvedValue({ id: "operator-1" });
+
+    render(await AdminUserDetailPage({
+      params: Promise.resolve({ id: "operator-target", locale: "en" }),
+      searchParams: Promise.resolve({}),
+    }));
+
+    expect(screen.getByText("Danger zone")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Permanent delete" })).toBeInTheDocument();
+  });
+
   it("queries and renders newest audit logs for admins", async () => {
     const auditLogsQuery = createOrderedQuery([
       {

@@ -11,8 +11,8 @@ import { getRequiredString, getSafeLocale, getUserIds } from "./validation";
 
 type CloudSyncCooldownOverrideInsert = Database["public"]["Tables"]["cloud_sync_cooldown_overrides"]["Insert"];
 
-function isElevatedUser(profile: { admin_role?: string | null; is_admin?: boolean | null }) {
-  return profile.is_admin === true || profile.admin_role === "owner" || profile.admin_role === "operator";
+function isOwnerUser(profile: { admin_role?: string | null; is_admin?: boolean | null }) {
+  return profile.is_admin === true || profile.admin_role === "owner";
 }
 
 function getRequiredFutureDate(formData: FormData, name: string) {
@@ -458,7 +458,7 @@ export async function permanentlyDeleteUser(formData: FormData) {
     });
   }
 
-  if (isElevatedUser(profile)) {
+  if (isOwnerUser(profile)) {
     admin = await requireOwner(locale);
   }
 
