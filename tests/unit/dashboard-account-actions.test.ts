@@ -169,6 +169,29 @@ describe("dashboard account actions", () => {
     );
   });
 
+  it("records a short internal reason when license redemption throws", async () => {
+    redeemLicenseCodeMock.mockRejectedValueOnce(
+      new Error("Unable to redeem trial code", {
+        cause: {
+          code: "23503",
+          message: "insert or update on table violates foreign key constraint",
+        },
+      }),
+    );
+    const formData = new FormData();
+    formData.set("license_code", "1MAB-CDEF-GHJK-LMNP");
+
+    await expect(redeemDashboardLicenseCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=error");
+
+    expect(recordLicenseRedeemAttemptMock).toHaveBeenCalledWith(
+      { admin: true },
+      expect.objectContaining({
+        reason: "unexpected_error:23503:insert or update on table violates foreign key constraint",
+        result: "failure",
+      }),
+    );
+  });
+
   it("signs out and returns to the localized home page", async () => {
     const signOut = vi.fn(async () => ({ error: null }));
     createSupabaseServerClientMock.mockResolvedValue({ auth: { signOut } });

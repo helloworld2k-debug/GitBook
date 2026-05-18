@@ -66,6 +66,30 @@ function getIpAddress(headerStore: Headers) {
   return headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() || headerStore.get("x-real-ip")?.trim() || null;
 }
 
+function getRedeemErrorReason(error: unknown) {
+  if (error && typeof error === "object") {
+    const record = error as { cause?: unknown; message?: unknown };
+    const cause = record.cause;
+
+    if (cause && typeof cause === "object") {
+      const causeRecord = cause as { code?: unknown; message?: unknown };
+      const code = typeof causeRecord.code === "string" ? causeRecord.code : "";
+      const message = typeof causeRecord.message === "string" ? causeRecord.message : "";
+      const detail = [code, message].filter(Boolean).join(":").slice(0, 160);
+
+      if (detail) {
+        return `unexpected_error:${detail}`;
+      }
+    }
+
+    if (typeof record.message === "string" && record.message) {
+      return `unexpected_error:${record.message.slice(0, 160)}`;
+    }
+  }
+
+  return "unexpected_error";
+}
+
 export async function redeemDashboardLicenseCode(locale: string, formData: FormData) {
   const safeLocale = getActionLocale(locale);
   const user = await requireUser(safeLocale, `/${safeLocale}/dashboard`);
@@ -98,16 +122,23 @@ export async function redeemDashboardLicenseCode(locale: string, formData: FormD
     redirect(getDashboardPath(safeLocale, { trial: "error" }));
   }
 
-  const result = await redeemLicenseCode(supabase, {
-    userId: user.id,
-    code,
-  }).catch(() => null);
+  let result: Awaited<ReturnType<typeof redeemLicenseCode>> | null = null;
+  let redeemErrorReason = "unexpected_error";
+
+  try {
+    result = await redeemLicenseCode(supabase, {
+      userId: user.id,
+      code,
+    });
+  } catch (error) {
+    redeemErrorReason = getRedeemErrorReason(error);
+  }
 
   if (!result) {
     await recordLicenseRedeemAttempt(redeemSecurityClient, {
       codeHash,
       ipAddress,
-      reason: "unexpected_error",
+      reason: redeemErrorReason,
       result: "failure",
       userAgent,
       userId: user.id,
