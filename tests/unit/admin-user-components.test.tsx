@@ -3,6 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 import { AdminUserBulkToolbar, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
 import { AdminUserDeleteDangerZone } from "@/components/admin/admin-user-delete-danger-zone";
 import { AdminUserFilters } from "@/components/admin/admin-user-filters";
+import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
+
+const revealLicenseCodeMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@/app/[locale]/admin/actions", () => ({
+  revealLicenseCode: revealLicenseCodeMock,
+}));
 
 describe("AdminUserFilters", () => {
   it("renders search, common filters, more-filters trigger, and reset link", () => {
@@ -32,6 +39,39 @@ describe("AdminUserFilters", () => {
     expect(screen.getByLabelText("Permission")).toBeInTheDocument();
     expect(screen.getByText("More filters")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Reset" })).toHaveAttribute("href", "/en/admin/users");
+  });
+});
+
+describe("TrialCodeRevealButton", () => {
+  it("reveals and copies a license code", async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    revealLicenseCodeMock.mockResolvedValueOnce({ code: "T3AB-CDEF-GHJK-LMNP" });
+
+    render(
+      <TrialCodeRevealButton
+        copiedLabel="Copied"
+        copyLabel="Copy code"
+        errorLabel="Unable to reveal this code."
+        hideLabel="Hide"
+        locale="en"
+        revealLabel="Reveal"
+        trialCodeId="trial-1"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reveal" }));
+
+    expect(await screen.findByText("T3AB-CDEF-GHJK-LMNP")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy code" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy code" }));
+
+    expect(writeText).toHaveBeenCalledWith("T3AB-CDEF-GHJK-LMNP");
+    expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
   });
 });
 

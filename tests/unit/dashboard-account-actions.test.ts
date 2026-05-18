@@ -25,6 +25,11 @@ vi.mock("@/lib/auth/guards", () => ({
 }));
 
 vi.mock("@/lib/license/trial-codes", () => ({
+  normalizeRedeemCode: (code: string) => {
+    const normalized = code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+
+    return normalized.length === 16 ? normalized.match(/.{1,4}/g)?.join("-") ?? normalized : code.trim();
+  },
   redeemLicenseCode: redeemLicenseCodeMock,
 }));
 

@@ -647,7 +647,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                                 <td className="px-4 py-3 text-slate-700">{formatDuration(code, t)}</td>
                                 <td className="px-4 py-3">
                                   <div className="flex flex-wrap gap-2">
-                                    <TrialCodeRevealButton errorLabel={t("licenses.revealError")} hideLabel={t("licenses.hide")} locale={locale} revealLabel={t("licenses.reveal")} trialCodeId={code.id} />
+                                    <TrialCodeRevealButton copiedLabel={t("licenses.copied")} copyLabel={t("licenses.copy")} errorLabel={t("licenses.revealError")} hideLabel={t("licenses.hide")} locale={locale} revealLabel={t("licenses.reveal")} trialCodeId={code.id} />
                                     <form action={setTrialCodeActive}>
                                       <input name="locale" type="hidden" value={locale} />
                                       <input name="return_to" type="hidden" value="/admin/licenses" />
@@ -753,7 +753,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                       <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{formatDateTime(code.created_at, locale)}</td>
                       <td className="sticky right-0 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                         <div className="flex flex-wrap justify-end gap-2">
-                          <TrialCodeRevealButton errorLabel={t("licenses.revealError")} hideLabel={t("licenses.hide")} locale={locale} revealLabel={t("licenses.reveal")} trialCodeId={code.id} />
+                          <TrialCodeRevealButton copiedLabel={t("licenses.copied")} copyLabel={t("licenses.copy")} errorLabel={t("licenses.revealError")} hideLabel={t("licenses.hide")} locale={locale} revealLabel={t("licenses.reveal")} trialCodeId={code.id} />
                           <form action={setTrialCodeActive}>
                             <input name="locale" type="hidden" value={locale} />
                             <input name="return_to" type="hidden" value="/admin/licenses" />

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/guards";
 import { getActionLocale } from "@/lib/i18n/action-locale";
-import { redeemLicenseCode } from "@/lib/license/trial-codes";
+import { normalizeRedeemCode, redeemLicenseCode } from "@/lib/license/trial-codes";
 import { hashDesktopSecret } from "@/lib/license/hash";
 import { checkLicenseRedeemRisk, recordLicenseRedeemAttempt, type RedeemSecurityClient } from "@/lib/license/redeem-security";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -104,7 +104,7 @@ export async function redeemDashboardLicenseCode(locale: string, formData: FormD
   const headerStore = await headers();
   const ipAddress = getIpAddress(headerStore);
   const userAgent = headerStore.get("user-agent");
-  const codeHash = await hashDesktopSecret(code, "trial_code");
+  const codeHash = await hashDesktopSecret(normalizeRedeemCode(code), "trial_code");
   const risk = await checkLicenseRedeemRisk(redeemSecurityClient, {
     ipAddress,
     userId: user.id,

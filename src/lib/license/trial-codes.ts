@@ -1,5 +1,6 @@
 import type { Database } from "@/lib/database.types";
 import { hashDesktopSecret } from "@/lib/license/hash";
+import { assertLicenseCode } from "@/lib/license/license-codes";
 
 export type TrialRedeemFailure =
   | "trial_code_invalid"
@@ -35,12 +36,20 @@ function isTrialRedeemFailure(reason: string): reason is TrialRedeemFailure {
   );
 }
 
+export function normalizeRedeemCode(code: string) {
+  try {
+    return assertLicenseCode(code);
+  } catch {
+    return code.trim();
+  }
+}
+
 export async function redeemLicenseCode(
   client: RedeemClient,
   input: RedeemTrialCodeInput,
 ): Promise<{ ok: true; validUntil: string } | { ok: false; reason: TrialRedeemFailure }> {
   const now = input.now ?? new Date();
-  const codeHash = await hashDesktopSecret(input.code, "trial_code");
+  const codeHash = await hashDesktopSecret(normalizeRedeemCode(input.code), "trial_code");
   const { data, error } = await client.rpc("redeem_license_code", {
     input_code_hash: codeHash,
     input_machine_code_hash: input.machineCodeHash ?? null,

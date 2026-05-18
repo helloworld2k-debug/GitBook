@@ -335,6 +335,8 @@ const testMessages = {
         delete: "Delete",
         reveal: "Reveal",
         hide: "Hide",
+        copy: "Copy code",
+        copied: "Copied",
         revealHelp: "Reveal only when sending this code to a user. The view is audited.",
         revealError: "Unable to reveal this code.",
         deletedTrialCodesTitle: "Deleted trial codes",

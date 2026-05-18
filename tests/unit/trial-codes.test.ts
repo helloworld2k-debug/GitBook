@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { hashDesktopSecret } from "@/lib/license/hash";
-import { redeemLicenseCode, redeemTrialCode } from "@/lib/license/trial-codes";
+import { normalizeRedeemCode, redeemLicenseCode, redeemTrialCode } from "@/lib/license/trial-codes";
 
 function createTrialClient(row: { ok: boolean; reason: string; valid_until: string | null } | null, error: unknown = null) {
   return {
@@ -9,6 +9,11 @@ function createTrialClient(row: { ok: boolean; reason: string; valid_until: stri
 }
 
 describe("redeemTrialCode", () => {
+  it("formats modern license code input while preserving legacy code input", () => {
+    expect(normalizeRedeemCode("  1mabcdefghjklmnp  ")).toBe("1MAB-CDEF-GHJK-LMNP");
+    expect(normalizeRedeemCode("SPRING-2026")).toBe("SPRING-2026");
+  });
+
   it("redeems a general license code through the unified RPC", async () => {
     const client = createTrialClient({
       ok: true,
@@ -30,6 +35,24 @@ describe("redeemTrialCode", () => {
       input_now: "2026-05-01T00:00:00.000Z",
       input_user_id: "user-1",
     });
+  });
+
+  it("normalizes pasted license codes before hashing for redemption", async () => {
+    const client = createTrialClient({
+      ok: true,
+      reason: "redeemed",
+      valid_until: "2026-06-01T00:00:00.000Z",
+    });
+
+    await redeemLicenseCode(client, {
+      userId: "user-1",
+      code: "  1mabcdefghjklmnp  ",
+      now: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    expect(client.rpc).toHaveBeenCalledWith("redeem_license_code", expect.objectContaining({
+      input_code_hash: await hashDesktopSecret("1MAB-CDEF-GHJK-LMNP", "trial_code"),
+    }));
   });
 
   it("passes machine hashes to support account-or-device trial abuse checks", async () => {
