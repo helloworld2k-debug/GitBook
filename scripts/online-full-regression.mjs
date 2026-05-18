@@ -43,6 +43,18 @@ function scalar(sql) {
   return Object.values(rows[0])[0];
 }
 
+async function waitForScalar(sql, { timeoutMs = 30000, intervalMs = 1000 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  let value = scalar(sql);
+
+  while (!value && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    value = scalar(sql);
+  }
+
+  return value;
+}
+
 function createAuthTestUser(email, password, displayName) {
   const id = staticUserId ?? randomUUID();
   query(`
@@ -303,13 +315,15 @@ async function main() {
   expect(licenseCode).toMatch(/^1M/);
 
   await goto(page, "/en/admin/donations");
-  await fillByLabel(page, "Email or user ID", userEmail);
-  await fillByLabel(page, "Amount (cents)", "1234");
-  await fillByLabel(page, "Reference", donationReference);
-  await fillByLabel(page, "Reason", `${marker} verified manual contribution`);
-  await submitConfirm(page, page.getByRole("button", { name: "Add manual contribution" }));
+  const manualDonationForm = page.locator('form:has(input[name="user_identifier"])').first();
+  await expect(manualDonationForm).toBeVisible({ timeout: 10000 });
+  await manualDonationForm.locator('input[name="user_identifier"]').fill(userEmail);
+  await manualDonationForm.locator('input[name="amount"]').fill("1234");
+  await manualDonationForm.locator('input[name="reference"]').fill(donationReference);
+  await manualDonationForm.locator('input[name="reason"]').fill(`${marker} verified manual contribution`);
+  await submitConfirm(page, manualDonationForm.getByRole("button", { name: "Add manual contribution" }));
   const manualTransactionId = `manual_${donationReference}`;
-  const donationId = scalar(`select id from public.donations where provider_transaction_id=${sqlLiteral(manualTransactionId)} limit 1`);
+  const donationId = await waitForScalar(`select id from public.donations where provider_transaction_id=${sqlLiteral(manualTransactionId)} limit 1`);
   expect(donationId).toBeTruthy();
   expect(Number(scalar(`select count(*) from public.certificates where donation_id=${sqlLiteral(donationId)}`))).toBeGreaterThan(0);
   const certificateNumber = scalar(`select certificate_number from public.certificates where donation_id=${sqlLiteral(donationId)} limit 1`);
