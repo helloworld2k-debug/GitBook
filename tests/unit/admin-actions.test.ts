@@ -434,16 +434,18 @@ describe("admin actions", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  it("permanently deletes a user after confirmation and audits the action", async () => {
-    const profileSingle = vi.fn(async () => ({ data: { email: "user@example.com" }, error: null }));
+  it("allows operators to permanently delete a standard user after confirmation and audits the action", async () => {
+    const profileSingle = vi.fn(async () => ({
+      data: { admin_role: "user", email: "user@example.com", is_admin: false },
+      error: null,
+    }));
     const profileEq = vi.fn(() => ({ single: profileSingle }));
     const profileSelect = vi.fn(() => ({ eq: profileEq }));
-    const deleteEq = vi.fn(async () => ({ error: null }));
-    const deleteFrom = vi.fn(() => ({ eq: deleteEq }));
+    const deleteUser = vi.fn(async () => ({ data: { user: {} }, error: null }));
     const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
-        return { delete: deleteFrom, select: profileSelect };
+        return { select: profileSelect };
       }
 
       if (table === "admin_audit_logs") {
@@ -452,7 +454,7 @@ describe("admin actions", () => {
 
       throw new Error(`Unexpected table: ${table}`);
     });
-    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+    mocks.createSupabaseAdminClient.mockReturnValue({ auth: { admin: { deleteUser } }, from });
 
     const formData = new FormData();
     formData.set("locale", "en");
@@ -461,13 +463,54 @@ describe("admin actions", () => {
 
     await expect(permanentlyDeleteUser(formData)).rejects.toThrow("redirect:/en/admin/users?notice=user-permanently-deleted");
 
-    expect(mocks.requireOwner).toHaveBeenCalledWith("en");
-    expect(deleteEq).toHaveBeenCalledWith("id", "user-1");
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(mocks.requireOwner).not.toHaveBeenCalled();
+    expect(profileSelect).toHaveBeenCalledWith("email,admin_role,is_admin");
+    expect(deleteUser).toHaveBeenCalledWith("user-1", false);
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
       action: "permanently_delete_user",
-      admin_user_id: "owner-1",
+      admin_user_id: "admin-1",
       target_id: "user-1",
       target_type: "profile",
+    }));
+  });
+
+  it("requires owner access before permanently deleting an elevated user account", async () => {
+    const profileSingle = vi.fn(async () => ({
+      data: { admin_role: "operator", email: "operator@example.com", is_admin: false },
+      error: null,
+    }));
+    const profileEq = vi.fn(() => ({ single: profileSingle }));
+    const profileSelect = vi.fn(() => ({ eq: profileEq }));
+    const deleteUser = vi.fn(async () => ({ data: { user: {} }, error: null }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return { select: profileSelect };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ auth: { admin: { deleteUser } }, from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("user_id", "operator-1");
+    formData.set("confirmation", "operator@example.com");
+
+    await expect(permanentlyDeleteUser(formData)).rejects.toThrow("redirect:/en/admin/users?notice=user-permanently-deleted");
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(mocks.requireOwner).toHaveBeenCalledWith("en");
+    expect(mocks.requireOwner.mock.invocationCallOrder[0]).toBeLessThan(deleteUser.mock.invocationCallOrder[0]);
+    expect(deleteUser).toHaveBeenCalledWith("operator-1", false);
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      admin_user_id: "owner-1",
+      target_id: "operator-1",
     }));
   });
 

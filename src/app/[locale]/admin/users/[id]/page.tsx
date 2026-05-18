@@ -117,6 +117,10 @@ function usageSeconds(session: CloudSyncUsageSessionRow, now = new Date()) {
   return Math.round((endedAt - startedAt) / 1000);
 }
 
+function isElevatedUserProfile(profile: { admin_role?: string | null; is_admin?: boolean | null }) {
+  return profile.is_admin === true || profile.admin_role === "owner" || profile.admin_role === "operator";
+}
+
 function isOptionalCloudSyncDetailSchemaError(error: { code?: string; message?: string } | null) {
   const code = error?.code;
   const message = error?.message?.toLowerCase() ?? "";
@@ -264,6 +268,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   const cooldownOverrides = cooldownOverridesResult.data ?? [];
   const supportFeedback = supportFeedbackResult.data ?? [];
   const canManageRoles = isOwnerProfile(adminProfileResult.data);
+  const canPermanentlyDeleteUser = canManageRoles || !isElevatedUserProfile(profile);
   const activeLease = leases.find((lease) => !lease.revoked_at);
   const totalUsageSeconds = usageSessions.reduce((total, session) => total + usageSeconds(session), 0);
   const uniqueUsageMachines = new Set(usageSessions.map((session) => session.machine_code_hash).filter(Boolean)).size;
@@ -814,20 +819,22 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
           )}
         </AdminCard>
 
-        <AdminUserDeleteDangerZone
-          action={permanentlyDeleteUser}
-          email={profile.email}
-          labels={{
-            confirmation: t("deleteConfirmation"),
-            description: t("dangerDescription"),
-            hint: profile.email,
-            submit: t("permanentDelete"),
-            title: t("dangerZone"),
-            warning: t("dangerWarning"),
-          }}
-          locale={locale}
-          userId={profile.id}
-        />
+        {canPermanentlyDeleteUser ? (
+          <AdminUserDeleteDangerZone
+            action={permanentlyDeleteUser}
+            email={profile.email}
+            labels={{
+              confirmation: t("deleteConfirmation"),
+              description: t("dangerDescription"),
+              hint: profile.email,
+              submit: t("permanentDelete"),
+              title: t("dangerZone"),
+              warning: t("dangerWarning"),
+            }}
+            locale={locale}
+            userId={profile.id}
+          />
+        ) : null}
       </section>
     </AdminShell>
   );

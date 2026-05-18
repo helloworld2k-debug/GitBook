@@ -11,6 +11,10 @@ import { getRequiredString, getSafeLocale, getUserIds } from "./validation";
 
 type CloudSyncCooldownOverrideInsert = Database["public"]["Tables"]["cloud_sync_cooldown_overrides"]["Insert"];
 
+function isElevatedUser(profile: { admin_role?: string | null; is_admin?: boolean | null }) {
+  return profile.is_admin === true || profile.admin_role === "owner" || profile.admin_role === "operator";
+}
+
 function getRequiredFutureDate(formData: FormData, name: string) {
   const value = getRequiredString(formData, name, "Expiry is required");
   const date = new Date(value);
@@ -434,11 +438,15 @@ export async function bulkProcessUsers(formData: FormData) {
 
 export async function permanentlyDeleteUser(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
-  const admin = await requireOwner(locale);
+  let admin = await requireAdmin(locale);
   const userId = getRequiredString(formData, "user_id", "User is required");
   const confirmation = getRequiredString(formData, "confirmation", "Confirmation is required");
   const supabase = createSupabaseAdminClient();
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("email").eq("id", userId).single();
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("email,admin_role,is_admin")
+    .eq("id", userId)
+    .single();
 
   if (profileError || !profile) {
     redirectWithAdminFeedback({
@@ -450,11 +458,15 @@ export async function permanentlyDeleteUser(formData: FormData) {
     });
   }
 
+  if (isElevatedUser(profile)) {
+    admin = await requireOwner(locale);
+  }
+
   if (confirmation !== "DELETE" && confirmation !== profile.email) {
     throw new Error("Confirmation does not match");
   }
 
-  const { error } = await supabase.from("profiles").delete().eq("id", userId);
+  const { error } = await supabase.auth.admin.deleteUser(userId, false);
 
   if (error) {
     redirectWithAdminFeedback({
