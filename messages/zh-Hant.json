@@ -33,6 +33,7 @@
     "signingUp": "建立帳戶中...",
     "humanVerificationError": "請先完成人類驗證後再試一次。",
     "humanVerificationLabel": "人類驗證",
+    "registrationImmediateSuccess": "帳戶已建立，現在可以直接登入。",
     "registrationSuccess": "如果這是新帳戶，請查看電子郵件並完成驗證；若沒有看到郵件，請檢查垃圾郵件或稍後再試。如果此信箱已註冊，請直接登入或重設密碼。",
     "registrationRateLimited": "註冊嘗試過於頻繁，請稍後再試。",
     "signInError": "無法登入。請檢查電子郵件與密碼。",

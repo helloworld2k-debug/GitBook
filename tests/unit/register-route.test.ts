@@ -26,9 +26,17 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 describe("register route", () => {
   beforeEach(() => {
+    delete process.env.TEMP_DISABLE_EMAIL_CONFIRMATION;
     process.env.TURNSTILE_SECRET_KEY = "turnstile_secret";
     mocks.checkRegisterRateLimit.mockReset().mockResolvedValue({ ok: true });
-    mocks.createSupabaseAdminClient.mockReset().mockReturnValue({ admin: true });
+    mocks.createSupabaseAdminClient.mockReset().mockReturnValue({
+      admin: true,
+      auth: {
+        admin: {
+          createUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-id" } }, error: null }),
+        },
+      },
+    });
     mocks.registerWithEmailPassword.mockReset().mockResolvedValue({ error: null });
     mocks.verifyTurnstileToken.mockReset().mockResolvedValue({ ok: true });
   });
@@ -119,7 +127,7 @@ describe("register route", () => {
     await expect(response.json()).resolves.toEqual({ error: "rate_limited" });
     expect(response.headers.get("retry-after")).toBe("60");
     expect(mocks.checkRegisterRateLimit).toHaveBeenCalledWith(
-      { admin: true },
+      expect.objectContaining({ admin: true }),
       expect.objectContaining({
         email: "new@example.com",
         ip: "203.0.113.10",
@@ -150,6 +158,139 @@ describe("register route", () => {
       email: "new@example.com",
       password: "new-password",
     });
+  });
+
+  it("creates a confirmed user through the admin API when temporary email confirmation bypass is enabled", async () => {
+    process.env.TEMP_DISABLE_EMAIL_CONFIRMATION = "true";
+    const adminClient = {
+      admin: true,
+      auth: {
+        admin: {
+          createUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-id" } }, error: null }),
+        },
+      },
+    };
+    mocks.createSupabaseAdminClient.mockReturnValue(adminClient);
+
+    const response = await POST(
+      new Request("https://gitbookai.example/api/auth/register", {
+        body: JSON.stringify({
+          callbackUrl: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
+          email: "new@example.com",
+          password: "new-password",
+          turnstileToken: "ok-token",
+        }),
+        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ emailConfirmationBypassed: true, ok: true });
+    expect(mocks.registerWithEmailPassword).not.toHaveBeenCalled();
+    expect(adminClient.auth.admin.createUser).toHaveBeenCalledWith({
+      email: "new@example.com",
+      email_confirm: true,
+      password: "new-password",
+      user_metadata: {
+        source: "register_form",
+      },
+    });
+  });
+
+  it("does not create a confirmed user when registration is rate-limited", async () => {
+    process.env.TEMP_DISABLE_EMAIL_CONFIRMATION = "true";
+    const adminClient = {
+      admin: true,
+      auth: {
+        admin: {
+          createUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-id" } }, error: null }),
+        },
+      },
+    };
+    mocks.createSupabaseAdminClient.mockReturnValue(adminClient);
+    mocks.checkRegisterRateLimit.mockReturnValueOnce({ ok: false, retryAfterSeconds: 60 });
+
+    const response = await POST(
+      new Request("https://gitbookai.example/api/auth/register", {
+        body: JSON.stringify({
+          callbackUrl: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
+          email: "new@example.com",
+          password: "new-password",
+          turnstileToken: "ok-token",
+        }),
+        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(429);
+    await expect(response.json()).resolves.toEqual({ error: "rate_limited" });
+    expect(adminClient.auth.admin.createUser).not.toHaveBeenCalled();
+  });
+
+  it("treats an existing email from temporary confirmed registration as a safe success", async () => {
+    process.env.TEMP_DISABLE_EMAIL_CONFIRMATION = "true";
+    const adminClient = {
+      admin: true,
+      auth: {
+        admin: {
+          createUser: vi.fn().mockResolvedValue({
+            data: { user: null },
+            error: { code: "email_exists", message: "User already registered", status: 422 },
+          }),
+        },
+      },
+    };
+    mocks.createSupabaseAdminClient.mockReturnValue(adminClient);
+
+    const response = await POST(
+      new Request("https://gitbookai.example/api/auth/register", {
+        body: JSON.stringify({
+          callbackUrl: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
+          email: "existing@example.com",
+          password: "new-password",
+          turnstileToken: "ok-token",
+        }),
+        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+  });
+
+  it("rejects non-duplicate temporary confirmed registration failures", async () => {
+    process.env.TEMP_DISABLE_EMAIL_CONFIRMATION = "true";
+    const adminClient = {
+      admin: true,
+      auth: {
+        admin: {
+          createUser: vi.fn().mockResolvedValue({
+            data: { user: null },
+            error: { code: "weak_password", message: "Password should be stronger", status: 422 },
+          }),
+        },
+      },
+    };
+    mocks.createSupabaseAdminClient.mockReturnValue(adminClient);
+
+    const response = await POST(
+      new Request("https://gitbookai.example/api/auth/register", {
+        body: JSON.stringify({
+          callbackUrl: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
+          email: "new@example.com",
+          password: "short",
+          turnstileToken: "ok-token",
+        }),
+        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "register_failed" });
   });
 
   it("treats an already registered email as a safe successful registration response", async () => {

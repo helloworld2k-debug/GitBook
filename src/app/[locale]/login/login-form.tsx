@@ -5,7 +5,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type OAuthProvider = "google" | "github";
 type AuthMode = "forgot-password" | "sign-in" | "register";
-type FormStatus = "idle" | "submitting" | "success" | "error" | "password-mismatch" | "oauth-error" | "reset-sent" | "reset-error";
+type FormStatus = "idle" | "submitting" | "success" | "immediate-success" | "error" | "password-mismatch" | "oauth-error" | "reset-sent" | "reset-error";
 
 export type LoginFormMessages = {
   confirmPassword: string;
@@ -28,6 +28,7 @@ export type LoginFormMessages = {
   providerButtons: Record<OAuthProvider, string>;
   providersLabel: string;
   registerTab: string;
+  registrationImmediateSuccess: string;
   registrationSuccess: string;
   registrationRateLimited: string;
   signInSubmit: string;
@@ -188,14 +189,14 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
         return;
       }
 
-      const result = await response.json() as { error?: string; ok?: boolean };
+      const result = await response.json() as { emailConfirmationBypassed?: boolean; error?: string; ok?: boolean };
 
       if (!response.ok || !result.ok) {
         setStatus("error");
         return;
       }
 
-      setStatus("success");
+      setStatus(result.emailConfirmationBypassed ? "immediate-success" : "success");
       return;
     }
 
@@ -417,13 +418,13 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
             {messages.passwordResetBack}
           </button>
         ) : null}
-        {status === "success" || status === "reset-sent" ? (
+        {status === "success" || status === "immediate-success" || status === "reset-sent" ? (
           <p
             aria-live="polite"
             className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100"
             role="status"
           >
-            {status === "reset-sent" ? messages.passwordResetSent : isRegistering ? messages.registrationSuccess : ""}
+            {status === "reset-sent" ? messages.passwordResetSent : status === "immediate-success" ? messages.registrationImmediateSuccess : isRegistering ? messages.registrationSuccess : ""}
           </p>
         ) : null}
         {status === "error" || status === "password-mismatch" ? (

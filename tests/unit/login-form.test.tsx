@@ -38,6 +38,7 @@ const messages: LoginFormMessages = {
   providersLabel: "Quick sign-in options",
   registerTab: "Register",
   registrationSuccess: "If this is a new account, check your email to verify it. If you do not see the message, check spam or try again later. If this email is already registered, sign in or reset your password.",
+  registrationImmediateSuccess: "Account created. You can sign in now.",
   registrationRateLimited: "Too many registration attempts. Please try again later.",
   signInSubmit: "Sign in with email",
   signInTab: "Sign in",
@@ -232,6 +233,23 @@ describe("LoginForm", () => {
       }));
     });
     expect(await screen.findByRole("status")).toHaveTextContent("If this is a new account, check your email to verify it. If you do not see the message, check spam or try again later. If this email is already registered, sign in or reset your password.");
+  });
+
+  it("shows the immediate sign-in message when registration bypasses email confirmation", async () => {
+    fetchMock.mockResolvedValueOnce({
+      json: async () => ({ emailConfirmationBypassed: true, ok: true }),
+      ok: true,
+      status: 200,
+    });
+    renderLoginForm({ turnstileSiteKey: undefined });
+
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "new@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "new-password" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "new-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Account created. You can sign in now.");
   });
 
   it("does not register when passwords do not match", async () => {

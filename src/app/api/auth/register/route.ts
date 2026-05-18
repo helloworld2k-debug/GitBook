@@ -31,6 +31,10 @@ function isTurnstileConfigured() {
   return Boolean(process.env.TURNSTILE_SECRET_KEY);
 }
 
+function shouldBypassEmailConfirmation() {
+  return process.env.TEMP_DISABLE_EMAIL_CONFIRMATION === "true";
+}
+
 function isAlreadyRegisteredError(error: AuthSignupError | null | undefined) {
   const code = error?.code?.toLowerCase();
   const message = error?.message?.toLowerCase() ?? "";
@@ -41,6 +45,22 @@ function isAlreadyRegisteredError(error: AuthSignupError | null | undefined) {
     message.includes("user already registered") ||
     message.includes("already registered")
   );
+}
+
+async function registerConfirmedUserWithEmailPassword(input: {
+  email: string;
+  password: string;
+}) {
+  const supabase = createSupabaseAdminClient();
+
+  return supabase.auth.admin.createUser({
+    email: input.email,
+    email_confirm: true,
+    password: input.password,
+    user_metadata: {
+      source: "register_form",
+    },
+  });
 }
 
 export async function POST(request: Request) {
@@ -86,11 +106,17 @@ export async function POST(request: Request) {
     }
   }
 
-  const result = await registerWithEmailPassword({
-    callbackUrl,
-    email,
-    password,
-  });
+  const bypassEmailConfirmation = shouldBypassEmailConfirmation();
+  const result = bypassEmailConfirmation
+    ? await registerConfirmedUserWithEmailPassword({
+      email,
+      password,
+    })
+    : await registerWithEmailPassword({
+      callbackUrl,
+      email,
+      password,
+    });
 
   if (isAlreadyRegisteredError(result.error)) {
     return jsonOk({ ok: true });
@@ -100,5 +126,5 @@ export async function POST(request: Request) {
     return jsonError("register_failed");
   }
 
-  return jsonOk({ ok: true });
+  return jsonOk({ ok: true, ...(bypassEmailConfirmation ? { emailConfirmationBypassed: true } : {}) });
 }

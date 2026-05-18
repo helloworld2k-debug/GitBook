@@ -66,6 +66,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
     },
     providersLabel: t("providersLabel"),
     registerTab: t("registerTab"),
+    registrationImmediateSuccess: t("registrationImmediateSuccess"),
     registrationSuccess: t("registrationSuccess"),
     registrationRateLimited: t("registrationRateLimited"),
     signInSubmit: t("signInSubmit"),
