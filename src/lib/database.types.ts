@@ -1058,6 +1058,93 @@ export type Database = {
           },
         ];
       };
+      cloud_sync_usage_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          lease_id: string;
+          desktop_session_id: string;
+          device_id: string;
+          machine_code_hash: string;
+          started_at: string;
+          last_heartbeat_at: string;
+          ended_at: string | null;
+          end_reason: string | null;
+          heartbeat_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          lease_id: string;
+          desktop_session_id: string;
+          device_id: string;
+          machine_code_hash: string;
+          started_at: string;
+          last_heartbeat_at: string;
+          ended_at?: string | null;
+          end_reason?: string | null;
+          heartbeat_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          lease_id?: string;
+          desktop_session_id?: string;
+          device_id?: string;
+          machine_code_hash?: string;
+          started_at?: string;
+          last_heartbeat_at?: string;
+          ended_at?: string | null;
+          end_reason?: string | null;
+          heartbeat_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      cloud_sync_usage_events: {
+        Row: {
+          id: string;
+          user_id: string;
+          lease_id: string | null;
+          desktop_session_id: string | null;
+          device_id: string | null;
+          machine_code_hash: string | null;
+          event_type: string;
+          reason: string | null;
+          metadata: Json;
+          occurred_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          lease_id?: string | null;
+          desktop_session_id?: string | null;
+          device_id?: string | null;
+          machine_code_hash?: string | null;
+          event_type: string;
+          reason?: string | null;
+          metadata?: Json;
+          occurred_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          lease_id?: string | null;
+          desktop_session_id?: string | null;
+          device_id?: string | null;
+          machine_code_hash?: string | null;
+          event_type?: string;
+          reason?: string | null;
+          metadata?: Json;
+          occurred_at?: string;
+        };
+        Relationships: [];
+      };
       cloud_sync_settings: {
         Row: {
           key: string;
@@ -1096,7 +1183,10 @@ export type Database = {
           user_id: string;
           expires_at: string;
           consumed_at: string | null;
+          override_type: "skip_cooldown" | "force_switch";
           reason: string;
+          target_device_id: string | null;
+          target_machine_code_hash: string | null;
           created_by: string | null;
           created_at: string;
         };
@@ -1105,7 +1195,10 @@ export type Database = {
           user_id: string;
           expires_at: string;
           consumed_at?: string | null;
+          override_type?: "skip_cooldown" | "force_switch";
           reason: string;
+          target_device_id?: string | null;
+          target_machine_code_hash?: string | null;
           created_by?: string | null;
           created_at?: string;
         };
@@ -1114,7 +1207,10 @@ export type Database = {
           user_id?: string;
           expires_at?: string;
           consumed_at?: string | null;
+          override_type?: "skip_cooldown" | "force_switch";
           reason?: string;
+          target_device_id?: string | null;
+          target_machine_code_hash?: string | null;
           created_by?: string | null;
           created_at?: string;
         };
@@ -1622,6 +1718,7 @@ export type Database = {
           override_id: string | null;
           reason: string;
           remaining_seconds: number | null;
+          usage_session_id: string | null;
         }[];
       };
       heartbeat_cloud_sync_lease: {
@@ -1637,6 +1734,7 @@ export type Database = {
           lease_id: string | null;
           ok: boolean;
           reason: string;
+          usage_session_id: string | null;
         }[];
       };
       release_cloud_sync_lease: {
@@ -1650,6 +1748,15 @@ export type Database = {
       get_cloud_sync_cooldown_minutes: {
         Args: Record<PropertyKey, never>;
         Returns: number;
+      };
+      find_active_cloud_sync_override: {
+        Args: {
+          input_machine_code_hash: string;
+          input_now: string;
+          input_override_type: string;
+          input_user_id: string;
+        };
+        Returns: string | null;
       };
       has_active_cloud_sync_cooldown_override: {
         Args: {
@@ -1668,6 +1775,27 @@ export type Database = {
       revoke_desktop_session_with_leases: {
         Args: {
           input_desktop_session_id: string;
+          input_now: string;
+        };
+        Returns: boolean;
+      };
+      record_cloud_sync_usage_event: {
+        Args: {
+          input_desktop_session_id: string | null;
+          input_device_id: string | null;
+          input_event_type: string;
+          input_lease_id: string | null;
+          input_machine_code_hash: string | null;
+          input_metadata: Json;
+          input_now: string;
+          input_reason: string | null;
+          input_user_id: string;
+        };
+        Returns: string;
+      };
+      revoke_cloud_sync_lease_with_usage: {
+        Args: {
+          input_cloud_sync_lease_id: string;
           input_now: string;
         };
         Returns: boolean;

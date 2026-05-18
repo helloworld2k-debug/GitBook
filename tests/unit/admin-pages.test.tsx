@@ -266,6 +266,14 @@ const testMessages = {
         description: "Generate, filter, reveal, and maintain channel license code batches.",
         cloudSyncCooldownTitle: "Cloud sync device switch cooldown",
         cloudSyncCooldownDescription: "Set how long a newly logged-in device must wait after another device releases cloud sync.",
+        cloudSyncUsageSignalsTitle: "Cloud sync usage signals",
+        cloudSyncUsageSignalsDescription: "Track active sync sessions, total usage duration, and multi-device sync attempts.",
+        totalUsage: "Total usage",
+        activeSyncSessionsLabel: "Active sessions",
+        activeSyncSessions: "active sync sessions",
+        conflicts: "Conflicts",
+        conflictAttempts: "conflict attempts",
+        cooldownBlocks: "Cooldown blocks",
         cooldownMinutes: "Cooldown minutes",
         cooldownReasonPlaceholder: "Reason for this operational change",
         reason: "Reason",
@@ -465,6 +473,24 @@ const testMessages = {
         overrideActive: "Temporary override active",
         overrideConsumed: "Temporary override used",
         overrideConsumedAt: "Used at",
+        cloudSyncUsageTitle: "Cloud sync usage",
+        cloudSyncUsageDescription: "Review usage duration, current device state, and multi-device sync attempts.",
+        cloudSyncUsageActive: "Sync active",
+        cloudSyncUsageInactive: "Sync inactive",
+        cloudSyncUsageTotal: "Total usage",
+        cloudSyncUsageMachines: "Machines",
+        cloudSyncUsageConflicts: "Conflicts",
+        cloudSyncUsageCooldowns: "Cooldowns",
+        cloudSyncUsageLatest: "Latest start",
+        cloudSyncUsageConflictAttempts: "conflict attempts",
+        cloudSyncUsageCooldownBlocks: "cooldown blocks",
+        cloudSyncUsageStarted: "Started",
+        cloudSyncUsageLastHeartbeat: "Last heartbeat",
+        cloudSyncUsageEnded: "Ended",
+        cloudSyncUsageEndReason: "End reason",
+        cloudSyncUsageStillActive: "still active",
+        cloudSyncUsageEmpty: "No cloud sync usage sessions yet.",
+        cloudSyncUsageEvents: "Recent sync events",
         unbind: "Unbind machine",
         addDonation: "Add manual donation",
         emptyTrials: "No trials",
@@ -1345,10 +1371,35 @@ describe("admin pages", () => {
       key: "cloud_sync_device_switch_cooldown_minutes",
       value: "180",
     });
+    const usageSessionsQuery = createAdminListQuery([
+      {
+        id: "usage-1",
+        user_id: "user-1",
+        device_id: "MacBook",
+        machine_code_hash: "machinehash123456",
+        started_at: "2026-05-01T00:00:00.000Z",
+        last_heartbeat_at: "2026-05-01T00:30:00.000Z",
+        ended_at: null,
+        end_reason: null,
+      },
+    ]);
+    const usageEventsQuery = createAdminListQuery([
+      {
+        id: "event-1",
+        user_id: "user-1",
+        event_type: "activate_conflict",
+        reason: "active_on_another_device",
+        device_id: "Windows PC",
+        machine_code_hash: "othermachine123456",
+        occurred_at: "2026-05-01T00:10:00.000Z",
+      },
+    ]);
     const from = vi.fn((table: string) => {
       if (table === "cloud_sync_settings") return cooldownSettingQuery;
       if (table === "license_code_batches") return batchesQuery;
       if (table === "license_code_redeem_attempts") return redeemAttemptsQuery;
+      if (table === "cloud_sync_usage_sessions") return usageSessionsQuery;
+      if (table === "cloud_sync_usage_events") return usageEventsQuery;
       if (table === "trial_codes") return codesQuery;
       return emptyQuery;
     });
@@ -1372,6 +1423,9 @@ describe("admin pages", () => {
     expect(screen.getByRole("button", { name: "Apply filters" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "License batches" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Security signals" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Cloud sync usage signals" })).toBeInTheDocument();
+    expect(screen.getAllByText("1 active sync sessions").length).toBeGreaterThan(0);
+    expect(screen.getByText("1 conflict attempts")).toBeInTheDocument();
     expect(screen.getByText("1 failed attempts")).toBeInTheDocument();
     expect(screen.getAllByText("203.0.113.10").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Taobao May monthly").length).toBeGreaterThan(0);
@@ -1578,6 +1632,38 @@ describe("admin pages", () => {
         updated_at: "2026-04-30T10:04:00.000Z",
       },
     ]);
+    const usageSessionsQuery = createAdminListQuery([
+      {
+        id: "usage-1",
+        lease_id: "lease-1",
+        desktop_session_id: "session-1",
+        device_id: "MacBook",
+        machine_code_hash: "machinehash123456",
+        started_at: "2026-04-30T10:00:00.000Z",
+        last_heartbeat_at: "2026-04-30T10:30:00.000Z",
+        ended_at: "2026-04-30T10:45:00.000Z",
+        end_reason: "released",
+        heartbeat_count: 4,
+      },
+    ]);
+    const usageEventsQuery = createAdminListQuery([
+      {
+        id: "usage-event-1",
+        event_type: "activate_conflict",
+        reason: "active_on_another_device",
+        device_id: "Windows PC",
+        machine_code_hash: "othermachine123456",
+        occurred_at: "2026-04-30T10:20:00.000Z",
+      },
+      {
+        id: "usage-event-2",
+        event_type: "cooldown_waiting",
+        reason: "cooldown_waiting",
+        device_id: "Windows PC",
+        machine_code_hash: "othermachine123456",
+        occurred_at: "2026-04-30T10:25:00.000Z",
+      },
+    ]);
     const supportFeedbackQuery = createAdminListQuery([
       {
         id: "feedback-1",
@@ -1587,6 +1673,16 @@ describe("admin pages", () => {
       },
     ]);
     const cooldownOverridesQuery = createAdminListQuery([]);
+    const recentConflictEventsQuery = createAdminListQuery([
+      {
+        id: "usage-event-force-1",
+        event_type: "activate_conflict",
+        reason: "active_on_another_device",
+        device_id: "Windows PC",
+        machine_code_hash: "othermachine123456",
+        occurred_at: "2026-04-30T10:20:00.000Z",
+      },
+    ]);
     const from = vi.fn((table: string) => {
       if (table === "profiles") return profileQuery;
       if (table === "donations") return donationsQuery;
@@ -1595,6 +1691,10 @@ describe("admin pages", () => {
       if (table === "desktop_sessions") return sessionsQuery;
       if (table === "license_entitlements") return entitlementsQuery;
       if (table === "cloud_sync_leases") return leasesQuery;
+      if (table === "cloud_sync_usage_sessions") return usageSessionsQuery;
+      if (table === "cloud_sync_usage_events") {
+        return from.mock.calls.filter(([name]) => name === "cloud_sync_usage_events").length === 1 ? usageEventsQuery : recentConflictEventsQuery;
+      }
       if (table === "cloud_sync_cooldown_overrides") return cooldownOverridesQuery;
       if (table === "support_feedback") return supportFeedbackQuery;
       throw new Error(`Unexpected table: ${table}`);
@@ -1622,6 +1722,13 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "Entitlements" })).toBeInTheDocument();
     expect(screen.getAllByText("cloud_sync").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Leases" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Cloud sync usage" })).toBeInTheDocument();
+    expect(screen.getAllByText("45m").length).toBeGreaterThan(0);
+    expect(screen.getByText("1 conflict attempts")).toBeInTheDocument();
+    expect(screen.getByText("1 cooldown blocks")).toBeInTheDocument();
+    expect(screen.getByText(/released/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Grant force switch" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("othermachine123456")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Account timeline" })).toBeInTheDocument();
     expect(screen.getByText("Need help with trial")).toBeInTheDocument();
   });
@@ -1738,7 +1845,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length <= 2 ? profileQuery : ownerQuery;
       }
 
-      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_cooldown_overrides", "support_feedback"].includes(table)) {
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback"].includes(table)) {
         return emptyQuery;
       }
 

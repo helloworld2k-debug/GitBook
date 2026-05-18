@@ -21,6 +21,26 @@ type ReleaseCloudSyncLeaseInput = {
   now?: Date;
 };
 
+type RecordCloudSyncUsageEventInput = {
+  userId: string;
+  desktopSessionId: string | null;
+  deviceId: string | null;
+  machineCodeHash: string | null;
+  eventType:
+    | "activate_success"
+    | "activate_conflict"
+    | "cooldown_waiting"
+    | "same_machine_takeover"
+    | "heartbeat_success"
+    | "release"
+    | "admin_revoke"
+    | "support_denied";
+  reason: string | null;
+  leaseId?: string | null;
+  metadata?: Database["public"]["Functions"]["record_cloud_sync_usage_event"]["Args"]["input_metadata"];
+  now?: Date;
+};
+
 type CloudSyncLeaseRpcClient = {
   rpc: <FunctionName extends keyof Database["public"]["Functions"]>(
     functionName: FunctionName,
@@ -40,6 +60,7 @@ export type CloudSyncLeaseActivation = {
   availableAfter: string | null;
   remainingSeconds: number | null;
   overrideId: string | null;
+  usageSessionId: string | null;
 };
 
 export type CloudSyncLeaseHeartbeat = {
@@ -48,6 +69,7 @@ export type CloudSyncLeaseHeartbeat = {
   leaseId: string | null;
   expiresAt: string | null;
   activeDeviceId: string | null;
+  usageSessionId: string | null;
 };
 
 export type CloudSyncLeaseStatus = {
@@ -119,6 +141,7 @@ export async function activateCloudSyncLease(
     overrideId: row.override_id,
     reason: row.reason,
     remainingSeconds: row.remaining_seconds,
+    usageSessionId: row.usage_session_id,
   };
 }
 
@@ -150,6 +173,7 @@ export async function heartbeatCloudSyncLease(
     leaseId: row.lease_id,
     ok: row.ok,
     reason: row.reason,
+    usageSessionId: row.usage_session_id,
   };
 }
 
@@ -169,6 +193,30 @@ export async function releaseCloudSyncLease(
   }
 
   return { released: true };
+}
+
+export async function recordCloudSyncUsageEvent(
+  client: CloudSyncLeaseRpcClient,
+  input: RecordCloudSyncUsageEventInput,
+): Promise<{ recorded: true }> {
+  const now = input.now ?? new Date();
+  const { error } = await client.rpc("record_cloud_sync_usage_event", {
+    input_desktop_session_id: input.desktopSessionId,
+    input_device_id: input.deviceId,
+    input_event_type: input.eventType,
+    input_lease_id: input.leaseId ?? null,
+    input_machine_code_hash: input.machineCodeHash,
+    input_metadata: input.metadata ?? {},
+    input_now: now.toISOString(),
+    input_reason: input.reason,
+    input_user_id: input.userId,
+  });
+
+  if (error) {
+    throw new Error("Unable to record cloud sync usage event");
+  }
+
+  return { recorded: true };
 }
 
 export async function readCloudSyncLeaseStatus(

@@ -69,6 +69,7 @@ export async function POST(request: Request) {
       expiresAt: lease.expiresAt,
       leaseId: lease.leaseId,
       reason: "active",
+      usageSessionId: lease.usageSessionId,
     });
   } catch {
     logSlow("internal_error");

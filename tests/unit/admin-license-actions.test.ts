@@ -576,22 +576,17 @@ describe("admin license actions", () => {
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "revoke_desktop_session" }));
   });
 
-  it("revokes cloud sync leases and updates the timestamp", async () => {
-    const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
-    const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
+  it("revokes cloud sync leases through the usage-aware RPC", async () => {
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
     const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
-      if (table === "cloud_sync_leases") {
-        return { update };
-      }
-
       if (table === "admin_audit_logs") {
         return { insert: auditInsert };
       }
 
       throw new Error(`Unexpected table: ${table}`);
     });
-    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, rpc });
 
     const formData = new FormData();
     formData.set("locale", "zh-Hant");
@@ -600,11 +595,10 @@ describe("admin license actions", () => {
     await expect(revokeCloudSyncLease(formData)).rejects.toThrow("redirect:/zh-Hant/admin/licenses?notice=cloud-sync-lease-revoked");
 
     expect(mocks.requireAdmin).toHaveBeenCalledWith("zh-Hant");
-    expect(update).toHaveBeenCalledWith({
-      revoked_at: expect.any(String),
-      updated_at: expect.any(String),
+    expect(rpc).toHaveBeenCalledWith("revoke_cloud_sync_lease_with_usage", {
+      input_cloud_sync_lease_id: "lease-1",
+      input_now: expect.any(String),
     });
-    expect(eq).toHaveBeenCalledWith("id", "lease-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh-Hant/admin/licenses");
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "revoke_cloud_sync_lease" }));
   });
@@ -680,6 +674,59 @@ describe("admin license actions", () => {
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
       action: "grant_cloud_sync_cooldown_override",
       target_id: "override-1",
+      target_type: "cloud_sync_cooldown_override",
+    }));
+  });
+
+  it("grants a target-bound force-switch override for a specific new machine", async () => {
+    const single = vi.fn(async () => ({
+      data: {
+        expires_at: "2026-12-01T06:00:00.000Z",
+        id: "override-2",
+        override_type: "force_switch",
+        target_device_id: "Windows PC",
+        target_machine_code_hash: "machine-hash-b",
+        user_id: "user-1",
+      },
+      error: null,
+    }));
+    const select = vi.fn(() => ({ single }));
+    const insert = vi.fn(() => ({ select }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "cloud_sync_cooldown_overrides") return { insert };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("user_id", "user-1");
+    formData.set("override_type", "force_switch");
+    formData.set("expires_at", "2026-12-01T06:00:00.000Z");
+    formData.set("target_machine_code_hash", "machine-hash-b");
+    formData.set("target_device_id", "Windows PC");
+    formData.set("reason", "Old computer is unavailable");
+
+    await expect(grantCloudSyncCooldownOverride(formData)).rejects.toThrow("redirect:/en/admin/users/user-1?notice=cloud-sync-override-granted");
+
+    expect(insert).toHaveBeenCalledWith({
+      created_by: "admin-1",
+      expires_at: "2026-12-01T06:00:00.000Z",
+      override_type: "force_switch",
+      reason: "Old computer is unavailable",
+      target_device_id: "Windows PC",
+      target_machine_code_hash: "machine-hash-b",
+      user_id: "user-1",
+    });
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "grant_cloud_sync_force_switch_override",
+      after: expect.objectContaining({
+        override_type: "force_switch",
+        target_machine_code_hash: "machine-hash-b",
+      }),
+      target_id: "override-2",
       target_type: "cloud_sync_cooldown_override",
     }));
   });

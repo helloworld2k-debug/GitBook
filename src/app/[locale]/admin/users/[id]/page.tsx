@@ -37,6 +37,28 @@ type TimelineItem = {
   title: string;
 };
 
+type CloudSyncUsageSessionRow = {
+  id: string;
+  lease_id: string;
+  desktop_session_id: string;
+  device_id: string;
+  machine_code_hash: string;
+  started_at: string;
+  last_heartbeat_at: string;
+  ended_at: string | null;
+  end_reason: string | null;
+  heartbeat_count: number;
+};
+
+type CloudSyncUsageEventRow = {
+  id: string;
+  event_type: string;
+  reason: string | null;
+  device_id: string | null;
+  machine_code_hash: string | null;
+  occurred_at: string;
+};
+
 function formatDateTime(value: string | null, locale: string) {
   if (!value) {
     return "-";
@@ -67,6 +89,34 @@ function shortHash(value: string | null | undefined) {
   return value ? `${value.slice(0, 10)}...${value.slice(-6)}` : "-";
 }
 
+function formatUsageDuration(seconds: number) {
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+
+  const minutes = Math.round(seconds / 60);
+
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+}
+
+function usageSeconds(session: CloudSyncUsageSessionRow, now = new Date()) {
+  const startedAt = new Date(session.started_at).getTime();
+  const endedAt = new Date(session.ended_at ?? session.last_heartbeat_at ?? now.toISOString()).getTime();
+
+  if (Number.isNaN(startedAt) || Number.isNaN(endedAt) || endedAt <= startedAt) {
+    return 0;
+  }
+
+  return Math.round((endedAt - startedAt) / 1000);
+}
+
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="min-w-0 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
@@ -94,6 +144,8 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
     sessionsResult,
     entitlementsResult,
     leasesResult,
+    usageSessionsResult,
+    usageEventsResult,
     cooldownOverridesResult,
     supportFeedbackResult,
     adminProfileResult,
@@ -140,6 +192,18 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .order("updated_at", { ascending: false })
       .limit(50),
     supabase
+      .from("cloud_sync_usage_sessions")
+      .select("id,lease_id,desktop_session_id,device_id,machine_code_hash,started_at,last_heartbeat_at,ended_at,end_reason,heartbeat_count")
+      .eq("user_id", id)
+      .order("started_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("cloud_sync_usage_events")
+      .select("id,event_type,reason,device_id,machine_code_hash,occurred_at")
+      .eq("user_id", id)
+      .order("occurred_at", { ascending: false })
+      .limit(50),
+    supabase
       .from("cloud_sync_cooldown_overrides")
       .select("id,expires_at,consumed_at,reason,created_at")
       .eq("user_id", id)
@@ -168,6 +232,8 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   if (sessionsResult.error) throw sessionsResult.error;
   if (entitlementsResult.error) throw entitlementsResult.error;
   if (leasesResult.error) throw leasesResult.error;
+  if (usageSessionsResult.error) throw usageSessionsResult.error;
+  if (usageEventsResult.error) throw usageEventsResult.error;
   if (cooldownOverridesResult.error) throw cooldownOverridesResult.error;
   if (supportFeedbackResult.error) throw supportFeedbackResult.error;
   if (adminProfileResult.error) throw adminProfileResult.error;
@@ -179,9 +245,18 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   const sessions = sessionsResult.data ?? [];
   const entitlements = entitlementsResult.data ?? [];
   const leases = leasesResult.data ?? [];
+  const usageSessions = (usageSessionsResult.data ?? []) as CloudSyncUsageSessionRow[];
+  const usageEvents = (usageEventsResult.data ?? []) as CloudSyncUsageEventRow[];
   const cooldownOverrides = cooldownOverridesResult.data ?? [];
   const supportFeedback = supportFeedbackResult.data ?? [];
   const canManageRoles = isOwnerProfile(adminProfileResult.data);
+  const activeLease = leases.find((lease) => !lease.revoked_at);
+  const totalUsageSeconds = usageSessions.reduce((total, session) => total + usageSeconds(session), 0);
+  const uniqueUsageMachines = new Set(usageSessions.map((session) => session.machine_code_hash).filter(Boolean)).size;
+  const conflictAttempts = usageEvents.filter((event) => event.event_type === "activate_conflict").length;
+  const cooldownBlocks = usageEvents.filter((event) => event.event_type === "cooldown_waiting").length;
+  const recentForceSwitchCandidate = usageEvents.find((event) => event.event_type === "activate_conflict" && event.machine_code_hash);
+  const latestUsageSession = usageSessions[0];
   const timelineItems: TimelineItem[] = [
     ...supportFeedback.map((item) => ({
       date: item.created_at,
@@ -523,6 +598,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
               <input name="locale" type="hidden" value={locale} />
               <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
               <input name="user_id" type="hidden" value={profile.id} />
+              <input name="override_type" type="hidden" value="skip_cooldown" />
               <div className="grid gap-3">
                 <label className="grid gap-1 text-xs font-medium text-slate-700">
                   {t("overrideExpiresAt")}
@@ -549,6 +625,50 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 </AdminSubmitButton>
               </div>
             </form>
+            {recentForceSwitchCandidate?.machine_code_hash ? (
+              <form action={grantCloudSyncCooldownOverride} className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3">
+                <input name="locale" type="hidden" value={locale} />
+                <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
+                <input name="user_id" type="hidden" value={profile.id} />
+                <input name="override_type" type="hidden" value="force_switch" />
+                <input name="target_device_id" type="hidden" value={recentForceSwitchCandidate.device_id ?? ""} />
+                <div className="grid gap-3">
+                  <label className="grid gap-1 text-xs font-medium text-slate-700">
+                    {t("overrideExpiresAt")}
+                    <input
+                      className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                      name="expires_at"
+                      required
+                      type="datetime-local"
+                    />
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-slate-700">
+                    {t("machine")}
+                    <input
+                      className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 font-mono text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                      name="target_machine_code_hash"
+                      readOnly
+                      required
+                      value={recentForceSwitchCandidate.machine_code_hash}
+                    />
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-slate-700">
+                    {t("overrideReason")}
+                    <input
+                      className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                      name="reason"
+                      required
+                    />
+                  </label>
+                  <AdminSubmitButton
+                    className="inline-flex min-h-10 items-center justify-center rounded-md bg-amber-700 px-3 text-sm font-semibold text-white transition-colors hover:bg-amber-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700"
+                    pendingLabel={adminT("common.processing")}
+                  >
+                    Grant force switch
+                  </AdminSubmitButton>
+                </div>
+              </form>
+            ) : null}
             {cooldownOverrides.length > 0 ? (
               <div className="mt-4 space-y-2">
                 {cooldownOverrides.map((override) => (
@@ -591,6 +711,64 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
             )}
           </AdminCard>
         </div>
+
+        <AdminCard className="mt-6 p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950">{t("cloudSyncUsageTitle")}</h2>
+              <p className="mt-1 text-sm text-slate-600">{t("cloudSyncUsageDescription")}</p>
+            </div>
+            <AdminStatusBadge tone={activeLease ? "success" : "neutral"}>
+              {activeLease ? t("cloudSyncUsageActive") : t("cloudSyncUsageInactive")}
+            </AdminStatusBadge>
+          </div>
+
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <DetailRow label={t("cloudSyncUsageTotal")} value={formatUsageDuration(totalUsageSeconds)} />
+            <DetailRow label={t("cloudSyncUsageMachines")} value={uniqueUsageMachines} />
+            <DetailRow label={t("cloudSyncUsageConflicts")} value={`${conflictAttempts} ${t("cloudSyncUsageConflictAttempts")}`} />
+            <DetailRow label={t("cloudSyncUsageCooldowns")} value={`${cooldownBlocks} ${t("cloudSyncUsageCooldownBlocks")}`} />
+            <DetailRow label={t("cloudSyncUsageLatest")} value={latestUsageSession ? formatDateTime(latestUsageSession.started_at, locale) : "-"} />
+          </dl>
+
+          {usageSessions.length > 0 ? (
+            <div className="mt-5 space-y-3">
+              {usageSessions.slice(0, 8).map((session) => (
+                <div key={session.id} className="rounded-md border border-slate-200 p-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="break-words text-sm font-medium text-slate-950">{session.device_id}</p>
+                      <p className="mt-1 font-mono text-xs text-slate-600">{shortHash(session.machine_code_hash)} / {shortId(session.desktop_session_id)}</p>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-950">{formatUsageDuration(usageSeconds(session))}</p>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-600">{t("cloudSyncUsageStarted")}: {formatDateTime(session.started_at, locale)}</p>
+                  <p className="mt-1 text-xs text-slate-600">{t("cloudSyncUsageLastHeartbeat")}: {formatDateTime(session.last_heartbeat_at, locale)}</p>
+                  <p className="mt-1 text-xs text-slate-600">{t("cloudSyncUsageEnded")}: {formatDateTime(session.ended_at, locale)}</p>
+                  <p className="mt-1 text-xs text-slate-600">{t("cloudSyncUsageEndReason")}: {session.end_reason ?? t("cloudSyncUsageStillActive")}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-slate-600">{t("cloudSyncUsageEmpty")}</p>
+          )}
+
+          {usageEvents.length > 0 ? (
+            <div className="mt-5">
+              <h3 className="text-sm font-semibold text-slate-950">{t("cloudSyncUsageEvents")}</h3>
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                {usageEvents.slice(0, 6).map((event) => (
+                  <div key={event.id} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                    <p className="font-semibold text-slate-950">{event.event_type}</p>
+                    <p className="mt-1">{formatDateTime(event.occurred_at, locale)}</p>
+                    <p className="mt-1 break-words">{event.device_id ?? "-"} / {shortHash(event.machine_code_hash)}</p>
+                    {event.reason ? <p className="mt-1">{event.reason}</p> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </AdminCard>
 
         <AdminCard className="mt-6 p-5">
           <h2 className="text-base font-semibold text-slate-950">{t("timelineTitle")}</h2>

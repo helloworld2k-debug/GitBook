@@ -1,6 +1,6 @@
 import { createRequestId, elapsedMs, logSlowDesktopApi, nowMs } from "@/lib/api/performance";
 import { jsonOk } from "@/lib/api/responses";
-import { activateCloudSyncLease } from "@/lib/license/cloud-sync-leases";
+import { activateCloudSyncLease, recordCloudSyncUsageEvent } from "@/lib/license/cloud-sync-leases";
 import { readBearerToken, validateDesktopSession } from "@/lib/license/desktop-session";
 import { getLicenseStatus } from "@/lib/license/status";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -49,6 +49,18 @@ export async function POST(request: Request) {
     entitlementMs = elapsedMs(entitlementStart);
 
     if (!status.allowed) {
+      try {
+        await recordCloudSyncUsageEvent(client, {
+          desktopSessionId: session.id,
+          deviceId: session.device_id,
+          eventType: "support_denied",
+          machineCodeHash: session.machine_code_hash,
+          reason: status.reason,
+          userId: session.user_id,
+        });
+      } catch {
+        // Usage diagnostics should not change the authorization result.
+      }
       logSlow(status.reason);
       return jsonOk(
         {
@@ -96,6 +108,7 @@ export async function POST(request: Request) {
       expiresAt: lease.expiresAt,
       activeDeviceId: lease.activeDeviceId,
       overrideId: lease.overrideId,
+      usageSessionId: lease.usageSessionId,
     });
   } catch {
     logSlow("internal_error");

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const routeMocks = vi.hoisted(() => ({
   activateCloudSyncLease: vi.fn(),
   createSupabaseAdminClient: vi.fn(),
+  recordCloudSyncUsageEvent: vi.fn(),
   getLicenseStatus: vi.fn(),
   heartbeatCloudSyncLease: vi.fn(),
   readBearerToken: vi.fn(),
@@ -14,6 +15,7 @@ const routeMocks = vi.hoisted(() => ({
 vi.mock("@/lib/license/cloud-sync-leases", () => ({
   activateCloudSyncLease: routeMocks.activateCloudSyncLease,
   heartbeatCloudSyncLease: routeMocks.heartbeatCloudSyncLease,
+  recordCloudSyncUsageEvent: routeMocks.recordCloudSyncUsageEvent,
   releaseCloudSyncLease: routeMocks.releaseCloudSyncLease,
   readCloudSyncLeaseStatus: routeMocks.readCloudSyncLeaseStatus,
 }));
@@ -53,6 +55,7 @@ describe("cloud sync lease service", () => {
           lease_id: "lease-a",
           ok: true,
           reason: "active",
+          usage_session_id: "usage-session-a",
         },
       ],
       error: null,
@@ -75,6 +78,7 @@ describe("cloud sync lease service", () => {
       leaseId: "lease-a",
       ok: true,
       reason: "active",
+      usageSessionId: "usage-session-a",
     });
 
     expect(rpc).toHaveBeenCalledWith("activate_cloud_sync_lease", {
@@ -177,6 +181,7 @@ describe("cloud sync lease service", () => {
           lease_id: "lease-a",
           ok: true,
           reason: "active",
+          usage_session_id: "usage-session-a",
         },
       ],
       error: null,
@@ -197,6 +202,7 @@ describe("cloud sync lease service", () => {
       leaseId: "lease-a",
       ok: true,
       reason: "active",
+      usageSessionId: "usage-session-a",
     });
   });
 
@@ -304,8 +310,10 @@ describe("cloud sync lease routes", () => {
       leaseId: "lease-a",
       ok: true,
       reason: "active",
+      usageSessionId: "usage-session-a",
     });
     routeMocks.createSupabaseAdminClient.mockReset().mockReturnValue(adminClient);
+    routeMocks.recordCloudSyncUsageEvent.mockReset().mockResolvedValue({ recorded: true });
     routeMocks.getLicenseStatus.mockReset().mockResolvedValue({
       allowed: true,
       feature: "cloud_sync",
@@ -320,6 +328,7 @@ describe("cloud sync lease routes", () => {
       leaseId: "lease-a",
       ok: true,
       reason: "active",
+      usageSessionId: "usage-session-a",
     });
     routeMocks.readBearerToken.mockReset().mockReturnValue("desktop-token");
     routeMocks.releaseCloudSyncLease.mockReset().mockResolvedValue({ released: true });
@@ -348,6 +357,7 @@ describe("cloud sync lease routes", () => {
       expiresAt: "2026-05-01T00:02:00.000Z",
       leaseId: "lease-a",
       reason: "active",
+      usageSessionId: "usage-session-a",
     });
     expect(routeMocks.getLicenseStatus).toHaveBeenCalledWith(adminClient, {
       machineCodeHash: "machine-hash-a",
@@ -417,6 +427,14 @@ describe("cloud sync lease routes", () => {
       validUntil: "2026-05-01T00:00:00.000Z",
     });
     expect(routeMocks.activateCloudSyncLease).not.toHaveBeenCalled();
+    expect(routeMocks.recordCloudSyncUsageEvent).toHaveBeenCalledWith(adminClient, {
+      desktopSessionId: "session-a",
+      deviceId: "device-a",
+      eventType: "support_denied",
+      machineCodeHash: "machine-hash-a",
+      reason: "expired",
+      userId: "user-1",
+    });
   });
 
   it("rejects activation when the desktop token is missing or invalid", async () => {
@@ -514,6 +532,7 @@ describe("cloud sync lease routes", () => {
       expiresAt: "2026-05-01T00:03:00.000Z",
       leaseId: "lease-a",
       reason: "active",
+      usageSessionId: "usage-session-a",
     });
   });
 
@@ -593,6 +612,7 @@ describe("cloud sync lease routes", () => {
       expiresAt: "2026-05-01T00:03:00.000Z",
       leaseId: "lease-a",
       reason: "active",
+      usageSessionId: "usage-session-a",
     });
     expect(routeMocks.getLicenseStatus).not.toHaveBeenCalled();
     expect(routeMocks.heartbeatCloudSyncLease).toHaveBeenCalledWith(adminClient, {

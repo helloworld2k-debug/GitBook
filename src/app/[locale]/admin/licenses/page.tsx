@@ -78,6 +78,27 @@ type LicenseRedeemAttemptRow = {
   created_at: string;
 };
 
+type CloudSyncUsageSessionRow = {
+  id: string;
+  user_id: string;
+  device_id: string;
+  machine_code_hash: string;
+  started_at: string;
+  last_heartbeat_at: string;
+  ended_at: string | null;
+  end_reason: string | null;
+};
+
+type CloudSyncUsageEventRow = {
+  id: string;
+  user_id: string;
+  event_type: string;
+  reason: string | null;
+  device_id: string | null;
+  machine_code_hash: string | null;
+  occurred_at: string;
+};
+
 function formatDateTime(value: string, locale: string) {
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
@@ -99,6 +120,30 @@ function shortId(value: string | null | undefined) {
 
 function shortHash(value: string | null | undefined) {
   return value ? `${value.slice(0, 10)}...${value.slice(-6)}` : "-";
+}
+
+function usageSeconds(session: CloudSyncUsageSessionRow, now = new Date()) {
+  const startedAt = new Date(session.started_at).getTime();
+  const endedAt = new Date(session.ended_at ?? session.last_heartbeat_at ?? now.toISOString()).getTime();
+
+  if (Number.isNaN(startedAt) || Number.isNaN(endedAt) || endedAt <= startedAt) {
+    return 0;
+  }
+
+  return Math.round((endedAt - startedAt) / 1000);
+}
+
+function formatUsageDuration(seconds: number) {
+  const minutes = Math.round(seconds / 60);
+
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 }
 
 function formatDuration(code: Pick<LicenseCodeRow, "duration_kind" | "trial_days">, t: Awaited<ReturnType<typeof getTranslations>>) {
@@ -190,7 +235,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   const supabase = createSupabaseAdminClient();
   const bulkFormId = "license-codes-bulk-action-form";
 
-  const [cooldownSettingResult, batchesResult, codesResult, trialRedemptionsResult, redeemAttemptsResult, entitlementsResult, sessionsResult, leasesResult] = await Promise.all([
+  const [cooldownSettingResult, batchesResult, codesResult, trialRedemptionsResult, redeemAttemptsResult, entitlementsResult, sessionsResult, leasesResult, usageSessionsResult, usageEventsResult] = await Promise.all([
     supabase.from("cloud_sync_settings").select("key,value").eq("key", "cloud_sync_device_switch_cooldown_minutes").single(),
     supabase
       .from("license_code_batches")
@@ -215,6 +260,8 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
     supabase.from("license_entitlements").select("id,user_id,feature_code,valid_until,status,source_donation_id,updated_at").order("valid_until", { ascending: false }).limit(50),
     supabase.from("desktop_sessions").select("id,user_id,device_id,machine_code_hash,platform,app_version,last_seen_at,cloud_sync_active_until,expires_at,revoked_at").order("last_seen_at", { ascending: false }).limit(50),
     supabase.from("cloud_sync_leases").select("id,user_id,desktop_session_id,device_id,last_heartbeat_at,expires_at,revoked_at,updated_at").order("updated_at", { ascending: false }).limit(50),
+    supabase.from("cloud_sync_usage_sessions").select("id,user_id,device_id,machine_code_hash,started_at,last_heartbeat_at,ended_at,end_reason").order("started_at", { ascending: false }).limit(50),
+    supabase.from("cloud_sync_usage_events").select("id,user_id,event_type,reason,device_id,machine_code_hash,occurred_at").order("occurred_at", { ascending: false }).limit(50),
   ]);
 
   if (cooldownSettingResult.error) throw cooldownSettingResult.error;
@@ -225,6 +272,8 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   if (entitlementsResult.error) throw entitlementsResult.error;
   if (sessionsResult.error) throw sessionsResult.error;
   if (leasesResult.error) throw leasesResult.error;
+  if (usageSessionsResult.error) throw usageSessionsResult.error;
+  if (usageEventsResult.error) throw usageEventsResult.error;
 
   let fallbackCodes: LicenseCodeRow[] | null = null;
 
@@ -260,6 +309,12 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   const entitlements = entitlementsResult.data ?? [];
   const sessions = sessionsResult.data ?? [];
   const leases = leasesResult.data ?? [];
+  const usageSessions = (usageSessionsResult.data ?? []) as CloudSyncUsageSessionRow[];
+  const usageEvents = (usageEventsResult.data ?? []) as CloudSyncUsageEventRow[];
+  const activeUsageSessions = usageSessions.filter((session) => !session.ended_at);
+  const conflictUsageEvents = usageEvents.filter((event) => event.event_type === "activate_conflict");
+  const cooldownUsageEvents = usageEvents.filter((event) => event.event_type === "cooldown_waiting");
+  const totalUsageSeconds = usageSessions.reduce((total, session) => total + usageSeconds(session), 0);
 
   for (const code of codes) {
     if (!code.batch_id) continue;
@@ -292,6 +347,47 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           title={t("licenses.title")}
         />
         <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
+
+        <AdminCard className="p-5">
+          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950">{t("licenses.cloudSyncUsageSignalsTitle")}</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.cloudSyncUsageSignalsDescription")}</p>
+            </div>
+            <AdminStatusBadge tone={activeUsageSessions.length > 0 ? "success" : "neutral"}>
+              {activeUsageSessions.length} {t("licenses.activeSyncSessions")}
+            </AdminStatusBadge>
+          </div>
+          <dl className="mt-4 grid gap-3 md:grid-cols-4">
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-xs font-semibold uppercase text-slate-500">{t("licenses.totalUsage")}</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-950">{formatUsageDuration(totalUsageSeconds)}</dd>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-xs font-semibold uppercase text-slate-500">{t("licenses.activeSyncSessionsLabel")}</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-950">{activeUsageSessions.length} {t("licenses.activeSyncSessions")}</dd>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-xs font-semibold uppercase text-slate-500">{t("licenses.conflicts")}</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-950">{conflictUsageEvents.length} {t("licenses.conflictAttempts")}</dd>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+              <dt className="text-xs font-semibold uppercase text-slate-500">{t("licenses.cooldownBlocks")}</dt>
+              <dd className="mt-1 text-sm font-semibold text-slate-950">{cooldownUsageEvents.length}</dd>
+            </div>
+          </dl>
+          {usageEvents.length > 0 ? (
+            <div className="mt-4 grid gap-2 md:grid-cols-2">
+              {usageEvents.slice(0, 4).map((event) => (
+                <div key={event.id} className="rounded-md border border-slate-200 p-3 text-xs text-slate-600">
+                  <p className="font-semibold text-slate-950">{event.event_type}</p>
+                  <p className="mt-1">{formatDateTime(event.occurred_at, locale)} / {shortId(event.user_id)}</p>
+                  <p className="mt-1 break-words">{event.device_id ?? "-"} / {shortHash(event.machine_code_hash)}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </AdminCard>
 
         <AdminCard className="p-5">
           <div>

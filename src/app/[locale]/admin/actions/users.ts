@@ -5,8 +5,11 @@ import { redirectWithAdminFeedback } from "@/lib/admin/feedback";
 import { requireAdmin, requireOwner } from "@/lib/auth/guards";
 import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/lib/database.types";
 import { insertAdminAuditLog } from "./audit";
 import { getRequiredString, getSafeLocale, getUserIds } from "./validation";
+
+type CloudSyncCooldownOverrideInsert = Database["public"]["Tables"]["cloud_sync_cooldown_overrides"]["Insert"];
 
 function getRequiredFutureDate(formData: FormData, name: string) {
   const value = getRequiredString(formData, name, "Expiry is required");
@@ -17,6 +20,16 @@ function getRequiredFutureDate(formData: FormData, name: string) {
   }
 
   return date.toISOString();
+}
+
+function getCloudSyncOverrideType(formData: FormData) {
+  const value = String(formData.get("override_type") ?? "skip_cooldown").trim();
+
+  if (value !== "skip_cooldown" && value !== "force_switch") {
+    throw new Error("Invalid cloud sync override type");
+  }
+
+  return value;
 }
 
 export async function updateAdminUserProfile(formData: FormData) {
@@ -122,10 +135,10 @@ export async function revokeCloudSyncLease(formData: FormData) {
   const admin = await requireAdmin(locale);
   const cloudSyncLeaseId = getRequiredString(formData, "cloud_sync_lease_id", "Cloud sync lease is required");
   const now = new Date().toISOString();
-  const { error } = await createSupabaseAdminClient()
-    .from("cloud_sync_leases")
-    .update({ revoked_at: now, updated_at: now })
-    .eq("id", cloudSyncLeaseId);
+  const { error } = await createSupabaseAdminClient().rpc("revoke_cloud_sync_lease_with_usage", {
+    input_cloud_sync_lease_id: cloudSyncLeaseId,
+    input_now: now,
+  });
 
   if (error) {
     redirectWithAdminFeedback({
@@ -163,16 +176,27 @@ export async function grantCloudSyncCooldownOverride(formData: FormData) {
   const userId = getRequiredString(formData, "user_id", "User is required");
   const expiresAt = getRequiredFutureDate(formData, "expires_at");
   const reason = getRequiredString(formData, "reason", "Reason is required");
+  const overrideType = getCloudSyncOverrideType(formData);
+  const targetMachineCodeHash = String(formData.get("target_machine_code_hash") ?? "").trim() || null;
+  const targetDeviceId = String(formData.get("target_device_id") ?? "").trim() || null;
   const supabase = createSupabaseAdminClient();
+  const overrideInsert: CloudSyncCooldownOverrideInsert = {
+    created_by: admin.id,
+    expires_at: expiresAt,
+    reason,
+    user_id: userId,
+    ...(overrideType === "force_switch"
+      ? {
+          override_type: overrideType,
+          target_device_id: targetDeviceId,
+          target_machine_code_hash: targetMachineCodeHash,
+        }
+      : {}),
+  };
   const { data: override, error } = await supabase
     .from("cloud_sync_cooldown_overrides")
-    .insert({
-      created_by: admin.id,
-      expires_at: expiresAt,
-      reason,
-      user_id: userId,
-    })
-    .select("id,user_id,expires_at")
+    .insert(overrideInsert)
+    .select("id,user_id,expires_at,override_type,target_machine_code_hash,target_device_id")
     .single();
 
   if (error || !override) {
@@ -186,10 +210,13 @@ export async function grantCloudSyncCooldownOverride(formData: FormData) {
   }
 
   await insertAdminAuditLog({
-    action: "grant_cloud_sync_cooldown_override",
+    action: overrideType === "force_switch" ? "grant_cloud_sync_force_switch_override" : "grant_cloud_sync_cooldown_override",
     adminUserId: admin.id,
     after: {
       expires_at: override.expires_at,
+      override_type: override.override_type,
+      target_device_id: override.target_device_id,
+      target_machine_code_hash: override.target_machine_code_hash,
       user_id: override.user_id,
     },
     reason,
