@@ -1,7 +1,7 @@
 import { chromium, expect } from "@playwright/test";
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 
 const baseUrl = process.env.E2E_BASE_URL ?? "https://gitbookai.ccwu.cc";
 const ownerEmail = process.env.E2E_OWNER_EMAIL ?? "codex-e2e-owner-20260506@example.com";
@@ -11,45 +11,6 @@ const userEmail = process.env.E2E_USER_EMAIL ?? `${marker}@example.test`;
 const userPasswordPath = process.env.E2E_USER_PASSWORD_FILE ?? "/tmp/codex-full-e2e-password.txt";
 const staticUserId = process.env.E2E_USER_ID;
 
-loadEnvFile(".env.codex-test");
-
-const supabase = createClient(
-  readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
-  readRequiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  },
-);
-
-function loadEnvFile(path) {
-  if (!existsSync(path)) return;
-
-  for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const separator = trimmed.indexOf("=");
-    if (separator === -1) continue;
-
-    const key = trimmed.slice(0, separator);
-    const rawValue = trimmed.slice(separator + 1);
-    if (!process.env[key]) {
-      process.env[key] = rawValue.replace(/^"(.*)"$/, "$1");
-    }
-  }
-}
-
-function readRequiredEnv(name) {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-
-  return value;
-}
-
 function readSecret(path) {
   if (!existsSync(path)) {
     throw new Error(`Missing secret file: ${path}`);
@@ -58,85 +19,154 @@ function readSecret(path) {
   return readFileSync(path, "utf8").trim();
 }
 
-async function withDbRetries(label, action, { attempts = 3 } = {}) {
+function sqlLiteral(value) {
+  return `'${String(value).replaceAll("'", "''")}'`;
+}
+
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function getCommandErrorOutput(error) {
+  const stderr = error && typeof error === "object" && "stderr" in error ? error.stderr : null;
+  if (Buffer.isBuffer(stderr)) return stderr.toString("utf8").trim();
+  if (typeof stderr === "string") return stderr.trim();
+  return error instanceof Error ? error.message : String(error);
+}
+
+function query(sql, { attempts = 10 } = {}) {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      return await action();
+      const output = execFileSync("supabase", ["db", "query", sql, "--linked", "--output", "json"], {
+        cwd: process.cwd(),
+        encoding: "utf8",
+        maxBuffer: 1024 * 1024 * 10,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      const parsed = JSON.parse(output.slice(output.indexOf("{")));
+      return parsed.rows ?? [];
     } catch (error) {
       lastError = error;
       if (attempt === attempts) break;
-      await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+      sleepSync(attempt * 1000);
     }
   }
 
-  throw new Error(`${label} failed after ${attempts} attempts: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+  throw new Error(`supabase db query failed after ${attempts} attempts: ${getCommandErrorOutput(lastError)}`);
 }
 
-async function maybeSingle(label, builder) {
-  return withDbRetries(label, async () => {
-    const { data, error } = await builder.maybeSingle();
-    if (error) throw error;
-    return data;
-  });
+function scalar(sql) {
+  const rows = query(sql);
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return Object.values(rows[0])[0];
 }
 
-async function exactCount(label, builder) {
-  return withDbRetries(label, async () => {
-    const { count, error } = await builder;
-    if (error) throw error;
-    return count ?? 0;
-  });
-}
-
-async function waitForValue(label, action, { timeoutMs = 30000, intervalMs = 1000 } = {}) {
+async function waitForScalar(sql, { timeoutMs = 30000, intervalMs = 1000 } = {}) {
   const deadline = Date.now() + timeoutMs;
-  let value = await action();
+  let value = scalar(sql);
 
   while (!value && Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
-    value = await action();
+    value = scalar(sql);
   }
 
   return value;
 }
 
-async function createAuthTestUser(email, password, displayName) {
-  if (staticUserId) {
-    throw new Error("E2E_USER_ID is not supported by the Supabase Admin API based online regression path.");
-  }
+function createAuthTestUser(email, password, displayName) {
+  const id = staticUserId ?? randomUUID();
+  query(`
+    insert into auth.users (
+      instance_id,
+      id,
+      aud,
+      role,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      confirmation_token,
+      recovery_token,
+      email_change_token_new,
+      email_change,
+      email_change_token_current,
+      phone_change,
+      phone_change_token,
+      reauthentication_token,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at,
+      is_sso_user,
+      is_anonymous
+    )
+    values (
+      '00000000-0000-0000-0000-000000000000',
+      ${sqlLiteral(id)},
+      'authenticated',
+      'authenticated',
+      ${sqlLiteral(email)},
+      crypt(${sqlLiteral(password)}, gen_salt('bf')),
+      now(),
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      jsonb_build_object('display_name', ${sqlLiteral(displayName)}, 'source', 'codex-online-regression'),
+      now(),
+      now(),
+      false,
+      false
+    )
+    on conflict (id) do update set
+      email=excluded.email,
+      encrypted_password=excluded.encrypted_password,
+      updated_at=now(),
+      deleted_at=null;
 
-  const { data, error } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    app_metadata: { provider: "email", providers: ["email"] },
-    user_metadata: { display_name: displayName, source: "codex-online-regression" },
-  });
-
-  if (error || !data.user) {
-    throw error ?? new Error("Failed to create auth test user");
-  }
-
-  const id = data.user.id;
-
-  await withDbRetries("upsert test profile", async () => {
-    const { error: profileError } = await supabase.from("profiles").upsert({
+    insert into public.profiles (
       id,
       email,
-      display_name: displayName,
-      public_display_name: displayName,
-      public_supporter_enabled: true,
-      admin_role: "user",
-      account_status: "active",
-      is_admin: false,
-      updated_at: new Date().toISOString(),
-    });
-
-    if (profileError) throw profileError;
-  });
-
+      display_name,
+      public_display_name,
+      public_supporter_enabled,
+      admin_role,
+      account_status,
+      is_admin,
+      created_at,
+      updated_at
+    )
+    values (
+      ${sqlLiteral(id)},
+      ${sqlLiteral(email)},
+      ${sqlLiteral(displayName)},
+      ${sqlLiteral(displayName)},
+      true,
+      'user',
+      'active',
+      false,
+      now(),
+      now()
+    )
+    on conflict (id) do update set
+      email=excluded.email,
+      display_name=excluded.display_name,
+      public_display_name=excluded.public_display_name,
+      public_supporter_enabled=true,
+      admin_role='user',
+      account_status='active',
+      is_admin=false,
+      updated_at=now();
+  `);
   return id;
 }
 
@@ -210,82 +240,6 @@ async function fillByLabel(scope, label, value) {
   await field.fill(value);
 }
 
-async function findProfile(userId) {
-  return maybeSingle("find profile", supabase.from("profiles").select("display_name,account_status,admin_role").eq("id", userId));
-}
-
-async function findFeedback(subject, userId) {
-  return maybeSingle(
-    "find support feedback",
-    supabase.from("support_feedback").select("id").eq("subject", subject).eq("user_id", userId).order("created_at", { ascending: false }).limit(1),
-  );
-}
-
-async function countSupportMessages(feedbackId, authorRole, body) {
-  return exactCount(
-    "count support messages",
-    supabase.from("support_feedback_messages").select("id", { count: "exact", head: true }).eq("feedback_id", feedbackId).eq("author_role", authorRole).eq("body", body),
-  );
-}
-
-async function findNotification(title) {
-  return maybeSingle(
-    "find notification",
-    supabase.from("notifications").select("id").eq("title", title).not("published_at", "is", null).order("created_at", { ascending: false }).limit(1),
-  );
-}
-
-async function findRelease(version) {
-  return maybeSingle("find release", supabase.from("software_releases").select("is_published").eq("version", version).limit(1));
-}
-
-async function findLicenseBatch(label) {
-  return maybeSingle(
-    "find license batch",
-    supabase.from("license_code_batches").select("id").eq("label", label).order("created_at", { ascending: false }).limit(1),
-  );
-}
-
-async function findTrialCode(batchId) {
-  return maybeSingle(
-    "find trial code",
-    supabase.from("trial_codes").select("id").eq("batch_id", batchId).eq("duration_kind", "month_1").eq("trial_days", 30).order("created_at", { ascending: false }).limit(1),
-  );
-}
-
-async function findDonation(providerTransactionId) {
-  return maybeSingle("find donation", supabase.from("donations").select("id").eq("provider_transaction_id", providerTransactionId).limit(1));
-}
-
-async function countCertificates(donationId) {
-  return exactCount("count certificates", supabase.from("certificates").select("id", { count: "exact", head: true }).eq("donation_id", donationId));
-}
-
-async function findCertificate(donationId) {
-  return maybeSingle("find certificate", supabase.from("certificates").select("certificate_number").eq("donation_id", donationId).limit(1));
-}
-
-async function countTrialCodeRedemptions(trialCodeId, userId) {
-  return exactCount(
-    "count trial code redemptions",
-    supabase.from("trial_code_redemptions").select("id", { count: "exact", head: true }).eq("trial_code_id", trialCodeId).eq("user_id", userId),
-  );
-}
-
-async function findLicenseEntitlement(userId) {
-  return maybeSingle(
-    "find license entitlement",
-    supabase.from("license_entitlements").select("status").eq("user_id", userId).eq("feature_code", "cloud_sync").limit(1),
-  );
-}
-
-async function countNotificationReads(notificationId, userId) {
-  return exactCount(
-    "count notification reads",
-    supabase.from("notification_reads").select("notification_id", { count: "exact", head: true }).eq("notification_id", notificationId).eq("user_id", userId),
-  );
-}
-
 async function main() {
   const ownerPassword = readSecret(ownerPasswordPath);
   const userPassword = readSecret(userPasswordPath);
@@ -318,7 +272,7 @@ async function main() {
   const licenseBatchLabel = `${marker} monthly license`;
   const profileName = `${marker} user`;
   const donationReference = `${marker}-manual-${randomUUID().slice(0, 8)}`;
-  const userId = await createAuthTestUser(userEmail, userPassword, profileName);
+  const userId = createAuthTestUser(userEmail, userPassword, profileName);
 
   await goto(page, "/en");
   await expect(page.getByRole("heading", { name: "GitBook AI" })).toBeVisible();
@@ -336,8 +290,8 @@ async function main() {
   await fillByLabel(page, "Display name", profileName);
   await safeClick(page, page.getByRole("button", { name: "Save profile" }));
   await expect(page).toHaveURL(/profile=saved/);
-  const updatedProfile = await findProfile(userId);
-  expect(updatedProfile?.display_name).toBe(profileName);
+  const updatedName = scalar(`select display_name from public.profiles where id=${sqlLiteral(userId)}`);
+  expect(updatedName).toBe(profileName);
 
   await goto(page, "/en/support");
   await fillByLabel(page, "Preferred contact", `${marker}@example.test`);
@@ -345,7 +299,7 @@ async function main() {
   await fillByLabel(page, "Message", `${marker} support message`);
   await safeClick(page, page.getByRole("button", { name: "Send feedback" }));
   await expect(page).toHaveURL(/feedback=saved/);
-  const feedbackId = (await findFeedback(supportSubject, userId))?.id;
+  const feedbackId = scalar(`select id from public.support_feedback where subject=${sqlLiteral(supportSubject)} and user_id=${sqlLiteral(userId)} order by created_at desc limit 1`);
   expect(feedbackId).toBeTruthy();
 
   await safeClick(page, page.getByRole("link", { name: /View thread/ }).first());
@@ -353,7 +307,7 @@ async function main() {
   await fillByLabel(page, "Reply", supportUserReply);
   await safeClick(page, page.getByRole("button", { name: "Send reply" }));
   await expect(page.getByText("Reply sent.")).toBeVisible();
-  expect(await countSupportMessages(feedbackId, "user", supportUserReply)).toBe(1);
+  expect(Number(scalar(`select count(*) from public.support_feedback_messages where feedback_id=${sqlLiteral(feedbackId)} and author_role='user' and body=${sqlLiteral(supportUserReply)}`))).toBe(1);
 
   await context.clearCookies();
   await login(page, ownerEmail, ownerPassword, "/en/admin");
@@ -364,7 +318,7 @@ async function main() {
   await fillByLabel(page, "Body", `${marker} notification body`);
   await page.getByLabel("Publish").check();
   await safeClick(page, page.getByRole("button", { name: "Create notification" }));
-  const notificationId = (await findNotification(notificationTitle))?.id;
+  const notificationId = scalar(`select id from public.notifications where title=${sqlLiteral(notificationTitle)} and published_at is not null order by created_at desc limit 1`);
   expect(notificationId).toBeTruthy();
 
   await goto(page, "/en/admin/support-feedback");
@@ -372,7 +326,7 @@ async function main() {
   await expect(page.getByRole("heading", { name: supportSubject })).toBeVisible();
   await fillByLabel(page, "Reply to user", supportAdminReply);
   await safeClick(page, page.getByRole("button", { name: "Send reply" }));
-  expect(await countSupportMessages(feedbackId, "admin", supportAdminReply)).toBe(1);
+  expect(Number(scalar(`select count(*) from public.support_feedback_messages where feedback_id=${sqlLiteral(feedbackId)} and author_role='admin' and body=${sqlLiteral(supportAdminReply)}`))).toBe(1);
 
   await goto(page, "/en/admin/releases");
   await fillByLabel(page, "Version", releaseVersion);
@@ -383,7 +337,7 @@ async function main() {
   await fillByLabel(page, "Windows primary URL", "https://example.com/codex-windows.exe");
   await page.getByLabel("Published").check();
   await safeClick(page, page.getByRole("button", { name: "Create release" }));
-  expect((await findRelease(releaseVersion))?.is_published).toBe(true);
+  expect(scalar(`select is_published from public.software_releases where version=${sqlLiteral(releaseVersion)} limit 1`)).toBe(true);
 
   await goto(page, "/en/admin/licenses");
   await fillByLabel(page, "Batch name", licenseBatchLabel);
@@ -391,9 +345,9 @@ async function main() {
   await fillByLabel(page, "Quantity", "1");
   await page.locator('form:has(input[name="label"]) select[name="channel_type"]').selectOption("partner");
   await safeClick(page, page.getByRole("button", { name: "Generate codes" }));
-  const licenseBatchId = (await findLicenseBatch(licenseBatchLabel))?.id;
+  const licenseBatchId = scalar(`select id from public.license_code_batches where label=${sqlLiteral(licenseBatchLabel)} order by created_at desc limit 1`);
   expect(licenseBatchId).toBeTruthy();
-  const licenseId = (await findTrialCode(licenseBatchId))?.id;
+  const licenseId = scalar(`select id from public.trial_codes where batch_id=${sqlLiteral(licenseBatchId)} and duration_kind='month_1' and trial_days=30 order by created_at desc limit 1`);
   expect(licenseId).toBeTruthy();
   const licenseRow = page.getByRole("row").filter({ hasText: licenseBatchLabel }).last();
   await safeClick(page, licenseRow.getByRole("button", { name: "Reveal" }));
@@ -411,10 +365,10 @@ async function main() {
   await manualDonationForm.locator('input[name="reason"]').fill(`${marker} verified manual contribution`);
   await submitConfirm(page, manualDonationForm.getByRole("button", { name: "Add manual contribution" }));
   const manualTransactionId = `manual_${donationReference}`;
-  const donationId = (await waitForValue("manual donation", async () => findDonation(manualTransactionId)))?.id;
+  const donationId = await waitForScalar(`select id from public.donations where provider_transaction_id=${sqlLiteral(manualTransactionId)} limit 1`);
   expect(donationId).toBeTruthy();
-  expect(await countCertificates(donationId)).toBeGreaterThan(0);
-  const certificateNumber = (await findCertificate(donationId))?.certificate_number;
+  expect(Number(scalar(`select count(*) from public.certificates where donation_id=${sqlLiteral(donationId)}`))).toBeGreaterThan(0);
+  const certificateNumber = scalar(`select certificate_number from public.certificates where donation_id=${sqlLiteral(donationId)} limit 1`);
   expect(certificateNumber).toBeTruthy();
 
   await goto(page, `/en/admin/users?query=${encodeURIComponent(userEmail)}`);
@@ -424,21 +378,21 @@ async function main() {
   await expect(page.getByText("1 selected")).toBeVisible();
   await safeClick(page, page.getByRole("button", { name: "Bulk disable" }));
   await expect(page).toHaveURL(/notice=bulk-user-status-updated/);
-  expect((await findProfile(userId))?.account_status).toBe("disabled");
+  expect(scalar(`select account_status from public.profiles where id=${sqlLiteral(userId)}`)).toBe("disabled");
   await userCheckbox.check();
   await safeClick(page, page.getByRole("button", { name: "Bulk enable" }));
   await expect(page).toHaveURL(/notice=bulk-user-status-updated/);
-  expect((await findProfile(userId))?.account_status).toBe("active");
+  expect(scalar(`select account_status from public.profiles where id=${sqlLiteral(userId)}`)).toBe("active");
   await userCheckbox.check();
   await page.locator("#bulk-users-bulk-action-form-admin-role").selectOption("operator");
   await safeClick(page, page.getByRole("button", { name: "Bulk change role" }));
   await expect(page).toHaveURL(/notice=bulk-user-role-updated/);
-  expect((await findProfile(userId))?.admin_role).toBe("operator");
+  expect(scalar(`select admin_role from public.profiles where id=${sqlLiteral(userId)}`)).toBe("operator");
   await userCheckbox.check();
   await page.locator("#bulk-users-bulk-action-form-admin-role").selectOption("user");
   await safeClick(page, page.getByRole("button", { name: "Bulk change role" }));
   await expect(page).toHaveURL(/notice=bulk-user-role-updated/);
-  expect((await findProfile(userId))?.admin_role).toBe("user");
+  expect(scalar(`select admin_role from public.profiles where id=${sqlLiteral(userId)}`)).toBe("user");
   await safeClick(page, page.getByRole("link", { name: "Manage user" }).first());
   await expect(page.getByRole("heading", { name: "User operations" })).toBeVisible();
 
@@ -447,15 +401,15 @@ async function main() {
   await fillByLabel(page, "License code", licenseCode);
   await safeClick(page, page.getByRole("button", { name: "Redeem code" }));
   await expectVisibleOrDump(page, page.getByText("License code redeemed."), "License redemption success message");
-  expect(await countTrialCodeRedemptions(licenseId, userId)).toBe(1);
-  expect((await findLicenseEntitlement(userId))?.status).toBe("active");
+  expect(Number(scalar(`select count(*) from public.trial_code_redemptions where trial_code_id=${sqlLiteral(licenseId)} and user_id=${sqlLiteral(userId)}`))).toBe(1);
+  expect(String(scalar(`select status from public.license_entitlements where user_id=${sqlLiteral(userId)} and feature_code='cloud_sync' limit 1`))).toBe("active");
   await expect(page.getByText(certificateNumber).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "View certificate" }).first()).toBeVisible();
 
   await goto(page, "/en/notifications");
   await expect(page.getByText(notificationTitle).first()).toBeVisible();
   await safeClick(page, page.getByRole("button", { name: "Mark as read" }).first());
-  expect(await countNotificationReads(notificationId, userId)).toBe(1);
+  expect(Number(scalar(`select count(*) from public.notification_reads where notification_id=${sqlLiteral(notificationId)} and user_id=${sqlLiteral(userId)}`))).toBe(1);
 
   await goto(page, `/en/support/feedback/${feedbackId}`);
   await expect(page.getByText(supportAdminReply)).toBeVisible();
