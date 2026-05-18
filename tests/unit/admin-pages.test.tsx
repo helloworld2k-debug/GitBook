@@ -1797,6 +1797,61 @@ describe("admin pages", () => {
     expect(screen.getByText("Need help with trial")).toBeInTheDocument();
   });
 
+  it("keeps user operations available when optional cloud sync detail tables are unavailable", async () => {
+    const optionalCloudSyncTableError = {
+      code: "42P01",
+      message: "relation public.cloud_sync_usage_events does not exist",
+    } as Error;
+    const profileQuery = createAdminListQuery({
+      id: "user-1",
+      email: "ada@example.com",
+      display_name: "Ada Lovelace",
+      public_display_name: "Ada",
+      public_supporter_enabled: true,
+      admin_role: "user",
+      account_status: "active",
+      is_admin: false,
+      created_at: "2026-04-29T00:00:00.000Z",
+    });
+    const emptyQuery = createAdminListQuery([]);
+    const missingOptionalCloudSyncQuery = createAdminListQuery(null, optionalCloudSyncTableError);
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return profileQuery;
+      if (
+        table === "cloud_sync_usage_sessions" ||
+        table === "cloud_sync_usage_events" ||
+        table === "cloud_sync_cooldown_overrides"
+      ) {
+        return missingOptionalCloudSyncQuery;
+      }
+      if (
+        table === "donations" ||
+        table === "certificates" ||
+        table === "trial_code_redemptions" ||
+        table === "desktop_sessions" ||
+        table === "license_entitlements" ||
+        table === "cloud_sync_leases" ||
+        table === "support_feedback"
+      ) {
+        return emptyQuery;
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+
+    const element = await AdminUserDetailPage({
+      params: Promise.resolve({ id: "user-1", locale: "en" }),
+    });
+
+    render(element);
+
+    expect(screen.getByRole("heading", { name: "User operations" })).toBeInTheDocument();
+    expect(screen.getAllByText("ada@example.com").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Cloud sync usage" })).toBeInTheDocument();
+    expect(screen.getAllByText("0s").length).toBeGreaterThan(0);
+  });
+
   it("renders admin users summary cards and search controls", async () => {
     const profilesQuery = createAdminListQuery([
       {

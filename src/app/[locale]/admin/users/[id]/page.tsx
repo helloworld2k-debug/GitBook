@@ -117,6 +117,20 @@ function usageSeconds(session: CloudSyncUsageSessionRow, now = new Date()) {
   return Math.round((endedAt - startedAt) / 1000);
 }
 
+function isOptionalCloudSyncDetailSchemaError(error: { code?: string; message?: string } | null) {
+  const code = error?.code;
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    code === "42P01" ||
+    code === "PGRST204" ||
+    message.includes("cloud_sync_usage_sessions") ||
+    message.includes("cloud_sync_usage_events") ||
+    message.includes("cloud_sync_cooldown_overrides") ||
+    message.includes("schema cache")
+  );
+}
+
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="min-w-0 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
@@ -232,9 +246,9 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   if (sessionsResult.error) throw sessionsResult.error;
   if (entitlementsResult.error) throw entitlementsResult.error;
   if (leasesResult.error) throw leasesResult.error;
-  if (usageSessionsResult.error) throw usageSessionsResult.error;
-  if (usageEventsResult.error) throw usageEventsResult.error;
-  if (cooldownOverridesResult.error) throw cooldownOverridesResult.error;
+  if (usageSessionsResult.error && !isOptionalCloudSyncDetailSchemaError(usageSessionsResult.error)) throw usageSessionsResult.error;
+  if (usageEventsResult.error && !isOptionalCloudSyncDetailSchemaError(usageEventsResult.error)) throw usageEventsResult.error;
+  if (cooldownOverridesResult.error && !isOptionalCloudSyncDetailSchemaError(cooldownOverridesResult.error)) throw cooldownOverridesResult.error;
   if (supportFeedbackResult.error) throw supportFeedbackResult.error;
   if (adminProfileResult.error) throw adminProfileResult.error;
 
