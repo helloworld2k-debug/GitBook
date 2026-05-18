@@ -53,6 +53,14 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("registration_attempts_ip_idx");
   });
 
+  it("qualifies entitlement valid_until inside the unified redemption RPC", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0033_redeem_license_code_valid_until_ambiguity.sql"), "utf8");
+
+    expect(migration).toContain("select entitlement.valid_until");
+    expect(migration).toContain("from public.license_entitlements entitlement");
+    expect(migration).toContain("returns table(ok boolean, reason text, valid_until timestamptz)");
+  });
+
   it("repairs desktop auth state storage for production schema drift", () => {
     const migration = readFileSync(join(process.cwd(), "supabase/migrations/0022_desktop_auth_state_schema_repair.sql"), "utf8");
 
