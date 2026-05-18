@@ -152,10 +152,28 @@ async function waitForPageSettled(page) {
   await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 }
 
+async function withRetries(label, action, { attempts = 3 } = {}) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await action();
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts) break;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+    }
+  }
+
+  throw new Error(`${label} failed after ${attempts} attempts: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
+}
+
 async function goto(page, path) {
-  await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
-  await waitForPageSettled(page);
-  await expect(page.getByText("This page couldn’t load")).toHaveCount(0);
+  await withRetries(`goto ${path}`, async () => {
+    await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await waitForPageSettled(page);
+    await expect(page.getByText("This page couldn’t load")).toHaveCount(0);
+  });
 }
 
 async function login(page, email, password, next = "/en/dashboard") {
@@ -203,24 +221,25 @@ async function main() {
   const ownerPassword = readSecret(ownerPasswordPath);
   const userPassword = readSecret(userPasswordPath);
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
-  const pageErrors = [];
-  const badResponses = [];
-  context.on("page", (page) => {
+  try {
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+    const pageErrors = [];
+    const badResponses = [];
+    context.on("page", (page) => {
+      page.on("pageerror", (error) => pageErrors.push(error.message));
+      page.on("response", (response) => {
+        if (response.status() >= 500) {
+          badResponses.push(`${response.status()} ${response.url()}`);
+        }
+      });
+    });
+    const page = await context.newPage();
     page.on("pageerror", (error) => pageErrors.push(error.message));
     page.on("response", (response) => {
       if (response.status() >= 500) {
         badResponses.push(`${response.status()} ${response.url()}`);
       }
     });
-  });
-  const page = await context.newPage();
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-  page.on("response", (response) => {
-    if (response.status() >= 500) {
-      badResponses.push(`${response.status()} ${response.url()}`);
-    }
-  });
 
   const supportSubject = `${marker} support`;
   const supportUserReply = `${marker} user reply`;
@@ -372,23 +391,24 @@ async function main() {
   await goto(page, `/en/support/feedback/${feedbackId}`);
   await expect(page.getByText(supportAdminReply)).toBeVisible();
 
-  await browser.close();
+    if (pageErrors.length > 0 || badResponses.length > 0) {
+      throw new Error(`Browser errors: ${pageErrors.join(" | ")}; bad responses: ${badResponses.join(" | ")}`);
+    }
 
-  if (pageErrors.length > 0 || badResponses.length > 0) {
-    throw new Error(`Browser errors: ${pageErrors.join(" | ")}; bad responses: ${badResponses.join(" | ")}`);
+    console.log(JSON.stringify({
+      baseUrl,
+      donationReference,
+      feedbackId,
+      marker,
+      notificationId,
+      releaseVersion,
+      licenseBatchId,
+      licenseId,
+      userEmail,
+    }, null, 2));
+  } finally {
+    await browser.close();
   }
-
-  console.log(JSON.stringify({
-    baseUrl,
-    donationReference,
-    feedbackId,
-    marker,
-    notificationId,
-    releaseVersion,
-    licenseBatchId,
-    licenseId,
-    userEmail,
-  }, null, 2));
 }
 
 main().catch((error) => {
