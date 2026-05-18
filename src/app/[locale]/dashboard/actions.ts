@@ -90,6 +90,16 @@ function getRedeemErrorReason(error: unknown) {
   return "unexpected_error";
 }
 
+function getTrialStatusForRedeemFailure(reason: string) {
+  if (reason === "trial_code_invalid") return "invalid";
+  if (reason === "trial_code_inactive") return "inactive";
+  if (reason === "trial_code_limit_reached") return "limit";
+  if (reason === "duplicate_trial_code_user") return "duplicate";
+  if (reason === "duplicate_trial_code_machine") return "machine_used";
+
+  return "error";
+}
+
 export async function redeemDashboardLicenseCode(locale: string, formData: FormData) {
   const safeLocale = getActionLocale(locale);
   const user = await requireUser(safeLocale, `/${safeLocale}/dashboard`);
@@ -167,7 +177,7 @@ export async function redeemDashboardLicenseCode(locale: string, formData: FormD
     userAgent,
     userId: user.id,
   }).catch(() => undefined);
-  redirect(getDashboardPath(safeLocale, { trial: "error" }));
+  redirect(getDashboardPath(safeLocale, { trial: getTrialStatusForRedeemFailure(result.reason) }));
 }
 
 export const redeemDashboardTrialCode = redeemDashboardLicenseCode;

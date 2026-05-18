@@ -158,12 +158,12 @@ describe("dashboard account actions", () => {
     );
   });
 
-  it("records detailed license redemption failures while returning a generic user error", async () => {
+  it("records detailed license redemption failures and returns a specific user error", async () => {
     redeemLicenseCodeMock.mockResolvedValueOnce({ ok: false, reason: "trial_code_invalid" });
     const formData = new FormData();
     formData.set("license_code", "BAD-CODE");
 
-    await expect(redeemDashboardLicenseCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=error");
+    await expect(redeemDashboardLicenseCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=invalid");
 
     expect(recordLicenseRedeemAttemptMock).toHaveBeenCalledWith(
       { admin: true },
