@@ -244,7 +244,7 @@ async function main() {
   await fillByLabel(page, "Subject", supportSubject);
   await fillByLabel(page, "Message", `${marker} support message`);
   await safeClick(page, page.getByRole("button", { name: "Send feedback" }));
-  await expect(page.getByText("Feedback sent. We will review it soon.")).toBeVisible();
+  await expect(page).toHaveURL(/feedback=saved/);
   const feedbackId = scalar(`select id from public.support_feedback where subject=${sqlLiteral(supportSubject)} and user_id=${sqlLiteral(userId)} order by created_at desc limit 1`);
   expect(feedbackId).toBeTruthy();
 
