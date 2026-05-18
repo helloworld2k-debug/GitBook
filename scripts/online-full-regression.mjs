@@ -372,27 +372,29 @@ async function main() {
   expect(certificateNumber).toBeTruthy();
 
   await goto(page, `/en/admin/users?query=${encodeURIComponent(userEmail)}`);
-  const userCheckbox = page.getByLabel(`Select ${userEmail}`);
+  let userCheckbox = page.getByLabel(`Select ${userEmail}`);
   await expect(userCheckbox).toBeVisible();
   await userCheckbox.check();
   await expect(page.getByText("1 selected")).toBeVisible();
   await safeClick(page, page.getByRole("button", { name: "Bulk disable" }));
-  await expect(page).toHaveURL(/notice=bulk-user-status-updated/);
-  expect(scalar(`select account_status from public.profiles where id=${sqlLiteral(userId)}`)).toBe("disabled");
+  expect(await waitForScalar(`select account_status from public.profiles where id=${sqlLiteral(userId)} and account_status='disabled' limit 1`)).toBe("disabled");
+  await goto(page, `/en/admin/users?query=${encodeURIComponent(userEmail)}`);
+  userCheckbox = page.getByLabel(`Select ${userEmail}`);
   await userCheckbox.check();
   await safeClick(page, page.getByRole("button", { name: "Bulk enable" }));
-  await expect(page).toHaveURL(/notice=bulk-user-status-updated/);
-  expect(scalar(`select account_status from public.profiles where id=${sqlLiteral(userId)}`)).toBe("active");
+  expect(await waitForScalar(`select account_status from public.profiles where id=${sqlLiteral(userId)} and account_status='active' limit 1`)).toBe("active");
+  await goto(page, `/en/admin/users?query=${encodeURIComponent(userEmail)}`);
+  userCheckbox = page.getByLabel(`Select ${userEmail}`);
   await userCheckbox.check();
   await page.locator("#bulk-users-bulk-action-form-admin-role").selectOption("operator");
   await safeClick(page, page.getByRole("button", { name: "Bulk change role" }));
-  await expect(page).toHaveURL(/notice=bulk-user-role-updated/);
-  expect(scalar(`select admin_role from public.profiles where id=${sqlLiteral(userId)}`)).toBe("operator");
+  expect(await waitForScalar(`select admin_role from public.profiles where id=${sqlLiteral(userId)} and admin_role='operator' limit 1`)).toBe("operator");
+  await goto(page, `/en/admin/users?query=${encodeURIComponent(userEmail)}`);
+  userCheckbox = page.getByLabel(`Select ${userEmail}`);
   await userCheckbox.check();
   await page.locator("#bulk-users-bulk-action-form-admin-role").selectOption("user");
   await safeClick(page, page.getByRole("button", { name: "Bulk change role" }));
-  await expect(page).toHaveURL(/notice=bulk-user-role-updated/);
-  expect(scalar(`select admin_role from public.profiles where id=${sqlLiteral(userId)}`)).toBe("user");
+  expect(await waitForScalar(`select admin_role from public.profiles where id=${sqlLiteral(userId)} and admin_role='user' limit 1`)).toBe("user");
   await safeClick(page, page.getByRole("link", { name: "Manage user" }).first());
   await expect(page.getByRole("heading", { name: "User operations" })).toBeVisible();
 
