@@ -23,15 +23,38 @@ function sqlLiteral(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
 }
 
-function query(sql) {
-  const output = execFileSync("supabase", ["db", "query", sql, "--linked", "--output", "json"], {
-    cwd: process.cwd(),
-    encoding: "utf8",
-    maxBuffer: 1024 * 1024 * 10,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  const parsed = JSON.parse(output.slice(output.indexOf("{")));
-  return parsed.rows ?? [];
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function getCommandErrorOutput(error) {
+  const stderr = error && typeof error === "object" && "stderr" in error ? error.stderr : null;
+  if (Buffer.isBuffer(stderr)) return stderr.toString("utf8").trim();
+  if (typeof stderr === "string") return stderr.trim();
+  return error instanceof Error ? error.message : String(error);
+}
+
+function query(sql, { attempts = 3 } = {}) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const output = execFileSync("supabase", ["db", "query", sql, "--linked", "--output", "json"], {
+        cwd: process.cwd(),
+        encoding: "utf8",
+        maxBuffer: 1024 * 1024 * 10,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      const parsed = JSON.parse(output.slice(output.indexOf("{")));
+      return parsed.rows ?? [];
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts) break;
+      sleepSync(attempt * 1000);
+    }
+  }
+
+  throw new Error(`supabase db query failed after ${attempts} attempts: ${getCommandErrorOutput(lastError)}`);
 }
 
 function scalar(sql) {
