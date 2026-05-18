@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "e2e:online": "node scripts/online-full-regression.mjs"
+    "e2e:online": "node scripts/online-full-regression.mjs",
+    "audit:china-access": "node scripts/china-access-audit.mjs"
   },
   "dependencies": {
     "@paypal/paypal-server-sdk": "^2.3.0",
