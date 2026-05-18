@@ -61,6 +61,17 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("returns table(ok boolean, reason text, valid_until timestamptz)");
   });
 
+  it("grants account-level cloud sync access when redeeming trial license codes", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0034_trial_license_code_entitlement.sql"), "utf8");
+
+    expect(migration).toContain("create or replace function public.redeem_license_code");
+    expect(migration).toContain("if code.duration_kind = 'trial_3_day' then");
+    expect(migration).toContain("insert into public.license_entitlements");
+    expect(migration).toContain("on conflict (user_id, feature_code)");
+    expect(migration).toContain("greatest(public.license_entitlements.valid_until, excluded.valid_until)");
+    expect(migration).toContain("grant execute on function public.redeem_license_code(uuid, text, text, timestamptz) to service_role");
+  });
+
   it("repairs desktop auth state storage for production schema drift", () => {
     const migration = readFileSync(join(process.cwd(), "supabase/migrations/0022_desktop_auth_state_schema_repair.sql"), "utf8");
 
