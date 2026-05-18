@@ -299,7 +299,9 @@ async function main() {
   expect(licenseId).toBeTruthy();
   const licenseRow = page.getByRole("row").filter({ hasText: licenseBatchLabel }).last();
   await safeClick(page, licenseRow.getByRole("button", { name: "Reveal" }));
-  const licenseCode = (await licenseRow.locator("code").innerText()).trim();
+  const revealedLicenseCode = licenseRow.locator("code").filter({ hasText: /^[A-Z0-9]{2,4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/ }).last();
+  await expect(revealedLicenseCode).toBeVisible({ timeout: 10000 });
+  const licenseCode = (await revealedLicenseCode.innerText()).trim();
   expect(licenseCode).toMatch(/^1M/);
 
   await goto(page, "/en/admin/donations");
