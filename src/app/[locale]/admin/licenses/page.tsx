@@ -226,6 +226,19 @@ function isLicenseSecuritySchemaError(error: { code?: string; message?: string }
   return code === "42P01" || code === "PGRST204" || message.includes("license_code_redeem_attempts") || message.includes("schema cache");
 }
 
+function isCloudSyncUsageSchemaError(error: { code?: string; message?: string } | null) {
+  const code = error?.code;
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    code === "42P01" ||
+    code === "PGRST204" ||
+    message.includes("cloud_sync_usage_sessions") ||
+    message.includes("cloud_sync_usage_events") ||
+    message.includes("schema cache")
+  );
+}
+
 export default async function AdminLicensesPage({ params, searchParams }: AdminLicensesPageProps) {
   const { locale: localeParam } = await params;
   const feedback = await searchParams;
@@ -272,8 +285,8 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   if (entitlementsResult.error) throw entitlementsResult.error;
   if (sessionsResult.error) throw sessionsResult.error;
   if (leasesResult.error) throw leasesResult.error;
-  if (usageSessionsResult.error) throw usageSessionsResult.error;
-  if (usageEventsResult.error) throw usageEventsResult.error;
+  if (usageSessionsResult.error && !isCloudSyncUsageSchemaError(usageSessionsResult.error)) throw usageSessionsResult.error;
+  if (usageEventsResult.error && !isCloudSyncUsageSchemaError(usageEventsResult.error)) throw usageEventsResult.error;
 
   let fallbackCodes: LicenseCodeRow[] | null = null;
 

@@ -1486,6 +1486,70 @@ describe("admin pages", () => {
     expect(screen.getByText("No license batches found.")).toBeInTheDocument();
   });
 
+  it("keeps license management available when optional cloud sync usage tables are unavailable", async () => {
+    const optionalUsageTableError = {
+      code: "42P01",
+      message: "relation public.cloud_sync_usage_sessions does not exist",
+    } as Error;
+    const batchesQuery = createAdminListQuery([
+      {
+        id: "batch-1",
+        label: "Partner monthly",
+        channel_type: "partner",
+        channel_note: null,
+        duration_kind: "month_1",
+        trial_days: 30,
+        code_count: 1,
+        created_by: "admin-1",
+        created_at: "2026-05-01T10:00:00.000Z",
+        deleted_at: null,
+        updated_by: null,
+      },
+    ]);
+    const codesQuery = createAdminListQuery([
+      {
+        id: "license-code-1",
+        label: "Partner monthly",
+        trial_days: 30,
+        duration_kind: "month_1",
+        channel_type: "partner",
+        channel_note: null,
+        code_mask: "1MAB-****-****-MNOP",
+        batch_id: "batch-1",
+        max_redemptions: 1,
+        redemption_count: 0,
+        is_active: true,
+        updated_by: null,
+        created_by: "admin-1",
+        created_at: "2026-05-01T10:00:00.000Z",
+        deleted_at: null,
+      },
+    ]);
+    const emptyQuery = createAdminListQuery([]);
+    const missingUsageQuery = createAdminListQuery(null, optionalUsageTableError);
+    const cooldownSettingQuery = createAdminListQuery({
+      key: "cloud_sync_device_switch_cooldown_minutes",
+      value: "180",
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "cloud_sync_settings") return cooldownSettingQuery;
+      if (table === "license_code_batches") return batchesQuery;
+      if (table === "trial_codes") return codesQuery;
+      if (table === "cloud_sync_usage_sessions" || table === "cloud_sync_usage_events") return missingUsageQuery;
+      return emptyQuery;
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+
+    const element = await AdminLicensesPage({ params: Promise.resolve({ locale: "en" }) });
+
+    render(element);
+
+    expect(screen.getByRole("heading", { name: "License management" })).toBeInTheDocument();
+    expect(screen.getAllByText("Partner monthly").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1MAB-****-****-MNOP").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("0 active sync sessions").length).toBeGreaterThan(0);
+  });
+
   it("shows role editing controls on the users page only to owner admins", async () => {
     const profilesQuery = createAdminListQuery([
       {
