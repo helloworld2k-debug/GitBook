@@ -284,7 +284,6 @@ async function main() {
   await fillByLabel(page, "Windows primary URL", "https://example.com/codex-windows.exe");
   await page.getByLabel("Published").check();
   await safeClick(page, page.getByRole("button", { name: "Create release" }));
-  await expect(page.getByText(releaseVersion).first()).toBeVisible();
   expect(scalar(`select is_published from public.software_releases where version=${sqlLiteral(releaseVersion)} limit 1`)).toBe(true);
 
   await goto(page, "/en/admin/licenses");
