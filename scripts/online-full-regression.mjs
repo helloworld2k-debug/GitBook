@@ -393,7 +393,7 @@ async function main() {
   await page.locator("#bulk-users-bulk-action-form-admin-role").selectOption("user");
   await safeClick(page, page.getByRole("button", { name: "Bulk change role" }));
   expect(await waitForScalar(`select admin_role from public.profiles where id=${sqlLiteral(userId)} and admin_role='user' limit 1`)).toBe("user");
-  await safeClick(page, page.getByRole("link", { name: "Manage user" }).first());
+  await goto(page, `/en/admin/users/${userId}`);
   await expect(page.getByRole("heading", { name: "User operations" })).toBeVisible();
 
   await context.clearCookies();
