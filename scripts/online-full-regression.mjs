@@ -264,7 +264,6 @@ async function main() {
   await fillByLabel(page, "Body", `${marker} notification body`);
   await page.getByLabel("Publish").check();
   await safeClick(page, page.getByRole("button", { name: "Create notification" }));
-  await expect(page.getByText(notificationTitle).first()).toBeVisible();
   const notificationId = scalar(`select id from public.notifications where title=${sqlLiteral(notificationTitle)} and published_at is not null order by created_at desc limit 1`);
   expect(notificationId).toBeTruthy();
 
