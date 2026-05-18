@@ -52,9 +52,31 @@ async function registerConfirmedUserWithEmailPassword(input: {
   password: string;
 }) {
   const supabase = createSupabaseAdminClient();
-
-  return supabase.auth.admin.createUser({
+  const result = await supabase.auth.admin.createUser({
     email: input.email,
+    email_confirm: true,
+    password: input.password,
+    user_metadata: {
+      source: "register_form",
+    },
+  });
+
+  if (!isAlreadyRegisteredError(result.error)) {
+    return result;
+  }
+
+  const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
+  if (usersError) {
+    return { data: { user: null }, error: usersError };
+  }
+
+  const existingUser = usersData.users.find((user) => user.email?.toLowerCase() === input.email.toLowerCase());
+
+  if (!existingUser || existingUser.email_confirmed_at) {
+    return { data: { user: null }, error: null };
+  }
+
+  return supabase.auth.admin.updateUserById(existingUser.id, {
     email_confirm: true,
     password: input.password,
     user_metadata: {
@@ -118,7 +140,7 @@ export async function POST(request: Request) {
       password,
     });
 
-  if (isAlreadyRegisteredError(result.error)) {
+  if (!bypassEmailConfirmation && isAlreadyRegisteredError(result.error)) {
     return jsonOk({ ok: true });
   }
 
@@ -126,5 +148,5 @@ export async function POST(request: Request) {
     return jsonError("register_failed");
   }
 
-  return jsonOk({ ok: true, ...(bypassEmailConfirmation ? { emailConfirmationBypassed: true } : {}) });
+  return jsonOk({ ok: true, ...(bypassEmailConfirmation && result.data.user ? { emailConfirmationBypassed: true } : {}) });
 }

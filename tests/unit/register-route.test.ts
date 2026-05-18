@@ -239,6 +239,19 @@ describe("register route", () => {
             data: { user: null },
             error: { code: "email_exists", message: "User already registered", status: 422 },
           }),
+          listUsers: vi.fn().mockResolvedValue({
+            data: {
+              users: [
+                {
+                  id: "existing-user-id",
+                  email: "existing@example.com",
+                  email_confirmed_at: "2026-05-18T12:00:00.000Z",
+                },
+              ],
+            },
+            error: null,
+          }),
+          updateUserById: vi.fn(),
         },
       },
     };
@@ -259,6 +272,61 @@ describe("register route", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
+  });
+
+  it("confirms and updates the password for an existing unverified user in temporary registration mode", async () => {
+    process.env.TEMP_DISABLE_EMAIL_CONFIRMATION = "true";
+    const adminClient = {
+      admin: true,
+      auth: {
+        admin: {
+          createUser: vi.fn().mockResolvedValue({
+            data: { user: null },
+            error: { code: "email_exists", message: "User already registered", status: 422 },
+          }),
+          listUsers: vi.fn().mockResolvedValue({
+            data: {
+              users: [
+                {
+                  id: "existing-user-id",
+                  email: "existing@example.com",
+                  email_confirmed_at: null,
+                },
+              ],
+            },
+            error: null,
+          }),
+          updateUserById: vi.fn().mockResolvedValue({
+            data: { user: { id: "existing-user-id" } },
+            error: null,
+          }),
+        },
+      },
+    };
+    mocks.createSupabaseAdminClient.mockReturnValue(adminClient);
+
+    const response = await POST(
+      new Request("https://gitbookai.example/api/auth/register", {
+        body: JSON.stringify({
+          callbackUrl: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
+          email: "existing@example.com",
+          password: "new-password",
+          turnstileToken: "ok-token",
+        }),
+        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ emailConfirmationBypassed: true, ok: true });
+    expect(adminClient.auth.admin.updateUserById).toHaveBeenCalledWith("existing-user-id", {
+      email_confirm: true,
+      password: "new-password",
+      user_metadata: {
+        source: "register_form",
+      },
+    });
   });
 
   it("rejects non-duplicate temporary confirmed registration failures", async () => {
