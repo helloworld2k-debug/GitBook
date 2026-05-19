@@ -277,6 +277,7 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "registration-block-revoked": "Registration block revoked.",
   "registration-block-revoke-failed": "Unable to revoke registration block.",
   "release-created": "Release created.",
+  "release-deleted": "Release draft deleted.",
   "release-updated": "Release updated.",
   "role-updated": "User role updated.",
   "role-update-failed": "Unable to update user role.",

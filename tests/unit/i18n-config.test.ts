@@ -38,4 +38,5 @@ describe("i18n configuration", () => {
     expect(nextConfig).toContain('createNextIntlPlugin("./src/i18n/request.ts")');
     expect(nextConfig).toContain("withNextIntl(nextConfig)");
   });
+
 });

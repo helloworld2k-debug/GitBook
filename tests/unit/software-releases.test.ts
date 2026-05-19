@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { getLatestPublishedRelease, getPlatformDelivery, getPublishedReleases } from "@/lib/releases/software-releases";
+import { getLatestPublishedRelease, getPlatformDelivery, getPublishedReleases, type ReleaseClient } from "@/lib/releases/software-releases";
 
 function createReleaseClient(rows: unknown[]) {
   const getPublicUrl = vi.fn((path: string) => ({
@@ -7,13 +7,13 @@ function createReleaseClient(rows: unknown[]) {
   }));
   const limit = vi.fn(async () => ({ data: rows.slice(0, 1), error: null }));
   const order = vi.fn(() => ({ order, limit, then: (resolve: (value: unknown) => void) => resolve({ data: rows, error: null }) }));
-  const eq = vi.fn(() => ({ order }));
+  const eq = vi.fn(() => ({ eq, order }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
   const storageFrom = vi.fn(() => ({ getPublicUrl }));
 
   return {
-    client: { from, storage: { from: storageFrom } },
+    client: { from, storage: { from: storageFrom } } as unknown as ReleaseClient,
     from,
     getPublicUrl,
     limit,
@@ -61,6 +61,7 @@ describe("software release queries", () => {
       windowsPrimaryUrl: null,
       windowsBackupUrl: null,
       isPublished: undefined,
+      releaseStatus: "ready",
       assets: [
         {
           id: "asset-mac",

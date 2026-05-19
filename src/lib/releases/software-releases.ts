@@ -2,6 +2,7 @@ export const SOFTWARE_RELEASES_BUCKET = "software-releases";
 
 export type ReleasePlatform = "macos" | "windows";
 export type ReleaseDeliveryMode = "file" | "link";
+export type ReleaseStatus = "draft" | "uploading" | "ready" | "failed";
 
 export type SoftwareReleaseAsset = {
   id: string;
@@ -29,6 +30,7 @@ export type SoftwareRelease = {
   windowsPrimaryUrl: string | null;
   windowsBackupUrl: string | null;
   isPublished?: boolean;
+  releaseStatus: ReleaseStatus;
   assets: SoftwareReleaseAsset[];
 };
 
@@ -74,6 +76,7 @@ type ReleaseRow = {
   windows_primary_url?: string | null;
   windows_backup_url?: string | null;
   is_published?: boolean;
+  release_status?: ReleaseStatus;
   software_release_assets?: {
     id: string;
     platform: ReleasePlatform;
@@ -84,6 +87,7 @@ type ReleaseRow = {
 };
 
 type ReleaseQuery = {
+  eq: (column: string, value: boolean | string) => ReleaseQuery;
   order: (column: string, options?: { ascending?: boolean }) => ReleaseQuery;
   limit: (count: number) => Promise<{ data: ReleaseRow[] | null; error: Error | null }>;
   then: (resolve: (value: { data: ReleaseRow[] | null; error: Error | null }) => void) => void;
@@ -92,9 +96,7 @@ type ReleaseQuery = {
 export type ReleaseClient = {
   from: (table: string) => {
     select: (columns: string) => {
-      eq: (column: string, value: boolean) => {
-        order: (column: string, options?: { ascending?: boolean }) => ReleaseQuery;
-      };
+      eq: (column: string, value: boolean | string) => ReleaseQuery;
     };
   };
   storage: {
@@ -105,7 +107,7 @@ export type ReleaseClient = {
 };
 
 const RELEASE_SELECT =
-  "id,version,released_at,notes,delivery_mode,macos_primary_url,macos_backup_url,windows_primary_url,windows_backup_url,is_published,software_release_assets(id,platform,file_name,storage_path,file_size)";
+  "id,version,released_at,notes,delivery_mode,macos_primary_url,macos_backup_url,windows_primary_url,windows_backup_url,is_published,release_status,software_release_assets(id,platform,file_name,storage_path,file_size)";
 
 function mapRelease(row: ReleaseRow, client: ReleaseClient): SoftwareRelease {
   return {
@@ -119,6 +121,7 @@ function mapRelease(row: ReleaseRow, client: ReleaseClient): SoftwareRelease {
     windowsPrimaryUrl: row.windows_primary_url ?? null,
     windowsBackupUrl: row.windows_backup_url ?? null,
     isPublished: row.is_published,
+    releaseStatus: row.release_status ?? "ready",
     assets: (row.software_release_assets ?? []).map((asset) => ({
       id: asset.id,
       platform: asset.platform,
@@ -135,6 +138,7 @@ function createPublishedReleaseQuery(client: ReleaseClient) {
     .from("software_releases")
     .select(RELEASE_SELECT)
     .eq("is_published", true)
+    .eq("release_status", "ready")
     .order("released_at", { ascending: false })
     .order("created_at", { ascending: false });
 }

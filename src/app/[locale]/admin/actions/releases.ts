@@ -5,7 +5,59 @@ import { redirectWithAdminFeedback } from "@/lib/admin/feedback";
 import { requireAdmin } from "@/lib/auth/guards";
 import { SOFTWARE_RELEASES_BUCKET, type ReleasePlatform } from "@/lib/releases/software-releases";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getOptionalReleaseUrl, getReleaseDate, getReleaseDeliveryMode, getReleaseNotes, getRequiredReleaseUrl, getRequiredString, getSafeLocale, getUploadFile, sanitizeFileName } from "./validation";
+import { getOptionalReleaseUrl, getReleaseDate, getReleaseDeliveryMode, getReleaseFileMetadata, getReleaseNotes, getReleaseStoragePath, getRequiredReleaseUrl, getRequiredString, getSafeLocale, getUploadFile, MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES, sanitizeFileName } from "./validation";
+
+type PreparedUploadAsset = {
+  contentType: string;
+  fileName: string;
+  fileSize: number;
+  storagePath: string;
+};
+
+function getStorageEndpoint() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!supabaseUrl) {
+    return "/storage/v1/upload/resumable";
+  }
+
+  const url = new URL(supabaseUrl);
+  if (url.hostname.endsWith(".supabase.co")) {
+    url.hostname = url.hostname.replace(".supabase.co", ".storage.supabase.co");
+  }
+
+  return `${url.origin}/storage/v1/upload/resumable`;
+}
+
+function getStorageObjectName(storagePath: string) {
+  return storagePath.split("/").pop() ?? storagePath;
+}
+
+async function verifyUploadedObject(
+  storage: ReturnType<typeof createSupabaseAdminClient>["storage"],
+  storagePath: string,
+) {
+  const prefix = storagePath.split("/").slice(0, -1).join("/");
+  const objectName = getStorageObjectName(storagePath);
+  const { data, error } = await storage.from(SOFTWARE_RELEASES_BUCKET).list(prefix, { search: objectName, limit: 1 });
+
+  if (error) {
+    throw new Error("Unable to verify uploaded installer");
+  }
+
+  const object = data?.find((entry) => entry.name === objectName);
+  const size = Number(object?.metadata?.size ?? object?.metadata?.contentLength ?? object?.metadata?.ContentLength ?? 0);
+
+  if (!object) {
+    throw new Error("Uploaded installer is missing");
+  }
+
+  if (!Number.isFinite(size) || size <= 0 || size > MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES) {
+    throw new Error("Uploaded installer files must be 50 MB or smaller");
+  }
+
+  return size;
+}
 
 export async function createSoftwareRelease(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
@@ -55,6 +107,7 @@ export async function createSoftwareRelease(formData: FormData) {
       macos_primary_url: macosPrimaryUrl,
       notes,
       released_at: releasedAt,
+      release_status: "ready",
       version,
       windows_backup_url: windowsBackupUrl,
       windows_primary_url: windowsPrimaryUrl,
@@ -116,6 +169,160 @@ export async function createSoftwareRelease(formData: FormData) {
     fallbackPath: "/admin/releases",
     formData,
     key: "release-created",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function prepareSoftwareReleaseUpload(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const version = getRequiredString(formData, "version", "Version is required");
+  const releasedAt = getReleaseDate(formData);
+  const notes = getReleaseNotes(formData);
+  const macos = getReleaseFileMetadata(formData, "macos");
+  const windows = getReleaseFileMetadata(formData, "windows");
+  const supabase = createSupabaseAdminClient();
+  const { data: release, error: releaseError } = await supabase
+    .from("software_releases")
+    .insert({
+      created_by: admin.id,
+      delivery_mode: "file",
+      is_published: false,
+      macos_backup_url: null,
+      macos_primary_url: null,
+      notes,
+      released_at: releasedAt,
+      release_status: "uploading",
+      version,
+      windows_backup_url: null,
+      windows_primary_url: null,
+    })
+    .select("id")
+    .single();
+
+  if (releaseError || !release) {
+    throw new Error("Unable to prepare release upload");
+  }
+
+  const assets: Record<ReleasePlatform, PreparedUploadAsset> = {
+    macos: {
+      ...macos,
+      storagePath: `${release.id}/macos/${sanitizeFileName(macos.fileName)}`,
+    },
+    windows: {
+      ...windows,
+      storagePath: `${release.id}/windows/${sanitizeFileName(windows.fileName)}`,
+    },
+  };
+
+  return {
+    assets,
+    bucket: SOFTWARE_RELEASES_BUCKET,
+    releaseId: release.id,
+    storageEndpoint: getStorageEndpoint(),
+  };
+}
+
+export async function finalizeSoftwareReleaseUpload(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const releaseId = getRequiredString(formData, "release_id", "Release is required");
+  const isPublished = String(formData.get("is_published") ?? "false") === "true";
+  const files = (["macos", "windows"] as const).map((platform) => ({
+    metadata: getReleaseFileMetadata(formData, platform),
+    platform,
+    storagePath: getReleaseStoragePath(formData, platform),
+  }));
+  const supabase = createSupabaseAdminClient();
+  const { data: release, error: releaseError } = await supabase
+    .from("software_releases")
+    .select("id,delivery_mode,release_status")
+    .eq("id", releaseId)
+    .single();
+
+  if (releaseError || !release || release.delivery_mode !== "file") {
+    throw new Error("Release upload is invalid");
+  }
+
+  const assets = [];
+  for (const file of files) {
+    const verifiedSize = await verifyUploadedObject(supabase.storage, file.storagePath);
+
+    assets.push({
+      file_name: file.metadata.fileName,
+      file_size: Math.min(file.metadata.fileSize, verifiedSize),
+      platform: file.platform,
+      release_id: releaseId,
+      storage_path: file.storagePath,
+    });
+  }
+
+  const { error: assetError } = await supabase.from("software_release_assets").insert(assets);
+
+  if (assetError) {
+    await supabase.from("software_releases").update({ release_status: "failed" }).eq("id", releaseId);
+    throw new Error("Unable to save release assets");
+  }
+
+  const { error: updateError } = await supabase
+    .from("software_releases")
+    .update({ is_published: isPublished, release_status: "ready" })
+    .eq("id", releaseId);
+
+  if (updateError) {
+    throw new Error("Unable to finalize release upload");
+  }
+
+  revalidatePath(`/${locale}`);
+  revalidatePath(`/${locale}/versions`);
+  revalidatePath(`/${locale}/admin/releases`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/releases",
+    formData,
+    key: "release-created",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function deleteDraftSoftwareRelease(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const releaseId = getRequiredString(formData, "release_id", "Release is required");
+  const supabase = createSupabaseAdminClient();
+  const { data: release, error: releaseError } = await supabase
+    .from("software_releases")
+    .select("id,release_status,software_release_assets(storage_path)")
+    .eq("id", releaseId)
+    .single();
+
+  if (releaseError || !release) {
+    throw new Error("Release is required");
+  }
+
+  if (release.release_status === "ready") {
+    throw new Error("Published releases cannot be deleted from this action");
+  }
+
+  const paths = (release.software_release_assets ?? []).map((asset: { storage_path: string }) => asset.storage_path);
+  if (paths.length > 0) {
+    const { error: removeError } = await supabase.storage.from(SOFTWARE_RELEASES_BUCKET).remove(paths);
+    if (removeError) {
+      throw new Error("Unable to remove uploaded installers");
+    }
+  }
+
+  const { error: deleteError } = await supabase.from("software_releases").delete().eq("id", releaseId);
+  if (deleteError) {
+    throw new Error("Unable to delete release");
+  }
+
+  revalidatePath(`/${locale}/admin/releases`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/releases",
+    formData,
+    key: "release-deleted",
     locale,
     tone: "notice",
   });

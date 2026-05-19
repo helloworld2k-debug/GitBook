@@ -1272,6 +1272,7 @@ export type Database = {
           macos_backup_url: string | null;
           windows_primary_url: string | null;
           windows_backup_url: string | null;
+          release_status: "draft" | "uploading" | "ready" | "failed";
           is_published: boolean;
           created_by: string | null;
           created_at: string;
@@ -1287,6 +1288,7 @@ export type Database = {
           macos_backup_url?: string | null;
           windows_primary_url?: string | null;
           windows_backup_url?: string | null;
+          release_status?: "draft" | "uploading" | "ready" | "failed";
           is_published?: boolean;
           created_by?: string | null;
           created_at?: string;
@@ -1302,6 +1304,7 @@ export type Database = {
           macos_backup_url?: string | null;
           windows_primary_url?: string | null;
           windows_backup_url?: string | null;
+          release_status?: "draft" | "uploading" | "ready" | "failed";
           is_published?: boolean;
           created_by?: string | null;
           created_at?: string;

@@ -1,13 +1,12 @@
 import { getTranslations } from "next-intl/server";
 import { AdminReleaseDeliveryModeFields } from "@/components/admin/admin-release-delivery-mode-fields";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
-import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { SOFTWARE_RELEASES_BUCKET, getPlatformDelivery, type ReleaseClient, type SoftwareRelease } from "@/lib/releases/software-releases";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSoftwareRelease, setSoftwareReleasePublished } from "../actions";
+import { createSoftwareRelease, deleteDraftSoftwareRelease, setSoftwareReleasePublished } from "../actions";
 
 type AdminReleasesPageProps = {
   params: Promise<{
@@ -19,6 +18,13 @@ type AdminReleasesPageProps = {
 type AdminReleaseRow = SoftwareRelease & {
   isPublished: boolean;
 };
+
+function getStatusTone(status: SoftwareRelease["releaseStatus"]) {
+  if (status === "ready") return "success";
+  if (status === "failed") return "danger";
+  if (status === "uploading") return "warning";
+  return "neutral";
+}
 
 function formatReleaseDate(value: string, locale: string) {
   return new Intl.DateTimeFormat(locale, {
@@ -37,13 +43,14 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
   const shellProps = await getAdminShellProps(locale, "/admin/releases");
   const createRelease = createSoftwareRelease;
   const togglePublished = setSoftwareReleasePublished;
+  const deleteDraft = deleteDraftSoftwareRelease;
   let releases: AdminReleaseRow[] = [];
 
   try {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("software_releases")
-      .select("id,version,released_at,notes,delivery_mode,macos_primary_url,macos_backup_url,windows_primary_url,windows_backup_url,is_published,software_release_assets(id,platform,file_name,storage_path,file_size)")
+      .select("id,version,released_at,notes,delivery_mode,macos_primary_url,macos_backup_url,windows_primary_url,windows_backup_url,is_published,release_status,software_release_assets(id,platform,file_name,storage_path,file_size)")
       .order("released_at", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -63,6 +70,7 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
       windowsPrimaryUrl: row.windows_primary_url,
       windowsBackupUrl: row.windows_backup_url,
       isPublished: row.is_published,
+      releaseStatus: row.release_status ?? "ready",
       assets: (row.software_release_assets ?? []).map((asset) => ({
         id: asset.id,
         platform: asset.platform,
@@ -118,21 +126,31 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                   deliveryModeFileHelp: t("releases.deliveryModeFileHelp"),
                   deliveryModeLink: t("releases.deliveryModeLink"),
                   deliveryModeLinkHelp: t("releases.deliveryModeLinkHelp"),
+                  create: t("releases.create"),
+                  createLink: t("releases.createLinkRelease"),
                   macBackupUrl: t("releases.macBackupUrl"),
                   macFile: t("releases.macFile"),
                   macPrimaryUrl: t("releases.macPrimaryUrl"),
+                  maxFileSizeHelp: t("releases.maxFileSizeHelp"),
+                  pauseUpload: t("releases.pauseUpload"),
+                  retryUpload: t("releases.retryUpload"),
+                  resumeUpload: t("releases.resumeUpload"),
+                  uploadComplete: t("releases.uploadComplete"),
+                  uploadFailed: t("releases.uploadFailed"),
+                  uploadIdle: t("releases.uploadIdle"),
+                  uploadLimitError: t("releases.uploadLimitError"),
+                  uploadProgress: t("releases.uploadProgress"),
+                  uploadUploading: t("releases.uploadUploading"),
                   windowsBackupUrl: t("releases.windowsBackupUrl"),
                   windowsFile: t("releases.windowsFile"),
                   windowsPrimaryUrl: t("releases.windowsPrimaryUrl"),
                 }}
+                locale={locale}
               />
               <label className="flex items-center gap-3 text-sm font-medium text-slate-950">
                 <input className="size-4" name="is_published" type="checkbox" />
                 {t("releases.published")}
               </label>
-              <AdminSubmitButton className="inline-flex min-h-11 w-fit items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white" pendingLabel={t("common.processing")}>
-                {t("releases.create")}
-              </AdminSubmitButton>
             </form>
           </AdminCard>
 
@@ -147,6 +165,9 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                           <h2 className="text-lg font-semibold text-slate-950">{release.version}</h2>
                           <AdminStatusBadge tone={release.isPublished ? "success" : "neutral"}>
                             {release.isPublished ? t("releases.published") : t("releases.unpublish")}
+                          </AdminStatusBadge>
+                          <AdminStatusBadge tone={getStatusTone(release.releaseStatus)}>
+                            {t(`releases.statuses.${release.releaseStatus}`)}
                           </AdminStatusBadge>
                           <AdminStatusBadge tone={release.deliveryMode === "link" ? "warning" : "neutral"}>
                             {release.deliveryMode === "link" ? t("releases.modeLink") : t("releases.modeFile")}
@@ -177,19 +198,36 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                           })}
                         </div>
                       </div>
-                      <form action={togglePublished}>
-                        <input name="locale" type="hidden" value={locale} />
-                        <input name="return_to" type="hidden" value="/admin/releases" />
-                        <input name="release_id" type="hidden" value={release.id} />
-                        <input name="is_published" type="hidden" value={release.isPublished ? "false" : "true"} />
-                        <ConfirmActionButton
-                          className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700"
-                          confirmLabel={release.isPublished ? t("releases.unpublish") : t("releases.publish")}
-                          pendingLabel={t("common.processing")}
-                        >
-                          {release.isPublished ? t("releases.unpublish") : t("releases.publish")}
-                        </ConfirmActionButton>
-                      </form>
+                      <div className="flex flex-wrap gap-2">
+                        {release.releaseStatus === "ready" ? (
+                          <form action={togglePublished}>
+                            <input name="locale" type="hidden" value={locale} />
+                            <input name="return_to" type="hidden" value="/admin/releases" />
+                            <input name="release_id" type="hidden" value={release.id} />
+                            <input name="is_published" type="hidden" value={release.isPublished ? "false" : "true"} />
+                            <ConfirmActionButton
+                              className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700"
+                              confirmLabel={release.isPublished ? t("releases.unpublish") : t("releases.publish")}
+                              pendingLabel={t("common.processing")}
+                            >
+                              {release.isPublished ? t("releases.unpublish") : t("releases.publish")}
+                            </ConfirmActionButton>
+                          </form>
+                        ) : (
+                          <form action={deleteDraft}>
+                            <input name="locale" type="hidden" value={locale} />
+                            <input name="return_to" type="hidden" value="/admin/releases" />
+                            <input name="release_id" type="hidden" value={release.id} />
+                            <ConfirmActionButton
+                              className="inline-flex min-h-10 items-center rounded-md border border-red-200 px-3 text-sm font-medium text-red-700"
+                              confirmLabel={t("releases.deleteDraft")}
+                              pendingLabel={t("common.processing")}
+                            >
+                              {t("releases.deleteDraft")}
+                            </ConfirmActionButton>
+                          </form>
+                        )}
+                      </div>
                     </div>
                   </li>
                 ))}

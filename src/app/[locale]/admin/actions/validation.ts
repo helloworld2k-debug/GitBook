@@ -19,6 +19,7 @@ export const MAX_DONATION_TIER_DESCRIPTION_LENGTH = 500;
 export const MAX_POLICY_TITLE_LENGTH = 120;
 export const MAX_POLICY_SUMMARY_LENGTH = 400;
 export const MAX_POLICY_BODY_LENGTH = 8000;
+export const MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES = 50_000_000;
 export const notificationAudiences = ["all", "authenticated", "admins"] as const;
 export const notificationPriorities = ["info", "success", "warning", "critical"] as const;
 export const feedbackStatuses = ["open", "reviewing", "closed"] as const;
@@ -216,6 +217,33 @@ export function getUploadFile(formData: FormData, key: string) {
   }
 
   return file;
+}
+
+export function getReleaseFileMetadata(formData: FormData, platform: "macos" | "windows") {
+  const fileName = getRequiredString(formData, `${platform}_file_name`, "Installer file name is required");
+  const rawSize = getRequiredString(formData, `${platform}_file_size`, "Installer file size is required");
+  const fileSize = Number(rawSize);
+  const contentType = String(formData.get(`${platform}_file_type`) ?? "application/octet-stream").trim() || "application/octet-stream";
+
+  if (!Number.isInteger(fileSize) || fileSize <= 0) {
+    throw new Error("Installer file size is required");
+  }
+
+  if (fileSize > MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES) {
+    throw new Error("Installer files must be 50 MB or smaller");
+  }
+
+  return { contentType, fileName, fileSize };
+}
+
+export function getReleaseStoragePath(formData: FormData, platform: "macos" | "windows") {
+  const storagePath = getRequiredString(formData, `${platform}_storage_path`, "Uploaded installer is required");
+
+  if (storagePath.includes("..") || storagePath.includes("\\") || !storagePath.includes(`/${platform}/`)) {
+    throw new Error("Uploaded installer path is invalid");
+  }
+
+  return storagePath;
 }
 
 export function sanitizeFileName(fileName: string) {
