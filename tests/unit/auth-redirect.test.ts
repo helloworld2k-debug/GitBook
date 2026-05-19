@@ -98,6 +98,25 @@ describe("auth callback route", () => {
     expect(response.headers.get("location")).toBe("https://gitbookai.example/en/dashboard?welcome=verified");
   });
 
+  it("verifies invite email links and redirects invited users to set a password", async () => {
+    const response = await GET(
+      new Request("https://gitbookai.example/auth/callback?token_hash=invite-hash&type=invite&next=%2Fzh-Hant%2Fdashboard"),
+    );
+
+    expect(verifyOtpMock).toHaveBeenCalledWith({ token_hash: "invite-hash", type: "invite" });
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/zh-Hant/reset-password");
+  });
+
+  it("redirects invite links to login with an error when Supabase rejects the token", async () => {
+    verifyOtpMock.mockResolvedValueOnce({ data: { session: null }, error: new Error("expired invite") });
+
+    const response = await GET(
+      new Request("https://gitbookai.example/auth/callback?token_hash=bad-invite&type=invite&next=%2Fja%2Fdashboard"),
+    );
+
+    expect(response.headers.get("location")).toBe("https://gitbookai.example/ja/login?error=callback&next=%2Fja%2Fdashboard");
+  });
+
   it("redirects to login with an error when the code is missing", async () => {
     const response = await GET(new Request("https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions"));
 

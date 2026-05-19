@@ -21,14 +21,18 @@ export async function GET(request: Request) {
 
   const supabase = await createSupabaseServerClient();
 
-  if (tokenHash && type === "signup") {
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "signup" });
+  if (tokenHash && (type === "signup" || type === "invite")) {
+    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
 
     if (error) {
       return buildLoginRedirect(requestUrl, "callback", nextPath);
     }
 
     const locale = getLocaleFromPath(nextPath);
+    if (type === "invite") {
+      return NextResponse.redirect(new URL(`/${locale}/reset-password`, requestUrl.origin));
+    }
+
     return NextResponse.redirect(new URL(`/${locale}/dashboard?welcome=verified`, requestUrl.origin));
   }
 

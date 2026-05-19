@@ -298,6 +298,8 @@ begin
 end;
 $$;
 
+drop function if exists public.activate_cloud_sync_lease(uuid, uuid, text, text, timestamptz, timestamptz);
+
 create or replace function public.activate_cloud_sync_lease(
   input_user_id uuid,
   input_desktop_session_id uuid,
@@ -481,6 +483,8 @@ begin
   return query select true, 'active'::text, inserted_lease.id, inserted_lease.expires_at, inserted_lease.device_id, null::timestamptz, null::integer, active_override_id, active_usage_session.id;
 end;
 $$;
+
+drop function if exists public.heartbeat_cloud_sync_lease(uuid, uuid, timestamptz, timestamptz);
 
 create or replace function public.heartbeat_cloud_sync_lease(
   input_user_id uuid,

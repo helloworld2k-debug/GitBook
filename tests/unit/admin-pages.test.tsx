@@ -389,6 +389,28 @@ const testMessages = {
         title: "User management",
         detailTitle: "User operations",
         detailDescription: "Review and maintain one user's profile, donations, certificates, trials, devices, and entitlements.",
+        accountCreationTitle: "Create account",
+        accountCreationDescription: "Invite a user or create a confirmed account with a temporary password.",
+        creationMode: "Creation mode",
+        inviteMode: "Invite email",
+        tempPasswordMode: "Temporary password",
+        email: "Email",
+        temporaryPassword: "Temporary password",
+        generatePassword: "Generate password",
+        createInvite: "Send invite",
+        createTempAccount: "Create account",
+        authStatus: "Auth status",
+        authConfirmed: "Email confirmed",
+        authUnconfirmed: "Email unconfirmed",
+        authInvited: "Invited",
+        authHasPassword: "Password set",
+        authNoPassword: "No password",
+        authRecoverySent: "Password email sent",
+        authLastSignIn: "Last sign-in",
+        passwordRecoveryTitle: "Password and invitation recovery",
+        passwordRecoveryDescription: "This account needs a password before it can use email sign-in.",
+        sendPasswordSetup: "Send password setup email",
+        setTemporaryPassword: "Set temporary password",
         manageUser: "Manage user",
         moreActions: "More actions",
         detailEntryHint: "Detailed account, contributions, certificates, and devices",
@@ -1623,6 +1645,67 @@ describe("admin pages", () => {
     expect(screen.queryByRole("button", { name: "Save role" })).not.toBeInTheDocument();
   });
 
+  it("shows account creation controls and auth status on the users page", async () => {
+    const profilesQuery = createAdminListQuery([
+      {
+        id: "user-1",
+        email: "invited@example.com",
+        display_name: "Invited User",
+        admin_role: "user",
+        account_status: "active",
+        is_admin: false,
+        created_at: "2026-05-01T00:00:00.000Z",
+      },
+    ]);
+    const emptyQuery = createAdminListQuery([]);
+    const operatorQuery = createAdminListQuery({
+      admin_role: "operator",
+      is_admin: false,
+      account_status: "active",
+    });
+    const rpc = vi.fn(async () => ({
+      data: [
+        {
+          user_id: "user-1",
+          email: "invited@example.com",
+          has_password: false,
+          invited_at: "2026-05-01T00:00:00.000Z",
+          email_confirmed_at: null,
+          confirmed_at: null,
+          recovery_sent_at: "2026-05-01T01:00:00.000Z",
+          last_sign_in_at: null,
+          banned_until: null,
+          deleted_at: null,
+          identity_providers: ["email"],
+        },
+      ],
+      error: null,
+    }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profilesQuery : operatorQuery;
+      }
+
+      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
+    requireAdminMock.mockResolvedValue({ id: "admin-operator" });
+
+    render(await AdminUsersPage({ params: Promise.resolve({ locale: "en" }) }));
+
+    expect(screen.getByRole("heading", { name: "Create account" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Invite email" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Temporary password" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send invite" })).toBeInTheDocument();
+    expect(screen.getAllByText("Email unconfirmed").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Invited").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("No password").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Password email sent").length).toBeGreaterThan(0);
+    expect(rpc).toHaveBeenCalledWith("get_admin_auth_user_status", { input_user_ids: ["user-1"] });
+  });
+
   it("renders a user operations detail page with profile, donations, certificates, trials, devices, and entitlements", async () => {
     const profileQuery = createAdminListQuery({
       id: "user-1",
@@ -1982,6 +2065,68 @@ describe("admin pages", () => {
 
     expect(screen.getByText("Danger zone")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Permanent delete" })).toBeInTheDocument();
+  });
+
+  it("shows password recovery actions on the admin user detail page when the auth account has no password", async () => {
+    const profileQuery = createAdminListQuery({
+      id: "user-1",
+      email: "invited@example.com",
+      display_name: "Invited User",
+      public_display_name: "Invited User",
+      public_supporter_enabled: false,
+      admin_role: "user",
+      account_status: "active",
+      is_admin: false,
+      created_at: "2026-05-01T00:00:00.000Z",
+    });
+    const emptyQuery = createAdminListQuery([]);
+    const operatorQuery = createAdminListQuery({
+      admin_role: "operator",
+      is_admin: false,
+      account_status: "active",
+    });
+    const rpc = vi.fn(async () => ({
+      data: [
+        {
+          user_id: "user-1",
+          email: "invited@example.com",
+          has_password: false,
+          invited_at: "2026-05-01T00:00:00.000Z",
+          email_confirmed_at: null,
+          confirmed_at: null,
+          recovery_sent_at: null,
+          last_sign_in_at: null,
+          banned_until: null,
+          deleted_at: null,
+          identity_providers: ["email"],
+        },
+      ],
+      error: null,
+    }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profileQuery : operatorQuery;
+      }
+
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback"].includes(table)) {
+        return emptyQuery;
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
+    requireAdminMock.mockResolvedValue({ id: "admin-operator" });
+
+    render(await AdminUserDetailPage({
+      params: Promise.resolve({ id: "user-1", locale: "en" }),
+      searchParams: Promise.resolve({}),
+    }));
+
+    expect(screen.getByRole("heading", { name: "Password and invitation recovery" })).toBeInTheDocument();
+    expect(screen.getByText("No password")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send password setup email" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Set temporary password" })).toBeInTheDocument();
+    expect(rpc).toHaveBeenCalledWith("get_admin_auth_user_status", { input_user_ids: ["user-1"] });
   });
 
   it("hides the permanent delete danger zone from operators when viewing an owner account", async () => {

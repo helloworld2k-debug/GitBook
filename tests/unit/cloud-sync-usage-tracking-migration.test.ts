@@ -38,6 +38,11 @@ describe("cloud sync usage tracking migration", () => {
     expect(migration).toContain("returns table(ok boolean, reason text, lease_id uuid, expires_at timestamptz, active_device_id text, usage_session_id uuid)");
   });
 
+  it("drops old cloud sync RPC signatures before changing return columns", () => {
+    expect(migration).toContain("drop function if exists public.activate_cloud_sync_lease(uuid, uuid, text, text, timestamptz, timestamptz)");
+    expect(migration).toContain("drop function if exists public.heartbeat_cloud_sync_lease(uuid, uuid, timestamptz, timestamptz)");
+  });
+
   it("closes usage sessions on release and admin revocation", () => {
     expect(migration).toContain("public.close_cloud_sync_usage_session");
     expect(migration).toContain("'released'");

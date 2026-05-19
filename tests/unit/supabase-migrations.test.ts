@@ -124,4 +124,18 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("login_attempts_email_ip_result_idx");
     expect(migration).toContain("login_attempts_admin_all");
   });
+
+  it("adds a safe admin auth status RPC without exposing password hashes", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0037_admin_auth_user_status.sql"), "utf8");
+
+    expect(migration).toContain("create or replace function public.get_admin_auth_user_status");
+    expect(migration).toContain("input_user_ids uuid[]");
+    expect(migration).toContain("has_password boolean");
+    expect(migration).toContain("invited_at timestamptz");
+    expect(migration).toContain("email_confirmed_at timestamptz");
+    expect(migration).toContain("recovery_sent_at timestamptz");
+    expect(migration).toContain("identity_providers text[]");
+    expect(migration).not.toContain("encrypted_password text");
+    expect(migration).toContain("grant execute on function public.get_admin_auth_user_status(uuid[]) to service_role");
+  });
 });

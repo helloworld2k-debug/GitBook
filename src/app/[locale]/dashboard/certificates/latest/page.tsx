@@ -12,6 +12,13 @@ type LatestCertificatePageProps = {
   }>;
 };
 
+const PAYMENT_LOOKUP_ATTEMPTS = 6;
+const PAYMENT_LOOKUP_DELAY_MS = 250;
+
+function waitForPaymentWrite() {
+  return new Promise((resolve) => setTimeout(resolve, PAYMENT_LOOKUP_DELAY_MS));
+}
+
 export default async function LatestCertificatePage({ params, searchParams }: LatestCertificatePageProps) {
   const { locale: localeParam } = await params;
   const status = await searchParams;
@@ -20,7 +27,7 @@ export default async function LatestCertificatePage({ params, searchParams }: La
   const supabase = await createSupabaseServerClient();
 
   async function findCertificateForDonation(donationId: string) {
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    for (let attempt = 0; attempt < PAYMENT_LOOKUP_ATTEMPTS; attempt += 1) {
       const { data: certificate, error } = await supabase
         .from("certificates")
         .select("id")
@@ -40,8 +47,36 @@ export default async function LatestCertificatePage({ params, searchParams }: La
         return certificate;
       }
 
-      if (attempt === 0) {
-        await new Promise((resolve) => setTimeout(resolve, 250));
+      if (attempt < PAYMENT_LOOKUP_ATTEMPTS - 1) {
+        await waitForPaymentWrite();
+      }
+    }
+
+    return null;
+  }
+
+  async function findDonationForCheckout(checkoutStartedAt: string) {
+    for (let attempt = 0; attempt < PAYMENT_LOOKUP_ATTEMPTS; attempt += 1) {
+      const { data: donation, error } = await supabase
+        .from("donations")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("status", "paid")
+        .gte("paid_at", checkoutStartedAt)
+        .order("paid_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      if (donation) {
+        return donation;
+      }
+
+      if (attempt < PAYMENT_LOOKUP_ATTEMPTS - 1) {
+        await waitForPaymentWrite();
       }
     }
 
@@ -49,19 +84,7 @@ export default async function LatestCertificatePage({ params, searchParams }: La
   }
 
   if (status?.checkout_started_at) {
-    const { data: donation, error: donationError } = await supabase
-      .from("donations")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("status", "paid")
-      .gte("paid_at", status.checkout_started_at)
-      .order("paid_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (donationError) {
-      throw donationError;
-    }
+    const donation = await findDonationForCheckout(status.checkout_started_at);
 
     if (!donation) {
       redirect(`/${locale}/dashboard?payment=dodo-success`);

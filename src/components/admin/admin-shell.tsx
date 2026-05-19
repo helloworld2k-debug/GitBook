@@ -285,6 +285,10 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "status-update-failed": "Unable to update account status.",
   "support-contact-updated": "Support contact updated.",
   "support-contact-update-failed": "Unable to update support contact.",
+  "user-created-with-temp-password": "User account created with a temporary password.",
+  "user-create-temp-password-failed": "Unable to create the temporary password account.",
+  "user-invited": "Invitation email sent.",
+  "user-invite-failed": "Unable to send the invitation.",
   "trial-code-created": "Trial code created.",
   "trial-code-create-failed": "Unable to create trial code.",
   "license-code-batch-created": "License code batch created.",
@@ -301,8 +305,12 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "trial-machine-unbind-failed": "Unable to unbind trial machine.",
   "user-permanently-deleted": "User permanently deleted.",
   "user-permanent-delete-failed": "Unable to permanently delete the user.",
+  "user-password-setup-sent": "Password setup email sent.",
+  "user-password-setup-failed": "Unable to send the password setup email.",
   "user-soft-deleted": "User soft-deleted.",
   "user-soft-delete-failed": "Unable to soft-delete the user.",
+  "user-temp-password-set": "Temporary password updated.",
+  "user-temp-password-set-failed": "Unable to update the temporary password.",
 };
 
 export function AdminFeedbackBanner({

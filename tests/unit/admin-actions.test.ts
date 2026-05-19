@@ -3,14 +3,18 @@ import {
   addManualDonation,
   bulkProcessUsers,
   createSoftwareRelease,
+  createUserWithTemporaryPassword,
   createTrialCode,
   deleteDraftSoftwareRelease,
   finalizeSoftwareReleaseUpload,
+  inviteUserAccount,
   permanentlyDeleteUser,
   prepareSoftwareReleaseUpload,
   replySupportFeedbackAsAdmin,
   revokeCertificate,
   setSoftwareReleasePublished,
+  sendUserPasswordSetupEmail,
+  setUserTemporaryPassword,
   softDeleteUser,
   updateDonationTier,
   updateSupportContactChannel,
@@ -202,6 +206,212 @@ describe("admin actions", () => {
     mocks.extendCloudSyncEntitlementForDonation.mockReset().mockResolvedValue("2027-05-01T00:00:00.000Z");
     mocks.redirect.mockClear();
     mocks.revalidatePath.mockClear();
+  });
+
+  it("invites a standard user account, updates the generated profile, audits it, and redirects with a notice", async () => {
+    const invitedUser = { id: "invited-user-id", email: "invitee@example.com" };
+    const inviteUserByEmail = vi.fn(async () => ({ data: { user: invitedUser }, error: null }));
+    const updateEq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq: updateEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return { update };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({
+      auth: { admin: { inviteUserByEmail } },
+      from,
+    });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("return_to", "/admin/users");
+    formData.set("email", "invitee@example.com");
+    formData.set("display_name", "Invited User");
+    formData.set("admin_role", "user");
+
+    await expect(inviteUserAccount(formData)).rejects.toThrow("redirect:/en/admin/users?notice=user-invited");
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(inviteUserByEmail).toHaveBeenCalledWith("invitee@example.com", expect.objectContaining({
+      data: expect.objectContaining({ source: "admin_invite" }),
+      redirectTo: expect.stringContaining("/auth/callback"),
+    }));
+    expect(update).toHaveBeenCalledWith({
+      admin_role: "user",
+      display_name: "Invited User",
+      is_admin: false,
+      updated_at: expect.any(String),
+    });
+    expect(updateEq).toHaveBeenCalledWith("id", "invited-user-id");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "invite_user",
+      after: expect.objectContaining({ admin_role: "user", email: "invitee@example.com" }),
+      admin_user_id: "admin-1",
+      target_id: "invited-user-id",
+      target_type: "profile",
+    }));
+  });
+
+  it("requires owner access when inviting an elevated account role", async () => {
+    const inviteUserByEmail = vi.fn();
+    mocks.createSupabaseAdminClient.mockReturnValue({
+      auth: { admin: { inviteUserByEmail } },
+      from: vi.fn(),
+    });
+    mocks.requireOwner.mockRejectedValueOnce(new Error("redirect:/en/admin"));
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("return_to", "/admin/users");
+    formData.set("email", "operator@example.com");
+    formData.set("admin_role", "operator");
+
+    await expect(inviteUserAccount(formData)).rejects.toThrow("redirect:/en/admin");
+
+    expect(mocks.requireOwner).toHaveBeenCalledWith("en");
+    expect(inviteUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it("creates a confirmed account with a temporary password without writing the password to audit logs", async () => {
+    const createdUser = { id: "created-user-id", email: "temp@example.com" };
+    const createUser = vi.fn(async () => ({ data: { user: createdUser }, error: null }));
+    const updateEq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq: updateEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return { update };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({
+      auth: { admin: { createUser } },
+      from,
+    });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("return_to", "/admin/users");
+    formData.set("email", "temp@example.com");
+    formData.set("display_name", "Temp User");
+    formData.set("admin_role", "user");
+    formData.set("password", "Generated-Temp-Password-123");
+
+    await expect(createUserWithTemporaryPassword(formData)).rejects.toThrow("redirect:/en/admin/users?notice=user-created-with-temp-password");
+
+    expect(createUser).toHaveBeenCalledWith({
+      email: "temp@example.com",
+      email_confirm: true,
+      password: "Generated-Temp-Password-123",
+      user_metadata: expect.objectContaining({ source: "admin_temp_password" }),
+    });
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "create_user_with_temp_password",
+      after: expect.not.objectContaining({ password: expect.any(String) }),
+    }));
+    expect(JSON.stringify(auditInsert.mock.calls)).not.toContain("Generated-Temp-Password-123");
+  });
+
+  it("lets owners create elevated temporary-password accounts", async () => {
+    const createdUser = { id: "operator-id", email: "operator@example.com" };
+    const createUser = vi.fn(async () => ({ data: { user: createdUser }, error: null }));
+    const updateEq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq: updateEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return { update };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({
+      auth: { admin: { createUser } },
+      from,
+    });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("return_to", "/admin/users");
+    formData.set("email", "operator@example.com");
+    formData.set("admin_role", "operator");
+    formData.set("password", "Generated-Temp-Password-123");
+
+    await expect(createUserWithTemporaryPassword(formData)).rejects.toThrow("redirect:/en/admin/users?notice=user-created-with-temp-password");
+
+    expect(mocks.requireOwner).toHaveBeenCalledWith("en");
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      admin_role: "operator",
+      is_admin: false,
+    }));
+  });
+
+  it("sends a password setup email for an existing account and audits the action", async () => {
+    const resetPasswordForEmail = vi.fn(async () => ({ data: {}, error: null }));
+    const profileSingle = vi.fn(async () => ({ data: { email: "user@example.com" }, error: null }));
+    const profileEq = vi.fn(() => ({ single: profileSingle }));
+    const profileSelect = vi.fn(() => ({ eq: profileEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return { select: profileSelect };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({
+      auth: { resetPasswordForEmail },
+      from,
+    });
+
+    const formData = new FormData();
+    formData.set("locale", "zh-Hant");
+    formData.set("return_to", "/admin/users/user-1");
+    formData.set("user_id", "user-1");
+
+    await expect(sendUserPasswordSetupEmail(formData)).rejects.toThrow("redirect:/zh-Hant/admin/users/user-1?notice=user-password-setup-sent");
+
+    expect(resetPasswordForEmail).toHaveBeenCalledWith("user@example.com", {
+      redirectTo: expect.stringContaining("/auth/callback"),
+    });
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "send_user_password_setup",
+      after: { email: "user@example.com" },
+      target_id: "user-1",
+    }));
+  });
+
+  it("sets a temporary password for an existing account without writing the password to audit logs", async () => {
+    const updateUserById = vi.fn(async () => ({ data: { user: { id: "user-1" } }, error: null }));
+    const profileSingle = vi.fn(async () => ({ data: { email: "user@example.com" }, error: null }));
+    const profileEq = vi.fn(() => ({ single: profileSingle }));
+    const profileSelect = vi.fn(() => ({ eq: profileEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return { select: profileSelect };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({
+      auth: { admin: { updateUserById } },
+      from,
+    });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("return_to", "/admin/users/user-1");
+    formData.set("user_id", "user-1");
+    formData.set("password", "Another-Temp-Password-123");
+
+    await expect(setUserTemporaryPassword(formData)).rejects.toThrow("redirect:/en/admin/users/user-1?notice=user-temp-password-set");
+
+    expect(updateUserById).toHaveBeenCalledWith("user-1", {
+      email_confirm: true,
+      password: "Another-Temp-Password-123",
+      user_metadata: expect.objectContaining({ source: "admin_temp_password_reset" }),
+    });
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "set_user_temp_password",
+      after: { email: "user@example.com", email_confirm: true },
+    }));
+    expect(JSON.stringify(auditInsert.mock.calls)).not.toContain("Another-Temp-Password-123");
   });
 
   it("requires owner access before changing a user's admin role, audits it, and redirects with a success notice", async () => {

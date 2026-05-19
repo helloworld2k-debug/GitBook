@@ -10,9 +10,290 @@ import { insertAdminAuditLog } from "./audit";
 import { getRequiredString, getSafeLocale, getUserIds } from "./validation";
 
 type CloudSyncCooldownOverrideInsert = Database["public"]["Tables"]["cloud_sync_cooldown_overrides"]["Insert"];
+type AdminRole = Database["public"]["Tables"]["profiles"]["Row"]["admin_role"];
 
 function isOwnerUser(profile: { admin_role?: string | null; is_admin?: boolean | null }) {
   return profile.is_admin === true || profile.admin_role === "owner";
+}
+
+function getSiteUrl() {
+  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+}
+
+function getAuthCallbackUrl(locale: string, nextPath = `/${locale}/dashboard`) {
+  const callbackUrl = new URL("/auth/callback", getSiteUrl());
+  callbackUrl.searchParams.set("next", nextPath);
+  return callbackUrl.toString();
+}
+
+function getPasswordResetCallbackUrl(locale: string) {
+  return getAuthCallbackUrl(locale, `/${locale}/reset-password`);
+}
+
+function getAdminRole(formData: FormData) {
+  const role = String(formData.get("admin_role") ?? "user").trim() || "user";
+
+  if (role !== "owner" && role !== "operator" && role !== "user") {
+    throw new Error("Invalid admin role");
+  }
+
+  return role as AdminRole;
+}
+
+async function requireAdminForRole(locale: string, role: AdminRole) {
+  return role === "user" ? requireAdmin(locale) : requireOwner(locale);
+}
+
+async function updateCreatedUserProfile(input: {
+  displayName: string | null;
+  role: AdminRole;
+  userId: string;
+}) {
+  const { error } = await createSupabaseAdminClient()
+    .from("profiles")
+    .update({
+      admin_role: input.role,
+      display_name: input.displayName,
+      is_admin: input.role === "owner",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", input.userId);
+
+  return error;
+}
+
+async function getProfileEmail(userId: string) {
+  return createSupabaseAdminClient()
+    .from("profiles")
+    .select("email")
+    .eq("id", userId)
+    .single();
+}
+
+export async function inviteUserAccount(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const role = getAdminRole(formData);
+  const admin = await requireAdminForRole(locale, role);
+  const email = getRequiredString(formData, "email", "Email is required").toLowerCase();
+  const displayName = String(formData.get("display_name") ?? "").trim() || null;
+  const supabase = createSupabaseAdminClient();
+  const result = await supabase.auth.admin.inviteUserByEmail(email, {
+    data: {
+      display_name: displayName,
+      source: "admin_invite",
+    },
+    redirectTo: getAuthCallbackUrl(locale),
+  });
+  const userId = result.data.user?.id;
+
+  if (result.error || !userId) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "user-invite-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const profileError = await updateCreatedUserProfile({ displayName, role, userId });
+
+  if (profileError) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "user-invite-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "invite_user",
+    adminUserId: admin.id,
+    after: { admin_role: role, email },
+    reason: "Invited user from admin console",
+    targetId: userId,
+    targetType: "profile",
+  });
+
+  revalidatePath(`/${locale}/admin/users`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/users",
+    formData,
+    key: "user-invited",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function createUserWithTemporaryPassword(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const role = getAdminRole(formData);
+  const admin = await requireAdminForRole(locale, role);
+  const email = getRequiredString(formData, "email", "Email is required").toLowerCase();
+  const displayName = String(formData.get("display_name") ?? "").trim() || null;
+  const password = getRequiredString(formData, "password", "Temporary password is required");
+  const supabase = createSupabaseAdminClient();
+  const result = await supabase.auth.admin.createUser({
+    email,
+    email_confirm: true,
+    password,
+    user_metadata: {
+      display_name: displayName,
+      source: "admin_temp_password",
+    },
+  });
+  const userId = result.data.user?.id;
+
+  if (result.error || !userId) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "user-create-temp-password-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const profileError = await updateCreatedUserProfile({ displayName, role, userId });
+
+  if (profileError) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "user-create-temp-password-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "create_user_with_temp_password",
+    adminUserId: admin.id,
+    after: { admin_role: role, email, email_confirm: true },
+    reason: "Created user with temporary password from admin console",
+    targetId: userId,
+    targetType: "profile",
+  });
+
+  revalidatePath(`/${locale}/admin/users`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/users",
+    formData,
+    key: "user-created-with-temp-password",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function sendUserPasswordSetupEmail(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const userId = getRequiredString(formData, "user_id", "User is required");
+  const supabase = createSupabaseAdminClient();
+  const { data: profile, error: profileError } = await getProfileEmail(userId);
+
+  if (profileError || !profile?.email) {
+    redirectWithAdminFeedback({
+      fallbackPath: `/admin/users/${userId}`,
+      formData,
+      key: "user-password-setup-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(profile.email, {
+    redirectTo: getPasswordResetCallbackUrl(locale),
+  });
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: `/admin/users/${userId}`,
+      formData,
+      key: "user-password-setup-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "send_user_password_setup",
+    adminUserId: admin.id,
+    after: { email: profile.email },
+    reason: "Sent password setup email from admin console",
+    targetId: userId,
+    targetType: "profile",
+  });
+
+  revalidatePath(`/${locale}/admin/users/${userId}`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: `/admin/users/${userId}`,
+    formData,
+    key: "user-password-setup-sent",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function setUserTemporaryPassword(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const userId = getRequiredString(formData, "user_id", "User is required");
+  const password = getRequiredString(formData, "password", "Temporary password is required");
+  const supabase = createSupabaseAdminClient();
+  const { data: profile, error: profileError } = await getProfileEmail(userId);
+
+  if (profileError || !profile?.email) {
+    redirectWithAdminFeedback({
+      fallbackPath: `/admin/users/${userId}`,
+      formData,
+      key: "user-temp-password-set-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const { error } = await supabase.auth.admin.updateUserById(userId, {
+    email_confirm: true,
+    password,
+    user_metadata: {
+      source: "admin_temp_password_reset",
+    },
+  });
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: `/admin/users/${userId}`,
+      formData,
+      key: "user-temp-password-set-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "set_user_temp_password",
+    adminUserId: admin.id,
+    after: { email: profile.email, email_confirm: true },
+    reason: "Set user temporary password from admin console",
+    targetId: userId,
+    targetType: "profile",
+  });
+
+  revalidatePath(`/${locale}/admin/users/${userId}`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: `/admin/users/${userId}`,
+    formData,
+    key: "user-temp-password-set",
+    locale,
+    tone: "notice",
+  });
 }
 
 function getRequiredFutureDate(formData: FormData, name: string) {

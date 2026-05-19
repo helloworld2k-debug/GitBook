@@ -1710,6 +1710,22 @@ export type Database = {
           sponsor_level_code: string | null;
         }[];
       };
+      get_admin_auth_user_status: {
+        Args: { input_user_ids: string[] };
+        Returns: {
+          banned_until: string | null;
+          confirmed_at: string | null;
+          deleted_at: string | null;
+          email: string | null;
+          email_confirmed_at: string | null;
+          has_password: boolean;
+          identity_providers: string[];
+          invited_at: string | null;
+          last_sign_in_at: string | null;
+          recovery_sent_at: string | null;
+          user_id: string;
+        }[];
+      };
       create_manual_paid_donation_with_audit: {
         Args: {
           input_admin_user_id: string;

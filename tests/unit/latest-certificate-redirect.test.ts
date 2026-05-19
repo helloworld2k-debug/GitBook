@@ -139,4 +139,26 @@ describe("latest certificate redirect page", () => {
 
     expect(mocks.maybeSingle).toHaveBeenCalledTimes(2);
   });
+
+  it("waits for the newly paid donation record before looking for its certificate", async () => {
+    const client = createCertificateClient();
+    mocks.createSupabaseServerClient.mockResolvedValue(client);
+    mocks.donationMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({ data: { id: "donation-3" }, error: null });
+    mocks.maybeSingle.mockResolvedValue({ data: { id: "cert-3" }, error: null });
+
+    await expect(
+      LatestCertificatePage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({ checkout_started_at: "2026-05-04T10:00:00.000Z", payment: "dodo-success" }),
+      } as {
+        params: Promise<{ locale: string }>;
+        searchParams: Promise<{ checkout_started_at: string; payment: string }>;
+      }),
+    ).rejects.toThrow("redirect:/en/dashboard/certificates/cert-3?payment=dodo-success");
+
+    expect(mocks.donationMaybeSingle).toHaveBeenCalledTimes(2);
+    expect(mocks.maybeSingle).toHaveBeenCalledTimes(1);
+  });
 });

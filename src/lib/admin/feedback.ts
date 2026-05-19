@@ -55,6 +55,10 @@ export type AdminFeedbackKey =
   | "status-update-failed"
   | "support-contact-updated"
   | "support-contact-update-failed"
+  | "user-created-with-temp-password"
+  | "user-create-temp-password-failed"
+  | "user-invited"
+  | "user-invite-failed"
   | "trial-code-created"
   | "trial-code-create-failed"
   | "license-code-batch-created"
@@ -71,8 +75,12 @@ export type AdminFeedbackKey =
   | "trial-machine-unbind-failed"
   | "user-permanently-deleted"
   | "user-permanent-delete-failed"
+  | "user-password-setup-sent"
+  | "user-password-setup-failed"
   | "user-soft-deleted"
-  | "user-soft-delete-failed";
+  | "user-soft-delete-failed"
+  | "user-temp-password-set"
+  | "user-temp-password-set-failed";
 
 const adminFeedbackKeys = new Set<string>([
   "account-profile-updated",
@@ -125,6 +133,10 @@ const adminFeedbackKeys = new Set<string>([
   "status-update-failed",
   "support-contact-updated",
   "support-contact-update-failed",
+  "user-created-with-temp-password",
+  "user-create-temp-password-failed",
+  "user-invited",
+  "user-invite-failed",
   "trial-code-created",
   "trial-code-create-failed",
   "license-code-batch-created",
@@ -141,8 +153,12 @@ const adminFeedbackKeys = new Set<string>([
   "trial-machine-unbind-failed",
   "user-permanently-deleted",
   "user-permanent-delete-failed",
+  "user-password-setup-sent",
+  "user-password-setup-failed",
   "user-soft-deleted",
   "user-soft-delete-failed",
+  "user-temp-password-set",
+  "user-temp-password-set-failed",
 ]);
 
 export function isAdminFeedbackKey(value: string | null | undefined): value is AdminFeedbackKey {

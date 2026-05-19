@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
+import { AdminTemporaryPasswordField } from "@/components/admin/admin-temporary-password-field";
 import { AdminUserDeleteDangerZone } from "@/components/admin/admin-user-delete-danger-zone";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
@@ -8,6 +9,7 @@ import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { isOwnerProfile } from "@/lib/auth/guards";
 import { setupAdminPage } from "@/lib/auth/page-guards";
+import type { Database } from "@/lib/database.types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   addManualDonation,
@@ -15,6 +17,8 @@ import {
   permanentlyDeleteUser,
   revokeCloudSyncLease,
   revokeDesktopSession,
+  sendUserPasswordSetupEmail,
+  setUserTemporaryPassword,
   unbindTrialMachine,
   updateAdminUserProfile,
   updateUserAccountStatus,
@@ -58,6 +62,8 @@ type CloudSyncUsageEventRow = {
   machine_code_hash: string | null;
   occurred_at: string;
 };
+
+type AdminAuthStatus = Database["public"]["Functions"]["get_admin_auth_user_status"]["Returns"][number];
 
 function formatDateTime(value: string | null, locale: string) {
   if (!value) {
@@ -140,6 +146,55 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
     <div className="min-w-0 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
       <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
       <dd className="mt-1 break-words text-sm text-slate-950">{value}</dd>
+    </div>
+  );
+}
+
+async function getAuthStatus(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  userId: string,
+) {
+  if (typeof supabase.rpc !== "function") {
+    return null;
+  }
+
+  const { data, error } = await supabase.rpc("get_admin_auth_user_status", { input_user_ids: [userId] });
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.[0] ?? null;
+}
+
+function AuthStatusBadges({
+  authStatus,
+  locale,
+  t,
+}: {
+  authStatus: AdminAuthStatus | null;
+  locale: string;
+  t: Awaited<ReturnType<typeof getTranslations>>;
+}) {
+  if (!authStatus) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 flex flex-wrap gap-1">
+      <AdminStatusBadge tone={authStatus.email_confirmed_at || authStatus.confirmed_at ? "success" : "warning"}>
+        {authStatus.email_confirmed_at || authStatus.confirmed_at ? t("authConfirmed") : t("authUnconfirmed")}
+      </AdminStatusBadge>
+      {authStatus.invited_at ? <AdminStatusBadge tone="warning">{t("authInvited")}</AdminStatusBadge> : null}
+      <AdminStatusBadge tone={authStatus.has_password ? "success" : "danger"}>
+        {authStatus.has_password ? t("authHasPassword") : t("authNoPassword")}
+      </AdminStatusBadge>
+      {authStatus.recovery_sent_at ? <AdminStatusBadge tone="warning">{t("authRecoverySent")}</AdminStatusBadge> : null}
+      {authStatus.last_sign_in_at ? (
+        <span className="inline-flex min-h-7 items-center rounded-md border border-slate-200 bg-slate-50 px-2 text-xs font-medium text-slate-600">
+          {t("authLastSignIn")}: {formatDateTime(authStatus.last_sign_in_at, locale)}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -257,6 +312,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   if (adminProfileResult.error) throw adminProfileResult.error;
 
   const profile = profileResult.data;
+  const authStatus = await getAuthStatus(supabase, profile.id);
   const donations = donationsResult.data ?? [];
   const certificates = certificatesResult.data ?? [];
   const trials = trialsResult.data ?? [];
@@ -392,6 +448,37 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 {t("save")}
               </AdminSubmitButton>
             </form>
+          </AdminCard>
+
+          <AdminCard className="p-5">
+            <h2 className="text-base font-semibold text-slate-950">{t("passwordRecoveryTitle")}</h2>
+            <AuthStatusBadges authStatus={authStatus} locale={locale} t={t} />
+            {authStatus?.has_password === false ? (
+              <>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{t("passwordRecoveryDescription")}</p>
+                <div className="mt-4 grid gap-4">
+                  <form action={sendUserPasswordSetupEmail}>
+                    <input name="locale" type="hidden" value={locale} />
+                    <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
+                    <input name="user_id" type="hidden" value={profile.id} />
+                    <AdminSubmitButton className="inline-flex min-h-10 items-center rounded-md bg-slate-950 px-3 text-sm font-semibold text-white" pendingLabel={adminT("common.processing")}>
+                      {t("sendPasswordSetup")}
+                    </AdminSubmitButton>
+                  </form>
+                  <form action={setUserTemporaryPassword} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                    <input name="locale" type="hidden" value={locale} />
+                    <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
+                    <input name="user_id" type="hidden" value={profile.id} />
+                    <AdminTemporaryPasswordField generateLabel={t("generatePassword")} label={t("temporaryPassword")} />
+                    <AdminSubmitButton className="mt-3 inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700" pendingLabel={adminT("common.processing")}>
+                      {t("setTemporaryPassword")}
+                    </AdminSubmitButton>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <p className="mt-3 text-sm leading-6 text-slate-600">{authStatus ? t("authHasPassword") : t("authStatus")}</p>
+            )}
           </AdminCard>
 
           <AdminCard className="p-5">

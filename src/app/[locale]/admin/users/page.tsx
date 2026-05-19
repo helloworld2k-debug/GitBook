@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { AdminAccountCreateForm } from "@/components/admin/admin-account-create-form";
 import { AdminUserBulkToolbar, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
 import { AdminUserFilters } from "@/components/admin/admin-user-filters";
 import { AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
@@ -8,8 +9,9 @@ import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { isOwnerProfile } from "@/lib/auth/guards";
 import { setupAdminPage } from "@/lib/auth/page-guards";
+import type { Database } from "@/lib/database.types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { bulkProcessUsers, softDeleteUser, unbindTrialMachine, updateUserAccountStatus, updateUserAdminRole } from "../actions";
+import { bulkProcessUsers, createUserWithTemporaryPassword, inviteUserAccount, softDeleteUser, unbindTrialMachine, updateUserAccountStatus, updateUserAdminRole } from "../actions";
 
 type AdminUsersSearchParams = {
   createdFrom?: string;
@@ -26,6 +28,8 @@ type AdminUsersPageProps = {
   params: Promise<{ locale: string }>;
   searchParams?: Promise<AdminUsersSearchParams>;
 };
+
+type AdminAuthStatus = Database["public"]["Functions"]["get_admin_auth_user_status"]["Returns"][number];
 
 function shortHash(value: string | null) {
   return value ? `${value.slice(0, 10)}...${value.slice(-6)}` : "-";
@@ -92,6 +96,55 @@ function matchesCreatedAt(profile: { created_at: string }, createdFrom?: string,
   return true;
 }
 
+async function getAuthStatusesByUser(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  userIds: string[],
+) {
+  if (userIds.length === 0 || typeof supabase.rpc !== "function") {
+    return new Map<string, AdminAuthStatus>();
+  }
+
+  const { data, error } = await supabase.rpc("get_admin_auth_user_status", { input_user_ids: userIds });
+
+  if (error) {
+    throw error;
+  }
+
+  return new Map((data ?? []).map((status) => [status.user_id, status]));
+}
+
+function AdminAuthStatusBadges({
+  locale,
+  status,
+  t,
+}: {
+  locale: string;
+  status: AdminAuthStatus | undefined;
+  t: Awaited<ReturnType<typeof getTranslations>>;
+}) {
+  if (!status) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-1">
+      <AdminStatusBadge tone={status.email_confirmed_at || status.confirmed_at ? "success" : "warning"}>
+        {status.email_confirmed_at || status.confirmed_at ? t("authConfirmed") : t("authUnconfirmed")}
+      </AdminStatusBadge>
+      {status.invited_at ? <AdminStatusBadge tone="warning">{t("authInvited")}</AdminStatusBadge> : null}
+      <AdminStatusBadge tone={status.has_password ? "success" : "danger"}>
+        {status.has_password ? t("authHasPassword") : t("authNoPassword")}
+      </AdminStatusBadge>
+      {status.recovery_sent_at ? <AdminStatusBadge tone="warning">{t("authRecoverySent")}</AdminStatusBadge> : null}
+      {status.last_sign_in_at ? (
+        <span className="inline-flex min-h-7 items-center rounded-md border border-slate-200 bg-slate-50 px-2 text-xs font-medium text-slate-600">
+          {t("authLastSignIn")}: {formatDate(status.last_sign_in_at, locale)}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 export default async function AdminUsersPage({ params, searchParams }: AdminUsersPageProps) {
   const { locale: localeParam } = await params;
   const feedback = await searchParams;
@@ -132,6 +185,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
 
   const allProfiles = profilesResult.data ?? [];
   const canManageRoles = isOwnerProfile(adminProfileResult.data);
+  const authStatusByUser = await getAuthStatusesByUser(supabase, allProfiles.map((profile) => profile.id));
 
   const trialsByUser = new Map<string, NonNullable<typeof trialsResult.data>>();
   for (const trial of trialsResult.data ?? []) {
@@ -194,6 +248,34 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.elevated}</p>
           </AdminCard>
         </div>
+
+        <AdminCard className="mt-6 p-5">
+          <div>
+            <h2 className="text-base font-semibold text-slate-950">{t("accountCreationTitle")}</h2>
+            <p className="mt-1 text-sm text-slate-600">{t("accountCreationDescription")}</p>
+          </div>
+          <AdminAccountCreateForm
+            canManageRoles={canManageRoles}
+            createTempAction={createUserWithTemporaryPassword}
+            inviteAction={inviteUserAccount}
+            labels={{
+              createInvite: t("createInvite"),
+              createTempAccount: t("createTempAccount"),
+              creationMode: t("creationMode"),
+              displayName: t("displayName"),
+              email: t("email"),
+              generatePassword: t("generatePassword"),
+              inviteMode: t("inviteMode"),
+              operatorRole: t("roles.operator"),
+              ownerRole: t("roles.owner"),
+              role: t("roleTarget"),
+              temporaryPassword: t("temporaryPassword"),
+              tempPasswordMode: t("tempPasswordMode"),
+              userRole: t("roles.user"),
+            }}
+            locale={locale}
+          />
+        </AdminCard>
 
         <AdminUserFilters
           actionPath={`/${locale}/admin/users`}
@@ -262,6 +344,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                   {filteredProfiles.map((profile) => {
                     const trials = trialsByUser.get(profile.id) ?? [];
                     const sessions = sessionsByUser.get(profile.id) ?? [];
+                    const authStatus = authStatusByUser.get(profile.id);
                     const resolvedRole = profile.admin_role ?? (profile.is_admin ? "owner" : "user");
                     const accountStatus = profile.account_status ?? "active";
 
@@ -272,6 +355,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                             <p className="break-all text-sm font-semibold text-slate-950">{profile.email}</p>
                             <p className="mt-1 text-sm text-slate-600">{profile.display_name ?? "-"}</p>
                             <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
+                            <AdminAuthStatusBadges locale={locale} status={authStatus} t={t} />
                           </div>
                           <AdminStatusBadge tone={accountStatus === "deleted" ? "warning" : accountStatus === "active" ? "success" : "danger"}>
                             {accountStatus === "deleted" ? t("deletedPill") : t(`statuses.${accountStatus}`)}
@@ -364,6 +448,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                   {filteredProfiles.map((profile) => {
                     const trials = trialsByUser.get(profile.id) ?? [];
                     const sessions = sessionsByUser.get(profile.id) ?? [];
+                    const authStatus = authStatusByUser.get(profile.id);
                     const resolvedRole = profile.admin_role ?? (profile.is_admin ? "owner" : "user");
                     const accountStatus = profile.account_status ?? "active";
 
@@ -376,6 +461,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                             <p className="break-all font-medium text-slate-950">{profile.email}</p>
                             <p className="mt-1 text-slate-600">{profile.display_name ?? "-"}</p>
                             <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
+                            <AdminAuthStatusBadges locale={locale} status={authStatus} t={t} />
                           </td>
                         <td className="px-5 py-4 align-top">
                           {canManageRoles ? (
