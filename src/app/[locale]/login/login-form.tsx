@@ -28,9 +28,15 @@ export type LoginFormMessages = {
   providerButtons: Record<OAuthProvider, string>;
   providersLabel: string;
   registerTab: string;
+  registrationCheckInboxAction: string;
+  registrationEmailSentTitle: string;
   registrationImmediateSuccess: string;
+  registrationNextSteps: string[];
   registrationSuccess: string;
   registrationRateLimited: string;
+  resendConfirmation: string;
+  resendConfirmationRateLimited: string;
+  resendConfirmationSent: string;
   signInSubmit: string;
   signInTab: string;
   signingIn: string;
@@ -104,6 +110,8 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
   const [status, setStatus] = useState<FormStatus>("idle");
   const [activeProvider, setActiveProvider] = useState<OAuthProvider | null>(null);
   const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [resendStatus, setResendStatus] = useState<"idle" | "submitting" | "sent" | "rate-limited" | "error">("idle");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<HTMLDivElement | null>(null);
   const turnstileWidgetId = useRef<string | null>(null);
@@ -196,6 +204,8 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
         return;
       }
 
+      setRegisteredEmail(email);
+      setResendStatus("idle");
       setStatus(result.emailConfirmationBypassed ? "immediate-success" : "success");
       return;
     }
@@ -280,6 +290,28 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
       setStatus("oauth-error");
       setActiveProvider(null);
     }
+  }
+
+  async function handleResendConfirmation() {
+    if (!registeredEmail) {
+      setResendStatus("error");
+      return;
+    }
+
+    setResendStatus("submitting");
+
+    const response = await fetch("/api/auth/resend-confirmation", {
+      body: JSON.stringify({
+        callbackUrl,
+        email: registeredEmail,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+
+    setResendStatus(response.status === 429 ? "rate-limited" : response.ok ? "sent" : "error");
   }
 
   const isSubmitting = status === "submitting";
@@ -418,13 +450,59 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
             {messages.passwordResetBack}
           </button>
         ) : null}
-        {status === "success" || status === "immediate-success" || status === "reset-sent" ? (
+        {status === "success" ? (
+          <div
+            aria-live="polite"
+            className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-3 text-sm text-emerald-100"
+            role="status"
+          >
+            <p className="font-semibold">{messages.registrationEmailSentTitle}</p>
+            <p className="mt-2 leading-6">{messages.registrationSuccess}</p>
+            <ul className="mt-3 list-disc space-y-1 pl-5 leading-6">
+              {messages.registrationNextSteps.map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ul>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                className="inline-flex min-h-10 items-center justify-center rounded-md border border-emerald-200/30 px-3 text-sm font-semibold text-emerald-50 transition-colors hover:bg-emerald-200/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
+                onClick={() => {
+                  setMode("sign-in");
+                  setStatus("idle");
+                  setResendStatus("idle");
+                }}
+                type="button"
+              >
+                {messages.registrationCheckInboxAction}
+              </button>
+              <button
+                className="inline-flex min-h-10 items-center justify-center rounded-md border border-cyan-200/30 px-3 text-sm font-semibold text-cyan-50 transition-colors hover:bg-cyan-200/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={resendStatus === "submitting"}
+                onClick={() => void handleResendConfirmation()}
+                type="button"
+              >
+                {resendStatus === "submitting" ? messages.sending : messages.resendConfirmation}
+              </button>
+            </div>
+            {resendStatus === "sent" ? (
+              <p className="mt-3 rounded-md border border-emerald-200/25 bg-emerald-200/10 px-3 py-2 text-emerald-50">
+                {messages.resendConfirmationSent}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+        {status === "immediate-success" || status === "reset-sent" ? (
           <p
             aria-live="polite"
             className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100"
             role="status"
           >
-            {status === "reset-sent" ? messages.passwordResetSent : status === "immediate-success" ? messages.registrationImmediateSuccess : isRegistering ? messages.registrationSuccess : ""}
+            {status === "reset-sent" ? messages.passwordResetSent : status === "immediate-success" ? messages.registrationImmediateSuccess : ""}
+          </p>
+        ) : null}
+        {resendStatus === "rate-limited" ? (
+          <p className="rounded-md border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-sm text-amber-100" role="alert">
+            {messages.resendConfirmationRateLimited}
           </p>
         ) : null}
         {status === "error" || status === "password-mismatch" ? (

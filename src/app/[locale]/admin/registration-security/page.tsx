@@ -31,6 +31,8 @@ type RegistrationBlock = {
   created_at: string;
 };
 
+type ConfirmationResendAttempt = RegistrationAttempt;
+
 function summarize<T extends string | null>(
   attempts: RegistrationAttempt[],
   key: (attempt: RegistrationAttempt) => T,
@@ -61,7 +63,11 @@ function summarize<T extends string | null>(
 
 async function getRegistrationSecurityData() {
   const supabase = createSupabaseAdminClient();
-  const [{ data: attempts, error: attemptsError }, { data: blocks, error: blocksError }] = await Promise.all([
+  const [
+    { data: attempts, error: attemptsError },
+    { data: blocks, error: blocksError },
+    { data: resendAttempts, error: resendAttemptsError },
+  ] = await Promise.all([
     supabase
       .from("registration_attempts")
       .select("id,email_normalized,email_domain,ip_address,user_agent,created_at")
@@ -73,14 +79,21 @@ async function getRegistrationSecurityData() {
       .is("revoked_at", null)
       .gt("blocked_until", new Date().toISOString())
       .order("blocked_until", { ascending: false }),
+    supabase
+      .from("confirmation_resend_attempts")
+      .select("id,email_normalized,email_domain,ip_address,user_agent,created_at")
+      .order("created_at", { ascending: false })
+      .limit(100),
   ]);
 
   if (attemptsError) throw attemptsError;
   if (blocksError) throw blocksError;
+  if (resendAttemptsError) throw resendAttemptsError;
 
   return {
     attempts: (attempts ?? []) as RegistrationAttempt[],
     blocks: (blocks ?? []) as RegistrationBlock[],
+    resendAttempts: (resendAttempts ?? []) as ConfirmationResendAttempt[],
   };
 }
 
@@ -94,7 +107,7 @@ export default async function AdminRegistrationSecurityPage({ params, searchPara
   const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/registration-security`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, "/admin/registration-security");
-  const { attempts, blocks } = await getRegistrationSecurityData();
+  const { attempts, blocks, resendAttempts } = await getRegistrationSecurityData();
   const ipSummary = summarize(attempts, (attempt) => attempt.ip_address);
   const domainSummary = summarize(attempts, (attempt) => attempt.email_domain);
 
@@ -174,6 +187,24 @@ export default async function AdminRegistrationSecurityPage({ params, searchPara
                 </div>
               ) : (
                 <p className="mt-4 text-sm text-slate-600">{t("registrationSecurity.emptyAttempts")}</p>
+              )}
+            </AdminCard>
+
+            <AdminCard className="p-5">
+              <h2 className="text-base font-semibold text-slate-950">{t("registrationSecurity.recentResendAttempts")}</h2>
+              {resendAttempts.length > 0 ? (
+                <div className="mt-4 grid gap-3">
+                  {resendAttempts.slice(0, 50).map((attempt) => (
+                    <div className="grid gap-2 rounded-md border border-slate-200 p-4 md:grid-cols-[1fr_1fr_1fr]" key={attempt.id}>
+                      <p className="break-all text-sm text-slate-950">{attempt.email_normalized}</p>
+                      <p className="break-all font-mono text-sm text-slate-700">{attempt.ip_address ?? "-"}</p>
+                      <p className="text-sm text-slate-600">{formatDateTimeWithSeconds(attempt.created_at, locale)}</p>
+                      <p className="break-all text-xs text-slate-500 md:col-span-3">{attempt.user_agent ?? "-"}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-slate-600">{t("registrationSecurity.emptyResendAttempts")}</p>
               )}
             </AdminCard>
           </div>

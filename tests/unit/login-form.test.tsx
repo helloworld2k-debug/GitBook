@@ -37,9 +37,19 @@ const messages: LoginFormMessages = {
   },
   providersLabel: "Quick sign-in options",
   registerTab: "Register",
+  registrationCheckInboxAction: "I verified it, sign in",
+  registrationEmailSentTitle: "Check your email to verify your account",
   registrationSuccess: "If this is a new account, check your email to verify it. If you do not see the message, check spam or try again later. If this email is already registered, sign in or reset your password.",
   registrationImmediateSuccess: "Account created. You can sign in now.",
+  registrationNextSteps: [
+    "Open the verification email from Gitbook AI.",
+    "Check spam, promotions, or junk folders if it is not in your inbox.",
+    "The verification link expires, so resend it if it no longer works.",
+  ],
   registrationRateLimited: "Too many registration attempts. Please try again later.",
+  resendConfirmation: "Resend verification email",
+  resendConfirmationRateLimited: "Please wait before requesting another verification email.",
+  resendConfirmationSent: "Verification email sent. Check your inbox and spam folder.",
   signInSubmit: "Sign in with email",
   signInTab: "Sign in",
   signingIn: "Signing in...",
@@ -208,8 +218,63 @@ describe("LoginForm", () => {
         method: "POST",
       }));
     });
-    expect(await screen.findByRole("status")).toHaveTextContent("If this is a new account, check your email to verify it. If you do not see the message, check spam or try again later. If this email is already registered, sign in or reset your password.");
+    const status = await screen.findByRole("status");
+    expect(status).toHaveTextContent("Check your email to verify your account");
+    expect(status).toHaveTextContent("Open the verification email from Gitbook AI.");
+    expect(status).toHaveTextContent("Check spam, promotions, or junk folders if it is not in your inbox.");
+    expect(status).toHaveTextContent("The verification link expires, so resend it if it no longer works.");
+    expect(screen.getByRole("button", { name: "I verified it, sign in" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Resend verification email" })).toBeInTheDocument();
     expect(signUpMock).not.toHaveBeenCalled();
+  });
+
+  it("resends the signup verification email after registration succeeds", async () => {
+    renderLoginForm();
+
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "new@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "new-password" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "new-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    await screen.findByRole("status");
+    fetchMock.mockResolvedValueOnce({
+      json: async () => ({ ok: true }),
+      ok: true,
+      status: 200,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Resend verification email" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenLastCalledWith("/api/auth/resend-confirmation", expect.objectContaining({
+        body: JSON.stringify({
+          callbackUrl: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
+          email: "new@example.com",
+        }),
+        method: "POST",
+      }));
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent("Verification email sent. Check your inbox and spam folder.");
+  });
+
+  it("shows a cooldown message when resend confirmation is rate limited", async () => {
+    renderLoginForm();
+
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "new@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "new-password" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "new-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    await screen.findByRole("status");
+    fetchMock.mockResolvedValueOnce({
+      json: async () => ({ error: "rate_limited" }),
+      ok: false,
+      status: 429,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Resend verification email" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Please wait before requesting another verification email.");
   });
 
   it("registers without a Turnstile token when captcha is not configured", async () => {
@@ -232,7 +297,7 @@ describe("LoginForm", () => {
         method: "POST",
       }));
     });
-    expect(await screen.findByRole("status")).toHaveTextContent("If this is a new account, check your email to verify it. If you do not see the message, check spam or try again later. If this email is already registered, sign in or reset your password.");
+    expect(await screen.findByRole("status")).toHaveTextContent("Check your email to verify your account");
   });
 
   it("shows the immediate sign-in message when registration bypasses email confirmation", async () => {

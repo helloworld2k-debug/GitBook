@@ -104,6 +104,16 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("registration_blocks_admin_all");
   });
 
+  it("adds confirmation resend attempt tracking to protect email quota", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0035_confirmation_resend_attempts.sql"), "utf8");
+
+    expect(migration).toContain("create table public.confirmation_resend_attempts");
+    expect(migration).toContain("email_normalized text not null");
+    expect(migration).toContain("confirmation_resend_attempts_email_idx");
+    expect(migration).toContain("confirmation_resend_attempts_ip_idx");
+    expect(migration).toContain("confirmation_resend_attempts_admin_all");
+  });
+
   it("adds login attempt tracking for risk-triggered Turnstile", () => {
     const migration = readFileSync(join(process.cwd(), "supabase/migrations/0030_login_turnstile_risk.sql"), "utf8");
 

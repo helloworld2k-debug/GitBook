@@ -35,11 +35,13 @@ vi.mock("next-intl/server", () => ({
       "admin.registrationSecurity.email": "Email",
       "admin.registrationSecurity.emptyBlocks": "No active blocks.",
       "admin.registrationSecurity.emptyAttempts": "No registration attempts yet.",
+      "admin.registrationSecurity.emptyResendAttempts": "No resend attempts yet.",
       "admin.registrationSecurity.ip": "IP",
       "admin.registrationSecurity.ipSummary": "IP summary",
       "admin.registrationSecurity.lastSeen": "Last seen",
       "admin.registrationSecurity.recentAttempts": "Recent attempts",
       "admin.registrationSecurity.reason": "Reason",
+      "admin.registrationSecurity.recentResendAttempts": "Recent resend attempts",
       "admin.registrationSecurity.revoke": "Revoke",
       "admin.registrationSecurity.scope": "Scope",
       "admin.registrationSecurity.scopeValue": "Value",
@@ -151,6 +153,28 @@ describe("AdminRegistrationSecurityPage", () => {
           };
         }
 
+        if (table === "confirmation_resend_attempts") {
+          return {
+            select: () => ({
+              order: () => ({
+                limit: async () => ({
+                  data: [
+                    {
+                      created_at: "2026-05-12T08:06:00.000Z",
+                      email_domain: "example.com",
+                      email_normalized: "b@example.com",
+                      id: "resend-1",
+                      ip_address: "203.0.113.10",
+                      user_agent: "Browser B",
+                    },
+                  ],
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+
         throw new Error(`Unexpected table: ${table}`);
       },
     });
@@ -158,6 +182,7 @@ describe("AdminRegistrationSecurityPage", () => {
     render(await AdminRegistrationSecurityPage({ params: Promise.resolve({ locale: "en" }), searchParams: Promise.resolve({}) }));
 
     expect(screen.getByRole("heading", { name: "Registration security" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Recent resend attempts" })).toBeInTheDocument();
     expect(screen.getAllByText("203.0.113.10").length).toBeGreaterThan(0);
     expect(screen.getAllByText("example.com").length).toBeGreaterThan(0);
     expect(screen.getByDisplayValue("203.0.113.10")).toBeInTheDocument();

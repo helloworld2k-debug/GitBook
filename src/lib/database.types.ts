@@ -643,6 +643,33 @@ export type Database = {
           },
         ];
       };
+      confirmation_resend_attempts: {
+        Row: {
+          id: string;
+          email_normalized: string;
+          email_domain: string;
+          ip_address: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email_normalized: string;
+          email_domain: string;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email_normalized?: string;
+          email_domain?: string;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       trial_codes: {
         Row: {
           id: string;
