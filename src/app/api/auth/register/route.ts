@@ -1,7 +1,6 @@
 import { jsonError, jsonOk } from "@/lib/api/responses";
 import { validateRequestOrigin } from "@/lib/auth/csrf";
 import { checkRegisterRateLimit, type RegisterLimitClient } from "@/lib/auth/register-rate-limit";
-import { registerWithEmailPassword } from "@/lib/auth/register";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -15,7 +14,6 @@ type AuthSignupError = {
 
 function getIpAddress(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for");
-
   return forwardedFor?.split(",")[0]?.trim() ?? null;
 }
 
@@ -27,21 +25,9 @@ function isTurnstileConfigured() {
   return Boolean(process.env.TURNSTILE_SECRET_KEY);
 }
 
-function shouldBypassEmailConfirmation() {
-  // Project design: users can register and login immediately without email verification
-  // This works regardless of Supabase enable_confirmations setting
-  if (process.env.TEMP_DISABLE_EMAIL_CONFIRMATION === "true") {
-    return true;
-  }
-  // In production, always bypass email confirmation using admin API with email_confirm: true
-  // This respects the project's design where Supabase config has enable_confirmations = false
-  return true;
-}
-
 function isAlreadyRegisteredError(error: AuthSignupError | null | undefined) {
   const code = error?.code?.toLowerCase();
   const message = error?.message?.toLowerCase() ?? "";
-
   return (
     code === "user_already_exists" ||
     code === "email_exists" ||
@@ -69,7 +55,6 @@ async function registerConfirmedUserWithEmailPassword(input: {
   }
 
   // Paginate through users to find the unconfirmed one with this email.
-  // listUsers returns max 50 per page, so we must paginate.
   let page = 1;
   const perPage = 50;
   let existingUser: { id: string; email_confirmed_at?: string | null } | null = null;
@@ -114,7 +99,6 @@ async function registerConfirmedUserWithEmailPassword(input: {
 const registerSchema = z.object({
   email: z.string().email().max(256),
   password: z.string().min(8).max(128),
-  callbackUrl: z.string().url().max(2048),
   turnstileToken: z.string().max(2048).optional(),
 });
 
@@ -128,11 +112,10 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return jsonError("invalid_request");
   }
-  const { email, password, callbackUrl } = parsed.data;
+  const { email, password } = parsed.data;
   const turnstileToken = parsed.data.turnstileToken?.trim() ?? "";
 
   const requireTurnstile = isTurnstileConfigured();
-
   if (requireTurnstile && !turnstileToken) {
     return jsonError("captcha_required");
   }
@@ -146,82 +129,63 @@ export async function POST(request: Request) {
   });
 
   if (!limit.ok) {
-    return jsonError(
-      "rate_limited",
-      429,
-      {
-        headers: { "retry-after": String(limit.retryAfterSeconds) },
-      },
-    );
+    return jsonError("rate_limited", 429, {
+      headers: { "retry-after": String(limit.retryAfterSeconds) },
+    });
   }
 
   if (requireTurnstile) {
     const turnstile = await verifyTurnstileToken(turnstileToken, ip);
-
     if (!turnstile.ok) {
       return jsonError("captcha_invalid");
     }
   }
 
-  const bypassEmailConfirmation = shouldBypassEmailConfirmation();
-  const result = bypassEmailConfirmation
-    ? await registerConfirmedUserWithEmailPassword({
-      email,
-      password,
-    })
-    : await registerWithEmailPassword({
-      callbackUrl,
-      email,
-      password,
-    });
-
-  if (!bypassEmailConfirmation && isAlreadyRegisteredError(result.error)) {
-    return jsonError("account_exists", 409);
-  }
+  // Register user with email confirmed immediately
+  const result = await registerConfirmedUserWithEmailPassword({ email, password });
 
   if (result.error) {
     return jsonError("register_failed");
   }
 
   const userId = result.data?.user?.id;
+  if (!userId) {
+    return jsonError("register_failed");
+  }
 
-  // Handle auto-login after registration
-  if (!bypassEmailConfirmation && userId) {
-    // When email confirmation is disabled, directly sign in with password
-    // This is more reliable than magic link approach
-    const serverClient = await createSupabaseServerClient();
-    const { error: signInError } = await serverClient.auth.signInWithPassword({
-      email,
-      password,
-    });
+  // Auto-login after successful registration
+  const serverClient = await createSupabaseServerClient();
+  const { error: signInError } = await serverClient.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    if (!signInError) {
-      return jsonOk({ ok: true, autoLogin: true });
-    }
+  if (!signInError) {
+    return jsonOk({ ok: true, autoLogin: true });
+  }
 
-    // Fallback: try magic link approach
-    const adminClient = createSupabaseAdminClient();
-    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
-      email,
-      type: "magiclink",
-    });
+  // Fallback: magic link approach
+  const adminClient = createSupabaseAdminClient();
+  const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+    email,
+    type: "magiclink",
+  });
 
-    if (!linkError && linkData?.properties?.action_link) {
-      const linkUrl = new URL(linkData.properties.action_link);
-      const tokenHash = linkUrl.searchParams.get("token_hash");
+  if (!linkError && linkData?.properties?.action_link) {
+    const linkUrl = new URL(linkData.properties.action_link);
+    const tokenHash = linkUrl.searchParams.get("token_hash");
 
-      if (tokenHash) {
-        const { error: verifyError } = await serverClient.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: "magiclink",
-        });
+    if (tokenHash) {
+      const { error: verifyError } = await serverClient.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "magiclink",
+      });
 
-        if (!verifyError) {
-          return jsonOk({ ok: true, autoLogin: true });
-        }
+      if (!verifyError) {
+        return jsonOk({ ok: true, autoLogin: true });
       }
     }
   }
 
-  return jsonOk({ ok: true, ...(bypassEmailConfirmation && result.data.user ? { emailConfirmationBypassed: true } : {}) });
+  return jsonOk({ ok: true, emailConfirmationBypassed: true });
 }
