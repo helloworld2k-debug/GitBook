@@ -26,6 +26,7 @@ import { signOutAction } from "@/app/[locale]/dashboard/actions";
 import { AdminFeedbackToast } from "./admin-feedback-toast";
 
 type AdminShellLabels = {
+  archivedUsers: string;
   auditLogs: string;
   backToAdmin: string;
   certificates: string;
@@ -73,6 +74,7 @@ function getAdminItems(labels: AdminShellLabels) {
     { href: "/admin/support-settings", label: labels.supportSettings, icon: MessageSquareText },
     { href: "/admin/licenses", label: labels.licenses, icon: KeyRound },
     { href: "/admin/users", label: labels.users, icon: Users },
+    { href: "/admin/archived-users", label: labels.archivedUsers, icon: Users },
     { href: "/admin/registration-security", label: labels.registrationSecurity, icon: ShieldAlert },
     { href: "/admin/audit-logs", label: labels.auditLogs, icon: ClipboardList },
   ];
@@ -236,6 +238,12 @@ export function AdminPageHeader({ backHref, backLabel, description, eyebrow, tit
 
 const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "account-profile-updated": "User profile updated.",
+  "archive-delete-email-exists": "Unable to archive delete: one or more users already exist in archive.",
+  "archive-delete-failed": "Unable to archive delete the selected users.",
+  "archived-user-permanently-deleted": "Archived user permanently deleted.",
+  "bulk-restore-failed": "Unable to restore the selected archived users.",
+  "bulk-restore-partial": "Some archived users were restored, but others failed.",
+  "bulk-restore-success": "Successfully restored the selected archived users.",
   "bulk-user-role-updated": "Updated user role for the selected users.",
   "bulk-user-role-update-failed": "Unable to update user role for the selected users.",
   "bulk-user-status-updated": "Updated account status for the selected users.",
@@ -265,10 +273,12 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "news-update-failed": "Unable to update news article.",
   "news-unpublished": "News article unpublished.",
   "news-unpublish-failed": "Unable to unpublish news article.",
+  "no-archives-selected": "No archived users selected.",
   "notification-created": "Notification created.",
   "notification-published": "Notification published.",
   "notification-unpublished": "Notification unpublished.",
   "operation-failed": "Unable to complete this operation.",
+  "permanent-delete-failed": "Unable to permanently delete the archived user.",
   "policy-page-updated": "Policy page updated.",
   "policy-page-update-failed": "Unable to update policy page.",
   "profile-update-failed": "Unable to update user profile.",
@@ -276,6 +286,10 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "registration-block-create-failed": "Unable to create registration block.",
   "registration-block-revoked": "Registration block revoked.",
   "registration-block-revoke-failed": "Unable to revoke registration block.",
+  "restore-auth-missing": "Unable to restore: auth.user record missing.",
+  "restore-email-exists": "Unable to restore: email already exists.",
+  "restore-failed": "Unable to restore the archived user.",
+  "restore-not-found": "Archived user not found.",
   "release-created": "Release created.",
   "release-deleted": "Release draft deleted.",
   "release-updated": "Release updated.",
@@ -289,6 +303,8 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "user-create-temp-password-failed": "Unable to create the temporary password account.",
   "user-invited": "Invitation email sent.",
   "user-invite-failed": "Unable to send the invitation.",
+  "users-archived": "Users archived successfully.",
+  "user-restored": "User restored from archive.",
   "trial-code-created": "Trial code created.",
   "trial-code-create-failed": "Unable to create trial code.",
   "license-code-batch-created": "License code batch created.",

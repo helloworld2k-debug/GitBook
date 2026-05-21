@@ -115,6 +115,8 @@ export function AdminUserBulkToolbar({
   canManageRoles: boolean;
   formId: string;
   labels: {
+    bulkArchiveDelete: string;
+    bulkArchiveDeleteSelected: string;
     bulkDisable: string;
     bulkEnable: string;
     bulkRole: string;
@@ -187,6 +189,14 @@ export function AdminUserBulkToolbar({
               type="button"
             >
               {labels.bulkSoftDelete}
+            </button>
+            <button
+              aria-label={labels.bulkArchiveDeleteSelected}
+              className="inline-flex min-h-10 items-center rounded-md bg-orange-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-orange-500 active:bg-orange-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              onClick={() => submitBulkIntent(formId, "archive-delete")}
+              type="button"
+            >
+              {labels.bulkArchiveDelete}
             </button>
           </div>
         </details>

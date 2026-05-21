@@ -621,10 +621,119 @@ export async function bulkProcessUsers(formData: FormData) {
   const intent = getRequiredString(formData, "intent", "Bulk intent is required");
   const userIds = getUserIds(formData);
 
-  if (intent === "enable" || intent === "disable" || intent === "soft-delete") {
+  if (intent === "enable" || intent === "disable" || intent === "soft-delete" || intent === "archive-delete") {
     const admin = await requireAdmin(locale);
-    const accountStatus = intent === "enable" ? "active" : intent === "disable" ? "disabled" : "deleted";
-    const supabase = createSupabaseAdminClient();
+    const accountStatus = intent === "enable" ? "active" : intent === "disable" ? "disabled" : intent === "soft-delete" ? "deleted" : ("archived_deleted" as const);
+    const supabase = createSupabaseAdminClient() as any;
+
+    // For archive-delete, we need to copy data to archive table first
+    if (intent === "archive-delete") {
+      // Check if any emails already exist in archive
+      const { data: existingEmails } = await supabase
+        .from("deleted_users_archive")
+        .select("email")
+        .in("email", await supabase
+          .from("profiles")
+          .select("email")
+          .in("id", userIds)
+          .then(({ data }) => data?.map((p) => p.email) ?? []));
+
+      if (existingEmails && existingEmails.length > 0) {
+        redirectWithAdminFeedback({
+          fallbackPath: "/admin/users",
+          formData,
+          key: "archive-delete-email-exists",
+          locale,
+          tone: "error",
+        });
+      }
+
+      // Get user profiles to archive
+      const { data: profilesToArchive } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", userIds);
+
+      if (!profilesToArchive || profilesToArchive.length === 0) {
+        redirectWithAdminFeedback({
+          fallbackPath: "/admin/users",
+          formData,
+          key: "archive-delete-failed",
+          locale,
+          tone: "error",
+        });
+      }
+
+      // Insert into archive table
+      const archiveEntries = profilesToArchive.map((profile) => ({
+        original_user_id: profile.id,
+        email: profile.email,
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+        preferred_locale: profile.preferred_locale,
+        public_supporter_enabled: profile.public_supporter_enabled,
+        public_display_name: profile.public_display_name,
+        is_admin: profile.is_admin,
+        admin_role: profile.admin_role,
+        account_status: profile.account_status,
+        created_at: profile.created_at,
+        updated_at: profile.updated_at,
+        deleted_by: admin.id,
+        deleted_reason: "Bulk archive delete from admin console",
+      }));
+
+      const { error: archiveError } = await supabase
+        .from("deleted_users_archive")
+        .insert(archiveEntries);
+
+      if (archiveError) {
+        redirectWithAdminFeedback({
+          fallbackPath: "/admin/users",
+          formData,
+          key: "archive-delete-failed",
+          locale,
+          tone: "error",
+        });
+      }
+
+      // Update profiles to archived_deleted status
+      const { error } = await supabase
+        .from("profiles")
+        .update({ account_status: accountStatus as any, updated_at: new Date().toISOString() })
+        .in("id", userIds);
+
+      if (error) {
+        redirectWithAdminFeedback({
+          fallbackPath: "/admin/users",
+          formData,
+          key: "archive-delete-failed",
+          locale,
+          tone: "error",
+        });
+      }
+
+      await insertAdminAuditLog({
+        action: "bulk_archive_delete_users",
+        adminUserId: admin.id,
+        after: { account_status: accountStatus, count: userIds.length, user_ids: userIds },
+        reason: "Bulk archive deleted users",
+        targetId: userIds[0],
+        targetType: "profile_batch",
+      });
+
+      revalidatePath(`/${locale}/admin/users`);
+      revalidatePath(`/${locale}/admin/archived-users`);
+      revalidatePath(`/${locale}/admin/audit-logs`);
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/users",
+        formData,
+        key: "users-archived",
+        locale,
+        tone: "notice",
+      });
+    }
+
+    // For enable, disable, soft-delete
     const { error } = await supabase
       .from("profiles")
       .update({ account_status: accountStatus, updated_at: new Date().toISOString() })
@@ -916,6 +1025,329 @@ export async function unbindTrialMachine(formData: FormData) {
     fallbackPath: "/admin/users",
     formData,
     key: "trial-machine-unbound",
+    locale,
+    tone: "notice",
+  });
+}
+
+// Archive delete users (move to deleted_users_archive)
+export async function archiveDeleteUsers(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const userIds = getUserIds(formData);
+  const reason = String(formData.get("reason") ?? "").trim() || null;
+  const supabase = createSupabaseAdminClient();
+
+  // Get profiles to archive
+  const { data: profiles, error: fetchError } = await supabase
+    .from("profiles")
+    .select("id,email,display_name,avatar_url,preferred_locale,public_supporter_enabled,public_display_name,is_admin,admin_role,account_status,created_at,updated_at")
+    .in("id", userIds);
+
+  if (fetchError || !profiles || profiles.length === 0) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "archive-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  // Check for owner role (only owners can archive other owners)
+  for (const profile of profiles) {
+    if (isOwnerUser(profile)) {
+      await requireOwner(locale);
+    }
+  }
+
+  // Insert into archive table
+  const archiveRecords = profiles.map((profile) => ({
+    original_user_id: profile.id,
+    email: profile.email,
+    display_name: profile.display_name,
+    avatar_url: profile.avatar_url,
+    preferred_locale: profile.preferred_locale,
+    public_supporter_enabled: profile.public_supporter_enabled,
+    public_display_name: profile.public_display_name,
+    is_admin: profile.is_admin,
+    admin_role: profile.admin_role,
+    account_status: profile.account_status,
+    created_at: profile.created_at,
+    updated_at: profile.updated_at,
+    deleted_by: admin.id,
+    deleted_reason: reason,
+  }));
+
+  const { error: archiveError } = await supabase
+    .from("deleted_users_archive")
+    .insert(archiveRecords);
+
+  if (archiveError) {
+    // Check if it's a duplicate email error
+    if (archiveError.message?.includes("deleted_users_archive_email_key")) {
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/users",
+        formData,
+        key: "archive-delete-email-exists",
+        locale,
+        tone: "error",
+      });
+    }
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "archive-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  // Update profile status to archived_deleted
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({
+      account_status: "archived_deleted",
+      updated_at: new Date().toISOString(),
+    })
+    .in("id", userIds);
+
+  if (updateError) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "archive-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "archive_delete_users",
+    adminUserId: admin.id,
+    after: {
+      archived_count: userIds.length,
+      user_ids: userIds,
+      reason,
+    },
+    before: profiles.map((p) => ({ id: p.id, email: p.email, status: p.account_status })),
+    reason: reason || "Archived deleted users",
+    targetId: userIds[0],
+    targetType: "profile_batch",
+  });
+
+  revalidatePath(`/${locale}/admin/users`);
+  revalidatePath(`/${locale}/admin/archived-users`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/users",
+    formData,
+    key: "users-archived",
+    locale,
+    tone: "notice",
+  });
+}
+
+// Restore archived user
+export async function restoreArchivedUser(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const archiveId = getRequiredString(formData, "archive_id", "Archive ID is required");
+  const supabase = createSupabaseAdminClient();
+
+  const { data, error } = await supabase.rpc("restore_archived_user", {
+    input_archive_id: archiveId,
+    input_restored_by: admin.id,
+  });
+
+  if (error || !data) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/archived-users",
+      formData,
+      key: "restore-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const result = data as { ok: boolean; reason: string; restored_user_id: string } | null;
+
+  if (!result || !result.ok) {
+    const keyMap: Record<string, string> = {
+      archive_not_found: "restore-not-found",
+      email_already_exists: "restore-email-exists",
+      auth_user_missing: "restore-auth-missing",
+    };
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/archived-users",
+      formData,
+      key: keyMap[result.reason] || "restore-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  revalidatePath(`/${locale}/admin/users`);
+  revalidatePath(`/${locale}/admin/users/${result.restored_user_id}`);
+  revalidatePath(`/${locale}/admin/archived-users`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/archived-users",
+    formData,
+    key: "user-restored",
+    locale,
+    tone: "notice",
+  });
+}
+
+// Permanently delete from archive (owner only)
+export async function permanentlyDeleteArchivedUser(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireOwner(locale);
+  const archiveId = getRequiredString(formData, "archive_id", "Archive ID is required");
+  const confirmation = getRequiredString(formData, "confirmation", "Confirmation is required");
+  const supabase = createSupabaseAdminClient();
+
+  // Get archive record to verify email
+  const { data: archive, error: fetchError } = await supabase
+    .from("deleted_users_archive")
+    .select("id,email")
+    .eq("id", archiveId)
+    .single();
+
+  if (fetchError || !archive) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/archived-users",
+      formData,
+      key: "archive-not-found",
+      locale,
+      tone: "error",
+    });
+  }
+
+  if (confirmation !== "DELETE" && confirmation !== archive.email) {
+    throw new Error("Confirmation does not match");
+  }
+
+  const { data, error } = await supabase.rpc("permanently_delete_archived_user", {
+    input_archive_id: archiveId,
+    input_deleted_by: admin.id,
+  });
+
+  if (error || !data) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/archived-users",
+      formData,
+      key: "permanent-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const result = data as { ok: boolean; reason: string } | null;
+
+  if (!result || !result.ok) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/archived-users",
+      formData,
+      key: "permanent-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  revalidatePath(`/${locale}/admin/archived-users`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/archived-users",
+    formData,
+    key: "archived-user-permanently-deleted",
+    locale,
+    tone: "notice",
+  });
+}
+
+// Bulk restore archived users
+export async function bulkRestoreArchivedUsers(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const archiveIds = formData.getAll("archive_id").filter(Boolean) as string[];
+
+  if (archiveIds.length === 0) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/archived-users",
+      formData,
+      key: "no-archives-selected",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const supabase = createSupabaseAdminClient();
+  let successCount = 0;
+  const errors: { archiveId: string; reason: string }[] = [];
+
+  for (const archiveId of archiveIds) {
+    const { data, error } = await supabase.rpc("restore_archived_user", {
+      input_archive_id: archiveId,
+      input_restored_by: admin.id,
+    });
+
+    if (error || !data) {
+      errors.push({ archiveId, reason: error?.message || "Unknown error" });
+      continue;
+    }
+
+    const result = data as { ok: boolean; reason: string } | null;
+    if (result?.ok) {
+      successCount++;
+    } else {
+      errors.push({ archiveId, reason: result.reason });
+    }
+  }
+
+  await insertAdminAuditLog({
+    action: "bulk_restore_archived_users",
+    adminUserId: admin.id,
+    after: {
+      success_count: successCount,
+      error_count: errors.length,
+      total_attempted: archiveIds.length,
+    },
+    before: { archive_ids: archiveIds },
+    reason: `Bulk restored archived users: ${successCount} succeeded, ${errors.length} failed`,
+    targetId: archiveIds[0],
+    targetType: "deleted_users_archive_batch",
+  });
+
+  revalidatePath(`/${locale}/admin/users`);
+  revalidatePath(`/${locale}/admin/archived-users`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+
+  if (errors.length === 0) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/archived-users",
+      formData,
+      key: "bulk-restore-success",
+      locale,
+      tone: "notice",
+    });
+  }
+
+  if (successCount === 0) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/archived-users",
+      formData,
+      key: "bulk-restore-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/archived-users",
+    formData,
+    key: "bulk-restore-partial",
     locale,
     tone: "notice",
   });

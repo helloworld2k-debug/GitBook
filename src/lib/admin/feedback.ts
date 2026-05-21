@@ -6,6 +6,12 @@ export type AdminFeedbackTone = "error" | "notice";
 
 export type AdminFeedbackKey =
   | "account-profile-updated"
+  | "archive-delete-email-exists"
+  | "archive-delete-failed"
+  | "archived-user-permanently-deleted"
+  | "bulk-restore-failed"
+  | "bulk-restore-partial"
+  | "bulk-restore-success"
   | "bulk-user-role-updated"
   | "bulk-user-role-update-failed"
   | "bulk-user-status-updated"
@@ -35,10 +41,12 @@ export type AdminFeedbackKey =
   | "news-update-failed"
   | "news-unpublished"
   | "news-unpublish-failed"
+  | "no-archives-selected"
   | "notification-created"
   | "notification-published"
   | "notification-unpublished"
   | "operation-failed"
+  | "permanent-delete-failed"
   | "policy-page-updated"
   | "policy-page-update-failed"
   | "profile-update-failed"
@@ -49,6 +57,10 @@ export type AdminFeedbackKey =
   | "release-created"
   | "release-deleted"
   | "release-updated"
+  | "restore-auth-missing"
+  | "restore-email-exists"
+  | "restore-failed"
+  | "restore-not-found"
   | "role-updated"
   | "role-update-failed"
   | "status-updated"
@@ -59,6 +71,7 @@ export type AdminFeedbackKey =
   | "user-create-temp-password-failed"
   | "user-invited"
   | "user-invite-failed"
+  | "users-archived"
   | "trial-code-created"
   | "trial-code-create-failed"
   | "license-code-batch-created"
@@ -77,6 +90,7 @@ export type AdminFeedbackKey =
   | "user-permanent-delete-failed"
   | "user-password-setup-sent"
   | "user-password-setup-failed"
+  | "user-restored"
   | "user-soft-deleted"
   | "user-soft-delete-failed"
   | "user-temp-password-set"
@@ -84,10 +98,16 @@ export type AdminFeedbackKey =
 
 const adminFeedbackKeys = new Set<string>([
   "account-profile-updated",
+  "archive-delete-email-exists",
+  "archive-delete-failed",
+  "archived-user-permanently-deleted",
   "bulk-user-role-updated",
   "bulk-user-role-update-failed",
   "bulk-user-status-updated",
   "bulk-user-status-update-failed",
+  "bulk-restore-failed",
+  "bulk-restore-partial",
+  "bulk-restore-success",
   "certificate-revoked",
   "cloud-sync-cooldown-updated",
   "cloud-sync-cooldown-update-failed",
@@ -116,7 +136,9 @@ const adminFeedbackKeys = new Set<string>([
   "notification-created",
   "notification-published",
   "notification-unpublished",
+  "no-archives-selected",
   "operation-failed",
+  "permanent-delete-failed",
   "policy-page-updated",
   "policy-page-update-failed",
   "profile-update-failed",
@@ -124,6 +146,10 @@ const adminFeedbackKeys = new Set<string>([
   "registration-block-create-failed",
   "registration-block-revoked",
   "registration-block-revoke-failed",
+  "restore-auth-missing",
+  "restore-email-exists",
+  "restore-failed",
+  "restore-not-found",
   "release-created",
   "release-deleted",
   "release-updated",
@@ -137,6 +163,8 @@ const adminFeedbackKeys = new Set<string>([
   "user-create-temp-password-failed",
   "user-invited",
   "user-invite-failed",
+  "users-archived",
+  "user-restored",
   "trial-code-created",
   "trial-code-create-failed",
   "license-code-batch-created",

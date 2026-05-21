@@ -323,6 +323,8 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             bulkRole: t("bulkChangeRole"),
             bulkSoftDelete: t("bulkSoftDelete"),
             bulkSoftDeleteSelected: t("bulkSoftDeleteSelected"),
+            bulkArchiveDelete: t("bulkArchiveDelete"),
+            bulkArchiveDeleteSelected: t("bulkArchiveDeleteSelected"),
             clearSelection: t("clearSelection"),
             dangerZone: t("dangerZone"),
             operatorRole: t("roles.operator"),
