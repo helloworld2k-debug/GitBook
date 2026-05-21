@@ -14,6 +14,8 @@ type AdminUserFiltersProps = {
     searchPlaceholder: string;
     status: string;
     type: string;
+    sortBy?: string;
+    sortOrder?: string;
   };
   values: {
     createdFrom?: string;
@@ -22,6 +24,8 @@ type AdminUserFiltersProps = {
     role?: string;
     status?: string;
     type?: string;
+    sort?: string;
+    order?: string;
   };
 };
 
@@ -73,6 +77,23 @@ export function AdminUserFilters({ actionPath, labels, values }: AdminUserFilter
           <label className="grid gap-1 text-sm font-medium text-slate-700">
             {labels.createdTo}
             <input className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={values.createdTo ?? ""} name="createdTo" type="date" />
+          </label>
+          <label className="grid gap-1 text-sm font-medium text-slate-700">
+            {labels.sortBy}
+            <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={values.sort ?? "created_at"} name="sort">
+              <option value="created_at">Created</option>
+              <option value="email">Email</option>
+              <option value="display_name">Display Name</option>
+              <option value="role">Role</option>
+              <option value="status">Status</option>
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm font-medium text-slate-700">
+            {labels.sortOrder}
+            <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={values.order ?? "desc"} name="order">
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
           </label>
         </div>
       </details>

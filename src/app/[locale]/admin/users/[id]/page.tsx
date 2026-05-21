@@ -65,6 +65,16 @@ type CloudSyncUsageEventRow = {
 
 type AdminAuthStatus = Database["public"]["Functions"]["get_admin_auth_user_status"]["Returns"][number];
 
+type LoginHistoryRow = {
+  id: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  success: boolean;
+  failure_reason: string | null;
+  login_method: string | null;
+  logged_in_at: string;
+};
+
 function formatDateTime(value: string | null, locale: string) {
   if (!value) {
     return "-";
@@ -221,11 +231,12 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
     usageEventsResult,
     cooldownOverridesResult,
     supportFeedbackResult,
+    loginHistoryResult,
     adminProfileResult,
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,created_at")
+      .select("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,avatar_url,created_at")
       .eq("id", id)
       .single(),
     supabase
@@ -288,6 +299,12 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .eq("user_id", id)
       .order("created_at", { ascending: false })
       .limit(50),
+    (supabase as any)
+      .from("user_login_history")
+      .select("id,ip_address,user_agent,success,failure_reason,login_method,logged_in_at")
+      .eq("user_id", id)
+      .order("logged_in_at", { ascending: false })
+      .limit(20),
     supabase
       .from("profiles")
       .select("is_admin,admin_role,account_status")
@@ -309,6 +326,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   if (usageEventsResult.error && !isOptionalCloudSyncDetailSchemaError(usageEventsResult.error)) throw usageEventsResult.error;
   if (cooldownOverridesResult.error && !isOptionalCloudSyncDetailSchemaError(cooldownOverridesResult.error)) throw cooldownOverridesResult.error;
   if (supportFeedbackResult.error) throw supportFeedbackResult.error;
+  if (loginHistoryResult.error && !isOptionalCloudSyncDetailSchemaError(loginHistoryResult.error)) throw loginHistoryResult.error;
   if (adminProfileResult.error) throw adminProfileResult.error;
 
   const profile = profileResult.data;
@@ -323,6 +341,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   const usageEvents = (usageEventsResult.data ?? []) as CloudSyncUsageEventRow[];
   const cooldownOverrides = cooldownOverridesResult.data ?? [];
   const supportFeedback = supportFeedbackResult.data ?? [];
+  const loginHistory = (loginHistoryResult.data ?? []) as LoginHistoryRow[];
   const canManageRoles = isOwnerProfile({
     ...adminProfileResult.data,
     admin_role: adminProfileResult.data?.admin_role as AdminRole | null,
@@ -421,6 +440,15 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 {t(`statuses.${profile.account_status ?? "active"}`)}
               </AdminStatusBadge>
             </div>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold text-slate-950">{t("details")}</h2>
+                <p className="mt-1 break-all text-sm text-slate-600">{profile.email}</p>
+              </div>
+              <AdminStatusBadge tone={profile.account_status === "active" ? "success" : "danger"}>
+                {t(`statuses.${profile.account_status ?? "active"}`)}
+              </AdminStatusBadge>
+            </div>
 
             <dl className="mt-4 grid gap-3 md:grid-cols-2">
               <DetailRow label="Email" value={profile.email} />
@@ -496,6 +524,43 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
               </>
             ) : (
               <p className="mt-3 text-sm leading-6 text-slate-600">{authStatus ? t("authHasPassword") : t("authStatus")}</p>
+            )}
+          </AdminCard>
+
+          <AdminCard className="p-5">
+            <h2 className="text-base font-semibold text-slate-950">{t("loginHistoryTitle")}</h2>
+            <p className="mt-1 text-sm text-slate-600">{t("loginHistoryDescription")}</p>
+            {loginHistory.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-500">{t("loginHistoryEmpty")}</p>
+            ) : (
+              <div className="mt-4 overflow-x-auto">
+                <table className="min-w-full text-sm text-left">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                    <tr>
+                      <th className="px-4 py-2">{t("loginHistoryTime")}</th>
+                      <th className="px-4 py-2">{t("loginHistoryStatus")}</th>
+                      <th className="px-4 py-2">{t("loginHistoryIP")}</th>
+                      <th className="px-4 py-2">{t("loginHistoryMethod")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {loginHistory.map((entry) => (
+                      <tr key={entry.id}>
+                        <td className="px-4 py-3 text-slate-700">{formatDateTime(entry.logged_in_at, locale)}</td>
+                        <td className="px-4 py-3">
+                          {entry.success ? (
+                            <AdminStatusBadge tone="success">{t("loginHistorySuccess")}</AdminStatusBadge>
+                          ) : (
+                            <AdminStatusBadge tone="danger">{entry.failure_reason ?? t("loginHistoryFailed")}</AdminStatusBadge>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">{entry.ip_address ?? "-"}</td>
+                        <td className="px-4 py-3 text-slate-700">{entry.login_method ?? "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </AdminCard>
 

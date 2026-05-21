@@ -146,6 +146,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
     admin_role: string | null;
     account_status: string | null;
     is_admin: boolean | null;
+    avatar_url: string | null;
     created_at: string;
   }>;
   const totalCount = Number(paginatedResult.total_count ?? 0);
@@ -283,6 +284,8 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             searchPlaceholder: t("searchPlaceholder"),
             status: t("filterStatus"),
             type: t("filterType"),
+            sortBy: t("sortBy"),
+            sortOrder: t("sortOrder"),
           }}
           values={{
             createdFrom: feedback?.createdFrom,
@@ -291,10 +294,13 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             role: feedback?.role,
             status: feedback?.status,
             type: feedback?.type,
+            sort: feedback?.sort,
+            order: feedback?.order,
           }}
         />
 
-        <AdminUserBulkToolbar
+        <div className="flex items-center justify-between">
+          <AdminUserBulkToolbar
           canManageRoles={canManageRoles}
           formId="bulk-users-bulk-action-form"
           labels={{
@@ -312,10 +318,28 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             roleTarget: t("roleTarget"),
             selectedCount: t("selectedCount", { count: "__COUNT__" }),
             userRole: t("roles.user"),
+            bulkEnableConfirm: t("bulkEnableConfirm"),
+            bulkDisableConfirm: t("bulkDisableConfirm"),
+            bulkRoleConfirm: t("bulkRoleConfirm"),
           }}
         />
 
         <form action={bulkProcessUsers} className="hidden" id="bulk-users-bulk-action-form">
+          <input name="locale" type="hidden" value={locale} />
+          <input name="return_to" type="hidden" value="/admin/users" />
+        </form>
+
+        <div className="ml-4">
+          <a
+            href={`/api/admin/users/export?locale=${locale}&query=${feedback?.query ?? ""}&role=${feedback?.role ?? ""}&status=${feedback?.status ?? ""}&type=${feedback?.type ?? ""}&sort=${feedback?.sort ?? "created_at"}&order=${feedback?.order ?? "desc"}`}
+            className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            {t("export")}
+          </a>
+        </div>
+      </div>
+
+      <form action={bulkProcessUsers} className="hidden" id="bulk-users-bulk-action-form">
           <input name="locale" type="hidden" value={locale} />
           <input name="return_to" type="hidden" value="/admin/users" />
         </form>
@@ -346,11 +370,18 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                     return (
                       <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={profile.id}>
                         <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="break-all text-sm font-semibold text-slate-950">{profile.email}</p>
-                            <p className="mt-1 text-sm text-slate-600">{profile.display_name ?? "-"}</p>
-                            <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
-                            <AdminAuthStatusBadges locale={locale} status={authStatus} t={t} />
+                          <div className="flex min-w-0 flex-1 items-start gap-3">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-500">
+                              <svg className="size-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="break-all text-sm font-semibold text-slate-950">{profile.email}</p>
+                              <p className="mt-1 text-sm text-slate-600">{profile.display_name ?? "-"}</p>
+                              <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
+                              <AdminAuthStatusBadges locale={locale} status={authStatus} t={t} />
+                            </div>
                           </div>
                           <AdminStatusBadge tone={accountStatus === "deleted" ? "warning" : accountStatus === "active" ? "success" : "danger"}>
                             {accountStatus === "deleted" ? t("deletedPill") : t(`statuses.${accountStatus}`)}
@@ -414,10 +445,11 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                 </div>
               }
             >
-              <table aria-label={t("title")} className="min-w-[1540px] table-fixed text-left text-sm">
+              <table aria-label={t("title")} className="min-w-[1580px] table-fixed text-left text-sm">
                 <colgroup>
                   <col className="w-[72px]" />
-                  <col className="w-[320px]" />
+                  <col className="w-[60px]" />
+                  <col className="w-[260px]" />
                   <col className="w-[230px]" />
                   <col className="w-[150px]" />
                   <col className="w-[260px]" />
@@ -430,6 +462,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                       <th className="px-5 py-3">
                         <AdminUserSelectAllCheckbox formId="bulk-users-bulk-action-form" label={t("selectAll")} />
                       </th>
+                    <th className="px-4 py-3"></th>
                     <th className="px-5 py-3">{t("user")}</th>
                     <th className="px-5 py-3">{t("role")}</th>
                     <th className="px-5 py-3">{t("type")}</th>
@@ -451,6 +484,13 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                         <tr key={profile.id}>
                           <td className="px-5 py-4 align-top">
                             <input aria-label={`Select ${profile.email}`} className="size-4 rounded border-slate-300" form="bulk-users-bulk-action-form" name="user_ids" type="checkbox" value={profile.id} />
+                          </td>
+                          <td className="px-4 py-4 align-top">
+                            <div className="flex size-10 items-center justify-center rounded-full bg-slate-200 text-slate-500">
+                              <svg className="size-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                              </svg>
+                            </div>
                           </td>
                           <td className="px-5 py-4 align-top">
                             <p className="break-all font-medium text-slate-950">{profile.email}</p>

@@ -109,13 +109,14 @@ begin
             'admin_role', p.admin_role,
             'account_status', p.account_status,
             'is_admin', p.is_admin,
+            'avatar_url', p.avatar_url,
             'created_at', p.created_at
           )
         ) as users,
         %L as total_count,
         %L as filtered_count
       from (
-        select p.id, p.email, p.display_name, p.admin_role, p.account_status, p.is_admin, p.created_at
+        select p.id, p.email, p.display_name, p.admin_role, p.account_status, p.is_admin, p.avatar_url, p.created_at
         from public.profiles p
         where 1=1 %s
         order by %s
