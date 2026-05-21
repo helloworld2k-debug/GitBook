@@ -101,6 +101,7 @@
     "copyright": "독립 소프트웨어 지원 사이트입니다.",
     "terms": "이용약관",
     "privacy": "개인정보 처리방침",
+    "help": "도움말",
     "policiesNav": "정책"
   },
   "donate": {
@@ -178,6 +179,78 @@
       "open": "열림",
       "reviewing": "검토 중",
       "closed": "닫힘"
+    }
+  },
+  "help": {
+    "eyebrow": "도움말 센터",
+    "title": "도움말 및 FAQ",
+    "subtitle": "GitBook AI 데스크톱 앱을 다운로드, 설치, 사용하는 방법과 클라우드 동기화 및 라이선스 코드 사용법을 알아보세요.",
+    "gettingStarted": {
+      "title": "시작하기",
+      "download": {
+        "title": "앱 다운로드",
+        "description": "홈페이지에서 OS에 맞는 최신 버전의 GitBook AI를 다운로드하세요.",
+        "step1": "홈페이지로 이동하여 macOS 또� Windows 다운로드 버튼 클릭",
+        "step2": "다운로드가 완료될 때까지 대기",
+        "step3": "다운로드한 파일을 열어 설치 시작"
+      },
+      "install": {
+        "title": "앱 설치",
+        "description": "OS에 따라 설치 진행:",
+        "mac": {
+          "title": "macOS",
+          "description": ".dmg 파일을 열고 GitBook AI를 '응용 프로그램' 폴더로 드래그합니다. 시스템 환경설정에서 식별되지 않은 개발자의 앱을 허용해야 할 수 있습니다."
+        },
+        "windows": {
+          "title": "Windows",
+          "description": ".exe 설치 프로그램을 실행하고 화면의 지시를 따릅니다. 앱은 프로그램 파일에 설치됩니다."
+        }
+      },
+      "signin": {
+        "title": "계정에 로그인",
+        "description": "GitBook AI를 처음 시작할 때 클라우드 동기화 기능을 활성화하려면 계정에 로그인해야 합니다.",
+        "note": "아직 계정이 없으면 웹사이트에서 무료로 가입할 수 있습니다."
+      }
+    },
+    "cloudSync": {
+      "title": "클라우드 동기화",
+      "description": "클라우드 동기화를 사용하면 여러 기기에서 AI 프로그래밍 지식에 액세스할 수 있습니다. 활성화 방법:",
+      "trial": {
+        "title": "체험 코드(7일)",
+        "description": "신규 사용자는 체험 코드를 교환하여 7일간의 클라우드 동기화 액세스 권한을 받을 수 있습니다. 체험 코드는 공식 채널을 통해 배포됩니다."
+      },
+      "contributors": {
+        "title": "지원자 액세스",
+        "description": "GitBook AI 개발에 일회 지원한 사용자는 감사의 표시로 클라우드 동기화 액세스 권한을 받습니다. 기간은 지원 등급에 따라 다릅니다."
+      }
+    },
+    "faq": {
+      "title": "자주 묻는 질문",
+      "download": {
+        "q": "GitBook AI는 어디서 다운로드할 수 있나요?",
+        "a": "홈페이지에서 OS(macOS 또는 Windows)에 맞는 다운로드 버튼을 클릭하세요."
+      },
+      "install": {
+        "q": "GitBook AI를 설치하는 방법은?",
+        "a": "macOS: .dmg 파일을 열고 앱을 '응용 프로그램' 폴더로 드래그합니다. Windows: .exe 설치 프로그램을 실행하고 지시를 따릅니다."
+      },
+      "cloudSync": {
+        "q": "클라우드 동기화란 무엇인가요?",
+        "a": "클라우드 동기화를 사용하면 여러 기기 간에 AI 프로그래밍 지식, 메모, 읽기 진행률을 동기화할 수 있습니다."
+      },
+      "trialCode": {
+        "q": "체험 코드는 어떻게 받나요?",
+        "a": "체험 코드는 공식 커뮤니티 채널을 통해 배포됩니다. 받는 방법은 지원 페이지를 확인하세요."
+      },
+      "certificate": {
+        "q": "지원자 인증서는 어떻게 받나요?",
+        "a": "지원 페이지에서 결제를 완료하면 인증서가 자동으로 생성되며 대시보드에서 확인할 수 있습니다."
+      }
+    },
+    "contact": {
+      "title": "여전히 도움이 필요하신가요?",
+      "description": "찾으시는 답변을 찾지 못하셨다면 지원 팀에 문의하세요.",
+      "button": "지원팀에 문의"
     }
   },
   "dashboard": {
@@ -259,6 +332,12 @@
       "processing": "처리 중...",
       "saving": "저장 중..."
     },
+    "pagination": {
+      "previous": "이전",
+      "next": "다음",
+      "page": "페이지",
+      "of": "/ 전체"
+    },
     "overview": {
       "eyebrow": "관리 도구",
       "title": "관리",
@@ -324,6 +403,21 @@
         "failed": "실패",
         "refunded": "환불됨"
       },
+      "filter": {
+        "search": "검색",
+        "searchPlaceholder": "거래 ID로 검색",
+        "provider": "제공업체",
+        "allProviders": "모든 제공업체",
+        "status": "상태",
+        "allStatuses": "모든 상태",
+        "dateFrom": "시작일",
+        "dateTo": "종료일",
+        "moreFilters": "더 많은 필터",
+        "apply": "적용",
+        "reset": "재설정"
+      },
+      "export": "CSV 내보내기",
+      "exporting": "내보내는 중...",
       "description": "결제 기록을 확인하고 검증된 수동 지원을 추가합니다."
     },
     "certificates": {
@@ -348,6 +442,25 @@
         "revoked": "폐기됨",
         "generation_failed": "생성 실패"
       },
+      "filter": {
+        "search": "검색",
+        "searchPlaceholder": "인증서 번호로 검색",
+        "type": "인증서 유형",
+        "allTypes": "모든 유형",
+        "status": "상태",
+        "allStatuses": "모든 상태",
+        "issuedFrom": "발급일(시작)",
+        "issuedTo": "발급일(종료)",
+        "moreFilters": "더 많은 필터",
+        "apply": "적용",
+        "reset": "재설정"
+      },
+      "export": "CSV 내보내기",
+      "exporting": "내보내는 중...",
+      "selectAll": "모두 선택",
+      "selectedCount": "{count}개 선택됨",
+      "exportSelected": "선택 항목 내보내기",
+      "clearSelection": "선택 해제",
       "description": "발급된 인증서를 확인하고 필요한 경우 폐기합니다."
     },
     "auditLogs": {
@@ -359,6 +472,19 @@
       "createdAt": "생성일",
       "admin": "관리자",
       "empty": "감사 로그가 없습니다.",
+      "filter": {
+        "search": "검색",
+        "searchPlaceholder": "작업, 대상 ID 또는 사유로 검색",
+        "action": "작업 유형",
+        "allActions": "모든 작업",
+        "target": "대상 유형",
+        "allTargets": "모든 대상",
+        "dateFrom": "시작일",
+        "dateTo": "종료일",
+        "moreFilters": "더 많은 필터",
+        "apply": "적용",
+        "reset": "재설정"
+      },
       "description": "관리 변경과 지원 작업을 확인합니다."
     },
     "releases": {
@@ -458,7 +584,8 @@
       },
       "allFeedback": "전체 피드백",
       "unread": "읽지 않음",
-      "unreadFeedback": "읽지 않은 피드백"
+      "unreadFeedback": "읽지 않은 피드백",
+      "searchPlaceholder": "제목, 메시지, 이메일로 검색"
     },
     "supportSettings": {
       "eyebrow": "관리",
@@ -893,6 +1020,9 @@
     "issued": "발급일",
     "pendingIssueDate": "발급일 미정",
     "fallbackRecipient": "지원자",
+    "share": "인증서 공유",
+    "shared": "링크가 복사되었습니다!",
+    "copyLink": "링크 복사",
     "download": {
       "title": "인증서 다운로드",
       "svg": "SVG 다운로드",

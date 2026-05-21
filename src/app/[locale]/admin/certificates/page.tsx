@@ -1,16 +1,30 @@
 import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminCertificateBulkToolbar, AdminCertificateSelectAllCheckbox } from "@/components/admin/admin-certificate-bulk-toolbar";
+import { AdminCertificateFilters } from "@/components/admin/admin-certificate-filters";
+import { AdminCertificateExport } from "@/components/admin/admin-certificate-export";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revokeCertificate } from "../actions";
+import { AdminCertificateBulkExport } from "@/components/admin/admin-certificate-bulk-export";
 
 type AdminCertificatesPageProps = {
   params: Promise<{
     locale: string;
   }>;
-  searchParams?: Promise<{ error?: string; notice?: string }>;
+  searchParams?: Promise<{
+    error?: string;
+    notice?: string;
+    page?: string;
+    query?: string;
+    type?: string;
+    status?: string;
+    issuedFrom?: string;
+    issuedTo?: string;
+  }>;
 };
 
 type CertificateType = "donation" | "honor";
@@ -36,21 +50,57 @@ function getCertificateStatusTone(status: CertificateStatus) {
 
 export default async function AdminCertificatesPage({ params, searchParams }: AdminCertificatesPageProps) {
   const { locale: localeParam } = await params;
-  const feedback = await searchParams;
+  const searchParamsState = await searchParams;
 
   const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/certificates`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, "/admin/certificates");
 
   const supabase = await createSupabaseServerClient();
-  const { data: certificates, error } = await supabase
+  const PAGE_SIZE = 20;
+  const currentPage = Number(searchParamsState?.page ?? 1);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = startIndex + PAGE_SIZE - 1;
+
+  let countQuery = supabase.from("certificates").select("id", { count: "exact", head: true });
+  let query = supabase
     .from("certificates")
-    .select("id,certificate_number,type,status,issued_at")
-    .order("issued_at", { ascending: false });
+    .select("id,certificate_number,type,status,issued_at");
+
+  const { query: searchQuery, type, status, issuedFrom, issuedTo } = searchParamsState ?? {};
+
+  if (searchQuery) {
+    const searchCondition = `certificate_number.ilike.%${searchQuery}%`;
+    countQuery = countQuery.ilike("certificate_number", `%${searchQuery}%`);
+    query = query.ilike("certificate_number", `%${searchQuery}%`);
+  }
+  if (type === "donation" || type === "honor") {
+    countQuery = countQuery.eq("type", type);
+    query = query.eq("type", type);
+  }
+  if (status === "active" || status === "revoked" || status === "generation_failed") {
+    countQuery = countQuery.eq("status", status);
+    query = query.eq("status", status);
+  }
+  if (issuedFrom) {
+    countQuery = countQuery.gte("issued_at", new Date(issuedFrom).toISOString());
+    query = query.gte("issued_at", new Date(issuedFrom).toISOString());
+  }
+  if (issuedTo) {
+    countQuery = countQuery.lte("issued_at", new Date(issuedTo).toISOString());
+    query = query.lte("issued_at", new Date(issuedTo).toISOString());
+  }
+
+  const [{ count: totalCount }, { data: certificates, error }] = await Promise.all([
+    countQuery,
+    query.order("issued_at", { ascending: false }).range(startIndex, endIndex),
+  ]);
 
   if (error) {
     throw error;
   }
+
+  const totalPages = totalCount ? Math.ceil(totalCount / PAGE_SIZE) : 1;
 
   return (
     <AdminShell {...shellProps}>
@@ -62,11 +112,54 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
             eyebrow={t("certificates.eyebrow")}
             title={t("certificates.title")}
           />
-          <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
+          <AdminFeedbackBanner error={searchParamsState?.error} notice={searchParamsState?.notice} />
+          <AdminCertificateFilters
+            actionPath="/admin/certificates"
+            labels={{
+              allStatuses: t("certificates.filter.allStatuses"),
+              allTypes: t("certificates.filter.allTypes"),
+              apply: t("certificates.filter.apply"),
+              issuedFrom: t("certificates.filter.issuedFrom"),
+              issuedTo: t("certificates.filter.issuedTo"),
+              moreFilters: t("certificates.filter.moreFilters"),
+              reset: t("certificates.filter.reset"),
+              search: t("certificates.filter.search"),
+              searchPlaceholder: t("certificates.filter.searchPlaceholder"),
+              status: t("certificates.filter.status"),
+              type: t("certificates.filter.type"),
+            }}
+            values={{
+              issuedFrom,
+              issuedTo,
+              query: searchQuery,
+              status,
+              type,
+            }}
+          />
+          <div className="mt-4 flex justify-end">
+            <AdminCertificateExport
+              certificates={certificates ?? []}
+              locale={locale}
+              labels={{
+                export: t("certificates.export"),
+                exporting: t("certificates.exporting"),
+              }}
+              typeLabels={{
+                donation: t("certificates.types.donation"),
+                honor: t("certificates.types.honor"),
+              }}
+              statusLabels={{
+                active: t("certificates.statuses.active"),
+                revoked: t("certificates.statuses.revoked"),
+                generation_failed: t("certificates.statuses.generation_failed"),
+              }}
+            />
+          </div>
           <AdminCard>
             {certificates && certificates.length > 0 ? (
-              <AdminTableShell label={t("certificates.title")}>
-                <table aria-label={t("certificates.title")} className="min-w-[1120px] table-fixed text-left text-sm">
+              <>
+                <AdminTableShell label={t("certificates.title")}>
+                  <table aria-label={t("certificates.title")} className="min-w-[1120px] table-fixed text-left text-sm">
                   <colgroup>
                     <col className="w-[240px]" />
                     <col className="w-[220px]" />
@@ -135,6 +228,18 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
                   </tbody>
                 </table>
               </AdminTableShell>
+              <AdminPagination
+                basePath="/admin/certificates"
+                currentPage={currentPage}
+                totalPages={totalPages}
+                labels={{
+                  previous: t("pagination.previous"),
+                  next: t("pagination.next"),
+                  page: t("pagination.page"),
+                  of: t("pagination.of"),
+                }}
+              />
+              </>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("certificates.empty")}</p>
             )}

@@ -82,10 +82,11 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 function createOrderedQuery(data: unknown, error: Error | null = null) {
-  const order = vi.fn().mockResolvedValue({ data, error });
+  const range = vi.fn().mockResolvedValue({ data, error });
+  const order = vi.fn(() => ({ range }));
   const select = vi.fn(() => ({ order }));
 
-  return { order, select };
+  return { order, select, range };
 }
 
 function createAdminListQuery(data: unknown, error: Error | null = null) {
@@ -108,6 +109,12 @@ const testMessages = {
       common: {
         processing: "Processing...",
         saving: "Saving...",
+      },
+      pagination: {
+        previous: "Previous",
+        next: "Next",
+        page: "Page",
+        of: "of",
       },
       overview: {
         eyebrow: "Admin tools",
@@ -175,6 +182,19 @@ const testMessages = {
           failed: "Failed",
           refunded: "Refunded",
         },
+        filter: {
+          search: "Search",
+          searchPlaceholder: "Search by transaction ID",
+          provider: "Provider",
+          allProviders: "All providers",
+          status: "Status",
+          allStatuses: "All statuses",
+          dateFrom: "Date from",
+          dateTo: "Date to",
+          moreFilters: "More filters",
+          apply: "Apply filters",
+          reset: "Reset",
+        },
       },
       certificates: {
         eyebrow: "Admin",
@@ -199,6 +219,19 @@ const testMessages = {
           revoked: "Revoked",
           generation_failed: "Generation failed",
         },
+        filter: {
+          search: "Search",
+          searchPlaceholder: "Search by certificate number",
+          type: "Certificate type",
+          allTypes: "All types",
+          status: "Status",
+          allStatuses: "All statuses",
+          issuedFrom: "Issued from",
+          issuedTo: "Issued to",
+          moreFilters: "More filters",
+          apply: "Apply filters",
+          reset: "Reset",
+        },
       },
       auditLogs: {
         eyebrow: "Admin",
@@ -210,6 +243,19 @@ const testMessages = {
         createdAt: "Created",
         admin: "Admin",
         empty: "No audit logs found.",
+        filter: {
+          search: "Search",
+          searchPlaceholder: "Search by action, target ID, or reason",
+          action: "Action type",
+          allActions: "All actions",
+          target: "Target type",
+          allTargets: "All targets",
+          dateFrom: "Date from",
+          dateTo: "Date to",
+          moreFilters: "More filters",
+          apply: "Apply filters",
+          reset: "Reset",
+        },
       },
       news: {
         eyebrow: "Admin",
@@ -250,6 +296,7 @@ const testMessages = {
         createdAt: "Created",
         save: "Save",
         empty: "No feedback found.",
+        searchPlaceholder: "Search by subject, message, or email",
         view: "Open thread",
         allFeedback: "All feedback",
         unread: "Unread",
@@ -564,6 +611,12 @@ const testMessages = {
         processing: "處理中...",
         saving: "儲存中...",
       },
+      pagination: {
+        previous: "上一頁",
+        next: "下一頁",
+        page: "第",
+        of: "頁，共",
+      },
       overview: {
         eyebrow: "管理工具",
         title: "管理後台",
@@ -630,6 +683,19 @@ const testMessages = {
           failed: "失敗",
           refunded: "已退款",
         },
+        filter: {
+          search: "搜尋",
+          searchPlaceholder: "依交易 ID 搜尋",
+          provider: "服務商",
+          allProviders: "所有服務商",
+          status: "狀態",
+          allStatuses: "所有狀態",
+          dateFrom: "日期從",
+          dateTo: "日期到",
+          moreFilters: "更多篩選",
+          apply: "套用篩選",
+          reset: "重設",
+        },
       },
       certificates: {
         eyebrow: "管理後台",
@@ -653,6 +719,19 @@ const testMessages = {
           active: "有效",
           revoked: "已撤銷",
           generation_failed: "產生失敗",
+        },
+        filter: {
+          search: "搜尋",
+          searchPlaceholder: "依證書編號搜尋",
+          type: "證書類型",
+          allTypes: "所有類型",
+          status: "狀態",
+          allStatuses: "所有狀態",
+          issuedFrom: "頒發日期從",
+          issuedTo: "頒發日期到",
+          moreFilters: "更多篩選",
+          apply: "套用篩選",
+          reset: "重設",
         },
       },
       auditLogs: {
@@ -694,6 +773,12 @@ const testMessages = {
       common: {
         processing: "Processing...",
         saving: "Saving...",
+      },
+      pagination: {
+        previous: "前へ",
+        next: "次へ",
+        page: "ページ",
+        of: "／全",
       },
       overview: {
         eyebrow: "管理ツール",
@@ -761,6 +846,19 @@ const testMessages = {
           failed: "失敗",
           refunded: "返金済み",
         },
+        filter: {
+          search: "検索",
+          searchPlaceholder: "取引 ID で検索",
+          provider: "プロバイダー",
+          allProviders: "すべてのプロバイダー",
+          status: "ステータス",
+          allStatuses: "すべてのステータス",
+          dateFrom: "開始日",
+          dateTo: "終了日",
+          moreFilters: "詳細フィルター",
+          apply: "適用",
+          reset: "リセット",
+        },
       },
       certificates: {
         eyebrow: "管理画面",
@@ -784,6 +882,19 @@ const testMessages = {
           active: "有効",
           revoked: "取り消し済み",
           generation_failed: "生成失敗",
+        },
+        filter: {
+          search: "検索",
+          searchPlaceholder: "証明書番号で検索",
+          type: "証明書種類",
+          allTypes: "すべての種類",
+          status: "ステータス",
+          allStatuses: "すべてのステータス",
+          issuedFrom: "発行日（開始）",
+          issuedTo: "発行日（終了）",
+          moreFilters: "詳細フィルター",
+          apply: "適用",
+          reset: "リセット",
         },
       },
       auditLogs: {
@@ -825,6 +936,12 @@ const testMessages = {
       common: {
         processing: "Processing...",
         saving: "Saving...",
+      },
+      pagination: {
+        previous: "이전",
+        next: "다음",
+        page: "페이지",
+        of: "/ 전체",
       },
       overview: {
         eyebrow: "관리 도구",
@@ -892,6 +1009,19 @@ const testMessages = {
           failed: "실패",
           refunded: "환불됨",
         },
+        filter: {
+          search: "검색",
+          searchPlaceholder: "거래 ID로 검색",
+          provider: "제공업체",
+          allProviders: "모든 제공업체",
+          status: "상태",
+          allStatuses: "모든 상태",
+          dateFrom: "시작일",
+          dateTo: "종료일",
+          moreFilters: "더 많은 필터",
+          apply: "적용",
+          reset: "재설정",
+        },
       },
       certificates: {
         eyebrow: "관리",
@@ -915,6 +1045,19 @@ const testMessages = {
           active: "활성",
           revoked: "폐기됨",
           generation_failed: "생성 실패",
+        },
+        filter: {
+          search: "검색",
+          searchPlaceholder: "인증서 번호로 검색",
+          type: "인증서 유형",
+          allTypes: "모든 유형",
+          status: "상태",
+          allStatuses: "모든 상태",
+          issuedFrom: "발급일(시작)",
+          issuedTo: "발급일(종료)",
+          moreFilters: "더 많은 필터",
+          apply: "적용",
+          reset: "재설정",
         },
       },
       auditLogs: {

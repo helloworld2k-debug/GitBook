@@ -101,6 +101,7 @@
     "copyright": "獨立軟體支援網站。",
     "terms": "使用條款",
     "privacy": "隱私權政策",
+    "help": "說明",
     "policiesNav": "政策"
   },
   "donate": {
@@ -178,6 +179,78 @@
       "open": "待處理",
       "reviewing": "處理中",
       "closed": "已關閉"
+    }
+  },
+  "help": {
+    "eyebrow": "說明中心",
+    "title": "說明與常見問題",
+    "subtitle": "了解如何下載、安裝和使用 GitBook AI 桌面應用程式，以及雲端同步和授權碼的使用方法。",
+    "gettingStarted": {
+      "title": "開始使用",
+      "download": {
+        "title": "下載應用程式",
+        "description": "前往首頁下載最新版本的 GitBook AI。",
+        "step1": "前往首頁，點擊 macOS 或 Windows 的下載按鈕",
+        "step2": "等待下載完成",
+        "step3": "開啟下載的檔案開始安裝"
+      },
+      "install": {
+        "title": "安裝應用程式",
+        "description": "依照您的作業系統進行安裝：",
+        "mac": {
+          "title": "macOS",
+          "description": "開啟 .dmg 檔案，將 GitBook AI 拖曳至「應用程式」資料夾。您可能需要在系統偏好設定中允許來自未識別開發人員的應用程式。"
+        },
+        "windows": {
+          "title": "Windows",
+          "description": "執行 .exe 安裝程式並依照螢幕上的提示操作。應用程式將會安裝至「程式檔案」資料夾。"
+        }
+      },
+      "signin": {
+        "title": "登入您的帳號",
+        "description": "首次啟動 GitBook AI 時，您需要登入帳號以啟用雲端同步功能。",
+        "note": "如果您還沒有帳號，可以免費在網站上註冊。"
+      }
+    },
+    "cloudSync": {
+      "title": "雲端同步",
+      "description": "雲端同步讓您的 AI 編程知識可以在多個裝置間存取。以下是啟用方法：",
+      "trial": {
+        "title": "試用碼（7 天）",
+        "description": "新用戶可以兌換試用碼獲得 7 天的雲端同步存取權限。試用碼透過官方管道發放。"
+      },
+      "contributors": {
+        "title": "支持者權限",
+        "description": "對 GitBook AI 開發提供一次性支持的用戶，作為感謝將獲得雲端同步存取權限。期限視支持方案而定。"
+      }
+    },
+    "faq": {
+      "title": "常見問題",
+      "download": {
+        "q": "在哪裡可以下載 GitBook AI？",
+        "a": "前往首頁，點擊適合您作業系統（macOS 或 Windows）的下載按鈕。"
+      },
+      "install": {
+        "q": "如何安裝 GitBook AI？",
+        "a": "macOS：開啟 .dmg 檔案，將應用程式拖曳至「應用程式」資料夾。Windows：執行 .exe 安裝程式並依照提示操作。"
+      },
+      "cloudSync": {
+        "q": "什麼是雲端同步？",
+        "a": "雲端同步讓您的 AI 編程知識、筆記和閱讀進度可以在多個裝置間同步。"
+      },
+      "trialCode": {
+        "q": "如何取得試用碼？",
+        "a": "試用碼透過我們的官方社群管道發放。請查看支援頁面了解取得方式。"
+      },
+      "certificate": {
+        "q": "如何獲得支持者證書？",
+        "a": "在支持頁面完成支持後，證書會自動生成，並可在儀表板中查看。"
+      }
+    },
+    "contact": {
+      "title": "仍需要協助？",
+      "description": "如果您找不到問題的答案，請聯絡我們的支援團隊。",
+      "button": "聯絡支援"
     }
   },
   "dashboard": {
@@ -259,6 +332,12 @@
       "processing": "處理中...",
       "saving": "儲存中..."
     },
+    "pagination": {
+      "previous": "上一頁",
+      "next": "下一頁",
+      "page": "第",
+      "of": "頁，共"
+    },
     "overview": {
       "eyebrow": "管理工具",
       "title": "管理後台",
@@ -324,6 +403,21 @@
         "failed": "失敗",
         "refunded": "已退款"
       },
+      "filter": {
+        "search": "搜尋",
+        "searchPlaceholder": "依交易 ID 搜尋",
+        "provider": "服務商",
+        "allProviders": "所有服務商",
+        "status": "狀態",
+        "allStatuses": "所有狀態",
+        "dateFrom": "日期從",
+        "dateTo": "日期到",
+        "moreFilters": "更多篩選",
+        "apply": "套用篩選",
+        "reset": "重設"
+      },
+      "export": "匯出 CSV",
+      "exporting": "匯出中...",
       "description": "檢視付款記錄，並新增已驗證的人工支持。"
     },
     "certificates": {
@@ -348,6 +442,25 @@
         "revoked": "已撤銷",
         "generation_failed": "產生失敗"
       },
+      "filter": {
+        "search": "搜尋",
+        "searchPlaceholder": "依證書編號搜尋",
+        "type": "證書類型",
+        "allTypes": "所有類型",
+        "status": "狀態",
+        "allStatuses": "所有狀態",
+        "issuedFrom": "頒發日期從",
+        "issuedTo": "頒發日期到",
+        "moreFilters": "更多篩選",
+        "apply": "套用篩選",
+        "reset": "重設"
+      },
+      "export": "匯出 CSV",
+      "exporting": "匯出中...",
+      "selectAll": "全選",
+      "selectedCount": "已選 {count} 項",
+      "exportSelected": "匯出已選",
+      "clearSelection": "清除選擇",
       "description": "檢視已頒發證書，必要時撤銷記錄。"
     },
     "auditLogs": {
@@ -359,6 +472,19 @@
       "createdAt": "建立時間",
       "admin": "管理員",
       "empty": "尚無稽核紀錄。",
+      "filter": {
+        "search": "搜尋",
+        "searchPlaceholder": "依操作、目標 ID 或原因搜尋",
+        "action": "操作類型",
+        "allActions": "所有操作",
+        "target": "目標類型",
+        "allTargets": "所有目標",
+        "dateFrom": "日期從",
+        "dateTo": "日期到",
+        "moreFilters": "更多篩選",
+        "apply": "套用篩選",
+        "reset": "重設"
+      },
       "description": "檢視管理變更與支援操作。"
     },
     "releases": {
@@ -458,7 +584,8 @@
       },
       "allFeedback": "所有回饋",
       "unread": "未讀",
-      "unreadFeedback": "未讀回饋"
+      "unreadFeedback": "未讀回饋",
+      "searchPlaceholder": "依主旨、訊息或電子郵件搜尋"
     },
     "supportSettings": {
       "eyebrow": "管理後台",
@@ -893,6 +1020,9 @@
     "issued": "頒發日期",
     "pendingIssueDate": "頒發日期待定",
     "fallbackRecipient": "支持者",
+    "share": "分享證書",
+    "shared": "連結已複製！",
+    "copyLink": "複製連結",
     "download": {
       "title": "下載證書",
       "svg": "下載 SVG",

@@ -13,6 +13,9 @@ export async function SiteFooter() {
           © {year} {siteConfig.name}. {footer("copyright")}
         </p>
         <nav aria-label={footer("policiesNav")} className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-slate-300">
+          <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/help">
+            {footer("help")}
+          </Link>
           <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/policies/terms">
             {footer("terms")}
           </Link>

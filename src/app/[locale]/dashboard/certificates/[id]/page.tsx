@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
+import { CertificateShareButton } from "@/components/certificate-share-button";
 import { setupUserPage } from "@/lib/auth/page-guards";
 import { CertificateView, formatCertificateAmount, getCertificateTypeLabel } from "@/lib/certificates/render";
 import { getCertificateTemplate } from "@/lib/certificates/templates";
@@ -81,6 +82,15 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
             aria-label={t("navigation.title")}
             className="mt-5 flex flex-col gap-3 rounded-lg border border-cyan-300/15 bg-white/[0.05] px-4 py-4 shadow-2xl shadow-cyan-950/20 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-end sm:px-5"
           >
+            <CertificateShareButton
+              certificateNumber={certificate.certificate_number}
+              certificateUrl={`${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/dashboard/certificates/${id}`}
+              labels={{
+                share: t("share"),
+                shared: t("shared"),
+                copyLink: t("copyLink"),
+              }}
+            />
             <Link
               href="/"
               className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-cyan-300/30 bg-cyan-300/10 px-4 text-sm font-semibold text-cyan-50 transition-colors hover:border-cyan-200/70 hover:bg-cyan-300/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 sm:w-auto"

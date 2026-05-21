@@ -11,7 +11,12 @@ import { updateSupportFeedbackStatus } from "../actions";
 
 type AdminSupportFeedbackPageProps = {
   params: Promise<{ locale: string }>;
-  searchParams?: Promise<{ error?: string; filter?: string; notice?: string }>;
+  searchParams?: Promise<{
+    error?: string;
+    filter?: string;
+    notice?: string;
+    query?: string;
+  }>;
 };
 
 type FeedbackStatus = "open" | "reviewing" | "closed";
@@ -52,9 +57,17 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, "/admin/support-feedback");
   const supabase = await createSupabaseServerClient();
-  const feedbackResult = await supabase
+
+  const queryParam = feedbackState?.query;
+  let query = supabase
     .from("support_feedback")
-    .select("id,email,contact,subject,message,status,created_at,updated_at,support_feedback_admin_reads(admin_user_id,read_at),support_feedback_messages(author_role,created_at)")
+    .select("id,email,contact,subject,message,status,created_at,updated_at,support_feedback_admin_reads(admin_user_id,read_at),support_feedback_messages(author_role,created_at)");
+
+  if (queryParam) {
+    query = query.or(`subject.ilike.%${queryParam}%,message.ilike.%${queryParam}%,email.ilike.%${queryParam}%`);
+  }
+
+  const feedbackResult = await query
     .order("updated_at", { ascending: false })
     .limit(100);
 
@@ -66,9 +79,15 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
       throw feedbackResult.error;
     }
 
-    const fallbackResult = await supabase
+    const fallbackQuery = supabase
       .from("support_feedback")
-      .select("id,email,contact,subject,message,status,created_at,updated_at")
+      .select("id,email,contact,subject,message,status,created_at,updated_at");
+
+    if (queryParam) {
+      fallbackQuery.or(`subject.ilike.%${queryParam}%,message.ilike.%${queryParam}%,email.ilike.%${queryParam}%`);
+    }
+
+    const fallbackResult = await fallbackQuery
       .order("updated_at", { ascending: false })
       .limit(100);
 
@@ -95,7 +114,15 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
 
       return new Date(b.latestUserMessageAt ?? b.created_at).getTime() - new Date(a.latestUserMessageAt ?? a.created_at).getTime();
     });
-  const visibleFeedback = filter === "unread" ? feedbackWithUnreadState.filter((item) => item.isUnread) : feedbackWithUnreadState;
+  let visibleFeedback = filter === "unread" ? feedbackWithUnreadState.filter((item) => item.isUnread) : feedbackWithUnreadState;
+
+  const buildFilterUrl = (newFilter: string | null) => {
+    const params = new URLSearchParams();
+    if (newFilter === "unread") params.set("filter", "unread");
+    if (queryParam) params.set("query", queryParam);
+    const queryString = params.toString();
+    return queryString ? `/admin/support-feedback?${queryString}` : "/admin/support-feedback";
+  };
 
   return (
     <AdminShell {...shellProps}>
@@ -108,12 +135,21 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
           title={t("supportFeedback.title")}
         />
         <AdminFeedbackBanner error={feedbackState?.error} notice={feedbackState?.notice} />
+        <form action="/admin/support-feedback" className="mb-4">
+          <input
+            className="min-h-11 w-full max-w-md rounded-md border border-slate-300 px-3 text-sm shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+            defaultValue={queryParam ?? ""}
+            name="query"
+            placeholder={t("supportFeedback.searchPlaceholder")}
+          />
+          {feedbackState?.filter ? <input name="filter" type="hidden" value={feedbackState.filter} /> : null}
+        </form>
         <div className="mb-4 flex flex-wrap gap-2">
           <Link
             className={`inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium ${
               filter === "all" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-white text-slate-700"
             }`}
-            href="/admin/support-feedback"
+            href={buildFilterUrl(null)}
           >
             {t("supportFeedback.allFeedback")}
           </Link>
@@ -121,7 +157,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
             className={`inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium ${
               filter === "unread" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-white text-slate-700"
             }`}
-            href="/admin/support-feedback?filter=unread"
+            href={buildFilterUrl("unread")}
           >
             {t("supportFeedback.unreadFeedback")}
           </Link>

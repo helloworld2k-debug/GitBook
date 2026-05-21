@@ -101,6 +101,7 @@
     "copyright": "独立したソフトウェアサポートサイトです。",
     "terms": "利用規約",
     "privacy": "プライバシーポリシー",
+    "help": "ヘルプ",
     "policiesNav": "ポリシー"
   },
   "donate": {
@@ -178,6 +179,78 @@
       "open": "未対応",
       "reviewing": "確認中",
       "closed": "完了"
+    }
+  },
+  "help": {
+    "eyebrow": "ヘルプセンター",
+    "title": "ヘルプとFAQ",
+    "subtitle": "GitBook AI デスクトップアプリのダウンロード、インストール、クラウド同期、ライセンスコードの使い方を学びます。",
+    "gettingStarted": {
+      "title": "はじめに",
+      "download": {
+        "title": "アプリをダウンロード",
+        "description": "ホームページから、OSに対応した最新版の GitBook AI をダウンロードします。",
+        "step1": "ホームページへ移動し、macOS または Windows のダウンロードボタンをクリック",
+        "step2": "ダウンロードが完了するまで待ちます",
+        "step3": "ダウンロードしたファイルを開き、インストールを開始します"
+      },
+      "install": {
+        "title": "アプリをインストール",
+        "description": "OSに合わせてインストールします：",
+        "mac": {
+          "title": "macOS",
+          "description": ".dmg ファイルを開き、GitBook AI を「アプリケーション」フォルダにドラッグします。システム環境設定で、識別不明な開発者からのアプリを許可する必要がある場合があります。"
+        },
+        "windows": {
+          "title": "Windows",
+          "description": ".exe インストーラーを実行し、画面の指示に従います。アプリは Program Files にインストールされます。"
+        }
+      },
+      "signin": {
+        "title": "アカウントにサインイン",
+        "description": "GitBook AI の初回起動時、クラウド同期機能を有効にするためアカウントにサインインする必要があります。",
+        "note": "まだアカウントをお持ちでない場合は、Webサイトで無料登録できます。"
+      }
+    },
+    "cloudSync": {
+      "title": "クラウド同期",
+      "description": "クラウド同期により、AI プログラミング知識をデバイス間でアクセスできます。有効化する方法：",
+      "trial": {
+        "title": "トライアルコード（7日間）",
+        "description": "新規ユーザーはトライアルコードを引き換えることで、7日間のクラウド同期アクセスを取得できます。トライアルコードは公式チャネルから配布されます。"
+      },
+      "contributors": {
+        "title": "支援者アクセス",
+        "description": "GitBook AI の開発に一度だけ支援したユーザーは、お礼としてクラウド同期アクセスを受け取ります。期間は支援プランによります。"
+      }
+    },
+    "faq": {
+      "title": "よくある質問",
+      "download": {
+        "q": "GitBook AI はどこからダウンロードできますか？",
+        "a": "ホームページから、お使いの OS（macOS または Windows）のダウンロードボタンをクリックしてください。"
+      },
+      "install": {
+        "q": "GitBook AI をインストールするには？",
+        "a": "macOS の場合：.dmg ファイルを開き、アプリを「アプリケーション」フォルダにドラッグします。Windows の場合：.exe インストーラーを実行し、指示に従います。"
+      },
+      "cloudSync": {
+        "q": "クラウド同期とは？",
+        "a": "クラウド同期により、AI プログラミング知識、メモ、閲覧進捗を複数のデバイス間で同期できます。"
+      },
+      "trialCode": {
+        "q": "トライアルコードを取得するには？",
+        "a": "トライアルコードは公式コミュニティチャネルから配布されます。取得方法についてはサポートページをご確認ください。"
+      },
+      "certificate": {
+        "q": "支援者証明書を取得するには？",
+        "a": "支援ページで支払いを完了すると、証明書が自動的に生成され、ダッシュボードで確認できます。"
+      }
+    },
+    "contact": {
+      "title": "まだお困りですか？",
+      "description": "お探しの答えが見つからなかった場合は、サポートチームまでお問い合わせください。",
+      "button": "サポートに連絡"
     }
   },
   "dashboard": {
@@ -259,6 +332,12 @@
       "processing": "処理中...",
       "saving": "保存中..."
     },
+    "pagination": {
+      "previous": "前へ",
+      "next": "次へ",
+      "page": "ページ",
+      "of": "／全"
+    },
     "overview": {
       "eyebrow": "管理ツール",
       "title": "管理画面",
@@ -324,6 +403,21 @@
         "failed": "失敗",
         "refunded": "返金済み"
       },
+      "filter": {
+        "search": "検索",
+        "searchPlaceholder": "取引 ID で検索",
+        "provider": "プロバイダー",
+        "allProviders": "すべてのプロバイダー",
+        "status": "ステータス",
+        "allStatuses": "すべてのステータス",
+        "dateFrom": "開始日",
+        "dateTo": "終了日",
+        "moreFilters": "詳細フィルター",
+        "apply": "適用",
+        "reset": "リセット"
+      },
+      "export": "CSV エクスポート",
+      "exporting": "エクスポート中...",
       "description": "決済記録を確認し、検証済みの手動応援を追加します。"
     },
     "certificates": {
@@ -348,6 +442,25 @@
         "revoked": "取り消し済み",
         "generation_failed": "生成失敗"
       },
+      "filter": {
+        "search": "検索",
+        "searchPlaceholder": "証明書番号で検索",
+        "type": "証明書種類",
+        "allTypes": "すべての種類",
+        "status": "ステータス",
+        "allStatuses": "すべてのステータス",
+        "issuedFrom": "発行日（開始）",
+        "issuedTo": "発行日（終了）",
+        "moreFilters": "詳細フィルター",
+        "apply": "適用",
+        "reset": "リセット"
+      },
+      "export": "CSV エクスポート",
+      "exporting": "エクスポート中...",
+      "selectAll": "すべてを選択",
+      "selectedCount": "{count} 件を選択",
+      "exportSelected": "選択項目をエクスポート",
+      "clearSelection": "選択を解除",
       "description": "発行済み証明書を確認し、必要に応じて取り消します。"
     },
     "auditLogs": {
@@ -359,6 +472,19 @@
       "createdAt": "作成日時",
       "admin": "管理者",
       "empty": "監査ログはまだありません。",
+      "filter": {
+        "search": "検索",
+        "searchPlaceholder": "操作、対象 ID、理由で検索",
+        "action": "操作種類",
+        "allActions": "すべての操作",
+        "target": "対象種類",
+        "allTargets": "すべての対象",
+        "dateFrom": "開始日",
+        "dateTo": "終了日",
+        "moreFilters": "詳細フィルター",
+        "apply": "適用",
+        "reset": "リセット"
+      },
       "description": "管理変更とサポート操作を確認します。"
     },
     "releases": {
@@ -458,7 +584,8 @@
       },
       "allFeedback": "すべてのフィードバック",
       "unread": "未読",
-      "unreadFeedback": "未読フィードバック"
+      "unreadFeedback": "未読フィードバック",
+      "searchPlaceholder": "件名、メッセージ、メールで検索"
     },
     "supportSettings": {
       "eyebrow": "管理画面",
@@ -893,6 +1020,9 @@
     "issued": "発行日",
     "pendingIssueDate": "発行日未定",
     "fallbackRecipient": "サポーター",
+    "share": "証明書をシェア",
+    "shared": "リンクをコピーしました！",
+    "copyLink": "リンクをコピー",
     "download": {
       "title": "証明書をダウンロード",
       "svg": "SVG をダウンロード",

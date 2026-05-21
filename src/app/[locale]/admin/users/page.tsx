@@ -3,6 +3,7 @@ import { AdminAccountCreateForm } from "@/components/admin/admin-account-create-
 import { AdminUserBulkToolbar, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
 import { AdminUserFilters } from "@/components/admin/admin-user-filters";
 import { AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { Link } from "@/i18n/routing";
@@ -18,6 +19,7 @@ type AdminUsersSearchParams = {
   createdTo?: string;
   error?: string;
   notice?: string;
+  page?: string;
   query?: string;
   role?: string;
   status?: string;
@@ -211,6 +213,14 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
     );
   });
 
+  // Client-side pagination
+  const PAGE_SIZE = 20;
+  const currentPage = Number(feedback?.page ?? 1);
+  const totalPages = Math.max(1, Math.ceil(filteredProfiles.length / PAGE_SIZE));
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = startIndex + PAGE_SIZE;
+  const paginatedProfiles = filteredProfiles.slice(startIndex, endIndex);
+
   const summary = {
     active: allProfiles.filter((profile) => (profile.account_status ?? "active") === "active").length,
     disabled: allProfiles.filter((profile) => profile.account_status === "disabled").length,
@@ -337,11 +347,12 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
               </Link>
             </div>
           ) : (
-            <AdminTableShell
+            <>
+              <AdminTableShell
               label={t("title")}
               mobileCards={
                 <div className="grid gap-3">
-                  {filteredProfiles.map((profile) => {
+                  {paginatedProfiles.map((profile) => {
                     const trials = trialsByUser.get(profile.id) ?? [];
                     const sessions = sessionsByUser.get(profile.id) ?? [];
                     const authStatus = authStatusByUser.get(profile.id);
@@ -445,7 +456,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {filteredProfiles.map((profile) => {
+                  {paginatedProfiles.map((profile) => {
                     const trials = trialsByUser.get(profile.id) ?? [];
                     const sessions = sessionsByUser.get(profile.id) ?? [];
                     const authStatus = authStatusByUser.get(profile.id);
@@ -553,6 +564,18 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                 </tbody>
               </table>
             </AdminTableShell>
+            <AdminPagination
+              basePath="/admin/users"
+              currentPage={currentPage}
+              totalPages={totalPages}
+              labels={{
+                previous: adminT("pagination.previous"),
+                next: adminT("pagination.next"),
+                page: adminT("pagination.page"),
+                of: adminT("pagination.of"),
+              }}
+            />
+            </>
           )}
         </AdminCard>
       </section>

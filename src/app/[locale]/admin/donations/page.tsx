@@ -1,5 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminDonationFilters } from "@/components/admin/admin-donation-filters";
+import { AdminDonationExport } from "@/components/admin/admin-donation-export";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
@@ -11,7 +14,16 @@ type AdminDonationsPageProps = {
   params: Promise<{
     locale: string;
   }>;
-  searchParams?: Promise<{ error?: string; notice?: string }>;
+  searchParams?: Promise<{
+    error?: string;
+    notice?: string;
+    page?: string;
+    query?: string;
+    provider?: string;
+    status?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }>;
 };
 
 type DonationStatus = "pending" | "paid" | "cancelled" | "failed" | "refunded";
@@ -36,17 +48,56 @@ function getDonationStatusTone(status: DonationStatus) {
 
 export default async function AdminDonationsPage({ params, searchParams }: AdminDonationsPageProps) {
   const { locale: localeParam } = await params;
-  const feedback = await searchParams;
+  const searchParamsState = await searchParams;
 
   const { locale } = await setupAdminPage(localeParam, `/${localeParam}/admin/donations`);
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, "/admin/donations");
 
   const supabase = await createSupabaseServerClient();
-  const { data: donations, error } = await supabase
+  const PAGE_SIZE = 20;
+  const currentPage = Number(searchParamsState?.page ?? 1);
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const endIndex = startIndex + PAGE_SIZE - 1;
+
+  let countQuery = supabase.from("donations").select("id", { count: "exact", head: true });
+  let query = supabase
     .from("donations")
-    .select("id,provider,status,amount,currency,provider_transaction_id,paid_at,created_at")
-    .order("created_at", { ascending: false });
+    .select("id,provider,status,amount,currency,provider_transaction_id,paid_at,created_at");
+
+  const { query: searchQuery, provider, status, dateFrom, dateTo } = searchParamsState ?? {};
+
+  if (searchQuery) {
+    countQuery = countQuery.ilike("provider_transaction_id", `%${searchQuery}%`);
+    query = query.ilike("provider_transaction_id", `%${searchQuery}%`);
+  }
+  if (provider === "stripe" || provider === "paypal" || provider === "manual" || provider === "dodo") {
+    countQuery = countQuery.eq("provider", provider);
+    query = query.eq("provider", provider);
+  }
+  if (status === "pending" || status === "paid" || status === "cancelled" || status === "failed" || status === "refunded") {
+    countQuery = countQuery.eq("status", status);
+    query = query.eq("status", status);
+  }
+  if (dateFrom) {
+    countQuery = countQuery.gte("created_at", new Date(dateFrom).toISOString());
+    query = query.gte("created_at", new Date(dateFrom).toISOString());
+  }
+  if (dateTo) {
+    countQuery = countQuery.lte("created_at", new Date(dateTo).toISOString());
+    query = query.lte("created_at", new Date(dateTo).toISOString());
+  }
+
+  const [{ count: totalCount }, { data: donations, error }] = await Promise.all([
+    countQuery,
+    query.order("created_at", { ascending: false }).range(startIndex, endIndex),
+  ]);
+
+  if (error) {
+    throw error;
+  }
+
+  const totalPages = totalCount ? Math.ceil(totalCount / PAGE_SIZE) : 1;
 
   if (error) {
     throw error;
@@ -62,7 +113,53 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
             eyebrow={t("donations.eyebrow")}
             title={t("donations.title")}
           />
-          <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
+          <AdminFeedbackBanner error={searchParamsState?.error} notice={searchParamsState?.notice} />
+          <AdminDonationFilters
+            actionPath="/admin/donations"
+            labels={{
+              allProviders: t("donations.filter.allProviders"),
+              allStatuses: t("donations.filter.allStatuses"),
+              apply: t("donations.filter.apply"),
+              dateFrom: t("donations.filter.dateFrom"),
+              dateTo: t("donations.filter.dateTo"),
+              moreFilters: t("donations.filter.moreFilters"),
+              reset: t("donations.filter.reset"),
+              search: t("donations.filter.search"),
+              searchPlaceholder: t("donations.filter.searchPlaceholder"),
+              status: t("donations.filter.status"),
+              provider: t("donations.filter.provider"),
+            }}
+            values={{
+              dateFrom,
+              dateTo,
+              query: searchQuery,
+              provider,
+              status,
+            }}
+          />
+          <div className="mt-4 flex justify-end">
+            <AdminDonationExport
+              donations={donations ?? []}
+              locale={locale}
+              labels={{
+                export: t("donations.export"),
+                exporting: t("donations.exporting"),
+              }}
+              providerLabels={{
+                stripe: t("donations.providers.stripe"),
+                paypal: t("donations.providers.paypal"),
+                manual: t("donations.providers.manual"),
+                dodo: t("donations.providers.dodo"),
+              }}
+              statusLabels={{
+                pending: t("donations.statuses.pending"),
+                paid: t("donations.statuses.paid"),
+                cancelled: t("donations.statuses.cancelled"),
+                failed: t("donations.statuses.failed"),
+                refunded: t("donations.statuses.refunded"),
+              }}
+            />
+          </div>
           <AdminCard className="p-5">
             <div>
               <h2 className="text-base font-semibold text-slate-950">{t("donations.manualEntryTitle")}</h2>
@@ -118,7 +215,8 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
           </AdminCard>
           <AdminCard className="mt-6">
             {donations && donations.length > 0 ? (
-              <AdminTableShell
+              <>
+                <AdminTableShell
                 label={t("donations.title")}
                 mobileCards={
                   <div className="grid gap-3">
@@ -192,6 +290,18 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
                   </tbody>
                 </table>
               </AdminTableShell>
+              <AdminPagination
+                basePath="/admin/donations"
+                currentPage={currentPage}
+                totalPages={totalPages}
+                labels={{
+                  previous: t("pagination.previous"),
+                  next: t("pagination.next"),
+                  page: t("pagination.page"),
+                  of: t("pagination.of"),
+                }}
+              />
+              </>
             ) : (
               <p className="px-5 py-6 text-sm text-slate-600">{t("donations.empty")}</p>
             )}

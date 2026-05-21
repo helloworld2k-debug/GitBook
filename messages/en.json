@@ -101,6 +101,7 @@
     "copyright": "Independent software support site.",
     "terms": "Terms",
     "privacy": "Privacy",
+    "help": "Help",
     "policiesNav": "Policies"
   },
   "versions": {
@@ -192,6 +193,78 @@
       "closed": "Closed"
     }
   },
+  "help": {
+    "eyebrow": "Help center",
+    "title": "Help & FAQ",
+    "subtitle": "Learn how to download, install, and use GitBook AI desktop app with cloud sync and license codes.",
+    "gettingStarted": {
+      "title": "Getting Started",
+      "download": {
+        "title": "Download the app",
+        "description": "Visit the homepage to download the latest version of GitBook AI for your operating system.",
+        "step1": "Go to the homepage and click the download button for macOS or Windows",
+        "step2": "Wait for the download to complete",
+        "step3": "Open the downloaded file to begin installation"
+      },
+      "install": {
+        "title": "Install the app",
+        "description": "Follow the installation steps for your operating system:",
+        "mac": {
+          "title": "macOS",
+          "description": "Open the .dmg file and drag GitBook AI to your Applications folder. You may need to allow apps from unidentified developers in System Preferences."
+        },
+        "windows": {
+          "title": "Windows",
+          "description": "Run the .exe installer and follow the on-screen prompts. The app will be installed in Program Files."
+        }
+      },
+      "signin": {
+        "title": "Sign in to your account",
+        "description": "When you first launch GitBook AI, you'll need to sign in to your account to activate cloud sync features.",
+        "note": "If you don't have an account yet, you can register for free on the website."
+      }
+    },
+    "cloudSync": {
+      "title": "Cloud Sync",
+      "description": "Cloud sync allows you to access your AI coding knowledge across devices. Here's how to activate it:",
+      "trial": {
+        "title": "Trial Code (7 days)",
+        "description": "New users can redeem a trial code for 7 days of cloud sync access. Trial codes are distributed through official channels."
+      },
+      "contributors": {
+        "title": "Contributor Access",
+        "description": "Users who have made a one-time contribution to support GitBook AI development receive cloud sync access as a thank you. The duration depends on the contribution tier."
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "download": {
+        "q": "Where can I download GitBook AI?",
+        "a": "Visit the homepage and click the download button for your operating system (macOS or Windows)."
+      },
+      "install": {
+        "q": "How do I install GitBook AI?",
+        "a": "For macOS: open the .dmg file and drag the app to Applications. For Windows: run the .exe installer and follow the prompts."
+      },
+      "cloudSync": {
+        "q": "What is cloud sync?",
+        "a": "Cloud sync allows your AI coding knowledge, notes, and reading progress to be synchronized across multiple devices."
+      },
+      "trialCode": {
+        "q": "How do I get a trial code?",
+        "a": "Trial codes are distributed through our official community channels. Check our support page for information on how to obtain one."
+      },
+      "certificate": {
+        "q": "How do I get a contributor certificate?",
+        "a": "After making a contribution on the Contributions page, a certificate is automatically generated and can be viewed in your dashboard."
+      }
+    },
+    "contact": {
+      "title": "Still need help?",
+      "description": "If you couldn't find the answer you were looking for, please reach out to our support team.",
+      "button": "Contact Support"
+    }
+  },
   "dashboard": {
     "title": "Personal center",
     "donations": "Contributions",
@@ -270,6 +343,12 @@
     "common": {
       "processing": "Processing...",
       "saving": "Saving..."
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page",
+      "of": "of"
     },
     "overview": {
       "eyebrow": "Admin tools",
@@ -384,6 +463,21 @@
         "failed": "Failed",
         "refunded": "Refunded"
       },
+      "filter": {
+        "search": "Search",
+        "searchPlaceholder": "Search by transaction ID",
+        "provider": "Provider",
+        "allProviders": "All providers",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "dateFrom": "Date from",
+        "dateTo": "Date to",
+        "moreFilters": "More filters",
+        "apply": "Apply filters",
+        "reset": "Reset"
+      },
+      "export": "Export CSV",
+      "exporting": "Exporting...",
       "description": "Review payment records and add verified manual contributions."
     },
     "notifications": {
@@ -463,7 +557,8 @@
       },
       "allFeedback": "All feedback",
       "unread": "Unread",
-      "unreadFeedback": "Unread feedback"
+      "unreadFeedback": "Unread feedback",
+      "searchPlaceholder": "Search by subject, message, or email"
     },
     "supportSettings": {
       "eyebrow": "Admin",
@@ -527,6 +622,25 @@
         "revoked": "Revoked",
         "generation_failed": "Generation failed"
       },
+      "filter": {
+        "search": "Search",
+        "searchPlaceholder": "Search by certificate number",
+        "type": "Certificate type",
+        "allTypes": "All types",
+        "status": "Status",
+        "allStatuses": "All statuses",
+        "issuedFrom": "Issued from",
+        "issuedTo": "Issued to",
+        "moreFilters": "More filters",
+        "apply": "Apply filters",
+        "reset": "Reset"
+      },
+      "export": "Export CSV",
+      "exporting": "Exporting...",
+      "selectAll": "Select all",
+      "selectedCount": "{count} selected",
+      "exportSelected": "Export selected",
+      "clearSelection": "Clear selection",
       "description": "Review issued certificates and revoke records when needed."
     },
     "auditLogs": {
@@ -538,6 +652,19 @@
       "createdAt": "Created",
       "admin": "Admin",
       "empty": "No audit logs found.",
+      "filter": {
+        "search": "Search",
+        "searchPlaceholder": "Search by action, target ID, or reason",
+        "action": "Action type",
+        "allActions": "All actions",
+        "target": "Target type",
+        "allTargets": "All targets",
+        "dateFrom": "Date from",
+        "dateTo": "Date to",
+        "moreFilters": "More filters",
+        "apply": "Apply filters",
+        "reset": "Reset"
+      },
       "description": "Review administrative changes and support actions."
     },
     "licenses": {
@@ -905,6 +1032,9 @@
     "issued": "Issued",
     "pendingIssueDate": "Pending issue date",
     "fallbackRecipient": "Supporter",
+    "share": "Share certificate",
+    "shared": "Link copied!",
+    "copyLink": "Copy link",
     "download": {
       "title": "Download certificate",
       "svg": "Download SVG",
