@@ -803,7 +803,7 @@
         "partner": "Partner",
         "other": "Other"
       },
-      "fixedPaidDurationsHelp": "Monthly codes use a fixed 30-day duration. Quarterly uses 90 days; yearly uses 365 days."
+      "fixedPaidDurationsHelp": "Monthly codes grant 1 calendar month from activation. Quarterly grants 3 calendar months; yearly grants 12 calendar months. Calculations use Beijing timezone. Only trial codes allow custom day counts (1-7 days)."
     },
     "users": {
       "eyebrow": "Admin",

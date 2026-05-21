@@ -1,17 +1,7 @@
-import { CLOUD_SYNC_FEATURE, getEntitlementDaysForTier } from "@/lib/license/constants";
+import { CLOUD_SYNC_FEATURE, getEntitlementMonthsForTier } from "@/lib/license/constants";
 
-type EntitlementClient = {
-  from: unknown;
-  rpc: (
-    functionName: "grant_cloud_sync_entitlement_for_donation",
-    args: {
-      input_days: number;
-      input_donation_id: string;
-      input_paid_at: string;
-      input_user_id: string;
-    },
-  ) => PromiseLike<{ data: string | null; error: unknown }>;
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type EntitlementClient = any;
 
 type EntitlementFrom = (table: "license_entitlements") => {
   select: (columns: "valid_until,status") => {
@@ -54,14 +44,14 @@ function remainingDaysUntil(validUntil: string, now: Date) {
 }
 
 export async function extendCloudSyncEntitlementForDonation(client: EntitlementClient, input: ExtendInput) {
-  const days = getEntitlementDaysForTier(input.tierCode);
+  const months = getEntitlementMonthsForTier(input.tierCode);
 
-  if (!days) {
+  if (!months) {
     throw new Error("Unsupported entitlement tier");
   }
 
   const { data, error } = await client.rpc("grant_cloud_sync_entitlement_for_donation", {
-    input_days: days,
+    input_months: months,
     input_donation_id: input.donationId,
     input_paid_at: input.paidAt.toISOString(),
     input_user_id: input.userId,

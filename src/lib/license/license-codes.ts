@@ -11,9 +11,9 @@ export type EncryptedLicenseCode = {
 
 export const licenseDurationOptions: { days: number; kind: LicenseDurationKind; label: string }[] = [
   { days: 3, kind: "trial_3_day", label: "3-day trial" },
-  { days: 30, kind: "month_1", label: "1 month" },
-  { days: 90, kind: "month_3", label: "3 months" },
-  { days: 365, kind: "year_1", label: "1 year" },
+  { days: 30, kind: "month_1", label: "1 calendar month" },
+  { days: 90, kind: "month_3", label: "3 calendar months" },
+  { days: 365, kind: "year_1", label: "1 year (12 calendar months)" },
 ];
 
 const LICENSE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
