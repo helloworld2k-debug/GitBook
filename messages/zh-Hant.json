@@ -317,9 +317,10 @@
       "title": "驗證您的電子郵件以確保帳號安全",
       "description": "電子郵件驗證可為您的帳號增加一層安全保障。部分功能（例如修改密碼）需要已驗證的電子郵件。請檢查您的收件匣和垃圾郵件資料夾。",
       "resendButton": "重新發送驗證郵件",
+      "resendAfter": "{seconds}秒後可重發",
       "resendSending": "發送中...",
       "resendSent": "驗證郵件已發送。請檢查您的收件匣和垃圾郵件資料夾。",
-      "resendRateLimited": "請稍候再請求發送新的驗證郵件。",
+      "resendRateLimited": "請等待 {seconds} 秒後再試。",
       "resendError": "無法發送驗證郵件，請稍後再試。",
       "dismiss": "關閉"
     },

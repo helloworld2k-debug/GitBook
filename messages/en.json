@@ -329,9 +329,10 @@
       "title": "Verify your email for account security",
       "description": "Email verification adds an extra layer of security. Some features, like changing your password, require a verified email. Check your inbox and spam folder.",
       "resendButton": "Resend verification email",
+      "resendAfter": "Resend in {seconds}s",
       "resendSending": "Sending...",
       "resendSent": "Verification email sent. Check your inbox and spam folder.",
-      "resendRateLimited": "Please wait before requesting another verification email.",
+      "resendRateLimited": "Please wait {seconds}s before resending.",
       "resendError": "Could not send verification email. Try again later.",
       "dismiss": "Dismiss"
     },
