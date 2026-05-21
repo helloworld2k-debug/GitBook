@@ -3,6 +3,7 @@ import { checkRegisterRateLimit, type RegisterLimitClient } from "@/lib/auth/reg
 import { registerWithEmailPassword } from "@/lib/auth/register";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { z } from "zod";
 
 type RegisterRequestBody = {
   callbackUrl?: string;
@@ -111,16 +112,21 @@ async function registerConfirmedUserWithEmailPassword(input: {
   });
 }
 
-export async function POST(request: Request) {
-  const body = (await request.json()) as RegisterRequestBody;
-  const email = String(body.email ?? "").trim();
-  const password = String(body.password ?? "");
-  const callbackUrl = String(body.callbackUrl ?? "").trim();
-  const turnstileToken = String(body.turnstileToken ?? "").trim();
+const registerSchema = z.object({
+  email: z.string().email().max(256),
+  password: z.string().min(8).max(128),
+  callbackUrl: z.string().url().max(2048),
+  turnstileToken: z.string().max(2048).optional(),
+});
 
-  if (!email || !password || !callbackUrl) {
+export async function POST(request: Request) {
+  const raw = await request.json();
+  const parsed = registerSchema.safeParse(raw);
+  if (!parsed.success) {
     return jsonError("invalid_request");
   }
+  const { email, password, callbackUrl } = parsed.data;
+  const turnstileToken = parsed.data.turnstileToken?.trim() ?? "";
 
   const requireTurnstile = isTurnstileConfigured();
 

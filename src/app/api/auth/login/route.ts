@@ -3,6 +3,7 @@ import { checkLoginRisk, recordLoginAttempt, type LoginRiskClient } from "@/lib/
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 type LoginRequestBody = {
   email?: string;
@@ -35,15 +36,20 @@ async function recordLoginAttemptSafely(
   }
 }
 
-export async function POST(request: Request) {
-  const body = (await request.json()) as LoginRequestBody;
-  const email = String(body.email ?? "").trim();
-  const password = String(body.password ?? "");
-  const turnstileToken = String(body.turnstileToken ?? "").trim();
+const loginSchema = z.object({
+  email: z.string().email().max(256),
+  password: z.string().min(1).max(1024),
+  turnstileToken: z.string().max(2048).optional(),
+});
 
-  if (!email || !password) {
+export async function POST(request: Request) {
+  const raw = await request.json();
+  const parsed = loginSchema.safeParse(raw);
+  if (!parsed.success) {
     return jsonError("invalid_request");
   }
+  const { email, password, turnstileToken } = parsed.data;
+  const turnstileTokenTrimmed = turnstileToken?.trim() ?? "";
 
   const ip = getIpAddress(request);
   const adminClient = createSupabaseAdminClient() as unknown as LoginRiskClient;
@@ -56,11 +62,11 @@ export async function POST(request: Request) {
   }
 
   if (risk.captchaRequired) {
-    if (!isTurnstileConfigured() || !turnstileToken) {
+    if (!isTurnstileConfigured() || !turnstileTokenTrimmed) {
       return jsonError("captcha_required");
     }
 
-    const turnstile = await verifyTurnstileToken(turnstileToken, ip);
+    const turnstile = await verifyTurnstileToken(turnstileTokenTrimmed, ip);
 
     if (!turnstile.ok) {
       return jsonError("captcha_invalid");

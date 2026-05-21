@@ -358,7 +358,7 @@ describe("register route", () => {
     );
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: "register_failed" });
+    await expect(response.json()).resolves.toEqual({ error: "invalid_request" });
   });
 
   it("treats an already registered email as a safe successful registration response", async () => {
@@ -401,7 +401,7 @@ describe("register route", () => {
         body: JSON.stringify({
           callbackUrl: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
           email: "new@example.com",
-          password: "short",
+          password: "longenoughpassword",
           turnstileToken: "ok-token",
         }),
         headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10" },

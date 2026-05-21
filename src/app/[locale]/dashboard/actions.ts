@@ -48,7 +48,11 @@ export async function updateDashboardPassword(locale: string, formData: FormData
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirm_password") ?? "");
 
-  if (!password || password !== confirmPassword) {
+  if (!password || password.length < 8 || password.length > 128) {
+    redirect(getDashboardPath(safeLocale, { password: "mismatch" }));
+  }
+
+  if (password !== confirmPassword) {
     redirect(getDashboardPath(safeLocale, { password: "mismatch" }));
   }
 
