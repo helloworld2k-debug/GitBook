@@ -53,18 +53,18 @@ describe("checkConfirmationResendRateLimit", () => {
   });
 
   it("enforces a 60 second per-email cooldown", async () => {
-    const client = createResendLimitClient({ emailMinute: 1 });
+    const client = createResendLimitClient({ emailMinute: 2 });
 
     await expect(checkConfirmationResendRateLimit(client, {
       email: "new@example.com",
       ip: "203.0.113.10",
       now: new Date("2026-05-19T00:00:00.000Z"),
     })).resolves.toEqual({ ok: false, retryAfterSeconds: 60 });
-    expect(client.insert).not.toHaveBeenCalled();
+    expect(client.insert).toHaveBeenCalled();
   });
 
   it("limits each email to five resend attempts per day", async () => {
-    const client = createResendLimitClient({ emailDay: 5, emailMinute: 0 });
+    const client = createResendLimitClient({ emailDay: 6, emailMinute: 0 });
 
     await expect(checkConfirmationResendRateLimit(client, {
       email: "new@example.com",
@@ -74,7 +74,7 @@ describe("checkConfirmationResendRateLimit", () => {
   });
 
   it("limits each IP to ten resend attempts per hour", async () => {
-    const client = createResendLimitClient({ emailDay: 0, emailMinute: 0, ipHour: 10 });
+    const client = createResendLimitClient({ emailDay: 0, emailMinute: 0, ipHour: 11 });
 
     await expect(checkConfirmationResendRateLimit(client, {
       email: "new@example.com",

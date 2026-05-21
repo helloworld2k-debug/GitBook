@@ -172,7 +172,7 @@ export function getNewsSlug(formData: FormData) {
 export function getPublicImagePath(formData: FormData, key: string) {
   const path = getRequiredString(formData, key, "Cover image path is required");
 
-  if (!path.startsWith("/news/") || path.includes("..") || path.includes("\\") || path.length > 240) {
+  if (!path.startsWith("/news/") || path.includes("..") || path.includes("\\") || path.includes("\0") || path.length > 240) {
     throw new Error("Cover image path must reference a news image");
   }
 
@@ -239,7 +239,7 @@ export function getReleaseFileMetadata(formData: FormData, platform: "macos" | "
 export function getReleaseStoragePath(formData: FormData, platform: "macos" | "windows") {
   const storagePath = getRequiredString(formData, `${platform}_storage_path`, "Uploaded installer is required");
 
-  if (storagePath.includes("..") || storagePath.includes("\\") || !storagePath.includes(`/${platform}/`)) {
+  if (storagePath.includes("..") || storagePath.includes("\\") || storagePath.includes("\0") || !storagePath.includes(`/${platform}/`)) {
     throw new Error("Uploaded installer path is invalid");
   }
 
