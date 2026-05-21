@@ -77,7 +77,7 @@ export default async function NewsPage({ params }: NewsPageProps) {
 
         {articles.length > 0 ? (
           <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {articles.map((article) => (
+            {articles.map((article, index) => (
               <Link
                 className="glass-panel group overflow-hidden rounded-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
                 href={`/news/${article.slug}`}
@@ -87,7 +87,8 @@ export default async function NewsPage({ params }: NewsPageProps) {
                   alt={article.image_alt}
                   className="aspect-[16/9] w-full object-cover"
                   height={675}
-                  loading="lazy"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  priority={index === 0}
                   src={article.cover_image_path}
                   width={1200}
                 />

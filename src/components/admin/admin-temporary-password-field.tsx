@@ -4,15 +4,7 @@ import { useId, useState } from "react";
 
 function generateTemporaryPassword() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
-  const values = new Uint32Array(18);
-
-  if (typeof crypto !== "undefined" && "getRandomValues" in crypto) {
-    crypto.getRandomValues(values);
-  } else {
-    for (let index = 0; index < values.length; index += 1) {
-      values[index] = Math.floor(Math.random() * alphabet.length);
-    }
-  }
+  const values = crypto.getRandomValues(new Uint32Array(18));
 
   return Array.from(values, (value) => alphabet[value % alphabet.length]).join("");
 }
@@ -40,7 +32,7 @@ export function AdminTemporaryPasswordField({
           name="password"
           onChange={(event) => setPassword(event.currentTarget.value)}
           required={required}
-          type="text"
+          type="password"
           value={password}
         />
       </label>

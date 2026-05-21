@@ -22,7 +22,7 @@ function getStorageEndpoint() {
   }
 
   const url = new URL(supabaseUrl);
-  if (url.hostname.endsWith(".supabase.co")) {
+  if (url.hostname.endsWith(".supabase.co") && !url.hostname.includes(".storage.supabase.co")) {
     url.hostname = url.hostname.replace(".supabase.co", ".storage.supabase.co");
   }
 
@@ -251,7 +251,7 @@ export async function finalizeSoftwareReleaseUpload(formData: FormData) {
 
     assets.push({
       file_name: file.metadata.fileName,
-      file_size: Math.min(file.metadata.fileSize, verifiedSize),
+      file_size: verifiedSize,
       platform: file.platform,
       release_id: releaseId,
       storage_path: file.storagePath,
