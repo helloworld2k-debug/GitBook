@@ -179,20 +179,30 @@ export async function POST(request: Request) {
     return jsonError("register_failed");
   }
 
-  // Auto-confirm the user via admin API and establish a session.
+  // Create a session via admin-generated magic link (does NOT confirm email).
+  // The verification email link stays valid so the user can verify later.
   const userId = result.data?.user?.id;
   if (!bypassEmailConfirmation && userId) {
     const adminClient = createSupabaseAdminClient();
-    const { error: confirmError } = await adminClient.auth.admin.updateUserById(userId, {
-      email_confirm: true,
+    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+      email,
+      type: "magiclink",
     });
 
-    if (!confirmError) {
-      const serverClient = await createSupabaseServerClient();
-      const { error: signInError } = await serverClient.auth.signInWithPassword({ email, password });
+    if (!linkError && linkData?.properties?.action_link) {
+      const linkUrl = new URL(linkData.properties.action_link);
+      const tokenHash = linkUrl.searchParams.get("token_hash");
 
-      if (!signInError) {
-        return jsonOk({ ok: true, autoLogin: true });
+      if (tokenHash) {
+        const serverClient = await createSupabaseServerClient();
+        const { error: verifyError } = await serverClient.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "magiclink",
+        });
+
+        if (!verifyError) {
+          return jsonOk({ ok: true, autoLogin: true });
+        }
       }
     }
   }

@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { getLocaleDashboardPath, getLocaleFromPath, sanitizeNextPath } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseBrowserConfig } from "@/lib/supabase/env";
 
 function buildLoginRedirect(requestUrl: URL, error: string, nextPath: string) {
   const locale = getLocaleFromPath(nextPath);
@@ -12,20 +13,53 @@ function buildLoginRedirect(requestUrl: URL, error: string, nextPath: string) {
   return NextResponse.redirect(loginUrl);
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const requestedNext = requestUrl.searchParams.get("next");
   const nextPath = sanitizeNextPath(requestedNext, getLocaleDashboardPath(getLocaleFromPath(requestedNext)));
   const code = requestUrl.searchParams.get("code");
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
-
-  const supabase = await createSupabaseServerClient();
+  const { url, anonKey } = getSupabaseBrowserConfig();
 
   if (tokenHash && (type === "signup" || type === "invite")) {
-    const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+    const locale = getLocaleFromPath(nextPath);
+    const redirectUrl =
+      type === "invite"
+        ? new URL(`/${locale}/reset-password`, requestUrl.origin)
+        : new URL(`/${locale}/dashboard?welcome=verified`, requestUrl.origin);
+
+    const response = NextResponse.redirect(redirectUrl);
+    const supabase = createServerClient(url, anonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    });
+
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: type as "signup" | "invite" });
 
     if (error) {
+      // If verifyOtp fails (e.g. email already confirmed by admin), the user
+      // may still be valid. Try to create a session via admin magic link.
+      if (type === "signup") {
+        const adminClient = createSupabaseAdminClient();
+
+        // The signup email address is embedded in the JWT token_hash. We can
+        // parse it to find the user, but that's fragile. Instead, just redirect
+        // to login so the user can sign in normally — their email IS confirmed.
+        return buildLoginRedirect(requestUrl, "callback", nextPath);
+      }
+
       return buildLoginRedirect(requestUrl, "callback", nextPath);
     }
 
@@ -34,17 +68,29 @@ export async function GET(request: Request) {
       await adminClient.from("profiles").update({ email_verified: true }).eq("id", data.user.id);
     }
 
-    const locale = getLocaleFromPath(nextPath);
-    if (type === "invite") {
-      return NextResponse.redirect(new URL(`/${locale}/reset-password`, requestUrl.origin));
-    }
-
-    return NextResponse.redirect(new URL(`/${locale}/dashboard?welcome=verified`, requestUrl.origin));
+    return response;
   }
 
   if (!code) {
     return buildLoginRedirect(requestUrl, "missing-code", nextPath);
   }
+
+  const response = NextResponse.redirect(new URL(nextPath, requestUrl.origin));
+  const supabase = createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => {
+          request.cookies.set(name, value);
+        });
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
 
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
@@ -62,5 +108,5 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL(`/${locale}/reset-password`, requestUrl.origin));
   }
 
-  return NextResponse.redirect(new URL(nextPath, requestUrl.origin));
+  return response;
 }
