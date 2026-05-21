@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
               "frame-src https://challenges.cloudflare.com",
               "object-src 'none'",
               "base-uri 'self'",
-              "form-action 'self' https://test.dodopayments.com https://live.dodopayments.com",
+              "form-action 'self' https://test.checkout.dodopayments.com https://live.checkout.dodopayments.com",
             ].join("; "),
           },
         ],
