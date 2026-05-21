@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirectWithAdminFeedback } from "@/lib/admin/feedback";
+import { redirectWithAdminFeedback, type AdminFeedbackKey } from "@/lib/admin/feedback";
 import { requireAdmin, requireOwner } from "@/lib/auth/guards";
 import { CLOUD_SYNC_FEATURE } from "@/lib/license/constants";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -636,7 +636,7 @@ export async function bulkProcessUsers(formData: FormData) {
           .from("profiles")
           .select("email")
           .in("id", userIds)
-          .then(({ data }) => data?.map((p) => p.email) ?? []));
+          .then(({ data }: any) => data?.map((p: any) => p.email) ?? []));
 
       if (existingEmails && existingEmails.length > 0) {
         redirectWithAdminFeedback({
@@ -665,7 +665,7 @@ export async function bulkProcessUsers(formData: FormData) {
       }
 
       // Insert into archive table
-      const archiveEntries = profilesToArchive.map((profile) => ({
+      const archiveEntries = profilesToArchive.map((profile: any) => ({
         original_user_id: profile.id,
         email: profile.email,
         display_name: profile.display_name,
@@ -1170,10 +1170,11 @@ export async function restoreArchivedUser(formData: FormData) {
     });
   }
 
-  const result = data as { ok: boolean; reason: string; restored_user_id: string } | null;
+  const results = data as { ok: boolean; reason: string; restored_user_id: string }[];
+  const result = results?.[0];
 
   if (!result || !result.ok) {
-    const keyMap: Record<string, string> = {
+    const keyMap: Record<string, AdminFeedbackKey> = {
       archive_not_found: "restore-not-found",
       email_already_exists: "restore-email-exists",
       auth_user_missing: "restore-auth-missing",
@@ -1181,7 +1182,7 @@ export async function restoreArchivedUser(formData: FormData) {
     redirectWithAdminFeedback({
       fallbackPath: "/admin/archived-users",
       formData,
-      key: keyMap[result.reason] || "restore-failed",
+      key: result ? keyMap[result.reason] || "restore-failed" : "restore-failed",
       locale,
       tone: "error",
     });
@@ -1209,7 +1210,7 @@ export async function permanentlyDeleteArchivedUser(formData: FormData) {
   const supabase = createSupabaseAdminClient();
 
   // Get archive record to verify email
-  const { data: archive, error: fetchError } = await supabase
+  const { data: archive, error: fetchError } = await (supabase as any)
     .from("deleted_users_archive")
     .select("id,email")
     .eq("id", archiveId)
@@ -1219,7 +1220,7 @@ export async function permanentlyDeleteArchivedUser(formData: FormData) {
     redirectWithAdminFeedback({
       fallbackPath: "/admin/archived-users",
       formData,
-      key: "archive-not-found",
+      key: "permanent-delete-failed",
       locale,
       tone: "error",
     });
@@ -1244,7 +1245,8 @@ export async function permanentlyDeleteArchivedUser(formData: FormData) {
     });
   }
 
-  const result = data as { ok: boolean; reason: string } | null;
+  const results = data as { ok: boolean; reason: string }[];
+  const result = results?.[0];
 
   if (!result || !result.ok) {
     redirectWithAdminFeedback({
@@ -1298,11 +1300,12 @@ export async function bulkRestoreArchivedUsers(formData: FormData) {
       continue;
     }
 
-    const result = data as { ok: boolean; reason: string } | null;
+    const results = data as { ok: boolean; reason: string; restored_user_id: string }[];
+    const result = results?.[0];
     if (result?.ok) {
       successCount++;
     } else {
-      errors.push({ archiveId, reason: result.reason });
+      errors.push({ archiveId, reason: result?.reason || "Unknown error" });
     }
   }
 

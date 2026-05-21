@@ -6,7 +6,8 @@ import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { isOwnerProfile } from "@/lib/auth/guards";
 import { setupAdminPage } from "@/lib/auth/page-guards";
-import { bulkRestoreArchivedUsers, permanentlyDeleteArchivedUser, restoreArchivedUser } from "@/app/[locale]/admin/users/actions";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { bulkRestoreArchivedUsers, permanentlyDeleteArchivedUser, restoreArchivedUser } from "@/app/[locale]/admin/actions/users";
 
 type AdminArchivedUsersSearchParams = {
   error?: string;
@@ -52,7 +53,15 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
   const t = await getTranslations("admin.archivedUsers");
   const adminT = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, "/admin/archived-users");
-  const canPermanentlyDelete = isOwnerProfile({ admin_role: admin.admin_role, is_admin: admin.is_admin });
+
+  // Fetch admin profile to check if user is owner
+  const supabaseAuth = await createSupabaseServerClient();
+  const { data: adminProfile } = await supabaseAuth
+    .from("profiles")
+    .select("is_admin,admin_role")
+    .eq("id", admin.id)
+    .single();
+  const canPermanentlyDelete = isOwnerProfile(adminProfile as any);
 
   const supabase = await import("@/lib/supabase/admin").then((m) => m.createSupabaseAdminClient()) as any;
 
@@ -64,7 +73,7 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
 
   if (error) throw error;
 
-  const filteredArchivedUsers = (archivedUsers ?? []).filter((archive) => matchesSearch(archive, feedback?.query));
+  const filteredArchivedUsers = (archivedUsers ?? []).filter((archive: any) => matchesSearch(archive, feedback?.query));
 
   // Client-side pagination
   const PAGE_SIZE = 20;
@@ -97,7 +106,7 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
                 label={t("title")}
                 mobileCards={
                   <div className="grid gap-3">
-                    {paginatedArchivedUsers.map((archive) => (
+                    {paginatedArchivedUsers.map((archive: any) => (
                       <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={archive.id}>
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -174,7 +183,7 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {paginatedArchivedUsers.map((archive) => (
+                    {paginatedArchivedUsers.map((archive: any) => (
                       <tr key={archive.id}>
                         <td className="px-5 py-4 align-top">
                           <p className="break-all font-medium text-slate-950">{archive.email}</p>
