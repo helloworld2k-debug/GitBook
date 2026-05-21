@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { BadgeCheck, Cloud, CreditCard, KeyRound, ShieldCheck, Sparkles, UserCircle } from "lucide-react";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
+import { EmailVerificationBanner } from "@/components/email-verification-banner";
 import { Link } from "@/i18n/routing";
 import { setupUserPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
@@ -103,7 +104,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
       .limit(5),
     supabase
       .from("profiles")
-      .select("email,display_name")
+      .select("email,display_name,email_verified")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -202,8 +203,27 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                     <h1 className="mt-5 text-4xl font-semibold tracking-normal text-white sm:text-5xl">{t("title")}</h1>
                     <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300">{t("subtitle")}</p>
                     <div className="mt-5 grid gap-3">
+                      {profile && !profile.email_verified ? (
+                        <EmailVerificationBanner
+                          callbackUrl={`${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback?next=/${locale}/dashboard`}
+                          email={profile.email}
+                          messages={{
+                            description: t("emailVerification.description"),
+                            dismiss: t("emailVerification.dismiss"),
+                            resendButton: t("emailVerification.resendButton"),
+                            resendError: t("emailVerification.resendError"),
+                            resendRateLimited: t("emailVerification.resendRateLimited"),
+                            resendSending: t("emailVerification.resendSending"),
+                            resendSent: t("emailVerification.resendSent"),
+                            title: t("emailVerification.title"),
+                          }}
+                        />
+                      ) : null}
                       {welcomeStatus === "verified" ? (
-                        <FormStatusBanner message="Your email has been verified and your account is ready." />
+                        <FormStatusBanner message={t("welcomeVerified")} />
+                      ) : null}
+                      {welcomeStatus === "unverified" ? (
+                        <FormStatusBanner message={t("welcomeUnverified")} tone="warning" />
                       ) : null}
                       {paymentStatus === "dodo-success" ? (
                         <FormStatusBanner message="Your contribution was received. We are preparing your certificate and access updates." />
@@ -410,6 +430,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                   {passwordStatus === "saved" ? <FormStatusBanner message={t("passwordSaved")} /> : null}
                   {passwordStatus === "mismatch" ? <FormStatusBanner message={t("passwordMismatch")} tone="error" /> : null}
                   {passwordStatus === "error" ? <FormStatusBanner message={t("passwordError")} tone="error" /> : null}
+                  {passwordStatus === "unverified" ? <FormStatusBanner message={t("passwordUnverified")} tone="warning" /> : null}
                   <label className="block text-sm font-medium text-slate-100">
                     {t("newPassword")}
                     <input className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-sm text-white outline-none transition-colors focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20" minLength={8} name="password" required type="password" />

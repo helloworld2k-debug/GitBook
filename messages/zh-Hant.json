@@ -239,7 +239,20 @@
     "accessNotActive": "目前沒有有效的雲端同步權限",
     "notAvailable": "暫無資料",
     "trialRedeemedAt": "試用兌換時間",
-    "memberFallback": "GitBook AI 會員"
+    "memberFallback": "GitBook AI 會員",
+    "emailVerification": {
+      "title": "驗證您的電子郵件以確保帳號安全",
+      "description": "電子郵件驗證可為您的帳號增加一層安全保障。部分功能（例如修改密碼）需要已驗證的電子郵件。請檢查您的收件匣和垃圾郵件資料夾。",
+      "resendButton": "重新發送驗證郵件",
+      "resendSending": "發送中...",
+      "resendSent": "驗證郵件已發送。請檢查您的收件匣和垃圾郵件資料夾。",
+      "resendRateLimited": "請稍候再請求發送新的驗證郵件。",
+      "resendError": "無法發送驗證郵件，請稍後再試。",
+      "dismiss": "關閉"
+    },
+    "welcomeVerified": "您的電子郵件已驗證，帳號已準備就緒。",
+    "welcomeUnverified": "歡迎！您的帳號已準備就緒。請驗證您的電子郵件以啟用完整的帳號安全功能。",
+    "passwordUnverified": "修改密碼前請先驗證您的電子郵件。請檢查收件匣中的驗證郵件。"
   },
   "admin": {
     "common": {
@@ -915,6 +928,7 @@
     "confirmPassword": "確認密碼",
     "submit": "更新密碼",
     "mismatch": "兩次輸入的密碼不一致。",
-    "error": "無法更新密碼。請開啟最新的重設密碼郵件連結後再試一次。"
+    "error": "無法更新密碼。請開啟最新的重設密碼郵件連結後再試一次。",
+    "unverified": "重設密碼前請先驗證您的電子郵件。"
   }
 }

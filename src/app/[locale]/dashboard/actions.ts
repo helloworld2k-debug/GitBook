@@ -15,7 +15,7 @@ function getDashboardPath(
   locale: string,
   params:
     | { profile: "saved" | "error" }
-    | { password: "saved" | "error" | "mismatch" }
+    | { password: "saved" | "error" | "mismatch" | "unverified" }
     | { trial: "saved" | "invalid" | "inactive" | "limit" | "machine_used" | "duplicate" | "error" },
 ) {
   const safeLocale = getActionLocale(locale);
@@ -44,7 +44,19 @@ export async function updateAccountProfile(locale: string, formData: FormData) {
 
 export async function updateDashboardPassword(locale: string, formData: FormData) {
   const safeLocale = getActionLocale(locale);
-  await requireUser(safeLocale, `/${safeLocale}/dashboard`);
+  const user = await requireUser(safeLocale, `/${safeLocale}/dashboard`);
+
+  const adminClient = createSupabaseAdminClient();
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("email_verified")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.email_verified) {
+    redirect(getDashboardPath(safeLocale, { password: "unverified" }));
+  }
+
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirm_password") ?? "");
 

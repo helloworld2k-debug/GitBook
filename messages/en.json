@@ -251,7 +251,20 @@
     "accessNotActive": "No active cloud sync access yet",
     "notAvailable": "Not available",
     "trialRedeemedAt": "Last code redeemed at",
-    "memberFallback": "GitBook AI member"
+    "memberFallback": "GitBook AI member",
+    "emailVerification": {
+      "title": "Verify your email for account security",
+      "description": "Email verification adds an extra layer of security. Some features, like changing your password, require a verified email. Check your inbox and spam folder.",
+      "resendButton": "Resend verification email",
+      "resendSending": "Sending...",
+      "resendSent": "Verification email sent. Check your inbox and spam folder.",
+      "resendRateLimited": "Please wait before requesting another verification email.",
+      "resendError": "Could not send verification email. Try again later.",
+      "dismiss": "Dismiss"
+    },
+    "welcomeVerified": "Your email has been verified and your account is ready.",
+    "welcomeUnverified": "Welcome! Your account is ready. Verify your email to enable full account security.",
+    "passwordUnverified": "Please verify your email before changing your password. Check your inbox for the verification email."
   },
   "admin": {
     "common": {
@@ -915,6 +928,7 @@
     "confirmPassword": "Confirm password",
     "submit": "Update password",
     "mismatch": "Passwords do not match.",
-    "error": "Could not update your password. Open the latest reset email link and try again."
+    "error": "Could not update your password. Open the latest reset email link and try again.",
+    "unverified": "Please verify your email address before resetting your password."
   }
 }

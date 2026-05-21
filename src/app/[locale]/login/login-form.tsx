@@ -197,7 +197,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
         return;
       }
 
-      const result = await response.json() as { emailConfirmationBypassed?: boolean; error?: string; ok?: boolean };
+      const result = await response.json() as { autoLogin?: boolean; emailConfirmationBypassed?: boolean; error?: string; ok?: boolean };
 
       if (result.error === "account_exists") {
         setMode("sign-in");
@@ -207,6 +207,13 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
 
       if (!response.ok || !result.ok) {
         setStatus("error");
+        return;
+      }
+
+      if (result.autoLogin) {
+        const dashboardUrl = new URL(nextPath, window.location.origin);
+        dashboardUrl.searchParams.set("welcome", "unverified");
+        window.location.assign(dashboardUrl.toString());
         return;
       }
 

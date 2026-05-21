@@ -4,6 +4,7 @@ import { checkRegisterRateLimit, type RegisterLimitClient } from "@/lib/auth/reg
 import { registerWithEmailPassword } from "@/lib/auth/register";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 type AuthSignupError = {
@@ -176,6 +177,24 @@ export async function POST(request: Request) {
 
   if (result.error) {
     return jsonError("register_failed");
+  }
+
+  // Auto-confirm the user via admin API and establish a session.
+  const userId = result.data?.user?.id;
+  if (!bypassEmailConfirmation && userId) {
+    const adminClient = createSupabaseAdminClient();
+    const { error: confirmError } = await adminClient.auth.admin.updateUserById(userId, {
+      email_confirm: true,
+    });
+
+    if (!confirmError) {
+      const serverClient = await createSupabaseServerClient();
+      const { error: signInError } = await serverClient.auth.signInWithPassword({ email, password });
+
+      if (!signInError) {
+        return jsonOk({ ok: true, autoLogin: true });
+      }
+    }
   }
 
   return jsonOk({ ok: true, ...(bypassEmailConfirmation && result.data.user ? { emailConfirmationBypassed: true } : {}) });

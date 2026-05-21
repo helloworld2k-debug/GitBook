@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getActionLocale } from "@/lib/i18n/action-locale";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
@@ -10,13 +11,30 @@ const resetPasswordSchema = z.object({
   confirm_password: z.string().min(8).max(128),
 });
 
-function getResetPasswordPath(locale: string, status: "error" | "mismatch" | "weak") {
+function getResetPasswordPath(locale: string, status: "error" | "mismatch" | "unverified" | "weak") {
   const safeLocale = getActionLocale(locale);
   return `/${safeLocale}/reset-password?status=${status}`;
 }
 
 export async function updateResetPassword(locale: string, formData: FormData) {
   const safeLocale = getActionLocale(locale);
+
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    const adminClient = createSupabaseAdminClient();
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("email_verified")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile?.email_verified) {
+      redirect(getResetPasswordPath(safeLocale, "unverified"));
+    }
+  }
+
   const parsed = resetPasswordSchema.safeParse({
     password: formData.get("password"),
     confirm_password: formData.get("confirm_password"),

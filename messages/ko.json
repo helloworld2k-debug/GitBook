@@ -239,7 +239,20 @@
     "accessNotActive": "아직 활성 클라우드 동기화 권한이 없습니다",
     "notAvailable": "사용 불가",
     "trialRedeemedAt": "마지막 코드 교환 시간",
-    "memberFallback": "GitBook AI 멤버"
+    "memberFallback": "GitBook AI 멤버",
+    "emailVerification": {
+      "title": "계정 보안을 위해 이메일을 인증해 주세요",
+      "description": "이메일 인증은 추가 보안 계층을 제공합니다. 비밀번호 변경 등 일부 기능은 인증된 이메일이 필요합니다. 받은편지함과 스팸 폴더를 확인해 주세요.",
+      "resendButton": "인증 이메일 다시 보내기",
+      "resendSending": "보내는 중...",
+      "resendSent": "인증 이메일을 보냈습니다. 받은편지함과 스팸 폴더를 확인해 주세요.",
+      "resendRateLimited": "새 인증 이메일을 요청하기 전에 잠시 기다려 주세요.",
+      "resendError": "인증 이메일을 보낼 수 없습니다. 나중에 다시 시도해 주세요.",
+      "dismiss": "닫기"
+    },
+    "welcomeVerified": "이메일이 인증되었으며 계정이 준비되었습니다.",
+    "welcomeUnverified": "환영합니다! 계정이 준비되었습니다. 전체 계정 보안을 활성화하려면 이메일을 인증해 주세요.",
+    "passwordUnverified": "비밀번호를 변경하기 전에 이메일을 인증해 주세요. 받은편지함에서 인증 이메일을 확인해 주세요."
   },
   "admin": {
     "common": {
@@ -915,6 +928,7 @@
     "confirmPassword": "비밀번호 확인",
     "submit": "비밀번호 업데이트",
     "mismatch": "비밀번호가 일치하지 않습니다.",
-    "error": "비밀번호를 업데이트할 수 없습니다. 최신 재설정 이메일 링크를 열고 다시 시도하세요."
+    "error": "비밀번호를 업데이트할 수 없습니다. 최신 재설정 이메일 링크를 열고 다시 시도하세요.",
+    "unverified": "비밀번호를 재설정하기 전에 이메일 주소를 인증해 주세요."
   }
 }

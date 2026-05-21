@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getLocaleDashboardPath, getLocaleFromPath, sanitizeNextPath } from "@/lib/auth/guards";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function buildLoginRedirect(requestUrl: URL, error: string, nextPath: string) {
@@ -22,10 +23,15 @@ export async function GET(request: Request) {
   const supabase = await createSupabaseServerClient();
 
   if (tokenHash && (type === "signup" || type === "invite")) {
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
 
     if (error) {
       return buildLoginRedirect(requestUrl, "callback", nextPath);
+    }
+
+    if (data.user) {
+      const adminClient = createSupabaseAdminClient();
+      await adminClient.from("profiles").update({ email_verified: true }).eq("id", data.user.id);
     }
 
     const locale = getLocaleFromPath(nextPath);
@@ -40,10 +46,15 @@ export async function GET(request: Request) {
     return buildLoginRedirect(requestUrl, "missing-code", nextPath);
   }
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     return buildLoginRedirect(requestUrl, "callback", nextPath);
+  }
+
+  if (data.user) {
+    const adminClient = createSupabaseAdminClient();
+    await adminClient.from("profiles").update({ email_verified: true }).eq("id", data.user.id).eq("email_verified", false);
   }
 
   if (nextPath.endsWith("/reset-password")) {

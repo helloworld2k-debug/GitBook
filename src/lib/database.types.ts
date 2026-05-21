@@ -71,6 +71,7 @@ export type Database = {
           is_admin: boolean;
           admin_role: "owner" | "operator" | "user";
           account_status: "active" | "disabled" | "deleted";
+          email_verified: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -85,6 +86,7 @@ export type Database = {
           is_admin?: boolean;
           admin_role?: "owner" | "operator" | "user";
           account_status?: "active" | "disabled" | "deleted";
+          email_verified?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -99,6 +101,7 @@ export type Database = {
           is_admin?: boolean;
           admin_role?: "owner" | "operator" | "user";
           account_status?: "active" | "disabled" | "deleted";
+          email_verified?: boolean;
           created_at?: string;
           updated_at?: string;
         };

@@ -35,6 +35,7 @@ export default async function ResetPasswordPage({ params, searchParams }: ResetP
             <form action={updatePassword} className="mt-6 space-y-4">
               {query?.status === "mismatch" ? <FormStatusBanner message={t("mismatch")} tone="error" /> : null}
               {query?.status === "error" ? <FormStatusBanner message={t("error")} tone="error" /> : null}
+              {query?.status === "unverified" ? <FormStatusBanner message={t("unverified")} tone="warning" /> : null}
               <label className="block text-sm font-medium text-slate-200" htmlFor="reset-password">
                 {t("newPassword")}
               </label>
