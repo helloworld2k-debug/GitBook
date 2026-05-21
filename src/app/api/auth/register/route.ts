@@ -1,4 +1,5 @@
 import { jsonError, jsonOk } from "@/lib/api/responses";
+import { validateRequestOrigin } from "@/lib/auth/csrf";
 import { checkRegisterRateLimit, type RegisterLimitClient } from "@/lib/auth/register-rate-limit";
 import { registerWithEmailPassword } from "@/lib/auth/register";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
@@ -120,6 +121,10 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (!validateRequestOrigin(request)) {
+    return jsonError("invalid_request", 403);
+  }
+
   const raw = await request.json();
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) {

@@ -1,4 +1,5 @@
 import { jsonError, jsonOk } from "@/lib/api/responses";
+import { validateRequestOrigin } from "@/lib/auth/csrf";
 import { checkLoginRisk, recordLoginAttempt, type LoginRiskClient } from "@/lib/auth/login-risk";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -43,6 +44,10 @@ const loginSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (!validateRequestOrigin(request)) {
+    return jsonError("invalid_request", 403);
+  }
+
   const raw = await request.json();
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
@@ -54,11 +59,13 @@ export async function POST(request: Request) {
   const ip = getIpAddress(request);
   const adminClient = createSupabaseAdminClient() as unknown as LoginRiskClient;
   let risk: { captchaRequired: boolean };
+  const turnstileConfigured = isTurnstileConfigured();
 
   try {
     risk = await checkLoginRisk(adminClient, { email, ip });
   } catch {
-    risk = { captchaRequired: false };
+    console.error("login risk check failed — requiring captcha as fallback");
+    risk = { captchaRequired: turnstileConfigured };
   }
 
   if (risk.captchaRequired) {

@@ -9,6 +9,10 @@ const mocks = vi.hoisted(() => ({
   verifyTurnstileToken: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/csrf", () => ({
+  validateRequestOrigin: () => true,
+}));
+
 vi.mock("@/lib/auth/login-risk", () => ({
   checkLoginRisk: mocks.checkLoginRisk,
   recordLoginAttempt: mocks.recordLoginAttempt,
@@ -70,7 +74,7 @@ describe("login route", () => {
     }));
   });
 
-  it("still signs in when login risk tracking is unavailable", async () => {
+  it("requires captcha as fallback when login risk tracking is unavailable", async () => {
     mocks.checkLoginRisk.mockRejectedValueOnce(new Error("login_attempts table missing"));
 
     const response = await POST(new Request("https://gitbookai.example/api/auth/login", {
@@ -82,8 +86,27 @@ describe("login route", () => {
       method: "POST",
     }));
 
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "captcha_required" });
+    expect(signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("allows sign-in after captcha verification when login risk tracking is unavailable", async () => {
+    mocks.checkLoginRisk.mockRejectedValueOnce(new Error("login_attempts table missing"));
+
+    const response = await POST(new Request("https://gitbookai.example/api/auth/login", {
+      body: JSON.stringify({
+        email: "friend@example.com",
+        password: "correct-password",
+        turnstileToken: "ok-token",
+      }),
+      headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10" },
+      method: "POST",
+    }));
+
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
+    expect(mocks.verifyTurnstileToken).toHaveBeenCalledWith("ok-token", "203.0.113.10");
     expect(signInWithPassword).toHaveBeenCalledWith({
       email: "friend@example.com",
       password: "correct-password",

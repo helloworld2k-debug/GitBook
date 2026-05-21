@@ -1,4 +1,5 @@
 import { jsonError, jsonOk } from "@/lib/api/responses";
+import { validateRequestOrigin } from "@/lib/auth/csrf";
 import {
   checkConfirmationResendRateLimit,
   type ConfirmationResendLimitClient,
@@ -31,6 +32,10 @@ function isSafeCallbackUrl(value: string, request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!validateRequestOrigin(request)) {
+    return jsonError("invalid_request", 403);
+  }
+
   const body = (await request.json()) as ResendConfirmationRequestBody;
   const email = String(body.email ?? "").trim();
   const callbackUrl = String(body.callbackUrl ?? "").trim();

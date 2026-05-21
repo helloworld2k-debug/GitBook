@@ -7,6 +7,10 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/csrf", () => ({
+  validateRequestOrigin: () => true,
+}));
+
 vi.mock("@/lib/payments/dodo", () => ({
   createDodoCheckoutSession: mocks.createCheckoutSession,
   getDodoProductId: (tierCode: string) =>

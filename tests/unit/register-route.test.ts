@@ -8,6 +8,10 @@ const mocks = vi.hoisted(() => ({
   verifyTurnstileToken: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/csrf", () => ({
+  validateRequestOrigin: () => true,
+}));
+
 vi.mock("@/lib/auth/register-rate-limit", () => ({
   checkRegisterRateLimit: mocks.checkRegisterRateLimit,
 }));

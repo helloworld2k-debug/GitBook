@@ -6,6 +6,10 @@ const mocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/csrf", () => ({
+  validateRequestOrigin: () => true,
+}));
+
 vi.mock("@/lib/auth/confirmation-resend-rate-limit", () => ({
   checkConfirmationResendRateLimit: mocks.checkConfirmationResendRateLimit,
 }));

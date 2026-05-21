@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api/responses";
+import { validateRequestOrigin } from "@/lib/auth/csrf";
 import { getActionLocale } from "@/lib/i18n/action-locale";
 import { createDodoCheckoutSession, getDodoProductId } from "@/lib/payments/dodo";
 import { findActiveDonationTier } from "@/lib/payments/tier";
@@ -18,6 +19,10 @@ function getSiteOrigin() {
 }
 
 export async function POST(request: Request) {
+  if (!validateRequestOrigin(request)) {
+    return jsonError("Invalid request", 403);
+  }
+
   const formData = await request.formData();
   const origin = getSiteOrigin();
   const locale = getActionLocale(formData.get("locale"));
