@@ -52,6 +52,10 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
   const donationDetails = await getDonationDetailsForCertificate(supabase, certificate, user.id);
   const donationAmount = formatCertificateAmount(donationDetails, locale);
 
+  // Get tier label if available
+  const tierCode = donationDetails?.tierCode;
+  const tierLabel = tierCode ? t(`tiers.${tierCode}` as any) : null;
+
   return (
     <>
       <main className="tech-shell flex-1">
@@ -67,9 +71,11 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
               pendingIssueDate: t("pendingIssueDate"),
               presentedTo: t("presentedTo"),
               title: t("title"),
+              tier: t("tier"),
             }}
             issuedAt={certificate.issued_at}
             donationAmount={donationAmount}
+            tierLabel={tierLabel}
             label={getCertificateTypeLabel(certificate.type, {
               donation: t("types.donation"),
               honor: t("types.honor"),

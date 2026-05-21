@@ -1015,6 +1015,7 @@
     "title": "感謝状",
     "description": "独立したソフトウェア開発への大切なご支援に、感謝を込めてこの証明書を贈ります。",
     "amount": "開発支援金額",
+    "tier": "支援ランク",
     "presentedTo": "贈呈先",
     "certificateNumber": "証明書番号",
     "issued": "発行日",
@@ -1034,8 +1035,13 @@
       "dashboard": "ダッシュボードへ戻る"
     },
     "types": {
-      "donation": "応援証明書",
+      "donation": "開発支援証明書",
       "honor": "表彰証明書"
+    },
+    "tiers": {
+      "monthly": "月次開発支援",
+      "quarterly": "四半期開発支援",
+      "yearly": "年次開発支援"
     }
   },
   "versions": {

@@ -11,12 +11,14 @@ type CertificateViewProps = {
     pendingIssueDate: string;
     presentedTo: string;
     title: string;
+    tier: string;
   };
   recipientName: string;
   label: string;
   issuedAt: string | Date | null;
   locale: string;
   donationAmount?: string | null;
+  tierLabel?: string | null;
   template?: CertificateTemplate;
 };
 
@@ -65,6 +67,7 @@ export function CertificateView({
   certificateNumber,
   copy,
   donationAmount,
+  tierLabel,
   recipientName,
   label,
   issuedAt,
@@ -132,7 +135,7 @@ export function CertificateView({
             </p>
           </div>
 
-          <div className="relative mt-10 grid gap-3 text-left text-sm sm:grid-cols-3">
+          <div className="relative mt-10 grid gap-3 text-left text-sm sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-md border border-cyan-300/15 bg-white/[0.05] p-4">
               <p className="font-semibold text-cyan-100">{copy.certificateNumber}</p>
               <p className="mt-2 break-words font-mono text-sm text-slate-200">{certificateNumber}</p>
@@ -141,6 +144,12 @@ export function CertificateView({
               <div className="rounded-md border border-cyan-300/15 bg-white/[0.05] p-4">
                 <p className="font-semibold text-cyan-100">{copy.amount}</p>
                 <p className="mt-2 text-slate-200">{donationAmount}</p>
+              </div>
+            ) : null}
+            {tierLabel ? (
+              <div className="rounded-md border border-cyan-300/15 bg-white/[0.05] p-4">
+                <p className="font-semibold text-cyan-100">{copy.tier}</p>
+                <p className="mt-2 text-slate-200">{tierLabel}</p>
               </div>
             ) : null}
             <div className="rounded-md border border-amber-200/20 bg-amber-200/[0.06] p-4">

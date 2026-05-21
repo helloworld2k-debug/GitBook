@@ -1028,6 +1028,7 @@
     "title": "Certificate of Appreciation",
     "description": "This certificate is presented with gratitude for meaningful support of independent software development.",
     "amount": "Support amount",
+    "tier": "Support tier",
     "presentedTo": "Presented to",
     "certificateNumber": "Certificate No.",
     "issued": "Issued",
@@ -1049,6 +1050,11 @@
     "types": {
       "donation": "Development Support Certificate",
       "honor": "Honor Certificate"
+    },
+    "tiers": {
+      "monthly": "Monthly Dev Support",
+      "quarterly": "Quarterly Dev Support",
+      "yearly": "Yearly Dev Support"
     }
   },
   "resetPassword": {

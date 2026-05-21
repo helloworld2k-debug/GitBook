@@ -1015,6 +1015,7 @@
     "title": "감사장",
     "description": "독립 소프트웨어 개발을 위한 의미 있는 지원에 감사드리며 이 인증서를 드립니다.",
     "amount": "개발 지원 금액",
+    "tier": "지원 등급",
     "presentedTo": "수여 대상",
     "certificateNumber": "인증서 번호",
     "issued": "발급일",
@@ -1036,6 +1037,11 @@
     "types": {
       "donation": "개발 지원 인증서",
       "honor": "공로 인증서"
+    },
+    "tiers": {
+      "monthly": "월간 개발 지원",
+      "quarterly": "분기 개발 지원",
+      "yearly": "연간 개발 지원"
     }
   },
   "versions": {
