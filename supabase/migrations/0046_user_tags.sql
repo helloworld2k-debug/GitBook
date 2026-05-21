@@ -41,9 +41,3 @@ on public.user_tag_assignments for all
 to service_role
 using (true)
 with check (true);
-
--- Update timestamp trigger
-create trigger update_user_tags_updated_at
-before update on public.user_tags
-for each row
-execute function public.update_updated_at_column();
