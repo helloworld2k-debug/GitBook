@@ -50,7 +50,6 @@ export async function updateResetPassword(locale: string, formData: FormData) {
     redirect(getResetPasswordPath(safeLocale, "mismatch"));
   }
 
-  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
