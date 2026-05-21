@@ -3,7 +3,6 @@ import { validateRequestOrigin } from "@/lib/auth/csrf";
 import { checkRegisterRateLimit, type RegisterLimitClient } from "@/lib/auth/register-rate-limit";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 type AuthSignupError = {
@@ -153,39 +152,6 @@ export async function POST(request: Request) {
     return jsonError("register_failed");
   }
 
-  // Auto-login after successful registration
-  const serverClient = await createSupabaseServerClient();
-  const { error: signInError } = await serverClient.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (!signInError) {
-    return jsonOk({ ok: true, autoLogin: true });
-  }
-
-  // Fallback: magic link approach
-  const adminClient = createSupabaseAdminClient();
-  const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
-    email,
-    type: "magiclink",
-  });
-
-  if (!linkError && linkData?.properties?.action_link) {
-    const linkUrl = new URL(linkData.properties.action_link);
-    const tokenHash = linkUrl.searchParams.get("token_hash");
-
-    if (tokenHash) {
-      const { error: verifyError } = await serverClient.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: "magiclink",
-      });
-
-      if (!verifyError) {
-        return jsonOk({ ok: true, autoLogin: true });
-      }
-    }
-  }
-
-  return jsonOk({ ok: true, emailConfirmationBypassed: true });
+  // Return success - frontend will handle the signIn to set browser cookies
+  return jsonOk({ ok: true, needsClientLogin: true });
 }

@@ -66,6 +66,36 @@ declare global {
 
 const providerOrder: OAuthProvider[] = ["google", "github"];
 
+// Toast notification helper
+function showToast(message: string, duration = 3000) {
+  // Remove existing toast if any
+  const existing = document.getElementById("registration-toast");
+  if (existing) {
+    existing.remove();
+  }
+
+  // Create toast element
+  const toast = document.createElement("div");
+  toast.id = "registration-toast";
+  toast.className = "fixed top-4 right-4 z-50 animate-in slide-in-from-right fade-in duration-300";
+  toast.innerHTML = `
+    <div class="flex items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-950/90 px-4 py-3 shadow-lg backdrop-blur-sm">
+      <svg class="h-5 w-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <p class="text-sm font-medium text-emerald-50">${message}</p>
+    </div>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Auto remove after duration
+  setTimeout(() => {
+    toast.classList.add("animate-out", "slide-out-to-right", "fade-out");
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
 function GoogleIcon() {
   return (
     <svg aria-hidden="true" className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -197,7 +227,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
         return;
       }
 
-      const result = await response.json() as { autoLogin?: boolean; emailConfirmationBypassed?: boolean; error?: string; ok?: boolean };
+      const result = await response.json() as { autoLogin?: boolean; emailConfirmationBypassed?: boolean; error?: string; needsClientLogin?: boolean; ok?: boolean };
 
       if (result.error === "account_exists") {
         setMode("sign-in");
@@ -210,9 +240,27 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
         return;
       }
 
-      if (result.autoLogin) {
+      // Registration successful - show toast and login
+      if (result.needsClientLogin) {
+        // Show success toast notification
+        showToast("Registration successful! Logging you in...");
+        setStatus("submitting");
+
+        // Login client-side to set browser cookies
+        const supabase = createSupabaseBrowserClient();
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (loginError) {
+          setStatus("error");
+          return;
+        }
+
+        // Redirect to dashboard
         const dashboardUrl = new URL(nextPath, window.location.origin);
-        dashboardUrl.searchParams.set("welcome", "unverified");
+        dashboardUrl.searchParams.set("welcome", "new");
         window.location.assign(dashboardUrl.toString());
         return;
       }
