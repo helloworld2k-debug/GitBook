@@ -65,7 +65,7 @@ describe("checkRegisterRateLimit", () => {
   });
 
   it("rate-limits repeated attempts for the same email and IP", async () => {
-    const client = createRegisterLimitClient({ emailIp: 5 });
+    const client = createRegisterLimitClient({ emailIp: 6 });
 
     await expect(checkRegisterRateLimit(client, {
       email: "new@example.com",
@@ -78,7 +78,7 @@ describe("checkRegisterRateLimit", () => {
   });
 
   it("rate-limits high registration volume from the same IP", async () => {
-    const client = createRegisterLimitClient({ emailIp: 0, ip: 20 });
+    const client = createRegisterLimitClient({ emailIp: 0, ip: 21 });
 
     await expect(checkRegisterRateLimit(client, {
       email: "new@example.com",
@@ -91,7 +91,7 @@ describe("checkRegisterRateLimit", () => {
   });
 
   it("rate-limits high registration volume for the same email domain", async () => {
-    const client = createRegisterLimitClient({ domain: 50, emailIp: 0, ip: 0 });
+    const client = createRegisterLimitClient({ domain: 51, emailIp: 0, ip: 0 });
 
     await expect(checkRegisterRateLimit(client, {
       email: "new@example.com",

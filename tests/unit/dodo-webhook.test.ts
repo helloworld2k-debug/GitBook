@@ -109,7 +109,7 @@ describe("Dodo webhook route", () => {
     );
   });
 
-  it("records the actual Dodo paid amount when the product id verifies the selected tier", async () => {
+  it("rejects mismatched amount even when the product id verifies the selected tier", async () => {
     mocks.verifyDodoWebhook.mockReturnValue({
       type: "payment.succeeded",
       data: {
@@ -129,21 +129,8 @@ describe("Dodo webhook route", () => {
 
     const response = await POST(new Request("https://example.com/api/webhooks/dodo", { body: "{}", method: "POST" }));
 
-    expect(response.status).toBe(200);
-    expect(mocks.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        amount: 1200,
-        currency: "usd",
-        metadata: {
-          expected_amount: 8640,
-          paid_amount: 1200,
-          product_id: "pdt_yearly",
-          tier: "yearly",
-        },
-        provider_transaction_id: "pay_456",
-      }),
-      { onConflict: "provider,provider_transaction_id" },
-    );
-    expect(mocks.generateCertificatesForDonation).toHaveBeenCalledWith("donation_123");
+    expect(response.status).toBe(400);
+    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.generateCertificatesForDonation).not.toHaveBeenCalled();
   });
 });

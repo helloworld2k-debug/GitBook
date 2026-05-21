@@ -68,12 +68,35 @@ async function registerConfirmedUserWithEmailPassword(input: {
     return result;
   }
 
-  const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
-  if (usersError) {
-    return { data: { user: null }, error: usersError };
-  }
+  // Paginate through users to find the unconfirmed one with this email.
+  // listUsers returns max 50 per page, so we must paginate.
+  let page = 1;
+  const perPage = 50;
+  let existingUser: { id: string; email_confirmed_at?: string | null } | null = null;
 
-  const existingUser = usersData.users.find((user) => user.email?.toLowerCase() === input.email.toLowerCase());
+  while (!existingUser) {
+    const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (usersError) {
+      return { data: { user: null }, error: usersError };
+    }
+
+    if (usersData.users.length === 0) {
+      break;
+    }
+
+    existingUser =
+      usersData.users.find((user) => user.email?.toLowerCase() === input.email.toLowerCase()) ?? null;
+
+    if (usersData.users.length < perPage) {
+      break;
+    }
+
+    page++;
+  }
 
   if (!existingUser || existingUser.email_confirmed_at) {
     return { data: { user: null }, error: null };

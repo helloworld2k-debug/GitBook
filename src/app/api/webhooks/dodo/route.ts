@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       amount <= 0 ||
       !currency ||
       (productId && productId !== expectedProductId) ||
-      (!productId && expectedAmount !== null && amount !== expectedAmount)
+      (expectedAmount !== null && amount !== expectedAmount)
     ) {
       return jsonError("Missing required metadata");
     }

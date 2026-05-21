@@ -85,6 +85,7 @@ export async function checkRegisterRateLimit(
   const since = new Date(now.getTime() - WINDOW_MS).toISOString();
   const ip = input.ip?.trim() || null;
 
+  // Check active blocks first — these are authoritative and don't need insert-before-count.
   const blockCandidates: Array<["domain" | "email" | "ip", string | null]> = [
     ["email", email],
     ["domain", domain],
@@ -103,38 +104,9 @@ export async function checkRegisterRateLimit(
     }
   }
 
-  const emailIpAttempts = await countRecent(client, "id", since, [
-    ["email_normalized", email],
-    ["ip_address", ip],
-  ]);
-
-  if (emailIpAttempts >= MAX_EMAIL_IP_ATTEMPTS) {
-    return {
-      ok: false as const,
-      retryAfterSeconds: WINDOW_SECONDS,
-    };
-  }
-
-  if (ip) {
-    const ipAttempts = await countRecent(client, "id,email_normalized", since, [["ip_address", ip]]);
-
-    if (ipAttempts >= MAX_IP_ATTEMPTS) {
-      return {
-        ok: false as const,
-        retryAfterSeconds: WINDOW_SECONDS,
-      };
-    }
-  }
-
-  const domainAttempts = await countRecent(client, "id,ip_address", since, [["email_domain", domain]]);
-
-  if (domainAttempts >= MAX_DOMAIN_ATTEMPTS) {
-    return {
-      ok: false as const,
-      retryAfterSeconds: WINDOW_SECONDS,
-    };
-  }
-
+  // Insert the attempt first to narrow the TOCTOU race window.
+  // Concurrent requests that pass the count check will still leave records
+  // that make subsequent checks stricter.
   const { error: insertError } = await client.from("registration_attempts").insert({
     email_domain: domain,
     email_normalized: email,
@@ -144,6 +116,38 @@ export async function checkRegisterRateLimit(
 
   if (insertError) {
     throw new Error("Unable to record registration attempt");
+  }
+
+  const emailIpAttempts = await countRecent(client, "id", since, [
+    ["email_normalized", email],
+    ["ip_address", ip],
+  ]);
+
+  if (emailIpAttempts > MAX_EMAIL_IP_ATTEMPTS) {
+    return {
+      ok: false as const,
+      retryAfterSeconds: WINDOW_SECONDS,
+    };
+  }
+
+  if (ip) {
+    const ipAttempts = await countRecent(client, "id,email_normalized", since, [["ip_address", ip]]);
+
+    if (ipAttempts > MAX_IP_ATTEMPTS) {
+      return {
+        ok: false as const,
+        retryAfterSeconds: WINDOW_SECONDS,
+      };
+    }
+  }
+
+  const domainAttempts = await countRecent(client, "id,ip_address", since, [["email_domain", domain]]);
+
+  if (domainAttempts > MAX_DOMAIN_ATTEMPTS) {
+    return {
+      ok: false as const,
+      retryAfterSeconds: WINDOW_SECONDS,
+    };
   }
 
   return { ok: true as const };
