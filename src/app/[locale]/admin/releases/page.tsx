@@ -4,7 +4,7 @@ import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatu
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
-import { SOFTWARE_RELEASES_BUCKET, getPlatformDelivery, type ReleaseClient, type SoftwareRelease } from "@/lib/releases/software-releases";
+import { SOFTWARE_RELEASES_BUCKET, getPlatformDelivery, type ReleaseClient, type ReleaseDeliveryMode, type ReleasePlatform, type ReleaseStatus, type SoftwareRelease } from "@/lib/releases/software-releases";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSoftwareRelease, deleteDraftSoftwareRelease, setSoftwareReleasePublished } from "../actions";
 
@@ -64,16 +64,16 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
       version: row.version,
       releasedAt: row.released_at,
       notes: row.notes,
-      deliveryMode: row.delivery_mode,
+      deliveryMode: row.delivery_mode as ReleaseDeliveryMode,
       macosPrimaryUrl: row.macos_primary_url,
       macosBackupUrl: row.macos_backup_url,
       windowsPrimaryUrl: row.windows_primary_url,
       windowsBackupUrl: row.windows_backup_url,
       isPublished: row.is_published,
-      releaseStatus: row.release_status ?? "ready",
+      releaseStatus: (row.release_status ?? "ready") as ReleaseStatus,
       assets: (row.software_release_assets ?? []).map((asset) => ({
         id: asset.id,
-        platform: asset.platform,
+        platform: asset.platform as ReleasePlatform,
         fileName: asset.file_name,
         storagePath: asset.storage_path,
         fileSize: asset.file_size,

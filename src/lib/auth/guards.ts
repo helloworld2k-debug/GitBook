@@ -77,7 +77,11 @@ export async function requireOperator(locale: Locale | string, nextPath?: string
   const supabase = await createSupabaseServerClient();
   const { data: profile } = await supabase.from("profiles").select("is_admin,admin_role,account_status").eq("id", user.id).single();
 
-  if (!isAdminProfile(profile)) {
+  if (!isAdminProfile({
+    ...profile,
+    admin_role: profile?.admin_role as AdminRole | null,
+    account_status: profile?.account_status as AccountStatus | null,
+  })) {
     redirect(`/${locale}/dashboard`);
   }
 
@@ -89,7 +93,11 @@ export async function requireOwner(locale: Locale | string, nextPath?: string) {
   const supabase = await createSupabaseServerClient();
   const { data: profile } = await supabase.from("profiles").select("is_admin,admin_role,account_status").eq("id", user.id).single();
 
-  if (!isOwnerProfile(profile)) {
+  if (!isOwnerProfile({
+    ...profile,
+    admin_role: profile?.admin_role as AdminRole | null,
+    account_status: profile?.account_status as AccountStatus | null,
+  })) {
     redirect(`/${locale}/admin`);
   }
 

@@ -7,7 +7,7 @@ import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatu
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { isOwnerProfile } from "@/lib/auth/guards";
+import { isOwnerProfile, type AccountStatus, type AdminRole } from "@/lib/auth/guards";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import type { Database } from "@/lib/database.types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -323,7 +323,11 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   const usageEvents = (usageEventsResult.data ?? []) as CloudSyncUsageEventRow[];
   const cooldownOverrides = cooldownOverridesResult.data ?? [];
   const supportFeedback = supportFeedbackResult.data ?? [];
-  const canManageRoles = isOwnerProfile(adminProfileResult.data);
+  const canManageRoles = isOwnerProfile({
+    ...adminProfileResult.data,
+    admin_role: adminProfileResult.data?.admin_role as AdminRole | null,
+    account_status: adminProfileResult.data?.account_status as AccountStatus | null,
+  });
   const canPermanentlyDeleteUser = canManageRoles || !isOwnerUserProfile(profile);
   const activeLease = leases.find((lease) => !lease.revoked_at);
   const totalUsageSeconds = usageSessions.reduce((total, session) => total + usageSeconds(session), 0);

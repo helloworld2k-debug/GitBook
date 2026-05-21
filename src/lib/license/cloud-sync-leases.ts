@@ -201,14 +201,14 @@ export async function recordCloudSyncUsageEvent(
 ): Promise<{ recorded: true }> {
   const now = input.now ?? new Date();
   const { error } = await client.rpc("record_cloud_sync_usage_event", {
-    input_desktop_session_id: input.desktopSessionId,
-    input_device_id: input.deviceId,
+    input_desktop_session_id: input.desktopSessionId ?? "",
+    input_device_id: input.deviceId ?? "",
     input_event_type: input.eventType,
-    input_lease_id: input.leaseId ?? null,
-    input_machine_code_hash: input.machineCodeHash,
+    input_lease_id: input.leaseId ?? "",
+    input_machine_code_hash: input.machineCodeHash ?? "",
     input_metadata: input.metadata ?? {},
     input_now: now.toISOString(),
-    input_reason: input.reason,
+    input_reason: input.reason ?? "",
     input_user_id: input.userId,
   });
 

@@ -8,7 +8,7 @@ import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
-import { isOwnerProfile } from "@/lib/auth/guards";
+import { isOwnerProfile, type AccountStatus, type AdminRole } from "@/lib/auth/guards";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import type { Database } from "@/lib/database.types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -186,7 +186,11 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
   if (adminProfileResult.error) throw adminProfileResult.error;
 
   const allProfiles = profilesResult.data ?? [];
-  const canManageRoles = isOwnerProfile(adminProfileResult.data);
+  const canManageRoles = isOwnerProfile({
+    ...adminProfileResult.data,
+    admin_role: adminProfileResult.data?.admin_role as AdminRole | null,
+    account_status: adminProfileResult.data?.account_status as AccountStatus | null,
+  });
   const authStatusByUser = await getAuthStatusesByUser(supabase, allProfiles.map((profile) => profile.id));
 
   const trialsByUser = new Map<string, NonNullable<typeof trialsResult.data>>();

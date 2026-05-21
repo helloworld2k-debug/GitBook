@@ -102,10 +102,10 @@ export async function exchangeDesktopAuthCode(client: ExchangeClient, input: Exc
   const expiresAt = addDays(now, DESKTOP_SESSION_TTL_DAYS).toISOString();
 
   const { data, error } = await client.rpc("exchange_desktop_auth_code", {
-    input_app_version: input.appVersion ?? null,
+    input_app_version: input.appVersion ?? "",
     input_code_hash: codeHash,
     input_device_id: input.deviceId,
-    input_device_name: input.deviceName ?? null,
+    input_device_name: input.deviceName ?? "",
     input_machine_code_hash: machineCodeHash,
     input_now: nowIso,
     input_platform: input.platform,

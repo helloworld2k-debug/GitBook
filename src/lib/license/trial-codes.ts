@@ -52,7 +52,7 @@ export async function redeemLicenseCode(
   const codeHash = await hashDesktopSecret(normalizeRedeemCode(input.code), "trial_code");
   const { data, error } = await client.rpc("redeem_license_code", {
     input_code_hash: codeHash,
-    input_machine_code_hash: input.machineCodeHash ?? null,
+    input_machine_code_hash: input.machineCodeHash ?? "",
     input_now: now.toISOString(),
     input_user_id: input.userId,
   });

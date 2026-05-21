@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { FormStatusBanner } from "@/components/form-status-banner";
 import { FormSubmitButton } from "@/components/form-submit-button";
-import { getDefaultSupportChannelsConfig, normalizeSupportChannels } from "@/config/support";
+import { getDefaultSupportChannelsConfig, normalizeSupportChannels, type SupportChannelId } from "@/config/support";
 import { Link } from "@/i18n/routing";
 import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -30,7 +30,10 @@ export default async function SupportPage({ params, searchParams }: SupportPageP
     .order("sort_order", { ascending: true });
   const channels = normalizeSupportChannels({
     defaults,
-    rows: channelRows ?? [],
+    rows: (channelRows ?? []).map((row) => ({
+      ...row,
+      id: row.id as SupportChannelId,
+    })),
   });
   const { data: feedback } = user
     ? await supabase

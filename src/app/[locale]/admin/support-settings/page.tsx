@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
-import { getDefaultSupportChannelsConfig, normalizeSupportChannels, toSupportChannelRows } from "@/config/support";
+import { getDefaultSupportChannelsConfig, normalizeSupportChannels, toSupportChannelRows, type SupportChannelId } from "@/config/support";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -19,7 +19,10 @@ async function getSupportContactRows(supabase: Awaited<ReturnType<typeof createS
       .select("id,label,value,is_enabled,sort_order")
       .order("sort_order", { ascending: true });
 
-    return rows ?? [];
+    return (rows ?? []).map((row) => ({
+      ...row,
+      id: row.id as SupportChannelId,
+    }));
   } catch {
     return [];
   }
