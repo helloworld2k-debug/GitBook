@@ -44,14 +44,18 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
   };
   const messages: LoginFormMessages = {
     confirmPassword: t("confirmPassword"),
+    confirmPasswordHint: t("confirmPasswordHint"),
     confirmPasswordPlaceholder: t("confirmPasswordPlaceholder"),
     createAccount: t("createAccount"),
     email: t("email"),
+    emailHint: t("emailHint"),
     emailPlaceholder: t("emailPlaceholder"),
     humanVerificationError: t("humanVerificationError"),
     humanVerificationLabel: t("humanVerificationLabel"),
     oauthError: t("oauthError"),
     password: t("password"),
+    passwordHint: t("passwordHint"),
+    passwordHintStrong: t("passwordHintStrong"),
     passwordMismatch: t("passwordMismatch"),
     passwordPlaceholder: t("passwordPlaceholder"),
     passwordResetBack: t("passwordResetBack"),

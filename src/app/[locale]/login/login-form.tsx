@@ -9,14 +9,18 @@ type FormStatus = "idle" | "submitting" | "success" | "immediate-success" | "err
 
 export type LoginFormMessages = {
   confirmPassword: string;
+  confirmPasswordHint: string;
   confirmPasswordPlaceholder: string;
   createAccount: string;
   email: string;
+  emailHint: string;
   emailPlaceholder: string;
   humanVerificationError: string;
   humanVerificationLabel: string;
   oauthError: string;
   password: string;
+  passwordHint: string;
+  passwordHintStrong: string;
   passwordMismatch: string;
   passwordPlaceholder: string;
   passwordResetBack: string;
@@ -437,6 +441,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
             required
             type="email"
           />
+          <p className="mt-1.5 text-xs text-slate-400">{messages.emailHint}</p>
           {isResettingPassword ? null : (
             <>
               <label className="mt-4 block text-sm font-medium text-slate-200" htmlFor="login-password">
@@ -451,6 +456,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
                 required
                 type="password"
               />
+              <p className="mt-1.5 text-xs text-slate-400">{isRegistering ? messages.passwordHintStrong : messages.passwordHint}</p>
               {isRegistering ? (
                 <>
                   <label className="mt-4 block text-sm font-medium text-slate-200" htmlFor="login-confirm-password">
@@ -465,6 +471,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
                     required
                     type="password"
                   />
+                  <p className="mt-1.5 text-xs text-slate-400">{messages.confirmPasswordHint}</p>
                 </>
               ) : null}
             </>
