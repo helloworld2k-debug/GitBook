@@ -179,10 +179,23 @@ export async function POST(request: Request) {
     return jsonError("register_failed");
   }
 
-  // Create a session via admin-generated magic link (does NOT confirm email).
-  // The verification email link stays valid so the user can verify later.
   const userId = result.data?.user?.id;
+
+  // Handle auto-login after registration
   if (!bypassEmailConfirmation && userId) {
+    // When email confirmation is disabled, directly sign in with password
+    // This is more reliable than magic link approach
+    const serverClient = await createSupabaseServerClient();
+    const { error: signInError } = await serverClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (!signInError) {
+      return jsonOk({ ok: true, autoLogin: true });
+    }
+
+    // Fallback: try magic link approach
     const adminClient = createSupabaseAdminClient();
     const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
       email,
@@ -194,7 +207,6 @@ export async function POST(request: Request) {
       const tokenHash = linkUrl.searchParams.get("token_hash");
 
       if (tokenHash) {
-        const serverClient = await createSupabaseServerClient();
         const { error: verifyError } = await serverClient.auth.verifyOtp({
           token_hash: tokenHash,
           type: "magiclink",
