@@ -11,6 +11,9 @@ vi.mock("next-intl/server", () => ({
         availability: "macOS and Windows releases",
         contact: "Support follows signed-in feedback threads",
         copyright: "Independent software support site.",
+        terms: "Terms",
+        privacy: "Privacy",
+        policiesNav: "Policies",
       },
     };
 

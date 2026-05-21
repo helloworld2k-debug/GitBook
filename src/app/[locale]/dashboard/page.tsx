@@ -272,7 +272,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                     <label className="block text-sm font-medium text-slate-100">
                       {t("trial.code")}
                       <input
-                        className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-sm text-white shadow-sm outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
+                        className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-sm text-white shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
                         name="license_code"
                         required
                       />
@@ -294,7 +294,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                       {cloudSyncValidUntil ? formatDashboardDateTime(cloudSyncValidUntil, locale) : t("notAvailable")}
                     </p>
                     {trialRedemption?.redeemed_at ? (
-                      <p className="mt-4 text-xs leading-5 text-slate-500">
+                      <p className="mt-4 text-xs leading-5 text-slate-400">
                         {t("trialRedeemedAt")} {formatDashboardDateTime(trialRedemption.redeemed_at, locale)}
                       </p>
                     ) : null}
@@ -348,7 +348,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                                   </Link>
                                 </div>
                               ) : (
-                                <span className="text-sm text-slate-500">{t("notAvailable")}</span>
+                                <span className="text-sm text-slate-400">{t("notAvailable")}</span>
                               )}
                             </td>
                           </tr>
@@ -383,7 +383,7 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                   <label className="block text-sm font-medium text-slate-100">
                     {t("displayName")}
                     <input
-                      className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-sm text-white shadow-sm outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
+                      className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-sm text-white shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
                       defaultValue={profile?.display_name ?? ""}
                       maxLength={80}
                       name="display_name"

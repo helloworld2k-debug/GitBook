@@ -67,7 +67,7 @@ export default async function NotificationsPage({ params }: NotificationsPagePro
                       </span>
                       <h2 className="mt-3 text-xl font-semibold text-white">{notification.title}</h2>
                       <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-300">{notification.body}</p>
-                      <p className="mt-4 text-xs text-slate-500">
+                      <p className="mt-4 text-xs text-slate-400">
                         {t("published")} {formatDateTimeWithSeconds(notification.published_at, locale)}
                       </p>
                     </div>

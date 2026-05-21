@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { formatNewsDate, splitNewsBody } from "@/lib/news/format";
@@ -70,6 +71,7 @@ async function getPublishedNewsArticle(slug: string) {
 export default async function NewsArticlePage({ params }: NewsArticlePageProps) {
   const { locale: localeParam, slug } = await params;
   const locale = resolvePageLocale(localeParam);
+  const t = await getTranslations("news");
   const article = await getPublishedNewsArticle(slug);
 
   if (!article) {
@@ -80,14 +82,14 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
     <main className="tech-shell flex-1">
       <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:py-16">
         <Link className="text-sm font-semibold text-cyan-100 hover:text-cyan-50" href="/news">
-          Back to News
+          {t("backToNews")}
         </Link>
         <div className="mt-6 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-normal">
           {article.is_ai_generated ? (
-            <span className="rounded-md border border-cyan-300/30 bg-cyan-300/10 px-2 py-1 text-cyan-100">AI-created</span>
+            <span className="rounded-md border border-cyan-300/30 bg-cyan-300/10 px-2 py-1 text-cyan-100">{t("aiCreated")}</span>
           ) : null}
           <span className="rounded-md border border-white/10 bg-white/[0.05] px-2 py-1 text-slate-300">{article.topic}</span>
-          <span className="text-slate-500">{formatNewsDate(article.published_at, locale)}</span>
+          <span className="text-slate-400">{formatNewsDate(article.published_at, locale)}</span>
         </div>
         <h1 className="mt-5 text-4xl font-semibold tracking-normal text-white sm:text-5xl">{article.title}</h1>
         <p className="mt-5 text-lg leading-8 text-slate-300">{article.summary}</p>

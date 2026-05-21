@@ -98,7 +98,10 @@
     "status": "安全下載與帳戶支援",
     "availability": "macOS 與 Windows 版本",
     "contact": "支援會跟進已登入帳戶的回饋對話",
-    "copyright": "獨立軟體支援網站。"
+    "copyright": "獨立軟體支援網站。",
+    "terms": "使用條款",
+    "privacy": "隱私權政策",
+    "policiesNav": "政策"
   },
   "donate": {
     "title": "支持 GitBook AI 持續開發",
@@ -113,6 +116,24 @@
     "oneTimeNote": "一次性支持，協助下載服務維持可用，也讓開發能持續推進。",
     "paymentNote": "透過 Dodo Payments 安全結帳，支援銀行卡與可用的本地支付方式。付款成功後會產生支持證書。",
     "cancelled": "結帳已取消。你可以重新查看支持方案，準備好後再試一次。"
+  },
+  "news": {
+    "eyebrow": "AI 生成研究前沿",
+    "title": "新聞",
+    "subtitle": "關於人工智慧、視覺辨識與科學成像趨勢的 AI 原創文章。",
+    "aiCreated": "AI 生成",
+    "empty": "尚未發布新聞文章。",
+    "backToNews": "返回新聞"
+  },
+  "desktopLogin": {
+    "eyebrow": "桌面端授權",
+    "title": "登入 GitBook AI",
+    "subtitle": "登入後，此瀏覽器將返回 GitBook AI 桌面應用程式。",
+    "authorizeError": "桌面端授權無法完成準備。請重新登入。"
+  },
+  "policies": {
+    "eyebrow": "政策",
+    "lastUpdated": "最後更新"
   },
   "notifications": {
     "eyebrow": "通知中心",

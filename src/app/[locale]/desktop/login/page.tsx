@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { getTranslations } from "next-intl/server";
 import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { DesktopLoginForm } from "./desktop-login-form";
 
@@ -52,6 +53,7 @@ export function sanitizeDesktopAuthorizeNextPath(nextPath: string | string[] | n
 export default async function DesktopLoginPage({ params, searchParams }: DesktopLoginPageProps) {
   const { locale: localeParam } = await params;
   const locale = resolvePageLocale(localeParam);
+  const t = await getTranslations("desktopLogin");
   const query = await searchParams;
   const nextPath = sanitizeDesktopAuthorizeNextPath(query.next, locale);
   const hasAuthorizeError = query.error === "desktop_authorize_failed";
@@ -68,15 +70,15 @@ export default async function DesktopLoginPage({ params, searchParams }: Desktop
         <section className="mx-auto grid min-h-[calc(100dvh-76px)] max-w-3xl items-center px-4 py-10 sm:px-6">
           <div className="mx-auto w-full max-w-md">
             <p className="inline-flex min-h-8 items-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-3 text-sm font-semibold uppercase text-cyan-200">
-              Desktop authorization
+              {t("eyebrow")}
             </p>
-            <h1 className="mt-4 text-3xl font-semibold tracking-normal text-white">Sign in to GitBook AI</h1>
+            <h1 className="mt-4 text-3xl font-semibold tracking-normal text-white">{t("title")}</h1>
             <p className="mt-4 text-base leading-7 text-slate-300">
-              After sign-in, this browser will return to the GitBook AI desktop app.
+              {t("subtitle")}
             </p>
             {hasAuthorizeError ? (
               <p className="mt-4 rounded-md border border-red-300/30 bg-red-400/10 px-3 py-2 text-sm text-red-100" role="alert">
-                Desktop authorization could not be prepared. Please sign in again.
+                {t("authorizeError")}
               </p>
             ) : null}
             <div className="mt-6">

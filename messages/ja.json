@@ -98,7 +98,10 @@
     "status": "安全なダウンロードとアカウントサポート",
     "availability": "macOS / Windows リリース",
     "contact": "サポートはログイン済みのフィードバックスレッドで対応します",
-    "copyright": "独立したソフトウェアサポートサイトです。"
+    "copyright": "独立したソフトウェアサポートサイトです。",
+    "terms": "利用規約",
+    "privacy": "プライバシーポリシー",
+    "policiesNav": "ポリシー"
   },
   "donate": {
     "title": "GitBook AI に貢献する",
@@ -113,6 +116,24 @@
     "oneTimeNote": "ダウンロード提供と継続開発を支える一回限りの支援です。",
     "paymentNote": "Dodo Payments による安全なチェックアウトで、カードと利用可能なローカル決済方法に対応しています。支払い完了後に証明書が発行されます。",
     "cancelled": "チェックアウトはキャンセルされました。支援プランを確認し、準備ができたらもう一度お試しください。"
+  },
+  "news": {
+    "eyebrow": "AI 作成の研究最前線",
+    "title": "ニュース",
+    "subtitle": "人工知能、画像認識、科学的イメージングトレンドに関する AI 生成のオリジナル記事。",
+    "aiCreated": "AI 作成",
+    "empty": "まだ公開されたニュース記事はありません。",
+    "backToNews": "ニュース一覧に戻る"
+  },
+  "desktopLogin": {
+    "eyebrow": "デスクトップ認証",
+    "title": "GitBook AI にサインイン",
+    "subtitle": "サインイン後、このブラウザは GitBook AI デスクトップアプリに戻ります。",
+    "authorizeError": "デスクトップ認証を準備できませんでした。もう一度サインインしてください。"
+  },
+  "policies": {
+    "eyebrow": "ポリシー",
+    "lastUpdated": "最終更新"
   },
   "notifications": {
     "eyebrow": "通知センター",

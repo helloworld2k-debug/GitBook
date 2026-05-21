@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { formatNewsDate } from "@/lib/news/format";
@@ -62,17 +63,18 @@ async function getPublishedNewsArticles() {
 export default async function NewsPage({ params }: NewsPageProps) {
   const { locale: localeParam } = await params;
   const locale = resolvePageLocale(localeParam);
+  const t = await getTranslations("news");
   const articles = await getPublishedNewsArticles();
 
   return (
     <main className="tech-shell flex-1">
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:py-16">
         <p className="inline-flex min-h-8 items-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-3 text-sm font-semibold uppercase text-cyan-200">
-          AI-created research frontiers
+          {t("eyebrow")}
         </p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-normal text-white">News</h1>
+        <h1 className="mt-4 text-4xl font-semibold tracking-normal text-white">{t("title")}</h1>
         <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300">
-          Original AI-generated articles on artificial intelligence, visual recognition, and scientific imaging trends.
+          {t("subtitle")}
         </p>
 
         {articles.length > 0 ? (
@@ -95,19 +97,19 @@ export default async function NewsPage({ params }: NewsPageProps) {
                 <div className="p-5">
                   <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-normal">
                     {article.is_ai_generated ? (
-                      <span className="rounded-md border border-cyan-300/30 bg-cyan-300/10 px-2 py-1 text-cyan-100">AI-created</span>
+                      <span className="rounded-md border border-cyan-300/30 bg-cyan-300/10 px-2 py-1 text-cyan-100">{t("aiCreated")}</span>
                     ) : null}
                     <span className="rounded-md border border-white/10 bg-white/[0.05] px-2 py-1 text-slate-300">{article.topic}</span>
                   </div>
                   <h2 className="mt-4 text-xl font-semibold text-white group-hover:text-cyan-100">{article.title}</h2>
                   <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-300">{article.summary}</p>
-                  <p className="mt-4 text-xs text-slate-500">{formatNewsDate(article.published_at, locale)}</p>
+                  <p className="mt-4 text-xs text-slate-400">{formatNewsDate(article.published_at, locale)}</p>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-          <p className="glass-panel mt-8 rounded-lg px-5 py-6 text-sm text-slate-300">No news articles are published yet.</p>
+          <p className="glass-panel mt-8 rounded-lg px-5 py-6 text-sm text-slate-300">{t("empty")}</p>
         )}
       </section>
     </main>

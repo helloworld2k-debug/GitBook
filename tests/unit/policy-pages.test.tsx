@@ -12,6 +12,16 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("next-intl/server", () => ({
   setRequestLocale: vi.fn(),
+  getTranslations: vi.fn(async (namespace: string) => {
+    const tables: Record<string, Record<string, string>> = {
+      policies: {
+        eyebrow: "Policy",
+        lastUpdated: "Last updated",
+      },
+    };
+
+    return (key: string) => tables[namespace]?.[key] ?? key;
+  }),
 }));
 
 describe("PolicyPage", () => {

@@ -150,7 +150,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
             <div className="flex items-center justify-between border-b border-cyan-300/10 pb-4">
               <div>
                 <p className="font-mono text-sm text-cyan-200">{t("mockTitle")}</p>
-                <p className="mt-1 text-xs uppercase text-slate-500">gitbook.ai/runtime</p>
+                <p className="mt-1 text-xs uppercase text-slate-400">gitbook.ai/runtime</p>
               </div>
               <span className="rounded-md border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-200">
                 {t("mockStatus")}

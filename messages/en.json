@@ -98,7 +98,10 @@
     "status": "Secure downloads and account support",
     "availability": "macOS and Windows releases",
     "contact": "Support follows signed-in feedback threads",
-    "copyright": "Independent software support site."
+    "copyright": "Independent software support site.",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "policiesNav": "Policies"
   },
   "versions": {
     "eyebrow": "Release archive",
@@ -125,6 +128,24 @@
     "oneTimeNote": "A one-time contribution that helps keep downloads available and development moving.",
     "paymentNote": "Secure checkout with Dodo Payments for cards and supported local payment methods. A certificate is issued after successful payment.",
     "cancelled": "Checkout was cancelled. You can review the support tiers and try again when ready."
+  },
+  "news": {
+    "eyebrow": "AI-created research frontiers",
+    "title": "News",
+    "subtitle": "Original AI-generated articles on artificial intelligence, visual recognition, and scientific imaging trends.",
+    "aiCreated": "AI-created",
+    "empty": "No news articles are published yet.",
+    "backToNews": "Back to News"
+  },
+  "desktopLogin": {
+    "eyebrow": "Desktop authorization",
+    "title": "Sign in to GitBook AI",
+    "subtitle": "After sign-in, this browser will return to the GitBook AI desktop app.",
+    "authorizeError": "Desktop authorization could not be prepared. Please sign in again."
+  },
+  "policies": {
+    "eyebrow": "Policy",
+    "lastUpdated": "Last updated"
   },
   "notifications": {
     "eyebrow": "Notification center",

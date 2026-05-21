@@ -12,12 +12,12 @@ export async function SiteFooter() {
         <p className="text-sm leading-6 text-slate-400">
           © {year} {siteConfig.name}. {footer("copyright")}
         </p>
-        <nav aria-label="Policies" className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-slate-300">
+        <nav aria-label={footer("policiesNav")} className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-slate-300">
           <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/policies/terms">
-            Terms
+            {footer("terms")}
           </Link>
           <Link className="hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" href="/policies/privacy">
-            Privacy
+            {footer("privacy")}
           </Link>
         </nav>
       </div>

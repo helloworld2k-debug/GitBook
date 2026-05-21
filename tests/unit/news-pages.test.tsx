@@ -30,6 +30,23 @@ vi.mock("@/i18n/routing", () => ({
   ),
 }));
 
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi.fn(async (namespace: string) => {
+    const tables: Record<string, Record<string, string>> = {
+      news: {
+        eyebrow: "AI-created research frontiers",
+        title: "News",
+        subtitle: "Original AI-generated articles on artificial intelligence, visual recognition, and scientific imaging trends.",
+        aiCreated: "AI-created",
+        empty: "No news articles are published yet.",
+        backToNews: "Back to News",
+      },
+    };
+
+    return (key: string) => tables[namespace]?.[key] ?? key;
+  }),
+}));
+
 function createNewsListClient() {
   return {
     from: (table: string) => {

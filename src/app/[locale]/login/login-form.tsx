@@ -369,7 +369,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
           </label>
           <input
             autoComplete="email"
-            className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
+            className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
             id="login-email"
             name="email"
             placeholder={messages.emailPlaceholder}
@@ -383,7 +383,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
               </label>
               <input
                 autoComplete={isRegistering ? "new-password" : "current-password"}
-                className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
+                className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
                 id="login-password"
                 name="password"
                 placeholder={messages.passwordPlaceholder}
@@ -397,7 +397,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
                   </label>
                   <input
                     autoComplete="new-password"
-                    className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
+                    className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
                     id="login-confirm-password"
                     name="confirm-password"
                     placeholder={messages.confirmPasswordPlaceholder}

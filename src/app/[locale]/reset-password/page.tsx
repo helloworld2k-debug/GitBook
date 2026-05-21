@@ -40,7 +40,7 @@ export default async function ResetPasswordPage({ params, searchParams }: ResetP
               </label>
               <input
                 autoComplete="new-password"
-                className="min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
+                className="min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
                 id="reset-password"
                 minLength={8}
                 name="password"
@@ -52,7 +52,7 @@ export default async function ResetPasswordPage({ params, searchParams }: ResetP
               </label>
               <input
                 autoComplete="new-password"
-                className="min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-500 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
+                className="min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-base text-white shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
                 id="reset-confirm-password"
                 minLength={8}
                 name="confirm_password"

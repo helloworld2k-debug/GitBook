@@ -14,6 +14,18 @@ vi.mock("@/app/[locale]/desktop/login/desktop-login-form", () => ({
 
 vi.mock("next-intl/server", () => ({
   setRequestLocale: vi.fn(),
+  getTranslations: vi.fn(async (namespace: string) => {
+    const tables: Record<string, Record<string, string>> = {
+      desktopLogin: {
+        eyebrow: "Desktop authorization",
+        title: "Sign in to GitBook AI",
+        subtitle: "After sign-in, this browser will return to the GitBook AI desktop app.",
+        authorizeError: "Desktop authorization could not be prepared. Please sign in again.",
+      },
+    };
+
+    return (key: string) => tables[namespace]?.[key] ?? key;
+  }),
 }));
 
 describe("DesktopLoginPage", () => {

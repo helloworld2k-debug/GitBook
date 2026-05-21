@@ -11,6 +11,36 @@ vi.mock("@/lib/supabase/client", () => ({
   createSupabaseBrowserClient: createSupabaseBrowserClientMock,
 }));
 
+vi.mock("next-intl", () => ({
+  useTranslations: (namespace: string) => {
+    const tables: Record<string, Record<string, string>> = {
+      login: {
+        email: "Email address",
+        emailPlaceholder: "you@example.com",
+        password: "Password",
+        passwordPlaceholder: "Enter your password",
+        signInSubmit: "Sign in with email",
+        signingIn: "Signing in...",
+        sending: "Sending...",
+        humanVerificationLabel: "Human verification",
+        humanVerificationError: "Verify that you are human and try again.",
+        signInError: "Could not sign in. Check your email and password.",
+        providersLabel: "Other sign-in options",
+        continueWithProvider: "Continue with {provider}",
+        oauthError: "Could not start sign in. Try another provider or use email.",
+      },
+    };
+
+    return (key: string, params?: Record<string, string>) => {
+      const template = tables[namespace]?.[key] ?? key;
+      if (params) {
+        return Object.entries(params).reduce((result, [k, v]) => result.replace(`{${k}}`, v), template);
+      }
+      return template;
+    };
+  },
+}));
+
 function renderDesktopLoginForm(options: { turnstileSiteKey?: string } = { turnstileSiteKey: "turnstile_site_key" }) {
   render(
     <DesktopLoginForm
