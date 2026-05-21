@@ -59,6 +59,20 @@ export async function checkConfirmationResendRateLimit(
   const domain = getEmailDomain(email);
   const ip = input.ip?.trim() || null;
 
+  // Insert the attempt first to reduce the TOCTOU race window.
+  // Concurrent requests that pass the count check below will still
+  // leave records that make subsequent checks stricter.
+  const { error: insertError } = await client.from("confirmation_resend_attempts").insert({
+    email_domain: domain,
+    email_normalized: email,
+    ip_address: ip,
+    user_agent: input.userAgent?.slice(0, 500) ?? null,
+  });
+
+  if (insertError) {
+    throw new Error("Unable to record confirmation resend attempt");
+  }
+
   const emailMinuteAttempts = await countRecent(
     client,
     "id,email_minute",
@@ -66,7 +80,7 @@ export async function checkConfirmationResendRateLimit(
     [["email_normalized", email]],
   );
 
-  if (emailMinuteAttempts >= 1) {
+  if (emailMinuteAttempts >= 2) {
     return { ok: false as const, retryAfterSeconds: EMAIL_COOLDOWN_SECONDS };
   }
 
@@ -77,7 +91,7 @@ export async function checkConfirmationResendRateLimit(
     [["email_normalized", email]],
   );
 
-  if (emailDayAttempts >= MAX_EMAIL_DAILY_RESENDS) {
+  if (emailDayAttempts > MAX_EMAIL_DAILY_RESENDS) {
     return { ok: false as const, retryAfterSeconds: IP_HOURLY_WINDOW_SECONDS };
   }
 
@@ -88,19 +102,8 @@ export async function checkConfirmationResendRateLimit(
     [["ip_address", ip]],
   );
 
-  if (ipHourAttempts >= MAX_IP_HOURLY_RESENDS) {
+  if (ipHourAttempts > MAX_IP_HOURLY_RESENDS) {
     return { ok: false as const, retryAfterSeconds: IP_HOURLY_WINDOW_SECONDS };
-  }
-
-  const { error: insertError } = await client.from("confirmation_resend_attempts").insert({
-    email_domain: domain,
-    email_normalized: email,
-    ip_address: ip,
-    user_agent: input.userAgent?.slice(0, 500) ?? null,
-  });
-
-  if (insertError) {
-    throw new Error("Unable to record confirmation resend attempt");
   }
 
   return { ok: true as const };

@@ -32,6 +32,9 @@ function isTurnstileConfigured() {
 }
 
 function shouldBypassEmailConfirmation() {
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
   return process.env.TEMP_DISABLE_EMAIL_CONFIRMATION === "true";
 }
 

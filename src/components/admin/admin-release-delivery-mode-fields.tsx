@@ -84,10 +84,15 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
     windows: { ...emptyUploadState },
   });
   const uploadsRef = useRef(uploads);
+  const fieldsetRef = useRef<HTMLFieldSetElement>(null);
 
   useEffect(() => {
     uploadsRef.current = uploads;
   }, [uploads]);
+
+  function getParentForm(): HTMLFormElement | null {
+    return fieldsetRef.current?.closest("form") ?? null;
+  }
 
   const limitError = labels.uploadLimitError ?? "Installer files must be 50 MB or smaller. Use download links for larger installers.";
   const allFilesSelected = Boolean(uploads.macos.file && uploads.windows.file);
@@ -246,7 +251,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
         return;
       }
 
-      const form = document.querySelector<HTMLFormElement>("form");
+      const form = getParentForm();
       const formData = new FormData(form ?? undefined);
       formData.set("locale", locale);
       formData.set("release_id", prepared.releaseId);
@@ -273,7 +278,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
 
   function startPreparedUploads() {
     setFormError(null);
-    const form = document.querySelector<HTMLFormElement>("form");
+    const form = getParentForm();
     const formData = new FormData(form ?? undefined);
     formData.set("locale", locale);
 
@@ -356,7 +361,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
 
   return (
     <>
-      <fieldset className="grid gap-3">
+      <fieldset className="grid gap-3" ref={fieldsetRef}>
         <legend className="text-sm font-medium text-slate-950">{labels.deliveryMode}</legend>
         <label className="flex items-start gap-3 rounded-md border border-slate-200 px-4 py-3">
           <input aria-label={labels.deliveryModeFile} checked={deliveryMode === "file"} className="mt-1 size-4" name="delivery_mode" onChange={() => setDeliveryMode("file")} type="radio" value="file" />

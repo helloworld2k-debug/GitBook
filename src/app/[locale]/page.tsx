@@ -76,7 +76,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
   return (
     <>
       <main className="tech-shell flex-1">
-        <div aria-label="Animated code intelligence background" className="code-field" role="img">
+        <div aria-hidden="true" className="code-field">
           <div className="code-stream code-stream-one">
             {["const ai = index(book);", "await mapConcepts(code);", "reader.sync(notes);", "model.ready();"].map((line) => (
               <span key={line}>{line}</span>
