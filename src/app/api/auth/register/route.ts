@@ -6,13 +6,6 @@ import { verifyTurnstileToken } from "@/lib/auth/turnstile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 
-type RegisterRequestBody = {
-  callbackUrl?: string;
-  email?: string;
-  password?: string;
-  turnstileToken?: string;
-};
-
 type AuthSignupError = {
   code?: string;
   message?: string;
@@ -178,7 +171,7 @@ export async function POST(request: Request) {
     });
 
   if (!bypassEmailConfirmation && isAlreadyRegisteredError(result.error)) {
-    return jsonOk({ ok: true });
+    return jsonError("account_exists", 409);
   }
 
   if (result.error) {

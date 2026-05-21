@@ -365,7 +365,7 @@ describe("register route", () => {
     await expect(response.json()).resolves.toEqual({ error: "invalid_request" });
   });
 
-  it("treats an already registered email as a safe successful registration response", async () => {
+  it("returns an explicit existing account error when signup reports an already registered email", async () => {
     mocks.registerWithEmailPassword.mockResolvedValueOnce({
       error: {
         code: "user_already_exists",
@@ -387,8 +387,8 @@ describe("register route", () => {
       }),
     );
 
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({ error: "account_exists" });
   });
 
   it("still rejects non-duplicate signup failures", async () => {

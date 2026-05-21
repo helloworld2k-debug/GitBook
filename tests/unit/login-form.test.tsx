@@ -228,6 +228,25 @@ describe("LoginForm", () => {
     expect(signUpMock).not.toHaveBeenCalled();
   });
 
+  it("does not show the verification email success state when the account already exists", async () => {
+    fetchMock.mockResolvedValueOnce({
+      json: async () => ({ error: "account_exists" }),
+      ok: false,
+      status: 409,
+    });
+    renderLoginForm();
+
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "existing@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "new-password" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "new-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not sign in. Check your email and password.");
+    expect(screen.queryByText("Check your email to verify your account")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in" })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("resends the signup verification email after registration succeeds", async () => {
     renderLoginForm();
 

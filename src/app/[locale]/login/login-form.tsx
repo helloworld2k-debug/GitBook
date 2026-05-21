@@ -199,6 +199,12 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
 
       const result = await response.json() as { emailConfirmationBypassed?: boolean; error?: string; ok?: boolean };
 
+      if (result.error === "account_exists") {
+        setMode("sign-in");
+        setStatus("error");
+        return;
+      }
+
       if (!response.ok || !result.ok) {
         setStatus("error");
         return;
