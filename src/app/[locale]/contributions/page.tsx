@@ -26,8 +26,15 @@ export default async function ContributionsPage({ params }: ContributionsPagePro
   const t = await getTranslations("donate");
   const fallbackTiers = donationTiers.map((tier, index) => ({ ...tier, sortOrder: index + 1 }));
   const supabase = await createSupabaseServerClient().catch(() => null);
-  const tiers = supabase ? await getActiveDonationTiers(supabase) : fallbackTiers;
-  const authResult = supabase ? await optionalTimeout(supabase.auth.getUser(), 900).catch(() => null) : null;
+
+  const [tiersResult, authResult] = supabase
+    ? await Promise.all([
+        getActiveDonationTiers(supabase),
+        optionalTimeout(supabase.auth.getUser(), 900).catch(() => null),
+      ])
+    : [fallbackTiers, null];
+
+  const tiers = tiersResult;
   const user = authResult?.data.user ?? null;
   const isAuthenticated = Boolean(user);
   const loginHref = getLoginRedirectPath(locale, `/${locale}/contributions`);
