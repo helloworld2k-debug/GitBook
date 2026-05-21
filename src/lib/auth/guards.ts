@@ -5,7 +5,7 @@ import { isSupabaseAuthCookieName } from "@/lib/auth/supabase-cookies";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type AdminRole = "owner" | "operator" | "user";
-export type AccountStatus = "active" | "disabled" | "deleted";
+export type AccountStatus = "active" | "disabled" | "deleted" | "archived_deleted";
 
 type AdminLike = { is_admin?: boolean; admin_role?: AdminRole | null; account_status?: AccountStatus | null } | null;
 

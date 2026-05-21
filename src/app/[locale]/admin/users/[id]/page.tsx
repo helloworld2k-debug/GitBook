@@ -396,6 +396,20 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
         />
         <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
 
+        {profile.account_status === "archived_deleted" ? (
+          <AdminCard className="border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-900">
+              {adminT("users.userIsArchived")}
+            </p>
+            <p className="mt-1 text-sm text-amber-800">
+              {adminT("users.userIsArchivedDescription")}
+            </p>
+            <a href={`/${locale}/admin/archived-users`} className="mt-2 inline-block text-sm font-semibold text-amber-900 underline">
+              {adminT("users.goToArchivedUsers")}
+            </a>
+          </AdminCard>
+        ) : null}
+
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
           <AdminCard className="p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

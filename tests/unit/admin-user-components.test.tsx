@@ -90,6 +90,8 @@ describe("AdminUserBulkToolbar", () => {
         canManageRoles
         formId="bulk-users-form"
         labels={{
+          bulkArchiveDelete: "Archive delete",
+          bulkArchiveDeleteSelected: "Archive delete selected users",
           bulkDisable: "Bulk disable",
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
@@ -132,6 +134,8 @@ describe("AdminUserBulkToolbar", () => {
         canManageRoles={false}
         formId="bulk-users-form"
         labels={{
+          bulkArchiveDelete: "Archive delete",
+          bulkArchiveDeleteSelected: "Archive delete selected users",
           bulkDisable: "Bulk disable",
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
@@ -173,6 +177,8 @@ describe("AdminUserBulkToolbar", () => {
         canManageRoles={false}
         formId="bulk-users-form"
         labels={{
+          bulkArchiveDelete: "Archive delete",
+          bulkArchiveDeleteSelected: "Archive delete selected users",
           bulkDisable: "Bulk disable",
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
@@ -216,6 +222,8 @@ describe("AdminUserBulkToolbar", () => {
         canManageRoles
         formId="bulk-users-form"
         labels={{
+          bulkArchiveDelete: "Archive delete",
+          bulkArchiveDeleteSelected: "Archive delete selected users",
           bulkDisable: "Bulk disable",
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
@@ -264,6 +272,8 @@ describe("AdminUserBulkToolbar", () => {
         canManageRoles={false}
         formId="bulk-users-form"
         labels={{
+          bulkArchiveDelete: "Archive delete",
+          bulkArchiveDeleteSelected: "Archive delete selected users",
           bulkDisable: "Bulk disable",
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",

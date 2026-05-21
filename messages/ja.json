@@ -829,6 +829,7 @@
       "createdAt": "作成日",
       "standardType": "一般",
       "adminType": "管理",
+      "empty": "まだユーザーがいません。",
       "emptyFiltered": "現在の条件に一致するユーザーはいません。",
       "softDelete": "ソフト削除",
       "moreActions": "その他の操作",
@@ -841,6 +842,9 @@
       "dangerWarning": "アカウントを完全に消去する必要がある場合のみ使用してください。",
       "deleteConfirmation": "確認のため DELETE またはユーザーのメールを入力",
       "permanentDelete": "完全削除",
+      "userIsArchived": "このユーザーはアーカイブされました",
+      "userIsArchivedDescription": "このユーザーはアーカイブされており、「アーカイブ済みユーザー」ページから復元できます。",
+      "goToArchivedUsers": "アーカイブ済みユーザーへ",
       "save": "保存",
       "saveRole": "ロールを保存",
       "viewDetails": "詳細を見る",
@@ -904,7 +908,8 @@
       "statuses": {
         "active": "有効",
         "disabled": "無効",
-        "deleted": "削除済み"
+        "deleted": "削除済み",
+        "archived_deleted": "アーカイブ済み"
       },
       "description": "アカウント権限、状態、トライアル紐付け、デスクトップ端末を確認します。"
     },

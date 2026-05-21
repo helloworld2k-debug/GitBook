@@ -829,6 +829,7 @@
       "createdAt": "생성일",
       "standardType": "일반",
       "adminType": "관리자",
+      "empty": "아직 사용자가 없습니다.",
       "emptyFiltered": "현재 필터에 일치하는 사용자가 없습니다.",
       "softDelete": "소프트 삭제",
       "moreActions": "추가 작업",
@@ -841,6 +842,9 @@
       "dangerWarning": "계정을 완전히 지워야 할 때만 사용하세요.",
       "deleteConfirmation": "확인을 위해 DELETE 또는 사용자 이메일을 입력하세요",
       "permanentDelete": "영구 삭제",
+      "userIsArchived": "이 사용자가 보관되었습니다",
+      "userIsArchivedDescription": "이 사용자는 보관되었으며 '보관된 사용자' 페이지에서 복원할 수 있습니다.",
+      "goToArchivedUsers": "보관된 사용자로 이동",
       "save": "저장",
       "saveRole": "역할 저장",
       "viewDetails": "자세히 보기",
@@ -904,7 +908,8 @@
       "statuses": {
         "active": "활성",
         "disabled": "비활성",
-        "deleted": "삭제됨"
+        "deleted": "삭제됨",
+        "archived_deleted": "보관됨"
       },
       "description": "계정 역할, 상태, 체험 연결, 데스크톱 기기를 확인합니다."
     },

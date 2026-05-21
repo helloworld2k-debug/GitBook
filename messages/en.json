@@ -881,6 +881,7 @@
       "createdAt": "Created",
       "standardType": "Standard",
       "adminType": "Admin",
+      "empty": "No users yet.",
       "emptyFiltered": "No users match the current filters.",
       "softDelete": "Soft delete",
       "moreActions": "More actions",
@@ -893,6 +894,9 @@
       "dangerWarning": "Only use this when the account must be fully erased.",
       "deleteConfirmation": "Type DELETE or the user email to confirm",
       "permanentDelete": "Permanent delete",
+      "userIsArchived": "This user has been archived",
+      "userIsArchivedDescription": "This user was archived and can be restored from the Archived Users page.",
+      "goToArchivedUsers": "Go to archived users",
       "save": "Save",
       "saveRole": "Save role",
       "viewDetails": "View details",
@@ -956,7 +960,8 @@
       "statuses": {
         "active": "Active",
         "disabled": "Disabled",
-        "deleted": "Deleted"
+        "deleted": "Deleted",
+        "archived_deleted": "Archived"
       },
       "description": "Review account roles, statuses, trial bindings, and desktop devices."
     },

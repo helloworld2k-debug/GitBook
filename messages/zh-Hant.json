@@ -830,6 +830,7 @@
       "createdAt": "建立時間",
       "standardType": "一般",
       "adminType": "管理",
+      "empty": "尚無使用者。",
       "emptyFiltered": "目前篩選條件下沒有符合的使用者。",
       "softDelete": "軟刪除",
       "moreActions": "更多操作",
@@ -842,6 +843,9 @@
       "dangerWarning": "只有在帳號必須被完全清除時才使用此操作。",
       "deleteConfirmation": "輸入 DELETE 或使用者電子郵件以確認",
       "permanentDelete": "永久刪除",
+      "userIsArchived": "此使用者已被歸檔",
+      "userIsArchivedDescription": "此使用者已被歸檔，可從「已歸檔使用者」頁面恢復。",
+      "goToArchivedUsers": "前往已歸檔使用者",
       "save": "儲存",
       "saveRole": "儲存角色",
       "viewDetails": "查看詳情",
@@ -905,7 +909,8 @@
       "statuses": {
         "active": "正常",
         "disabled": "停用",
-        "deleted": "已刪除"
+        "deleted": "已刪除",
+        "archived_deleted": "已歸檔"
       },
       "description": "檢視帳號角色、狀態、試用綁定與桌面裝置。"
     },

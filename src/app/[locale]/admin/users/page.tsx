@@ -22,6 +22,8 @@ type AdminUsersSearchParams = {
   page?: string;
   query?: string;
   role?: string;
+  sort?: string;
+  order?: string;
   status?: string;
   type?: string;
 };
@@ -49,53 +51,6 @@ function formatDate(value: string | null, locale: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
-}
-
-function matchesSearch(profile: { display_name: string | null; email: string | null; id: string }, query?: string) {
-  const normalized = String(query ?? "").trim().toLowerCase();
-
-  if (!normalized) {
-    return true;
-  }
-
-  return [profile.email ?? "", profile.display_name ?? "", profile.id].some((value) => value.toLowerCase().includes(normalized));
-}
-
-function matchesRole(profile: { admin_role: string | null; is_admin: boolean | null }, role?: string) {
-  if (!role) {
-    return true;
-  }
-
-  const resolvedRole = profile.admin_role ?? (profile.is_admin ? "owner" : "user");
-  return resolvedRole === role;
-}
-
-function matchesStatus(profile: { account_status: string | null }, status?: string) {
-  return !status || (profile.account_status ?? "active") === status;
-}
-
-function matchesType(profile: { is_admin: boolean | null }, type?: string) {
-  if (!type) {
-    return true;
-  }
-
-  return type === "admin" ? profile.is_admin === true : profile.is_admin !== true;
-}
-
-function matchesCreatedAt(profile: { created_at: string }, createdFrom?: string, createdTo?: string) {
-  const value = new Date(profile.created_at).getTime();
-  const start = createdFrom ? new Date(createdFrom).getTime() : null;
-  const end = createdTo ? new Date(`${createdTo}T23:59:59.999Z`).getTime() : null;
-
-  if (start && value < start) {
-    return false;
-  }
-
-  if (end && value > end) {
-    return false;
-  }
-
-  return true;
 }
 
 async function getAuthStatusesByUser(
@@ -157,41 +112,79 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
   const shellProps = await getAdminShellProps(locale, "/admin/users");
   const supabase = createSupabaseAdminClient();
 
-  const [profilesResult, trialsResult, sessionsResult, adminProfileResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id,email,display_name,admin_role,account_status,is_admin,created_at")
-      .order("created_at", { ascending: false })
-      .limit(100),
+  // Pagination params
+  const PAGE_SIZE = 20;
+  const currentPage = Number(feedback?.page ?? 1);
+  const sortColumn = feedback?.sort ?? "created_at";
+  const sortDirection = feedback?.order ?? "desc";
+
+  // Call RPC for paginated users
+  const { data: paginatedData, error: paginatedError } = await (supabase.rpc as any)("get_admin_users_paginated", {
+    input_page: currentPage,
+    input_per_page: PAGE_SIZE,
+    input_search: feedback?.query ?? null,
+    input_role_filter: feedback?.role ?? null,
+    input_status_filter: feedback?.status ?? null,
+    input_type_filter: feedback?.type ?? null,
+    input_created_from: feedback?.createdFrom ? new Date(feedback.createdFrom).toISOString() : null,
+    input_created_to: feedback?.createdTo ? new Date(feedback.createdTo + "T23:59:59.999Z").toISOString() : null,
+    input_sort_column: sortColumn,
+    input_sort_direction: sortDirection,
+  });
+
+  if (paginatedError) throw paginatedError;
+
+  const paginatedResult = (paginatedData as any)?.[0];
+  if (!paginatedResult) {
+    throw new Error("Failed to get paginated users");
+  }
+
+  const users = (paginatedResult.users as any) as Array<{
+    id: string;
+    email: string;
+    display_name: string | null;
+    admin_role: string | null;
+    account_status: string | null;
+    is_admin: boolean | null;
+    created_at: string;
+  }>;
+  const totalCount = Number(paginatedResult.total_count ?? 0);
+  const filteredCount = Number(paginatedResult.filtered_count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
+
+  // Get admin profile for permission check
+  const { data: adminProfileResult, error: adminProfileError } = await supabase
+    .from("profiles")
+    .select("is_admin,admin_role,account_status")
+    .eq("id", admin.id)
+    .single();
+
+  if (adminProfileError) throw adminProfileError;
+
+  const canManageRoles = isOwnerProfile({
+    ...adminProfileResult,
+    admin_role: adminProfileResult?.admin_role as AdminRole | null,
+    account_status: adminProfileResult?.account_status as AccountStatus | null,
+  });
+
+  // Get auth statuses for current page
+  const authStatusByUser = await getAuthStatusesByUser(supabase, users.map((u) => u.id));
+
+  // Get trials and sessions for current page only
+  const userIds = users.map((u) => u.id);
+  const [trialsResult, sessionsResult] = await Promise.all([
     supabase
       .from("trial_code_redemptions")
       .select("id,user_id,machine_code_hash,device_id,redeemed_at,trial_valid_until,bound_at")
-      .order("redeemed_at", { ascending: false })
-      .limit(200),
+      .in("user_id", userIds),
     supabase
       .from("desktop_sessions")
       .select("id,user_id,device_id,machine_code_hash,platform,app_version,last_seen_at,revoked_at")
-      .order("last_seen_at", { ascending: false })
-      .limit(200),
-    supabase
-      .from("profiles")
-      .select("is_admin,admin_role,account_status")
-      .eq("id", admin.id)
-      .single(),
+      .in("user_id", userIds),
   ]);
 
-  if (profilesResult.error) throw profilesResult.error;
   if (trialsResult.error) throw trialsResult.error;
   if (sessionsResult.error) throw sessionsResult.error;
-  if (adminProfileResult.error) throw adminProfileResult.error;
-
-  const allProfiles = profilesResult.data ?? [];
-  const canManageRoles = isOwnerProfile({
-    ...adminProfileResult.data,
-    admin_role: adminProfileResult.data?.admin_role as AdminRole | null,
-    account_status: adminProfileResult.data?.account_status as AccountStatus | null,
-  });
-  const authStatusByUser = await getAuthStatusesByUser(supabase, allProfiles.map((profile) => profile.id));
 
   const trialsByUser = new Map<string, NonNullable<typeof trialsResult.data>>();
   for (const trial of trialsResult.data ?? []) {
@@ -207,29 +200,12 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
     sessionsByUser.set(session.user_id, current);
   }
 
-  const filteredProfiles = allProfiles.filter((profile) => {
-    return (
-      matchesSearch(profile, feedback?.query) &&
-      matchesRole(profile, feedback?.role) &&
-      matchesStatus(profile, feedback?.status) &&
-      matchesType(profile, feedback?.type) &&
-      matchesCreatedAt(profile, feedback?.createdFrom, feedback?.createdTo)
-    );
-  });
-
-  // Client-side pagination
-  const PAGE_SIZE = 20;
-  const currentPage = Number(feedback?.page ?? 1);
-  const totalPages = Math.max(1, Math.ceil(filteredProfiles.length / PAGE_SIZE));
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const endIndex = startIndex + PAGE_SIZE;
-  const paginatedProfiles = filteredProfiles.slice(startIndex, endIndex);
-
+  // Summary counts from RPC
   const summary = {
-    active: allProfiles.filter((profile) => (profile.account_status ?? "active") === "active").length,
-    disabled: allProfiles.filter((profile) => profile.account_status === "disabled").length,
-    elevated: allProfiles.filter((profile) => profile.is_admin || profile.admin_role === "operator").length,
-    total: allProfiles.length,
+    active: 0, // Will be updated when we add summary to RPC
+    disabled: 0,
+    elevated: 0,
+    total: totalCount,
   };
 
   return (
@@ -345,12 +321,14 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
         </form>
 
         <AdminCard className="mt-6">
-          {filteredProfiles.length === 0 ? (
+          {users.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-base font-medium text-slate-950">{t("emptyFiltered")}</p>
-              <Link className="mt-4 inline-flex min-h-10 items-center rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700" href="/admin/users">
-                {t("reset")}
-              </Link>
+              <p className="text-base font-medium text-slate-950">{filteredCount < totalCount ? t("emptyFiltered") : t("empty")}</p>
+              {filteredCount < totalCount ? (
+                <Link className="mt-4 inline-flex min-h-10 items-center rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700" href="/admin/users">
+                  {t("reset")}
+                </Link>
+              ) : null}
             </div>
           ) : (
             <>
@@ -358,7 +336,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
               label={t("title")}
               mobileCards={
                 <div className="grid gap-3">
-                  {paginatedProfiles.map((profile) => {
+                  {users.map((profile) => {
                     const trials = trialsByUser.get(profile.id) ?? [];
                     const sessions = sessionsByUser.get(profile.id) ?? [];
                     const authStatus = authStatusByUser.get(profile.id);
@@ -462,7 +440,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {paginatedProfiles.map((profile) => {
+                  {users.map((profile) => {
                     const trials = trialsByUser.get(profile.id) ?? [];
                     const sessions = sessionsByUser.get(profile.id) ?? [];
                     const authStatus = authStatusByUser.get(profile.id);

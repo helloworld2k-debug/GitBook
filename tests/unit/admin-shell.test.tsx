@@ -16,6 +16,7 @@ vi.mock("@/i18n/routing", () => ({
 
 const adminLabels = {
   auditLogs: "Audit Logs",
+  archivedUsers: "Archived users",
   backToAdmin: "Back to admin",
   certificates: "Certificates",
   contributionPricing: "Contribution pricing",
