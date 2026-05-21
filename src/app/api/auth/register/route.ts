@@ -28,10 +28,14 @@ function isTurnstileConfigured() {
 }
 
 function shouldBypassEmailConfirmation() {
-  if (process.env.NODE_ENV === "production") {
-    return false;
+  // Project design: users can register and login immediately without email verification
+  // This works regardless of Supabase enable_confirmations setting
+  if (process.env.TEMP_DISABLE_EMAIL_CONFIRMATION === "true") {
+    return true;
   }
-  return process.env.TEMP_DISABLE_EMAIL_CONFIRMATION === "true";
+  // In production, always bypass email confirmation using admin API with email_confirm: true
+  // This respects the project's design where Supabase config has enable_confirmations = false
+  return true;
 }
 
 function isAlreadyRegisteredError(error: AuthSignupError | null | undefined) {
