@@ -1,7 +1,7 @@
 {
   "nav": {
     "download": "ホーム",
-    "donate": "応援",
+    "donate": "開発支援",
     "dashboard": "ダッシュボード",
     "notifications": "通知",
     "support": "サポート",
@@ -15,8 +15,8 @@
   "login": {
     "eyebrow": "安全なアクセス",
     "title": "AI ワークスペースにサインイン",
-    "subtitle": "メールアドレスとパスワード、または信頼できる OAuth プロバイダーで、ダウンロード、応援、証明書、ダッシュボードに進めます。",
-    "privacyNote": "アカウントは応援履歴、証明書、ダッシュボード設定をあなたに紐づけます。",
+    "subtitle": "メールアドレスとパスワード、または信頼できる OAuth プロバイダーで、ダウンロード、開発支援、証明書、ダッシュボードに進めます。",
+    "privacyNote": "アカウントは開発支援履歴、証明書、ダッシュボード設定をあなたに紐づけます。",
     "formTitle": "メールとパスワード",
     "signInTab": "サインイン",
     "registerTab": "登録",
@@ -78,8 +78,8 @@
     "relatedSubtitle": "リリース履歴、支援、アカウントツール、製品更新を続けて確認できます。",
     "relatedVersionsTitle": "リリースアーカイブ",
     "relatedVersionsText": "特定バージョンが必要なとき、過去の macOS / Windows ビルドを取得できます。",
-    "relatedContributionsTitle": "応援",
-    "relatedContributionsText": "一回限りの支援で継続開発を支え、証明書を受け取れます。",
+    "relatedContributionsTitle": "開発支援",
+    "relatedContributionsText": "一回限りの開発支援で継続開発を支え、証明書を受け取れます。",
     "relatedSupportTitle": "サポート",
     "relatedSupportText": "連絡チャンネル、フィードバック送信、サポート会話を確認できます。",
     "relatedNotificationsTitle": "通知",
@@ -105,16 +105,16 @@
     "policiesNav": "ポリシー"
   },
   "donate": {
-    "title": "GitBook AI に貢献する",
-    "subtitle": "製品リリース、AI ナレッジ更新、クラウド同期基盤、サポーター証明書を支える一回限りの支援金額を選択してください。",
+    "title": "GitBook AI の開発を支援する",
+    "subtitle": "製品リリース、AI ナレッジ更新、クラウド同期基盤、開発支援証明書を支える一回限りの支援金額を選択してください。",
     "tiers": {
-      "monthly": "月額相当の支援",
-      "quarterly": "四半期相当の支援",
-      "yearly": "年額相当の支援"
+      "monthly": "月次開発支援",
+      "quarterly": "四半期開発支援",
+      "yearly": "年次開発支援"
     },
-    "checkoutDodo": "今すぐ支援する",
-    "loginToContribute": "ログインして支援する",
-    "oneTimeNote": "ダウンロード提供と継続開発を支える一回限りの支援です。",
+    "checkoutDodo": "今すぐ開発を支援",
+    "loginToContribute": "ログインして支援",
+    "oneTimeNote": "ダウンロード提供と継続開発を支える一回限りの開発支援です。",
     "paymentNote": "Dodo Payments による安全なチェックアウトで、カードと利用可能なローカル決済方法に対応しています。支払い完了後に証明書が発行されます。",
     "cancelled": "チェックアウトはキャンセルされました。支援プランを確認し、準備ができたらもう一度お試しください。"
   },
@@ -220,8 +220,8 @@
         "description": "新規ユーザーはトライアルコードを引き換えることで、7日間のクラウド同期アクセスを取得できます。トライアルコードは公式チャネルから配布されます。"
       },
       "contributors": {
-        "title": "支援者アクセス",
-        "description": "GitBook AI の開発に一度だけ支援したユーザーは、お礼としてクラウド同期アクセスを受け取ります。期間は支援プランによります。"
+        "title": "開発支援者アクセス",
+        "description": "GitBook AI の開発に一度だけ開発支援したユーザーは、お礼としてクラウド同期アクセスを受け取ります。期間は開発支援プランによります。"
       }
     },
     "faq": {
@@ -243,8 +243,8 @@
         "a": "トライアルコードは公式コミュニティチャネルから配布されます。取得方法についてはサポートページをご確認ください。"
       },
       "certificate": {
-        "q": "支援者証明書を取得するには？",
-        "a": "支援ページで支払いを完了すると、証明書が自動的に生成され、ダッシュボードで確認できます。"
+        "q": "開発支援証明書を取得するには？",
+        "a": "開発支援ページで支払いを完了すると、証明書が自動的に生成され、ダッシュボードで確認できます。"
       }
     },
     "contact": {
@@ -255,9 +255,9 @@
   },
   "dashboard": {
     "title": "個人センター",
-    "donations": "支払い済み応援",
+    "donations": "開発支援",
     "certificates": "有効な証明書",
-    "recentDonations": "応援履歴",
+    "recentDonations": "開発支援履歴",
     "recentCertificates": "証明書",
     "amount": "金額",
     "status": "ステータス",
@@ -265,7 +265,7 @@
     "certificateNumber": "証明書番号",
     "type": "種類",
     "viewCertificate": "証明書を見る",
-    "noDonations": "応援履歴はまだありません。",
+    "noDonations": "開発支援履歴はまだありません。",
     "noCertificates": "有効な証明書はまだありません。",
     "trial": {
       "title": "ライセンスコード",
@@ -303,7 +303,7 @@
     "passwordMismatch": "パスワードが一致しません。",
     "passwordError": "パスワードを更新できませんでした。",
     "eyebrow": "AI アカウントワークスペース",
-    "subtitle": "クラウド同期アクセス、トライアルコード、応援履歴、証明書、アカウントの安全性をまとめて管理します。",
+    "subtitle": "クラウド同期アクセス、トライアルコード、開発支援履歴、証明書、アカウントの安全性をまとめて管理します。",
     "cloudSync": "クラウド同期",
     "cloudSyncActive": "有効",
     "cloudSyncInactive": "未有効",
@@ -341,8 +341,8 @@
     "overview": {
       "eyebrow": "管理ツール",
       "title": "管理画面",
-      "donationsTitle": "応援",
-      "donationsDescription": "応援記録、ステータス、取引 ID を確認します。",
+      "donationsTitle": "開発支援",
+      "donationsDescription": "開発支援記録、ステータス、取引 ID を確認します。",
       "certificatesTitle": "証明書",
       "certificatesDescription": "発行済み証明書の番号、種類、ステータス、発行日を確認します。",
       "auditLogsTitle": "監査ログ",
@@ -363,10 +363,10 @@
       "totalUsersMetric": "総ユーザー数",
       "activeTrialsMetric": "有効な試用コード",
       "pendingFeedbackMetric": "未対応フィードバック",
-      "recentContributionsMetric": "最近の応援",
-      "description": "応援、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。",
-      "contributionPricingTitle": "応援価格設定",
-      "contributionPricingDescription": "Contributions ページの価格、割引、開発サポート文言を管理します。",
+      "recentContributionsMetric": "最近の開発支援",
+      "description": "開発支援、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。",
+      "contributionPricingTitle": "開発支援価格設定",
+      "contributionPricingDescription": "開発支援ページの価格、割引、開発支援文言を管理します。",
       "policyPagesTitle": "Policy pages",
       "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer.",
       "newsTitle": "ニュース",
@@ -376,20 +376,20 @@
     },
     "donations": {
       "eyebrow": "管理画面",
-      "title": "管理者向け応援履歴",
+      "title": "開発支援記録",
       "provider": "プロバイダー",
       "status": "ステータス",
       "amount": "金額",
       "paidAt": "支払い日時（UTC）",
       "transactionId": "取引 ID",
-      "manualEntryTitle": "手動支払い済み応援",
+      "manualEntryTitle": "手動開発支援記録",
       "manualEntryDescription": "既存ユーザーのメールまたはユーザー ID で支払い済み手動記録を 1 件作成します。",
       "userIdentifier": "メールまたはユーザー ID",
       "amountCents": "金額（セント）",
       "reference": "参照番号",
       "reason": "理由",
-      "submitManualDonation": "手動応援を追加",
-      "empty": "応援履歴はまだありません。",
+      "submitManualDonation": "手動開発支援を追加",
+      "empty": "開発支援記録はまだありません。",
       "providers": {
         "stripe": "旧 Stripe",
         "paypal": "PayPal",
@@ -418,7 +418,7 @@
       },
       "export": "CSV エクスポート",
       "exporting": "エクスポート中...",
-      "description": "決済記録を確認し、検証済みの手動応援を追加します。"
+      "description": "決済記録を確認し、検証済みの手動開発支援を追加します。"
     },
     "certificates": {
       "eyebrow": "管理画面",
@@ -434,7 +434,7 @@
       "notIssued": "未発行",
       "empty": "証明書はまだありません。",
       "types": {
-        "donation": "応援証明書",
+        "donation": "開発支援証明書",
         "honor": "表彰証明書"
       },
       "statuses": {
@@ -684,7 +684,7 @@
       "user": "ユーザー",
       "feature": "機能",
       "validUntil": "有効期限",
-      "sourceDonation": "元の応援",
+      "sourceDonation": "元の開発支援",
       "none": "なし",
       "device": "デバイス",
       "platform": "プラットフォーム",
@@ -758,9 +758,9 @@
       "eyebrow": "管理",
       "title": "ユーザー管理",
       "detailTitle": "ユーザー運用",
-      "detailDescription": "1 人のユーザーのプロフィール、応援、証明書、トライアル、端末、権限をまとめて確認・保守します。",
+      "detailDescription": "1 人のユーザーのプロフィール、開発支援、証明書、トライアル、端末、権限をまとめて確認・保守します。",
       "manageUser": "ユーザー管理へ進む",
-      "detailEntryHint": "アカウント詳細、応援、証明書、端末設定を確認",
+      "detailEntryHint": "アカウント詳細、開発支援、証明書、端末設定を確認",
       "user": "ユーザー",
       "details": "詳細",
       "role": "ロール",
@@ -886,10 +886,10 @@
       "cloudSyncUsageEmpty": "クラウド同期の利用記録はまだありません。",
       "cloudSyncUsageEvents": "最近の同期イベント",
       "unbind": "マシン紐づけ解除",
-      "addDonation": "手動応援を追加",
+      "addDonation": "手動開発支援を追加",
       "emptyTrials": "トライアルなし",
       "emptyDevices": "デスクトップデバイスなし",
-      "emptyContributions": "応援はありません",
+      "emptyContributions": "開発支援記録はありません",
       "emptyCertificates": "証明書はありません",
       "emptyEntitlements": "権限はありません",
       "emptyLeases": "リースはありません",
@@ -910,7 +910,7 @@
       "backToAdmin": "管理画面へ戻る",
       "certificates": "証明書",
       "dashboard": "概要",
-      "donations": "応援",
+      "donations": "開発支援",
       "language": "言語",
       "licenses": "ライセンス",
       "menu": "メニュー",
@@ -921,7 +921,7 @@
       "supportFeedback": "フィードバック",
       "supportSettings": "サポート設定",
       "users": "ユーザー",
-      "contributionPricing": "応援価格設定",
+      "contributionPricing": "開発支援価格設定",
       "supportFeedbackUnread": "{count} 件の未読フィードバックがあります",
       "policies": "Policy pages",
       "news": "ニュース",
@@ -929,10 +929,10 @@
     },
     "contributionPricing": {
       "eyebrow": "Admin",
-      "title": "応援価格設定",
-      "description": "Contributions ページの価格、割引、開発サポート文言を管理します。",
+      "title": "開発支援価格設定",
+      "description": "開発支援ページの価格、割引、開発支援文言を管理します。",
       "tiersTitle": "開発サポートプラン",
-      "tiersDescription": "Contributions ページに表示する価格と文言を更新します。",
+      "tiersDescription": "開発支援ページに表示する価格と文言を更新します。",
       "tierLabel": "プラン名",
       "tierDescription": "説明",
       "tierPrice": "価格",
@@ -1014,7 +1014,7 @@
     "brand": "GitBook AI",
     "title": "感謝状",
     "description": "独立したソフトウェア開発への大切なご支援に、感謝を込めてこの証明書を贈ります。",
-    "amount": "応援金額",
+    "amount": "開発支援金額",
     "presentedTo": "贈呈先",
     "certificateNumber": "証明書番号",
     "issued": "発行日",

@@ -1,7 +1,7 @@
 {
   "nav": {
     "download": "首頁",
-    "donate": "支持",
+    "donate": "開發支持",
     "dashboard": "儀表板",
     "notifications": "通知",
     "support": "支援",
@@ -15,8 +15,8 @@
   "login": {
     "eyebrow": "安全存取",
     "title": "登入你的 AI 工作區",
-    "subtitle": "使用電子郵件與密碼，或透過可信任的 OAuth 服務商繼續下載、自願支持、證書與儀表板流程。",
-    "privacyNote": "你的帳戶用於保存支持記錄、證書與儀表板設定。",
+    "subtitle": "使用電子郵件與密碼，或透過可信任的 OAuth 服務商繼續下載、開發支持、證書與儀表板流程。",
+    "privacyNote": "你的帳戶用於保存開發支持記錄、證書與儀表板設定。",
     "formTitle": "電子郵件與密碼",
     "signInTab": "登入",
     "registerTab": "註冊",
@@ -78,8 +78,8 @@
     "relatedSubtitle": "繼續查看版本歷史、支持入口、帳戶工具與產品更新。",
     "relatedVersionsTitle": "版本封存",
     "relatedVersionsText": "需要特定版本時，可下載先前的 macOS 與 Windows 構建。",
-    "relatedContributionsTitle": "支持",
-    "relatedContributionsText": "透過一次性支持協助持續開發，並取得支持證書。",
+    "relatedContributionsTitle": "開發支持",
+    "relatedContributionsText": "透過一次性開發支持協助持續開發，並取得開發支持證書。",
     "relatedSupportTitle": "支援",
     "relatedSupportText": "查看聯絡渠道、提交回饋，並追蹤你的支援對話。",
     "relatedNotificationsTitle": "通知",
@@ -105,16 +105,16 @@
     "policiesNav": "政策"
   },
   "donate": {
-    "title": "支持 GitBook AI 持續開發",
-    "subtitle": "選擇一次性支持金額，用於產品版本發布、AI 知識更新、雲端同步基礎設施與支持證書。",
+    "title": "支持 GitBook AI 開發",
+    "subtitle": "選擇一次性開發支持金額，用於產品版本發布、AI 知識更新、雲端同步基礎設施與開發支持證書。",
     "tiers": {
-      "monthly": "月度支持",
-      "quarterly": "季度支持",
-      "yearly": "年度支持"
+      "monthly": "月度開發支持",
+      "quarterly": "季度開發支持",
+      "yearly": "年度開發支持"
     },
-    "checkoutDodo": "立即支持",
+    "checkoutDodo": "立即支持開發",
     "loginToContribute": "登入後支持",
-    "oneTimeNote": "一次性支持，協助下載服務維持可用，也讓開發能持續推進。",
+    "oneTimeNote": "一次性開發支持，協助下載服務維持可用，也讓開發能持續推進。",
     "paymentNote": "透過 Dodo Payments 安全結帳，支援銀行卡與可用的本地支付方式。付款成功後會產生支持證書。",
     "cancelled": "結帳已取消。你可以重新查看支持方案，準備好後再試一次。"
   },
@@ -220,8 +220,8 @@
         "description": "新用戶可以兌換試用碼獲得 7 天的雲端同步存取權限。試用碼透過官方管道發放。"
       },
       "contributors": {
-        "title": "支持者權限",
-        "description": "對 GitBook AI 開發提供一次性支持的用戶，作為感謝將獲得雲端同步存取權限。期限視支持方案而定。"
+        "title": "開發支持者權限",
+        "description": "對 GitBook AI 開發提供一次性開發支持的用戶，作為感謝將獲得雲端同步存取權限。期限視開發支持方案而定。"
       }
     },
     "faq": {
@@ -243,8 +243,8 @@
         "a": "試用碼透過我們的官方社群管道發放。請查看支援頁面了解取得方式。"
       },
       "certificate": {
-        "q": "如何獲得支持者證書？",
-        "a": "在支持頁面完成支持後，證書會自動生成，並可在儀表板中查看。"
+        "q": "如何獲得開發支持證書？",
+        "a": "在開發支持頁面完成支持後，證書會自動生成，並可在儀表板中查看。"
       }
     },
     "contact": {
@@ -255,9 +255,9 @@
   },
   "dashboard": {
     "title": "個人中心",
-    "donations": "支持記錄",
+    "donations": "開發支持記錄",
     "certificates": "有效證書",
-    "recentDonations": "支持記錄",
+    "recentDonations": "開發支持記錄",
     "recentCertificates": "證書",
     "amount": "金額",
     "status": "狀態",
@@ -265,7 +265,7 @@
     "certificateNumber": "證書編號",
     "type": "類型",
     "viewCertificate": "查看證書",
-    "noDonations": "尚無支持記錄。",
+    "noDonations": "尚無開發支持記錄。",
     "noCertificates": "尚無有效證書。",
     "trial": {
       "title": "授權碼",
@@ -303,7 +303,7 @@
     "passwordMismatch": "兩次密碼不一致。",
     "passwordError": "無法更新密碼。",
     "eyebrow": "AI 帳戶工作區",
-    "subtitle": "集中管理雲端同步權限、試用兌換碼、支持記錄、證書與帳戶安全。",
+    "subtitle": "集中管理雲端同步權限、試用兌換碼、開發支持記錄、證書與帳戶安全。",
     "cloudSync": "雲端同步",
     "cloudSyncActive": "有效中",
     "cloudSyncInactive": "未啟用",
@@ -341,8 +341,8 @@
     "overview": {
       "eyebrow": "管理工具",
       "title": "管理後台",
-      "donationsTitle": "支持",
-      "donationsDescription": "檢視支持記錄、狀態與交易 ID。",
+      "donationsTitle": "開發支持",
+      "donationsDescription": "檢視開發支持記錄、狀態與交易 ID。",
       "certificatesTitle": "證書",
       "certificatesDescription": "檢視已頒發的證書編號、類型、狀態與頒發日期。",
       "auditLogsTitle": "稽核紀錄",
@@ -363,10 +363,10 @@
       "totalUsersMetric": "使用者總數",
       "activeTrialsMetric": "啟用中的試用碼",
       "pendingFeedbackMetric": "待處理回饋",
-      "recentContributionsMetric": "近期支持",
-      "description": "管理支持記錄、證書、版本、授權、使用者與稽核活動。",
-      "contributionPricingTitle": "支持價格設定",
-      "contributionPricingDescription": "管理 Contributions 頁面的價格、折扣與開發支持方案文案。",
+      "recentContributionsMetric": "近期開發支持",
+      "description": "管理開發支持記錄、證書、版本、授權、使用者與稽核活動。",
+      "contributionPricingTitle": "開發支持價格設定",
+      "contributionPricingDescription": "管理開發支持頁面的價格、折扣與開發支持方案文案。",
       "policyPagesTitle": "Policy pages",
       "policyPagesDescription": "Edit the English Terms, Privacy, and Refund pages linked from the footer.",
       "newsTitle": "新聞",
@@ -376,20 +376,20 @@
     },
     "donations": {
       "eyebrow": "管理後台",
-      "title": "管理支持記錄",
+      "title": "開發支持記錄",
       "provider": "服務商",
       "status": "狀態",
       "amount": "金額",
       "paidAt": "付款時間（UTC）",
       "transactionId": "交易 ID",
-      "manualEntryTitle": "人工已付款支持記錄",
+      "manualEntryTitle": "人工已付款開發支持記錄",
       "manualEntryDescription": "為既有使用者以電子郵件或使用者 ID 建立一筆已付款人工記錄。",
       "userIdentifier": "電子郵件或使用者 ID",
       "amountCents": "金額（美分）",
       "reference": "參考編號",
       "reason": "原因",
-      "submitManualDonation": "新增人工支持記錄",
-      "empty": "尚無支持記錄。",
+      "submitManualDonation": "新增人工開發支持記錄",
+      "empty": "尚無開發支持記錄。",
       "providers": {
         "stripe": "舊版 Stripe",
         "paypal": "PayPal",
@@ -418,7 +418,7 @@
       },
       "export": "匯出 CSV",
       "exporting": "匯出中...",
-      "description": "檢視付款記錄，並新增已驗證的人工支持。"
+      "description": "檢視付款記錄，並新增已驗證的人工開發支持記錄。"
     },
     "certificates": {
       "eyebrow": "管理後台",
@@ -434,7 +434,7 @@
       "notIssued": "尚未頒發",
       "empty": "尚無證書。",
       "types": {
-        "donation": "支持證書",
+        "donation": "開發支持證書",
         "honor": "榮譽證書"
       },
       "statuses": {
@@ -684,7 +684,7 @@
       "user": "使用者",
       "feature": "功能",
       "validUntil": "有效至",
-      "sourceDonation": "來源支持",
+      "sourceDonation": "來源開發支持",
       "none": "無",
       "device": "裝置",
       "platform": "平台",
@@ -758,9 +758,9 @@
       "eyebrow": "管理後台",
       "title": "使用者管理",
       "detailTitle": "使用者營運維護",
-      "detailDescription": "集中檢視並維護單一使用者的資料、支持、證書、試用、裝置與權益。",
+      "detailDescription": "集中檢視並維護單一使用者的資料、開發支持、證書、試用、裝置與權益。",
       "manageUser": "管理使用者",
-      "detailEntryHint": "查看帳號詳情、支持、證書與裝置設定",
+      "detailEntryHint": "查看帳號詳情、開發支持、證書與裝置設定",
       "user": "使用者",
       "details": "詳細資料",
       "role": "角色",
@@ -772,6 +772,7 @@
       "entitlements": "權益",
       "leases": "租約",
       "sessions": "桌面工作階段",
+      "donations": "開發支持",
       "search": "搜尋使用者",
       "searchPlaceholder": "電子郵件、顯示名稱或使用者 ID",
       "applyFilters": "套用",
@@ -886,10 +887,10 @@
       "cloudSyncUsageEmpty": "尚無雲端同步使用記錄。",
       "cloudSyncUsageEvents": "最近同步事件",
       "unbind": "解除機器綁定",
-      "addDonation": "新增人工支持記錄",
+      "addDonation": "新增人工開發支持記錄",
       "emptyTrials": "尚無試用",
       "emptyDevices": "尚無桌面裝置",
-      "emptyContributions": "尚無支持記錄",
+      "emptyContributions": "尚無開發支持記錄",
       "emptyCertificates": "尚無證書",
       "emptyEntitlements": "尚無權益",
       "emptyLeases": "尚無租約",
@@ -910,7 +911,7 @@
       "backToAdmin": "返回管理首頁",
       "certificates": "證書",
       "dashboard": "總覽",
-      "donations": "支持",
+      "donations": "開發支持",
       "language": "語言",
       "licenses": "授權",
       "menu": "選單",
@@ -921,7 +922,7 @@
       "supportFeedback": "回饋",
       "supportSettings": "支援設定",
       "users": "使用者",
-      "contributionPricing": "支持價格設定",
+      "contributionPricing": "開發支持價格設定",
       "supportFeedbackUnread": "有 {count} 則未讀回饋",
       "policies": "Policy pages",
       "news": "新聞",
@@ -929,10 +930,10 @@
     },
     "contributionPricing": {
       "eyebrow": "Admin",
-      "title": "支持價格設定",
-      "description": "管理 Contributions 頁面的價格、折扣與開發支持方案文案。",
+      "title": "開發支持價格設定",
+      "description": "管理開發支持頁面的價格、折扣與開發支持方案文案。",
       "tiersTitle": "開發支持方案",
-      "tiersDescription": "更新 Contributions 頁面顯示的價格與文案。",
+      "tiersDescription": "更新開發支持頁面顯示的價格與文案。",
       "tierLabel": "方案名稱",
       "tierDescription": "描述",
       "tierPrice": "價格",
@@ -940,7 +941,7 @@
       "status": "顯示狀態",
       "tierActive": "啟用",
       "tierInactive": "停用",
-      "tierStatusHelp": "停用的方案會從 Contributions 頁面隱藏。",
+      "tierStatusHelp": "停用的方案會從開發支持頁面隱藏。",
       "save": "儲存方案",
       "tierSaved": "方案已儲存"
     },
@@ -1014,7 +1015,7 @@
     "brand": "GitBook AI",
     "title": "感謝狀",
     "description": "謹以此證書感謝你對獨立軟體開發的珍貴支持。",
-    "amount": "支持金額",
+    "amount": "開發支持金額",
     "presentedTo": "頒發給",
     "certificateNumber": "證書編號",
     "issued": "頒發日期",
@@ -1034,7 +1035,7 @@
       "dashboard": "返回個人中心"
     },
     "types": {
-      "donation": "支持證書",
+      "donation": "開發支持證書",
       "honor": "榮譽證書"
     }
   },

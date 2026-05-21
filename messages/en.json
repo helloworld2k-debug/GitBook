@@ -1,7 +1,7 @@
 {
   "nav": {
     "download": "Home",
-    "donate": "Contributions",
+    "donate": "Development Support",
     "dashboard": "Dashboard",
     "news": "News",
     "notifications": "Notifications",
@@ -15,8 +15,8 @@
   "login": {
     "eyebrow": "Secure access",
     "title": "Sign in to your AI workspace",
-    "subtitle": "Use email and password, or a trusted OAuth provider, to continue to downloads, support contributions, certificates, and your dashboard.",
-    "privacyNote": "Your account keeps contribution records, certificates, and dashboard settings tied to you.",
+    "subtitle": "Use email and password, or a trusted OAuth provider, to continue to downloads, development support, certificates, and your dashboard.",
+    "privacyNote": "Your account keeps support records, certificates, and dashboard settings tied to you.",
     "formTitle": "Email and password",
     "signInTab": "Sign in",
     "registerTab": "Register",
@@ -81,8 +81,8 @@
     "relatedSubtitle": "Keep going with release history, support, account tools, and product updates.",
     "relatedVersionsTitle": "Release archive",
     "relatedVersionsText": "Download previous macOS and Windows builds when you need a specific version.",
-    "relatedContributionsTitle": "Contributions",
-    "relatedContributionsText": "Support continued development with a one-time contribution and certificate.",
+    "relatedContributionsTitle": "Development Support",
+    "relatedContributionsText": "Support continued development with a one-time support and certificate.",
     "relatedSupportTitle": "Support",
     "relatedSupportText": "Find contact channels, submit feedback, and follow your support conversations.",
     "relatedNotificationsTitle": "Notifications",
@@ -117,16 +117,16 @@
     "empty": "No public releases have been published yet."
   },
   "donate": {
-    "title": "Contribute to GitBook AI",
-    "subtitle": "Choose a one-time contribution to support product releases, AI knowledge updates, cloud sync infrastructure, and supporter certificates.",
+    "title": "Support GitBook AI Development",
+    "subtitle": "Choose a one-time support amount to help with product releases, AI knowledge updates, cloud sync infrastructure, and supporter certificates.",
     "tiers": {
-      "monthly": "Monthly Support",
-      "quarterly": "Quarterly Support",
-      "yearly": "Yearly Support"
+      "monthly": "Monthly Dev Support",
+      "quarterly": "Quarterly Dev Support",
+      "yearly": "Yearly Dev Support"
     },
-    "checkoutDodo": "Contribute now",
-    "loginToContribute": "Sign in to contribute",
-    "oneTimeNote": "A one-time contribution that helps keep downloads available and development moving.",
+    "checkoutDodo": "Support development now",
+    "loginToContribute": "Sign in to support",
+    "oneTimeNote": "A one-time support that helps keep downloads available and development moving.",
     "paymentNote": "Secure checkout with Dodo Payments for cards and supported local payment methods. A certificate is issued after successful payment.",
     "cancelled": "Checkout was cancelled. You can review the support tiers and try again when ready."
   },
@@ -232,8 +232,8 @@
         "description": "New users can redeem a trial code for 7 days of cloud sync access. Trial codes are distributed through official channels."
       },
       "contributors": {
-        "title": "Contributor Access",
-        "description": "Users who have made a one-time contribution to support GitBook AI development receive cloud sync access as a thank you. The duration depends on the contribution tier."
+        "title": "Supporter Access",
+        "description": "Users who have made a one-time support to help GitBook AI development receive cloud sync access as a thank you. The duration depends on the support tier."
       }
     },
     "faq": {
@@ -255,8 +255,8 @@
         "a": "Trial codes are distributed through our official community channels. Check our support page for information on how to obtain one."
       },
       "certificate": {
-        "q": "How do I get a contributor certificate?",
-        "a": "After making a contribution on the Contributions page, a certificate is automatically generated and can be viewed in your dashboard."
+        "q": "How do I get a development support certificate?",
+        "a": "After making a support on the Development Support page, a certificate is automatically generated and can be viewed in your dashboard."
       }
     },
     "contact": {
@@ -267,7 +267,7 @@
   },
   "dashboard": {
     "title": "Personal center",
-    "donations": "Contributions",
+    "donations": "Development Support",
     "certificates": "Active certificates",
     "accountTitle": "Account profile",
     "email": "Email",
@@ -283,7 +283,7 @@
     "passwordSaved": "Password updated.",
     "passwordMismatch": "Passwords do not match.",
     "passwordError": "Could not update password.",
-    "recentDonations": "Contribution history",
+    "recentDonations": "Support history",
     "recentCertificates": "Certificates",
     "amount": "Amount",
     "status": "Status",
@@ -291,7 +291,7 @@
     "certificateNumber": "Certificate number",
     "type": "Type",
     "viewCertificate": "View certificate",
-    "noDonations": "No contribution records yet.",
+    "noDonations": "No support records yet.",
     "noCertificates": "No active certificates yet.",
     "trial": {
       "title": "License code",
@@ -315,7 +315,7 @@
       "refunded": "Refunded"
     },
     "eyebrow": "AI account workspace",
-    "subtitle": "Manage cloud sync access, license codes, contribution history, certificates, and account security in one place.",
+    "subtitle": "Manage cloud sync access, license codes, support history, certificates, and account security in one place.",
     "cloudSync": "Cloud sync",
     "cloudSyncActive": "Active",
     "cloudSyncInactive": "Not active",
@@ -353,8 +353,8 @@
     "overview": {
       "eyebrow": "Admin tools",
       "title": "Admin",
-      "donationsTitle": "Contributions",
-      "donationsDescription": "Review contribution records, statuses, and transaction IDs.",
+      "donationsTitle": "Development Support",
+      "donationsDescription": "Review support records, statuses, and transaction IDs.",
       "certificatesTitle": "Certificates",
       "certificatesDescription": "Review issued certificate numbers, types, statuses, and issue dates.",
       "releasesTitle": "Releases",
@@ -379,10 +379,10 @@
       "totalUsersMetric": "Total users",
       "activeTrialsMetric": "Active trials",
       "pendingFeedbackMetric": "Open feedback",
-      "recentContributionsMetric": "Recent contributions",
-      "description": "Manage contributions, certificates, releases, licenses, users, and audit activity.",
-      "contributionPricingTitle": "Contribution pricing",
-      "contributionPricingDescription": "Manage Contributions page prices, discounts, and support tier copy.",
+      "recentContributionsMetric": "Recent support",
+      "description": "Manage support records, certificates, releases, licenses, users, and audit activity.",
+      "contributionPricingTitle": "Support pricing",
+      "contributionPricingDescription": "Manage Development Support page prices, discounts, and support tier copy.",
       "registrationSecurityTitle": "Registration security",
       "registrationSecurityDescription": "Review signup abuse patterns and block risky sources before they create load."
     },
@@ -436,20 +436,20 @@
     },
     "donations": {
       "eyebrow": "Admin",
-      "title": "Admin contributions",
+      "title": "Development support records",
       "provider": "Provider",
       "status": "Status",
       "amount": "Amount",
       "paidAt": "Paid at (UTC)",
       "transactionId": "Transaction ID",
-      "manualEntryTitle": "Manual paid contribution",
+      "manualEntryTitle": "Manual support record",
       "manualEntryDescription": "Create one paid manual record for an existing user by email or user ID.",
       "userIdentifier": "Email or user ID",
       "amountCents": "Amount (cents)",
       "reference": "Reference",
       "reason": "Reason",
-      "submitManualDonation": "Add manual contribution",
-      "empty": "No contributions found.",
+      "submitManualDonation": "Add manual support record",
+      "empty": "No support records found.",
       "providers": {
         "stripe": "Legacy Stripe",
         "paypal": "PayPal",
@@ -478,7 +478,7 @@
       },
       "export": "Export CSV",
       "exporting": "Exporting...",
-      "description": "Review payment records and add verified manual contributions."
+      "description": "Review payment records and add verified manual support records."
     },
     "notifications": {
       "eyebrow": "Admin",
@@ -614,7 +614,7 @@
       "notIssued": "Not issued",
       "empty": "No certificates found.",
       "types": {
-        "donation": "Contribution Certificate",
+        "donation": "Dev Support Certificate",
         "honor": "Honor Certificate"
       },
       "statuses": {
@@ -735,7 +735,7 @@
       "user": "User",
       "feature": "Feature",
       "validUntil": "Valid until",
-      "sourceDonation": "Source contribution",
+      "sourceDonation": "Source support",
       "none": "None",
       "device": "Device",
       "platform": "Platform",
@@ -809,9 +809,9 @@
       "eyebrow": "Admin",
       "title": "User management",
       "detailTitle": "User operations",
-      "detailDescription": "Review and maintain one user's profile, contributions, certificates, trials, devices, and entitlements.",
+      "detailDescription": "Review and maintain one user's profile, support records, certificates, trials, devices, and entitlements.",
       "manageUser": "Manage user",
-      "detailEntryHint": "Detailed account, contributions, certificates, and devices",
+      "detailEntryHint": "Detailed account, support records, certificates, and devices",
       "user": "User",
       "details": "Details",
       "role": "Role",
@@ -823,6 +823,7 @@
       "entitlements": "Entitlements",
       "leases": "Leases",
       "sessions": "Desktop sessions",
+      "donations": "Contributions",
       "search": "Search users",
       "searchPlaceholder": "Email, display name, or user ID",
       "applyFilters": "Apply",
@@ -903,7 +904,7 @@
       "lastSeen": "Last seen",
       "timelineTitle": "Account timeline",
       "timelineEmpty": "No timeline activity yet.",
-      "timelineDonation": "Contribution",
+      "timelineDonation": "Support",
       "timelineCertificate": "Certificate",
       "timelineTrial": "Trial redeemed",
       "timelineSession": "Desktop session",
@@ -937,10 +938,10 @@
       "cloudSyncUsageEmpty": "No cloud sync usage sessions yet.",
       "cloudSyncUsageEvents": "Recent sync events",
       "unbind": "Unbind machine",
-      "addDonation": "Add manual contribution",
+      "addDonation": "Add manual support record",
       "emptyTrials": "No trials",
       "emptyDevices": "No desktop devices",
-      "emptyContributions": "No contributions",
+      "emptyContributions": "No support records",
       "emptyCertificates": "No certificates",
       "emptyEntitlements": "No entitlements",
       "emptyLeases": "No leases",
@@ -961,7 +962,7 @@
       "backToAdmin": "Back to admin",
       "certificates": "Certificates",
       "dashboard": "Overview",
-      "donations": "Contributions",
+      "donations": "Development Support",
       "language": "Language",
       "licenses": "Licenses",
       "menu": "Menu",
@@ -974,16 +975,16 @@
       "supportSettings": "Support settings",
       "returnToSite": "Return to site",
       "users": "Users",
-      "contributionPricing": "Contribution pricing",
+      "contributionPricing": "Support pricing",
       "supportFeedbackUnread": "You have {count} unread feedback threads",
       "registrationSecurity": "Registration security"
     },
     "contributionPricing": {
       "eyebrow": "Admin",
-      "title": "Contribution pricing",
-      "description": "Manage Contributions page prices, discounts, and support tier copy.",
+      "title": "Support pricing",
+      "description": "Manage Development Support page prices, discounts, and support tier copy.",
       "tiersTitle": "Development support tiers",
-      "tiersDescription": "Update the prices and copy shown on the Contributions page.",
+      "tiersDescription": "Update the prices and copy shown on the Development Support page.",
       "tierLabel": "Tier label",
       "tierDescription": "Description",
       "tierPrice": "Price",
@@ -991,7 +992,7 @@
       "status": "Visibility",
       "tierActive": "Active",
       "tierInactive": "Inactive",
-      "tierStatusHelp": "Inactive tiers are hidden from the Contributions page.",
+      "tierStatusHelp": "Inactive tiers are hidden from the Development Support page.",
       "save": "Save tier",
       "tierSaved": "Tier saved"
     },
@@ -1026,7 +1027,7 @@
     "brand": "GitBook AI",
     "title": "Certificate of Appreciation",
     "description": "This certificate is presented with gratitude for meaningful support of independent software development.",
-    "amount": "Contribution amount",
+    "amount": "Support amount",
     "presentedTo": "Presented to",
     "certificateNumber": "Certificate No.",
     "issued": "Issued",
@@ -1046,7 +1047,7 @@
       "dashboard": "Back to dashboard"
     },
     "types": {
-      "donation": "Contribution Certificate",
+      "donation": "Development Support Certificate",
       "honor": "Honor Certificate"
     }
   },
