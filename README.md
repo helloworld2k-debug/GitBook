@@ -24,19 +24,38 @@ Key directories:
 
 ## Local Setup
 
-Install dependencies:
+### Quick Start (Recommended)
+
+```bash
+# Install dependencies
+npm install
+
+# Setup environment (interactive - creates .env.local from template)
+npm run setup
+
+# Run development server (auto-checks env before starting)
+npm run dev
+```
+
+The `npm run setup` command will:
+- Check if `.env.local` exists
+- Create it from `.env.example` if missing
+- Prompt you to fill in required values
+- Open the file in your editor for configuration
+
+### Manual Setup
+
+If you prefer manual setup:
 
 ```bash
 npm install
-```
-
-Create local environment variables:
-
-```bash
 cp .env.example .env.local
+# Edit .env.local with your credentials
 ```
 
-Fill in Supabase and Dodo Payments values. The minimum local template is:
+### Required Environment Variables
+
+Fill in Supabase and Dodo Payments values in `.env.local`:
 
 ```bash
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
@@ -50,6 +69,13 @@ DODO_PRODUCT_MONTHLY=
 DODO_PRODUCT_QUARTERLY=
 DODO_PRODUCT_YEARLY=
 ```
+
+### Environment Check
+
+The project automatically checks environment configuration:
+- `npm run dev` runs `predev` check before starting
+- `npm run check-env` manually verifies your setup
+- Missing or incomplete `.env.local` will block dev server with helpful messages
 
 Run the development server:
 

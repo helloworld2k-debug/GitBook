@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "bash scripts/check-env.sh",
     "dev": "next dev",
+    "setup": "bash scripts/check-env.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -13,6 +15,7 @@
     "e2e:online": "node scripts/online-full-regression.mjs",
     "audit:china-access": "node scripts/china-access-audit.mjs",
     "check-config": "bash scripts/check-config.sh",
+    "check-env": "bash scripts/check-env.sh",
     "verify:rpc": "npx tsx scripts/verify-rpc-functions.ts"
   },
   "dependencies": {
