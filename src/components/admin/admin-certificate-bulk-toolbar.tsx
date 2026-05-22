@@ -97,13 +97,13 @@ export function AdminCertificateBulkToolbar({
   }
 
   return (
-    <div className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-4 py-3">
-      <p className="text-sm font-medium text-slate-900">
+    <div className="mt-4 flex items-center justify-between rounded-md border border-slate-200 bg-slate-950 px-4 py-3 text-white shadow-sm">
+      <p className="text-sm font-semibold">
         {labels.selectedCount.replace("{count}", String(selectedCount))}
       </p>
       <div className="flex gap-2">
         <button
-          className="inline-flex min-h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:border-slate-500 hover:bg-slate-50"
+          className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/20 px-3 text-sm font-medium text-white transition-colors hover:bg-white/10"
           onClick={() => {
             getSelectedCertificateInputs(formId).forEach((input) => {
               input.checked = false;
@@ -114,7 +114,7 @@ export function AdminCertificateBulkToolbar({
           {labels.clearSelection}
         </button>
         <button
-          className="inline-flex min-h-9 items-center justify-center rounded-md bg-slate-950 px-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-slate-800"
+          className="inline-flex min-h-10 items-center justify-center rounded-md bg-white/10 px-3 text-sm font-medium text-white transition-colors hover:bg-white/15 active:bg-white/20"
           onClick={onExportSelected}
           type="button"
         >

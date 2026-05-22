@@ -339,12 +339,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
         </div>
       </div>
 
-      <form action={bulkProcessUsers} className="hidden" id="bulk-users-bulk-action-form">
-          <input name="locale" type="hidden" value={locale} />
-          <input name="return_to" type="hidden" value="/admin/users" />
-        </form>
-
-        <AdminCard className="mt-6">
+      <AdminCard className="mt-6">
           {users.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-base font-medium text-slate-950">{filteredCount < totalCount ? t("emptyFiltered") : t("empty")}</p>

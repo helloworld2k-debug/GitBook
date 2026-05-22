@@ -440,15 +440,6 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 {t(`statuses.${profile.account_status ?? "active"}`)}
               </AdminStatusBadge>
             </div>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0">
-                <h2 className="text-base font-semibold text-slate-950">{t("details")}</h2>
-                <p className="mt-1 break-all text-sm text-slate-600">{profile.email}</p>
-              </div>
-              <AdminStatusBadge tone={profile.account_status === "active" ? "success" : "danger"}>
-                {t(`statuses.${profile.account_status ?? "active"}`)}
-              </AdminStatusBadge>
-            </div>
 
             <dl className="mt-4 grid gap-3 md:grid-cols-2">
               <DetailRow label="Email" value={profile.email} />
