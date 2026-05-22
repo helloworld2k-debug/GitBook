@@ -605,7 +605,8 @@
       "previous": "前へ",
       "next": "次へ",
       "page": "ページ",
-      "of": "/ 全"
+      "of": "/ 全",
+      "confirmChange": "ステータスを {old} から {new} に変更しますか？"
     },
     "supportSettings": {
       "eyebrow": "管理画面",

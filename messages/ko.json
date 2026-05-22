@@ -605,7 +605,8 @@
       "previous": "이전",
       "next": "다음",
       "page": "페이지",
-      "of": "/ 전체"
+      "of": "/ 전체",
+      "confirmChange": "상태를 {old}에서 {new}(으)로 변경하시겠습니까?"
     },
     "supportSettings": {
       "eyebrow": "관리",

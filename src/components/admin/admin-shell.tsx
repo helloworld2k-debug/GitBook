@@ -403,4 +403,5 @@ export function AdminStatusBadge({ children, tone = "neutral" }: { children: Rea
 }
 
 export { AdminTableSkeleton } from "./admin-table-skeleton";
+export { AdminPageSkeleton } from "./admin-page-skeleton";
 

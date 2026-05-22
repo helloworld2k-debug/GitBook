@@ -605,7 +605,8 @@
       "previous": "上一頁",
       "next": "下一頁",
       "page": "第",
-      "of": "頁，共"
+      "of": "頁，共",
+      "confirmChange": "確定要將狀態從 {old} 改為 {new}？"
     },
     "supportSettings": {
       "eyebrow": "管理後台",

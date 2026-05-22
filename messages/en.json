@@ -670,7 +670,8 @@
       "previous": "Previous",
       "next": "Next",
       "page": "Page",
-      "of": "of"
+      "of": "of",
+      "confirmChange": "Change status from {old} to {new}?"
     },
     "supportSettings": {
       "eyebrow": "Admin",

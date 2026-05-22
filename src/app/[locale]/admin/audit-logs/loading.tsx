@@ -1,0 +1,5 @@
+import { AdminPageSkeleton } from "@/components/admin/admin-shell";
+
+export default function Loading() {
+  return <AdminPageSkeleton colCount={6} showFilters={false} />;
+}

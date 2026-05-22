@@ -1,14 +1,13 @@
 import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminPagination } from "@/components/admin/admin-pagination";
-import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { enrichFeedbackUnreadState, type FeedbackUnreadSource } from "@/lib/admin/support-feedback-unread";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { updateSupportFeedbackStatus } from "../actions";
+import { SupportFeedbackTableRow } from "./support-feedback-table-row";
 
 type AdminSupportFeedbackPageProps = {
   params: Promise<{ locale: string }>;
@@ -230,55 +229,18 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {paginatedFeedback.map((item) => (
-                    <tr className={item.isUnread ? "bg-rose-50/40" : ""} key={item.id}>
-                      <td className="min-w-56 px-5 py-4 font-medium text-slate-950">
-                        <Link className="underline-offset-4 hover:underline" href={`/admin/support-feedback/${item.id}`}>
-                          {item.subject}
-                        </Link>
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4">
-                        {item.isUnread ? (
-                          <span className="inline-flex min-h-7 items-center rounded-md border border-rose-200 bg-rose-50 px-2 text-xs font-semibold text-rose-700">
-                            {t("supportFeedback.unread")}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-slate-400">-</span>
-                        )}
-                      </td>
-                      <td className="min-w-56 px-5 py-4 text-slate-700">
-                        <span className="block">{item.email ?? "-"}</span>
-                        <span className="block text-xs text-slate-500">{item.contact ?? "-"}</span>
-                      </td>
-                      <td className="max-w-md px-5 py-4 text-slate-700">
-                        <p className="line-clamp-3 whitespace-pre-wrap break-words">{item.message}</p>
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4">
-                        <AdminStatusBadge tone={statusTone(item.status as FeedbackStatus)}>
-                          {t(`supportFeedback.statuses.${item.status as FeedbackStatus}`)}
-                        </AdminStatusBadge>
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">
-                        {formatDateTimeWithSeconds(item.created_at, locale)}
-                      </td>
-                      <td className="border-l border-slate-200 px-5 py-4">
-                        <form action={updateSupportFeedbackStatus} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
-                          <input name="locale" type="hidden" value={locale} />
-                          <input name="return_to" type="hidden" value="/admin/support-feedback" />
-                          <input name="feedback_id" type="hidden" value={item.id} />
-                          <select className="min-h-10 min-w-0 rounded-md border border-slate-300 px-2 text-sm" name="status" defaultValue={item.status}>
-                            <option value="open">{t("supportFeedback.statuses.open")}</option>
-                            <option value="reviewing">{t("supportFeedback.statuses.reviewing")}</option>
-                            <option value="closed">{t("supportFeedback.statuses.closed")}</option>
-                          </select>
-                          <AdminSubmitButton className="min-h-10 whitespace-nowrap rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700" pendingLabel={t("common.saving")}>
-                            {t("supportFeedback.save")}
-                          </AdminSubmitButton>
-                        </form>
-                        <Link className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/support-feedback/${item.id}`}>
-                          {t("supportFeedback.view")}
-                        </Link>
-                      </td>
-                    </tr>
+                    <SupportFeedbackTableRow
+                      key={item.id}
+                      contact={item.contact}
+                      createdAt={formatDateTimeWithSeconds(item.created_at, locale)}
+                      email={item.email}
+                      feedbackId={item.id}
+                      initialStatus={item.status as FeedbackStatus}
+                      isUnread={item.isUnread}
+                      locale={locale}
+                      message={item.message}
+                      subject={item.subject}
+                    />
                   ))}
                 </tbody>
               </table>
