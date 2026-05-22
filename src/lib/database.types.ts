@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admin_audit_logs: {
@@ -1865,6 +1840,144 @@ export type Database = {
           },
         ]
       }
+      user_login_history: {
+        Row: {
+          failure_reason: string | null
+          id: string
+          ip_address: unknown
+          logged_in_at: string | null
+          login_method: string | null
+          success: boolean
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          failure_reason?: string | null
+          id?: string
+          ip_address?: unknown
+          logged_in_at?: string | null
+          login_method?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          failure_reason?: string | null
+          id?: string
+          ip_address?: unknown
+          logged_in_at?: string | null
+          login_method?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_login_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_tag_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          tag_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          tag_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          tag_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tag_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tag_assignments_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "user_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tag_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_tags: {
+        Row: {
+          color: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          created_at: string
+          event_type: string | null
+          id: string
+          metadata: Json | null
+          source: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          metadata?: Json | null
+          source: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          metadata?: Json | null
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1899,6 +2012,7 @@ export type Database = {
         Args: { input_retention_days?: number }
         Returns: number
       }
+      cleanup_old_webhook_logs: { Args: never; Returns: number }
       close_cloud_sync_usage_session: {
         Args: {
           input_end_reason: string
@@ -1959,6 +2073,25 @@ export type Database = {
           last_sign_in_at: string
           recovery_sent_at: string
           user_id: string
+        }[]
+      }
+      get_admin_users_paginated: {
+        Args: {
+          input_created_from?: string
+          input_created_to?: string
+          input_page?: number
+          input_per_page?: number
+          input_role_filter?: string
+          input_search?: string
+          input_sort_column?: string
+          input_sort_direction?: string
+          input_status_filter?: string
+          input_type_filter?: string
+        }
+        Returns: {
+          filtered_count: number
+          total_count: number
+          users: Json
         }[]
       }
       get_cloud_sync_cooldown_minutes: { Args: never; Returns: number }
@@ -2049,6 +2182,17 @@ export type Database = {
           input_now: string
           input_reason: string
           input_user_id: string
+        }
+        Returns: string
+      }
+      record_user_login: {
+        Args: {
+          p_failure_reason?: string
+          p_ip_address?: unknown
+          p_login_method?: string
+          p_success?: boolean
+          p_user_agent?: string
+          p_user_id: string
         }
         Returns: string
       }
@@ -2281,9 +2425,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       certificate_status: ["active", "revoked", "generation_failed"],

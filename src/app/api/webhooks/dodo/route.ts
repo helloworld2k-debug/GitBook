@@ -15,14 +15,14 @@ async function logWebhookEvent(
   event: unknown,
   status: "received" | "processing" | "success" | "error",
   metadata?: Record<string, unknown>,
-  errorMessage?: string
+  errorContext?: Record<string, unknown>
 ) {
   try {
     await supabase.from("webhook_logs").insert({
       source: "dodo",
       event_type: (event as { type?: string })?.type ?? "unknown",
       status,
-      metadata: JSON.stringify({ ...metadata, errorMessage } || {}),
+      metadata: JSON.stringify({ ...metadata, ...errorContext }),
     });
   } catch {
     // Silently fail logging
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       return jsonError("Unable to save donation", 500);
     }
 
-    await logWebhookEvent(supababse, event, "processing", { donationId: donation.id });
+    await logWebhookEvent(supabase, event, "processing", { donationId: donation.id });
 
     try {
       await generateCertificatesForDonation(donation.id);
