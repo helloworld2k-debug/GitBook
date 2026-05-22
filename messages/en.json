@@ -448,7 +448,10 @@
       "userSoftDeleted": "User soft-deleted.",
       "userSoftDeleteFailed": "Unable to soft-delete the user.",
       "userTempPasswordSet": "Temporary password updated.",
-      "userTempPasswordSetFailed": "Unable to update the temporary password."
+      "userTempPasswordSetFailed": "Unable to update the temporary password.",
+      "bulkPermanentDeleteFailed": "Unable to permanently delete the selected archived users.",
+      "bulkPermanentDeletePartial": "Some archived users were permanently deleted, but others failed.",
+      "bulkPermanentDeleteSuccess": "Selected archived users permanently deleted."
     },
     "overview": {
       "eyebrow": "Admin tools",
@@ -1120,7 +1123,12 @@
       "permanentDelete": "Permanent delete",
       "permanentDeleteConfirm": "This cannot be undone. Confirm permanent deletion?",
       "archived": "Archived",
-      "empty": "No archived users yet."
+      "empty": "No archived users yet.",
+      "select": "Select",
+      "selectArchive": "Select archived user",
+      "bulkPermanentDelete": "Delete selected permanently",
+      "bulkPermanentDeleteConfirm": "This cannot be undone. Confirm permanent deletion of selected archived users?",
+      "bulkPermanentDeleteDescription": "Select archived users below, then permanently delete the selected archive records."
     },
     "shell": {
       "auditLogs": "Audit Logs",

@@ -975,7 +975,12 @@
       "permanentDelete": "永久削除",
       "permanentDeleteConfirm": "この操作は取り消せません。永久削除しますか？",
       "archived": "アーカイブ済み",
-      "empty": "アーカイブ済みユーザーはまだいません。"
+      "empty": "アーカイブ済みユーザーはまだいません。",
+      "select": "選択",
+      "selectArchive": "アーカイブ済みユーザーを選択",
+      "bulkPermanentDelete": "選択項目を完全削除",
+      "bulkPermanentDeleteConfirm": "この操作は取り消せません。選択したアーカイブ済みユーザーを完全削除しますか？",
+      "bulkPermanentDeleteDescription": "下のアーカイブ済みユーザーを選択してから、選択したアーカイブ記録を完全削除します。"
     },
     "shell": {
       "auditLogs": "監査ログ",
@@ -1172,7 +1177,10 @@
       "userSoftDeleted": "User soft-deleted.",
       "userSoftDeleteFailed": "Unable to soft-delete the user.",
       "userTempPasswordSet": "Temporary password updated.",
-      "userTempPasswordSetFailed": "Unable to update the temporary password."
+      "userTempPasswordSetFailed": "Unable to update the temporary password.",
+      "bulkPermanentDeleteFailed": "選択したアーカイブ済みユーザーを完全削除できません。",
+      "bulkPermanentDeletePartial": "一部のアーカイブ済みユーザーは完全削除されましたが、失敗した項目があります。",
+      "bulkPermanentDeleteSuccess": "選択したアーカイブ済みユーザーを完全削除しました。"
     }
   },
   "certificate": {

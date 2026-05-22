@@ -1,13 +1,19 @@
 import { getTranslations } from "next-intl/server";
 import { AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminPagination } from "@/components/admin/admin-pagination";
-import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { isOwnerProfile } from "@/lib/auth/guards";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { bulkRestoreArchivedUsers, permanentlyDeleteArchivedUser, restoreArchivedUser } from "@/app/[locale]/admin/actions/users";
+import type { Database } from "@/lib/database.types";
+import {
+  bulkPermanentlyDeleteArchivedUsers,
+  permanentlyDeleteArchivedUser,
+  restoreArchivedUser,
+} from "@/app/[locale]/admin/actions/users";
+
+type ArchivedUser = Database["public"]["Tables"]["deleted_users_archive"]["Row"];
 
 type AdminArchivedUsersSearchParams = {
   error?: string;
@@ -61,9 +67,12 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
     .select("is_admin,admin_role")
     .eq("id", admin.id)
     .single();
-  const canPermanentlyDelete = isOwnerProfile(adminProfile as any);
+  const canPermanentlyDelete = isOwnerProfile(adminProfile ? {
+    admin_role: adminProfile.admin_role === "owner" || adminProfile.admin_role === "operator" || adminProfile.admin_role === "user" ? adminProfile.admin_role : null,
+    is_admin: adminProfile.is_admin ?? undefined,
+  } : null);
 
-  const supabase = await import("@/lib/supabase/admin").then((m) => m.createSupabaseAdminClient()) as any;
+  const supabase = await import("@/lib/supabase/admin").then((m) => m.createSupabaseAdminClient());
 
   const { data: archivedUsers, error } = await supabase
     .from("deleted_users_archive")
@@ -73,7 +82,7 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
 
   if (error) throw error;
 
-  const filteredArchivedUsers = (archivedUsers ?? []).filter((archive: any) => matchesSearch(archive, feedback?.query));
+  const filteredArchivedUsers = (archivedUsers ?? []).filter((archive) => matchesSearch(archive, feedback?.query));
 
   // Client-side pagination
   const PAGE_SIZE = 20;
@@ -102,19 +111,47 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
             </div>
           ) : (
             <>
+              {canPermanentlyDelete ? (
+                <form action={bulkPermanentlyDeleteArchivedUsers} className="mb-4 rounded-md border border-red-200 bg-red-50 p-4" id="archived-users-bulk-delete-form">
+                  <input name="locale" type="hidden" value={locale} />
+                  <input name="return_to" type="hidden" value="/admin/archived-users" />
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-red-900">{t("bulkPermanentDeleteDescription")}</p>
+                    <ConfirmActionButton
+                      className="inline-flex min-h-10 items-center justify-center rounded-md bg-red-600 px-3 text-sm font-semibold text-white hover:bg-red-500"
+                      confirmLabel={t("bulkPermanentDeleteConfirm")}
+                      pendingLabel={adminT("common.processing")}
+                    >
+                      {t("bulkPermanentDelete")}
+                    </ConfirmActionButton>
+                  </div>
+                </form>
+              ) : null}
               <AdminTableShell
                 label={t("title")}
                 mobileCards={
                   <div className="grid gap-3">
-                    {paginatedArchivedUsers.map((archive: any) => (
+                    {paginatedArchivedUsers.map((archive: ArchivedUser) => (
                       <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={archive.id}>
                         <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="break-all text-sm font-semibold text-slate-950">{archive.email}</p>
-                            <p className="mt-1 text-sm text-slate-600">{archive.display_name ?? "-"}</p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {t("deletedAt")}: {formatDate(archive.deleted_at, locale)}
-                            </p>
+                          <div className="flex min-w-0 gap-3">
+                            {canPermanentlyDelete ? (
+                              <input
+                                aria-label={t("selectArchive")}
+                                className="mt-1 size-4 rounded border-slate-300"
+                                form="archived-users-bulk-delete-form"
+                                name="archive_id"
+                                type="checkbox"
+                                value={archive.id}
+                              />
+                            ) : null}
+                            <div className="min-w-0">
+                              <p className="break-all text-sm font-semibold text-slate-950">{archive.email}</p>
+                              <p className="mt-1 text-sm text-slate-600">{archive.display_name ?? "-"}</p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {t("deletedAt")}: {formatDate(archive.deleted_at, locale)}
+                              </p>
+                            </div>
                           </div>
                           <AdminStatusBadge tone="warning">{t("archived")}</AdminStatusBadge>
                         </div>
@@ -165,6 +202,7 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
               >
                 <table aria-label={t("title")} className="min-w-[1200px] table-fixed text-left text-sm">
                   <colgroup>
+                    {canPermanentlyDelete ? <col className="w-[56px]" /> : null}
                     <col className="w-[280px]" />
                     <col className="w-[200px]" />
                     <col className="w-[150px]" />
@@ -174,6 +212,7 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
                   </colgroup>
                   <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                     <tr>
+                      {canPermanentlyDelete ? <th className="px-5 py-3">{t("select")}</th> : null}
                       <th className="px-5 py-3">{t("user")}</th>
                       <th className="px-5 py-3">{t("originalStatus")}</th>
                       <th className="px-5 py-3">{t("deletedAt")}</th>
@@ -183,8 +222,20 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {paginatedArchivedUsers.map((archive: any) => (
+                    {paginatedArchivedUsers.map((archive: ArchivedUser) => (
                       <tr key={archive.id}>
+                        {canPermanentlyDelete ? (
+                          <td className="px-5 py-4 align-top">
+                            <input
+                              aria-label={t("selectArchive")}
+                              className="size-4 rounded border-slate-300"
+                              form="archived-users-bulk-delete-form"
+                              name="archive_id"
+                              type="checkbox"
+                              value={archive.id}
+                            />
+                          </td>
+                        ) : null}
                         <td className="px-5 py-4 align-top">
                           <p className="break-all font-medium text-slate-950">{archive.email}</p>
                           <p className="mt-1 text-slate-600">{archive.display_name ?? "-"}</p>

@@ -975,7 +975,12 @@
       "permanentDelete": "영구 삭제",
       "permanentDeleteConfirm": "이 작업은 되돌릴 수 없습니다. 영구 삭제하시겠습니까?",
       "archived": "보관됨",
-      "empty": "아직 보관된 사용자가 없습니다."
+      "empty": "아직 보관된 사용자가 없습니다.",
+      "select": "선택",
+      "selectArchive": "보관된 사용자 선택",
+      "bulkPermanentDelete": "선택 항목 영구 삭제",
+      "bulkPermanentDeleteConfirm": "이 작업은 되돌릴 수 없습니다. 선택한 보관 사용자를 영구 삭제할까요?",
+      "bulkPermanentDeleteDescription": "아래에서 보관된 사용자를 선택한 다음 선택한 보관 기록을 영구 삭제합니다."
     },
     "shell": {
       "auditLogs": "감사 로그",
@@ -1172,7 +1177,10 @@
       "userSoftDeleted": "User soft-deleted.",
       "userSoftDeleteFailed": "Unable to soft-delete the user.",
       "userTempPasswordSet": "Temporary password updated.",
-      "userTempPasswordSetFailed": "Unable to update the temporary password."
+      "userTempPasswordSetFailed": "Unable to update the temporary password.",
+      "bulkPermanentDeleteFailed": "선택한 보관 사용자를 영구 삭제할 수 없습니다.",
+      "bulkPermanentDeletePartial": "일부 보관 사용자는 영구 삭제되었지만 실패한 항목이 있습니다.",
+      "bulkPermanentDeleteSuccess": "선택한 보관 사용자를 영구 삭제했습니다."
     }
   },
   "certificate": {

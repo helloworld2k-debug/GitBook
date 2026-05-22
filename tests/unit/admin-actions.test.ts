@@ -8,7 +8,9 @@ import {
   deleteDraftSoftwareRelease,
   finalizeSoftwareReleaseUpload,
   inviteUserAccount,
+  bulkPermanentlyDeleteArchivedUsers,
   permanentlyDeleteUser,
+  permanentlyDeleteArchivedUser,
   prepareSoftwareReleaseUpload,
   replySupportFeedbackAsAdmin,
   revokeCertificate,
@@ -780,6 +782,83 @@ describe("admin actions", () => {
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
       admin_user_id: "owner-1",
       target_id: "owner-1",
+    }));
+  });
+
+  it("permanently deletes an archived user from the archive confirm button without a typed confirmation field", async () => {
+    const archiveSingle = vi.fn(async () => ({
+      data: { id: "archive-1", email: "archived@example.com" },
+      error: null,
+    }));
+    const archiveEq = vi.fn(() => ({ single: archiveSingle }));
+    const archiveSelect = vi.fn(() => ({ eq: archiveEq }));
+    const rpc = vi.fn(async () => ({
+      data: [{ ok: true, reason: "deleted" }],
+      error: null,
+    }));
+    const from = vi.fn((table: string) => {
+      if (table === "deleted_users_archive") {
+        return { select: archiveSelect };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, rpc });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("archive_id", "archive-1");
+
+    await expect(permanentlyDeleteArchivedUser(formData)).rejects.toThrow(
+      "redirect:/en/admin/archived-users?notice=archived-user-permanently-deleted",
+    );
+
+    expect(mocks.requireOwner).toHaveBeenCalledWith("en");
+    expect(rpc).toHaveBeenCalledWith("permanently_delete_archived_user", {
+      input_archive_id: "archive-1",
+      input_deleted_by: "owner-1",
+    });
+  });
+
+  it("bulk permanently deletes selected archived users and audits the batch", async () => {
+    const rpc = vi.fn(async () => ({
+      data: [{ ok: true, reason: "deleted" }],
+      error: null,
+    }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, rpc });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.append("archive_id", "archive-1");
+    formData.append("archive_id", "archive-2");
+
+    await expect(bulkPermanentlyDeleteArchivedUsers(formData)).rejects.toThrow(
+      "redirect:/en/admin/archived-users?notice=bulk-permanent-delete-success",
+    );
+
+    expect(mocks.requireOwner).toHaveBeenCalledWith("en");
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(rpc).toHaveBeenNthCalledWith(1, "permanently_delete_archived_user", {
+      input_archive_id: "archive-1",
+      input_deleted_by: "owner-1",
+    });
+    expect(rpc).toHaveBeenNthCalledWith(2, "permanently_delete_archived_user", {
+      input_archive_id: "archive-2",
+      input_deleted_by: "owner-1",
+    });
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "bulk_permanently_delete_archived_users",
+      admin_user_id: "owner-1",
+      target_id: "archive-1",
+      target_type: "deleted_users_archive_batch",
     }));
   });
 

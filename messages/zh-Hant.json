@@ -975,7 +975,12 @@
       "permanentDelete": "永久刪除",
       "permanentDeleteConfirm": "此操作無法復原。確認永久刪除？",
       "archived": "已歸檔",
-      "empty": "尚無已歸檔的使用者。"
+      "empty": "尚無已歸檔的使用者。",
+      "select": "選取",
+      "selectArchive": "選取已歸檔使用者",
+      "bulkPermanentDelete": "永久刪除選取項目",
+      "bulkPermanentDeleteConfirm": "此操作無法復原。確認永久刪除選取的已歸檔使用者？",
+      "bulkPermanentDeleteDescription": "先在下方選取已歸檔使用者，再永久刪除選取的歸檔記錄。"
     },
     "shell": {
       "auditLogs": "稽核紀錄",
@@ -1172,7 +1177,10 @@
       "userSoftDeleted": "User soft-deleted.",
       "userSoftDeleteFailed": "Unable to soft-delete the user.",
       "userTempPasswordSet": "Temporary password updated.",
-      "userTempPasswordSetFailed": "Unable to update the temporary password."
+      "userTempPasswordSetFailed": "Unable to update the temporary password.",
+      "bulkPermanentDeleteFailed": "無法永久刪除選取的已歸檔使用者。",
+      "bulkPermanentDeletePartial": "部分已歸檔使用者已永久刪除，但仍有項目失敗。",
+      "bulkPermanentDeleteSuccess": "已永久刪除選取的已歸檔使用者。"
     }
   },
   "certificate": {

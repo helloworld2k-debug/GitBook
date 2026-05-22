@@ -9,6 +9,9 @@ export type AdminFeedbackKey =
   | "archive-delete-email-exists"
   | "archive-delete-failed"
   | "archived-user-permanently-deleted"
+  | "bulk-permanent-delete-failed"
+  | "bulk-permanent-delete-partial"
+  | "bulk-permanent-delete-success"
   | "bulk-restore-failed"
   | "bulk-restore-partial"
   | "bulk-restore-success"
@@ -101,6 +104,9 @@ const adminFeedbackKeys = new Set<string>([
   "archive-delete-email-exists",
   "archive-delete-failed",
   "archived-user-permanently-deleted",
+  "bulk-permanent-delete-failed",
+  "bulk-permanent-delete-partial",
+  "bulk-permanent-delete-success",
   "bulk-user-role-updated",
   "bulk-user-role-update-failed",
   "bulk-user-status-updated",
