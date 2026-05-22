@@ -1,3 +1,4 @@
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import LatestCertificatePage from "@/app/[locale]/dashboard/certificates/latest/page";
 
@@ -99,24 +100,30 @@ describe("latest certificate redirect page", () => {
     ).rejects.toThrow("redirect:/zh-Hant/dashboard?payment=dodo-success");
   });
 
-  it("does not redirect to an older certificate when the current checkout has not produced a new paid record yet", async () => {
+  it("keeps the payment success flow pending when the current checkout has not produced a new paid record yet", async () => {
     const client = createCertificateClient();
     mocks.createSupabaseServerClient.mockResolvedValue(client);
     mocks.donationMaybeSingle.mockResolvedValue({ data: null, error: null });
 
-    await expect(
-      LatestCertificatePage({
-        params: Promise.resolve({ locale: "en" }),
-        searchParams: Promise.resolve({ checkout_started_at: "2026-05-04T10:00:00.000Z", payment: "dodo-success" }),
-      } as {
-        params: Promise<{ locale: string }>;
-        searchParams: Promise<{ checkout_started_at: string; payment: string }>;
-      }),
-    ).rejects.toThrow("redirect:/en/dashboard?payment=dodo-success");
+    const page = await LatestCertificatePage({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ checkout_started_at: "2026-05-04T10:00:00.000Z", payment: "dodo-success" }),
+    } as {
+      params: Promise<{ locale: string }>;
+      searchParams: Promise<{ checkout_started_at: string; payment: string }>;
+    });
+
+    render(page);
 
     expect(client.from).toHaveBeenCalledWith("donations");
     expect(client.donationQuery.gte).toHaveBeenCalledWith("paid_at", "2026-05-04T10:00:00.000Z");
     expect(mocks.maybeSingle).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+    expect(screen.getByRole("status")).toHaveTextContent("Payment received. Your certificate is being prepared.");
+    expect(screen.getByRole("link", { name: "Check again" })).toHaveAttribute(
+      "href",
+      "/en/dashboard/certificates/latest?payment=dodo-success&checkout_started_at=2026-05-04T10%3A00%3A00.000Z",
+    );
   });
 
   it("waits for a newly paid donation certificate instead of falling back immediately when the donation exists", async () => {
