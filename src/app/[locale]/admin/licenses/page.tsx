@@ -371,7 +371,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
         />
         <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
 
-        <AdminCard className="p-5">
+        <AdminCard className="">
           <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
             <div>
               <h2 className="text-base font-semibold text-slate-950">{t("licenses.cloudSyncUsageSignalsTitle")}</h2>
@@ -412,7 +412,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           ) : null}
         </AdminCard>
 
-        <AdminCard className="p-5">
+        <AdminCard className="">
           <div>
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.cloudSyncCooldownTitle")}</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.cloudSyncCooldownDescription")}</p>
@@ -422,11 +422,11 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <input name="return_to" type="hidden" value="/admin/licenses" />
             <label className="grid gap-1 text-sm font-medium text-slate-700">
               {t("licenses.cooldownMinutes")}
-              <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10" defaultValue={Number.isFinite(cooldownMinutes) ? cooldownMinutes : 180} max="10080" min="0" name="cooldown_minutes" required type="number" />
+              <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" defaultValue={Number.isFinite(cooldownMinutes) ? cooldownMinutes : 180} max="10080" min="0" name="cooldown_minutes" required type="number" />
             </label>
             <label className="grid gap-1 text-sm font-medium text-slate-700">
               {t("licenses.reason")}
-              <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10" name="reason" placeholder={t("licenses.cooldownReasonPlaceholder")} />
+              <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" name="reason" placeholder={t("licenses.cooldownReasonPlaceholder")} />
             </label>
             <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 lg:w-fit" pendingLabel={t("common.processing")}>
               {t("licenses.save")}
@@ -434,7 +434,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           </form>
         </AdminCard>
 
-        <AdminCard className="mt-6 p-5">
+        <AdminCard className="mt-6">
           <div>
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.batchGenerateTitle")}</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.batchGenerateDescription")}</p>
@@ -446,7 +446,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <div className="grid gap-4 lg:grid-cols-3">
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("licenses.label")}
-                <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10" maxLength={120} name="label" required />
+                <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" maxLength={120} name="label" required />
               </label>
               <LicenseDurationFields
                 labels={{
@@ -461,11 +461,11 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               />
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("licenses.quantity")}
-                <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10" defaultValue="1" max="10" min="1" name="quantity" required type="number" />
+                <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" defaultValue="1" max="10" min="1" name="quantity" required type="number" />
               </label>
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("licenses.channel")}
-                <select className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10" defaultValue="internal" name="channel_type">
+                <select className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" defaultValue="internal" name="channel_type">
                   <option value="internal">{t("licenses.channels.internal")}</option>
                   <option value="taobao">{t("licenses.channels.taobao")}</option>
                   <option value="xianyu">{t("licenses.channels.xianyu")}</option>
@@ -549,7 +549,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           </div>
         </form>
 
-        <AdminCard className="mt-6 p-5">
+        <AdminCard className="mt-6">
           <div>
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.securitySignalsTitle")}</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.securitySignalsDescription")}</p>

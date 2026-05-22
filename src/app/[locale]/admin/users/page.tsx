@@ -240,7 +240,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
           </AdminCard>
         </div>
 
-        <AdminCard className="mt-6 p-5">
+        <AdminCard className="mt-6">
           <div>
             <h2 className="text-base font-semibold text-slate-950">{t("accountCreationTitle")}</h2>
             <p className="mt-1 text-sm text-slate-600">{t("accountCreationDescription")}</p>

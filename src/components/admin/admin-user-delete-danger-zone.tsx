@@ -10,7 +10,9 @@ export function AdminUserDeleteDangerZone({
   action: (formData: FormData) => Promise<void>;
   email: string;
   labels: {
+    acceptedConfirmation: string;
     confirmation: string;
+    deleting: string;
     description: string;
     hint: string;
     submit: string;
@@ -38,12 +40,12 @@ export function AdminUserDeleteDangerZone({
             required
           />
         </label>
-        <AdminSubmitButton className="inline-flex min-h-10 w-fit items-center rounded-md bg-red-600 px-4 text-sm font-semibold text-white" pendingLabel="Deleting...">
+        <AdminSubmitButton className="inline-flex min-h-10 w-fit items-center rounded-md bg-red-600 px-4 text-sm font-semibold text-white" pendingLabel={labels.deleting}>
           {labels.submit}
         </AdminSubmitButton>
       </form>
       <p className="mt-3 text-xs text-red-700">
-        Accepted confirmation values: <span className="font-mono">DELETE</span> or <span className="font-mono">{email}</span>
+        {labels.acceptedConfirmation} <span className="font-mono">DELETE</span> or <span className="font-mono">{email}</span>
       </p>
     </section>
   );

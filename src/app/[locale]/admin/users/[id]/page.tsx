@@ -442,10 +442,10 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
             </div>
 
             <dl className="mt-4 grid gap-3 md:grid-cols-2">
-              <DetailRow label="Email" value={profile.email} />
-              <DetailRow label="User ID" value={<span className="font-mono text-xs">{profile.id}</span>} />
+              <DetailRow label={t("email")} value={profile.email} />
+              <DetailRow label={t("userId")} value={<span className="font-mono text-xs">{profile.id}</span>} />
               <DetailRow label={t("role")} value={t(`roles.${profile.admin_role ?? (profile.is_admin ? "owner" : "user")}`)} />
-              <DetailRow label="Created" value={formatDateTime(profile.created_at, locale)} />
+              <DetailRow label={t("createdAt")} value={formatDateTime(profile.created_at, locale)} />
             </dl>
 
             <form action={updateAdminUserProfile} className="mt-5 grid gap-4">
@@ -456,7 +456,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("displayName")}
                   <input
-                    className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                    className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                     defaultValue={profile.display_name ?? ""}
                     maxLength={80}
                     name="display_name"
@@ -465,7 +465,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 <label className="grid gap-1 text-sm font-medium text-slate-700">
                   {t("publicDisplayName")}
                   <input
-                    className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                    className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                     defaultValue={profile.public_display_name ?? ""}
                     maxLength={80}
                     name="public_display_name"
@@ -783,7 +783,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 <label className="grid gap-1 text-xs font-medium text-slate-700">
                   {t("overrideExpiresAt")}
                   <input
-                    className="min-h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                    className="min-h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                     name="expires_at"
                     required
                     type="datetime-local"
@@ -792,7 +792,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 <label className="grid gap-1 text-xs font-medium text-slate-700">
                   {t("overrideReason")}
                   <input
-                    className="min-h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                    className="min-h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                     name="reason"
                     required
                   />
@@ -816,7 +816,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                   <label className="grid gap-1 text-xs font-medium text-slate-700">
                     {t("overrideExpiresAt")}
                     <input
-                      className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                      className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                       name="expires_at"
                       required
                       type="datetime-local"
@@ -825,7 +825,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                   <label className="grid gap-1 text-xs font-medium text-slate-700">
                     {t("machine")}
                     <input
-                      className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 font-mono text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                      className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 font-mono text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                       name="target_machine_code_hash"
                       readOnly
                       required
@@ -835,7 +835,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                   <label className="grid gap-1 text-xs font-medium text-slate-700">
                     {t("overrideReason")}
                     <input
-                      className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                      className="min-h-10 rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                       name="reason"
                       required
                     />
@@ -985,7 +985,9 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
             action={permanentlyDeleteUser}
             email={profile.email}
             labels={{
+              acceptedConfirmation: t("acceptedConfirmation"),
               confirmation: t("deleteConfirmation"),
+              deleting: t("deleting"),
               description: t("dangerDescription"),
               hint: profile.email,
               submit: t("permanentDelete"),

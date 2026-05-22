@@ -171,7 +171,7 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("donations.userIdentifier")}
                 <input
-                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                   name="user_identifier"
                   required
                 />
@@ -179,7 +179,7 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("donations.amountCents")}
                 <input
-                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                   min="1"
                   name="amount"
                   required
@@ -189,7 +189,7 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("donations.reference")}
                 <input
-                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                   maxLength={120}
                   name="reference"
                   required
@@ -198,7 +198,7 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("donations.reason")}
                 <input
-                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                  className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                   maxLength={500}
                   name="reason"
                   required

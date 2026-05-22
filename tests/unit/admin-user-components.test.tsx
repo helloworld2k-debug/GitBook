@@ -322,7 +322,9 @@ describe("AdminUserDeleteDangerZone", () => {
         action={vi.fn(async () => {})}
         email="user@example.com"
         labels={{
+          acceptedConfirmation: "Accepted confirmation values:",
           confirmation: "Type DELETE or the user email to confirm",
+          deleting: "Deleting...",
           description: "Permanently deleting a user removes the profile and cannot be undone.",
           hint: "user@example.com",
           submit: "Permanent delete",

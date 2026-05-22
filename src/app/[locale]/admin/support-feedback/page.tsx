@@ -144,7 +144,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
         <AdminFeedbackBanner error={feedbackState?.error} notice={feedbackState?.notice} />
         <form action="/admin/support-feedback" className="mb-4">
           <input
-            className="min-h-11 w-full max-w-md rounded-md border border-slate-300 px-3 text-sm shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+            className="min-h-11 w-full max-w-md rounded-md border border-slate-300 px-3 text-sm shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
             defaultValue={queryParam ?? ""}
             name="query"
             placeholder={t("supportFeedback.searchPlaceholder")}

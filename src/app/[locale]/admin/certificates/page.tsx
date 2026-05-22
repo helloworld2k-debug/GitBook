@@ -203,7 +203,7 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
                                 {t("certificates.revokeReason")}
                               </label>
                               <input
-                                className="min-h-10 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+                                className="min-h-10 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                                 id={`revoke-reason-${certificate.id}`}
                                 maxLength={500}
                                 name="reason"

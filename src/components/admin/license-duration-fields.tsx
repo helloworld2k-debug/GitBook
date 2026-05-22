@@ -22,7 +22,7 @@ export function LicenseDurationFields({ labels }: LicenseDurationFieldsProps) {
       <label className="grid gap-1 text-sm font-medium text-slate-700">
         {labels.duration}
         <select
-          className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+          className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
           name="duration_kind"
           onChange={(event) => setDurationKind(event.currentTarget.value)}
           value={durationKind}
@@ -37,7 +37,7 @@ export function LicenseDurationFields({ labels }: LicenseDurationFieldsProps) {
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           {labels.trialDays}
           <input
-            className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950/10"
+            className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
             defaultValue="3"
             max="7"
             min="1"
