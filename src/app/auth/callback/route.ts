@@ -52,8 +52,6 @@ export async function GET(request: NextRequest) {
       // If verifyOtp fails (e.g. email already confirmed by admin), the user
       // may still be valid. Try to create a session via admin magic link.
       if (type === "signup") {
-        const adminClient = createSupabaseAdminClient();
-
         // The signup email address is embedded in the JWT token_hash. We can
         // parse it to find the user, but that's fragile. Instead, just redirect
         // to login so the user can sign in normally — their email IS confirmed.

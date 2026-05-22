@@ -2107,6 +2107,18 @@ export type Database = {
           sponsor_level_code: string
         }[]
       }
+      refresh_desktop_session: {
+        Args: {
+          input_current_token_hash: string
+          input_new_expires_at: string
+          input_new_token_hash: string
+          input_now: string
+        }
+        Returns: {
+          desktop_session_id: string
+          user_id: string
+        }[]
+      }
       grant_cloud_sync_entitlement_for_donation: {
         Args: {
           input_donation_id: string

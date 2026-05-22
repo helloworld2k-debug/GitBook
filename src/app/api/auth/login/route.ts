@@ -6,12 +6,6 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
-type LoginRequestBody = {
-  email?: string;
-  password?: string;
-  turnstileToken?: string;
-};
-
 function getIpAddress(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for");
 

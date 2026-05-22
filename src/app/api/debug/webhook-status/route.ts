@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request) {
+export async function GET() {
   const debugInfo: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
     env: {

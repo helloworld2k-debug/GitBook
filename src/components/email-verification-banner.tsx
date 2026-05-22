@@ -42,6 +42,11 @@ function setCooldownEnd(timestamp: number) {
   localStorage.setItem(COOLDOWN_KEY, String(timestamp));
 }
 
+function getRemainingSeconds(cooldownUntil: number | null) {
+  if (!cooldownUntil) return 0;
+  return Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+}
+
 export function EmailVerificationBanner({ callbackUrl, email, messages }: EmailVerificationBannerProps) {
   const [dismissed, setDismissed] = useState(() => {
     if (typeof sessionStorage === "undefined") return false;
@@ -49,17 +54,16 @@ export function EmailVerificationBanner({ callbackUrl, email, messages }: EmailV
   });
   const [resendStatus, setResendStatus] = useState<ResendStatus>("idle");
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(() => getCooldownEnd());
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(() => getRemainingSeconds(cooldownUntil));
 
   // Countdown timer
   useEffect(() => {
     if (!cooldownUntil) {
-      setRemainingSeconds(0);
       return;
     }
 
     const updateRemaining = () => {
-      const remaining = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+      const remaining = getRemainingSeconds(cooldownUntil);
       setRemainingSeconds(remaining);
 
       if (remaining === 0) {

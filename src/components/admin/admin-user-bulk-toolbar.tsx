@@ -62,7 +62,7 @@ function syncBulkRoleToForm(form: HTMLFormElement, formId: string) {
   }
 }
 
-function submitBulkIntent(formId: string, intent: string, count = 0, confirmMessage?: string) {
+function submitBulkIntent(formId: string, intent: string, confirmMessage?: string) {
   const form = document.getElementById(formId);
 
   if (!(form instanceof HTMLFormElement)) {
@@ -160,10 +160,10 @@ export function AdminUserBulkToolbar({
     <div className="mt-4 rounded-md border border-slate-200 bg-slate-950 p-4 text-white shadow-sm">
       <div className="flex flex-wrap items-center gap-3">
         <p className="text-sm font-semibold">{labels.selectedCount.replace("{count}", String(count)).replace("__COUNT__", String(count))}</p>
-        <button className="inline-flex min-h-10 items-center rounded-md bg-white/10 px-3 text-sm font-medium transition-colors hover:bg-white/15 active:bg-white/20" onClick={() => submitBulkIntent(formId, "enable", count, labels.bulkEnableConfirm)} type="button">
+        <button className="inline-flex min-h-10 items-center rounded-md bg-white/10 px-3 text-sm font-medium transition-colors hover:bg-white/15 active:bg-white/20" onClick={() => submitBulkIntent(formId, "enable", labels.bulkEnableConfirm)} type="button">
           {labels.bulkEnable}
         </button>
-        <button className="inline-flex min-h-10 items-center rounded-md bg-white/10 px-3 text-sm font-medium transition-colors hover:bg-white/15 active:bg-white/20" onClick={() => submitBulkIntent(formId, "disable", count, labels.bulkDisableConfirm)} type="button">
+        <button className="inline-flex min-h-10 items-center rounded-md bg-white/10 px-3 text-sm font-medium transition-colors hover:bg-white/15 active:bg-white/20" onClick={() => submitBulkIntent(formId, "disable", labels.bulkDisableConfirm)} type="button">
           {labels.bulkDisable}
         </button>
         {canManageRoles ? (

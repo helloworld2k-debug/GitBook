@@ -299,7 +299,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .eq("user_id", id)
       .order("created_at", { ascending: false })
       .limit(50),
-    (supabase as any)
+    supabase
       .from("user_login_history")
       .select("id,ip_address,user_agent,success,failure_reason,login_method,logged_in_at")
       .eq("user_id", id)

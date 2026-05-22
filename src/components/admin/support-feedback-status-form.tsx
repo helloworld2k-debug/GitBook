@@ -63,6 +63,7 @@ export function SupportFeedbackStatusForm({
       <div className="relative">
         <select
           className="min-h-10 min-w-0 appearance-none rounded-md border border-slate-300 bg-white px-2 pr-8 text-sm"
+          disabled={isPending}
           value={selectedStatus}
           onChange={(e) => setSelectedStatus(e.target.value as FeedbackStatus)}
         >
@@ -80,9 +81,10 @@ export function SupportFeedbackStatusForm({
         className={`min-h-10 whitespace-nowrap rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700 ${
           selectedStatus === initialStatus ? "cursor-not-allowed opacity-60" : ""
         }`}
+        aria-label={isPending ? labels.saving : labels.save}
         pendingLabel={labels.saving}
       >
-        {labels.save}
+        {isPending ? labels.saving : labels.save}
       </AdminSubmitButton>
     </form>
   );

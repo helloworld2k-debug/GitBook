@@ -141,7 +141,7 @@ export async function refreshDesktopSession(client: DesktopSessionRpcClient, inp
   const newTokenHash = await hashDesktopSecret(sessionToken, "desktop_token");
   const expiresAt = addDays(now, DESKTOP_SESSION_TTL_DAYS).toISOString();
 
-  const { data, error } = await (client as any).rpc("refresh_desktop_session", {
+  const { data, error } = await client.rpc("refresh_desktop_session", {
     input_current_token_hash: currentTokenHash,
     input_new_expires_at: expiresAt,
     input_new_token_hash: newTokenHash,

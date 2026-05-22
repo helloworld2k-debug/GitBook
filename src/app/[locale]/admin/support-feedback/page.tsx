@@ -113,7 +113,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
 
       return new Date(b.latestUserMessageAt ?? b.created_at).getTime() - new Date(a.latestUserMessageAt ?? a.created_at).getTime();
     });
-  let visibleFeedback = filter === "unread" ? feedbackWithUnreadState.filter((item) => item.isUnread) : feedbackWithUnreadState;
+  const visibleFeedback = filter === "unread" ? feedbackWithUnreadState.filter((item) => item.isUnread) : feedbackWithUnreadState;
 
   const buildFilterUrl = (newFilter: string | null) => {
     const params = new URLSearchParams();

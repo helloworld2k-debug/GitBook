@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
-import { AdminCertificateBulkToolbar, AdminCertificateSelectAllCheckbox } from "@/components/admin/admin-certificate-bulk-toolbar";
 import { AdminCertificateFilters } from "@/components/admin/admin-certificate-filters";
 import { AdminCertificateExport } from "@/components/admin/admin-certificate-export";
 import { AdminPagination } from "@/components/admin/admin-pagination";
@@ -9,7 +8,6 @@ import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revokeCertificate } from "../actions";
-import { AdminCertificateBulkExport } from "@/components/admin/admin-certificate-bulk-export";
 
 type AdminCertificatesPageProps = {
   params: Promise<{
@@ -70,7 +68,6 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
   const { query: searchQuery, type, status, issuedFrom, issuedTo } = searchParamsState ?? {};
 
   if (searchQuery) {
-    const searchCondition = `certificate_number.ilike.%${searchQuery}%`;
     countQuery = countQuery.ilike("certificate_number", `%${searchQuery}%`);
     query = query.ilike("certificate_number", `%${searchQuery}%`);
   }

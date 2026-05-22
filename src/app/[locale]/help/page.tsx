@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import { resolvePageLocale } from "@/lib/i18n/page-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +8,7 @@ type HelpPageProps = {
 };
 
 export default async function HelpPage({ params }: HelpPageProps) {
-  const { locale: localeParam } = await params;
-  const locale = resolvePageLocale(localeParam);
+  await params;
   const t = await getTranslations("help");
 
   const faqs = [
