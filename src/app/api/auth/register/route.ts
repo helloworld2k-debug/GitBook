@@ -101,6 +101,20 @@ const registerSchema = z.object({
   turnstileToken: z.string().max(2048).optional(),
 });
 
+function getRegisterValidationError(error: z.ZodError) {
+  const passwordIssue = error.issues.find((issue) => issue.path[0] === "password");
+  if (passwordIssue?.code === "too_small") {
+    return "password_too_short";
+  }
+
+  const emailIssue = error.issues.find((issue) => issue.path[0] === "email");
+  if (emailIssue) {
+    return "email_invalid";
+  }
+
+  return "invalid_request";
+}
+
 export async function POST(request: Request) {
   if (!validateRequestOrigin(request)) {
     return jsonError("invalid_request", 403);
@@ -109,7 +123,7 @@ export async function POST(request: Request) {
   const raw = await request.json();
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) {
-    return jsonError("invalid_request");
+    return jsonError(getRegisterValidationError(parsed.error));
   }
   const { email, password } = parsed.data;
   const turnstileToken = parsed.data.turnstileToken?.trim() ?? "";

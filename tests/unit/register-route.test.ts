@@ -89,6 +89,25 @@ describe("register route", () => {
     expect(mocks.registerWithEmailPassword).not.toHaveBeenCalled();
   });
 
+  it("returns a specific error when the registration password is shorter than 8 characters", async () => {
+    delete process.env.TURNSTILE_SECRET_KEY;
+
+    const response = await POST(
+      new Request("https://gitbookai.example/api/auth/register", {
+        body: JSON.stringify({
+          email: "new@example.com",
+          password: "short",
+        }),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "password_too_short" });
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
+  });
+
   it("rejects registration when Turnstile verification fails", async () => {
     mocks.verifyTurnstileToken.mockResolvedValueOnce({ ok: false, errorCode: "invalid-input-response" });
 

@@ -15,16 +15,23 @@ vi.mock("@/lib/supabase/client", () => ({
 
 const messages: LoginFormMessages = {
   confirmPassword: "Confirm password",
+  confirmPasswordHint: "Re-enter your password to confirm",
   confirmPasswordPlaceholder: "Repeat your password",
   createAccount: "Create account",
   email: "Email address",
+  emailHint: "Enter a valid email address",
   emailPlaceholder: "you@example.com",
   humanVerificationError: "Verify that you are human and try again.",
   humanVerificationLabel: "Human verification",
   oauthError: "Could not start sign in.",
+  accountExistsError: "This email is already registered. Sign in or reset your password.",
+  emailInvalidError: "Enter a valid email address.",
   password: "Password",
+  passwordHint: "Minimum 8 characters",
+  passwordHintStrong: "Use 8+ characters for better security",
   passwordMismatch: "Passwords do not match.",
   passwordPlaceholder: "Enter your password",
+  passwordTooShortError: "Password must be at least 8 characters.",
   passwordResetBack: "Back to sign in",
   passwordResetError: "Could not send the reset email.",
   passwordResetMode: "Forgot password?",
@@ -242,9 +249,26 @@ describe("LoginForm", () => {
     fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "new-password" } });
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not sign in. Check your email and password.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("This email is already registered. Sign in or reset your password.");
     expect(screen.queryByText("Check your email to verify your account")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("shows a specific registration password length error", async () => {
+    fetchMock.mockResolvedValueOnce({
+      json: async () => ({ error: "password_too_short" }),
+      ok: false,
+      status: 400,
+    });
+    renderLoginForm({ turnstileSiteKey: undefined });
+
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "new@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "short" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "short" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Password must be at least 8 characters.");
   });
 
   it("resends the signup verification email after registration succeeds", async () => {

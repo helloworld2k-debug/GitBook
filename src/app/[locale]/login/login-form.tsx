@@ -6,6 +6,15 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 type OAuthProvider = "google" | "github";
 type AuthMode = "forgot-password" | "sign-in" | "register";
 type FormStatus = "idle" | "submitting" | "success" | "immediate-success" | "error" | "password-mismatch" | "oauth-error" | "reset-sent" | "reset-error";
+type AuthErrorCode =
+  | "account_exists"
+  | "captcha_invalid"
+  | "captcha_required"
+  | "email_invalid"
+  | "invalid_credentials"
+  | "password_too_short"
+  | "rate_limited"
+  | "register_failed";
 
 export type LoginFormMessages = {
   confirmPassword: string;
@@ -18,9 +27,12 @@ export type LoginFormMessages = {
   humanVerificationError: string;
   humanVerificationLabel: string;
   oauthError: string;
+  accountExistsError: string;
+  emailInvalidError: string;
   password: string;
   passwordHint: string;
   passwordHintStrong: string;
+  passwordTooShortError: string;
   passwordMismatch: string;
   passwordPlaceholder: string;
   passwordResetBack: string;
@@ -139,12 +151,62 @@ function ProviderIcon({ provider }: { provider: OAuthProvider }) {
   return provider === "google" ? <GoogleIcon /> : <GitHubIcon />;
 }
 
+function isAuthErrorCode(error: string | undefined): error is AuthErrorCode {
+  return (
+    error === "account_exists" ||
+    error === "captcha_invalid" ||
+    error === "captcha_required" ||
+    error === "email_invalid" ||
+    error === "invalid_credentials" ||
+    error === "password_too_short" ||
+    error === "rate_limited" ||
+    error === "register_failed"
+  );
+}
+
+function getAuthErrorMessage({
+  authErrorCode,
+  isRegistering,
+  messages,
+  status,
+}: {
+  authErrorCode: AuthErrorCode | null;
+  isRegistering: boolean;
+  messages: LoginFormMessages;
+  status: FormStatus;
+}) {
+  if (status === "password-mismatch") {
+    return messages.passwordMismatch;
+  }
+
+  switch (authErrorCode) {
+    case "account_exists":
+      return messages.accountExistsError;
+    case "captcha_invalid":
+    case "captcha_required":
+      return messages.humanVerificationError;
+    case "email_invalid":
+      return messages.emailInvalidError;
+    case "invalid_credentials":
+      return messages.signInError;
+    case "password_too_short":
+      return messages.passwordTooShortError;
+    case "rate_limited":
+      return messages.registrationRateLimited;
+    case "register_failed":
+      return messages.signUpError;
+    default:
+      return isRegistering ? messages.signUpError : messages.signInError;
+  }
+}
+
 export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallbackUrl, turnstileSiteKey }: LoginFormProps) {
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [activeProvider, setActiveProvider] = useState<OAuthProvider | null>(null);
   const [captchaRequired, setCaptchaRequired] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [authErrorCode, setAuthErrorCode] = useState<AuthErrorCode | null>(null);
   const [resendStatus, setResendStatus] = useState<"idle" | "submitting" | "sent" | "rate-limited" | "error">("idle");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<HTMLDivElement | null>(null);
@@ -195,6 +257,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
     event.preventDefault();
     setStatus("submitting");
     setActiveProvider(null);
+    setAuthErrorCode(null);
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
@@ -209,6 +272,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
       }
 
       if (turnstileSiteKey && !turnstileToken) {
+        setAuthErrorCode("captcha_required");
         setStatus("error");
         return;
       }
@@ -227,6 +291,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
       });
 
       if (response.status === 429) {
+        setAuthErrorCode("rate_limited");
         setStatus("error");
         return;
       }
@@ -235,11 +300,13 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
 
       if (result.error === "account_exists") {
         setMode("sign-in");
+        setAuthErrorCode("account_exists");
         setStatus("error");
         return;
       }
 
       if (!response.ok || !result.ok) {
+        setAuthErrorCode(isAuthErrorCode(result.error) ? result.error : "register_failed");
         setStatus("error");
         return;
       }
@@ -258,6 +325,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
         });
 
         if (loginError) {
+          setAuthErrorCode("invalid_credentials");
           setStatus("error");
           return;
         }
@@ -276,6 +344,7 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
     }
 
     if (captchaRequired && turnstileSiteKey && !turnstileToken) {
+      setAuthErrorCode("captcha_required");
       setStatus("error");
       return;
     }
@@ -296,11 +365,13 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
     if (result.error === "captcha_required") {
       setCaptchaRequired(true);
       setTurnstileToken(null);
+      setAuthErrorCode("captcha_required");
       setStatus("error");
       return;
     }
 
     if (!response.ok || !result.ok) {
+      setAuthErrorCode(isAuthErrorCode(result.error) ? result.error : "invalid_credentials");
       setStatus("error");
       return;
     }
@@ -385,16 +456,12 @@ export function LoginForm({ callbackUrl, messages, nextPath, passwordResetCallba
   const submitLabel = isRegistering ? messages.createAccount : messages.signInSubmit;
   const submittingLabel = isRegistering ? messages.signingUp : messages.signingIn;
   const passwordSubmitLabel = isSubmitting && activeProvider === null ? submittingLabel : submitLabel;
-  const errorMessage =
-    status === "password-mismatch"
-      ? messages.passwordMismatch
-      : captchaRequired && turnstileSiteKey
-        ? messages.humanVerificationError
-        : isRegistering && turnstileSiteKey && !turnstileToken
-          ? messages.humanVerificationError
-          : isRegistering
-            ? messages.signUpError
-            : messages.signInError;
+  const errorMessage = getAuthErrorMessage({
+    authErrorCode,
+    isRegistering,
+    messages,
+    status,
+  });
 
   return (
     <div className="glass-panel rounded-lg p-5 sm:p-6">
