@@ -58,10 +58,13 @@ cp .env.example .env.local
 Fill in Supabase and Dodo Payments values in `.env.local`:
 
 ```bash
+# Local development
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+
+# Dodo Payments (use test credentials for development)
 DODO_PAYMENTS_API_KEY=
 DODO_PAYMENTS_WEBHOOK_KEY=
 DODO_PAYMENTS_ENV=test
@@ -69,6 +72,11 @@ DODO_PRODUCT_MONTHLY=
 DODO_PRODUCT_QUARTERLY=
 DODO_PRODUCT_YEARLY=
 ```
+
+**For production deployment:**
+- Set `NEXT_PUBLIC_SITE_URL` to your production domain
+- Set `DODO_PAYMENTS_ENV=live` with production credentials
+- Update product IDs to match your live Dodo products
 
 ### Environment Check
 
