@@ -3,9 +3,10 @@ create table if not exists public.webhook_logs (
   id uuid primary key default gen_random_uuid(),
   source text not null,
   event_type text,
-  status text not null check (status in ('received', 'processing', 'success', 'error')),
+  status text not null,
   metadata jsonb,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint webhook_logs_status_check check (status in ('received', 'processing', 'success', 'error'))
 );
 
 -- Index for faster queries
@@ -15,7 +16,7 @@ create index if not exists webhook_logs_event_type_idx on public.webhook_logs(ev
 create index if not exists webhook_logs_status_idx on public.webhook_logs(status);
 
 -- Clean up old logs (keep last 90 days)
-create function if not exists public.cleanup_old_webhook_logs()
+create or replace function public.cleanup_old_webhook_logs()
 returns int
 language plpgsql
 security definer
@@ -24,4 +25,4 @@ begin
   delete from public.webhook_logs where created_at < now() - interval '90 days';
   return found;
 end;
-$$;
+$$;;
