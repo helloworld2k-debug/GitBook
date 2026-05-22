@@ -86,6 +86,8 @@ export async function POST(request: Request) {
     const productId = getProductId(data);
     const expectedProductId = donationTier ? getDodoProductId(donationTier.code) : null;
     const expectedAmount = getPositiveIntegerString(metadata.amount) ?? donationTier?.amount ?? null;
+    const expectedCurrency = getString(metadata.currency)?.toLowerCase() ?? donationTier?.currency.toLowerCase() ?? null;
+    const shouldValidateAmount = Boolean(currency && expectedCurrency && currency === expectedCurrency);
 
     await logWebhookEvent(supabase, event, "processing", { userId, tierCode, paymentId, amount, currency });
 
@@ -97,10 +99,10 @@ export async function POST(request: Request) {
       amount <= 0 ||
       !currency ||
       (productId && productId !== expectedProductId) ||
-      (expectedAmount !== null && amount !== expectedAmount)
+      (shouldValidateAmount && expectedAmount !== null && amount !== expectedAmount)
     ) {
       await logWebhookEvent(supabase, event, "error", metadata, {
-        errorMessage: `Missing metadata: userId=${!!userId}, tierCode=${tierCode}, paymentId=${!!paymentId}, amount=${amount}, currency=${currency}, productId=${productId}, expectedProductId=${expectedProductId}, expectedAmount=${expectedAmount}`,
+        errorMessage: `Missing metadata: userId=${!!userId}, tierCode=${tierCode}, paymentId=${!!paymentId}, amount=${amount}, currency=${currency}, productId=${productId}, expectedProductId=${expectedProductId}, expectedAmount=${expectedAmount}, expectedCurrency=${expectedCurrency}`,
       });
       return jsonError("Missing required metadata", 400);
     }
@@ -117,6 +119,7 @@ export async function POST(request: Request) {
     });
     record.metadata = {
       expected_amount: expectedAmount,
+      expected_currency: expectedCurrency,
       paid_amount: amount,
       product_id: productId,
       tier: donationTier.code,
@@ -157,6 +160,7 @@ export async function POST(request: Request) {
       await logWebhookEvent(supabase, event, "error", metadata, {
         errorMessage: `Entitlement extension failed: ${String(entitlementError)}`,
       });
+      return jsonError("Unable to extend entitlement", 500);
     }
   } else {
     await logWebhookEvent(supabase, event, "received", undefined, {

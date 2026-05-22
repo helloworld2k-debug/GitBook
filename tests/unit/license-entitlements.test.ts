@@ -45,8 +45,8 @@ describe("extendCloudSyncEntitlementForDonation", () => {
 
     expect(validUntil).toBe("2026-05-31T00:00:00.000Z");
     expect(client.rpc).toHaveBeenCalledWith("grant_cloud_sync_entitlement_for_donation", {
-      input_days: 30,
       input_donation_id: "donation-1",
+      input_months: 1,
       input_paid_at: "2026-05-01T00:00:00.000Z",
       input_user_id: "user-1",
     });
@@ -64,8 +64,8 @@ describe("extendCloudSyncEntitlementForDonation", () => {
 
     expect(validUntil).toBe("2027-05-21T00:00:00.000Z");
     expect(client.rpc).toHaveBeenCalledWith("grant_cloud_sync_entitlement_for_donation", {
-      input_days: 365,
       input_donation_id: "donation-2",
+      input_months: 12,
       input_paid_at: "2026-05-01T00:00:00.000Z",
       input_user_id: "user-1",
     });

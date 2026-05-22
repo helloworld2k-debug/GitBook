@@ -59,7 +59,7 @@ describe("Dodo webhook route", () => {
 
     const response = await POST(new Request("https://example.com/api/webhooks/dodo", { body: "{}", method: "POST" }));
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ error: "Invalid Dodo signature" });
     expect(mocks.upsert).not.toHaveBeenCalled();
   });
@@ -132,5 +132,86 @@ describe("Dodo webhook route", () => {
     expect(response.status).toBe(400);
     expect(mocks.upsert).not.toHaveBeenCalled();
     expect(mocks.generateCertificatesForDonation).not.toHaveBeenCalled();
+  });
+
+  it("accepts provider-local currency totals when product id and selected tier match", async () => {
+    mocks.verifyDodoWebhook.mockReturnValue({
+      type: "payment.succeeded",
+      data: {
+        currency: "CNY",
+        created_at: "2026-04-29T00:00:00.000Z",
+        metadata: {
+          amount: "2475",
+          tier: "quarterly",
+          user_id: "user_123",
+        },
+        payment_id: "pay_cny",
+        product_cart: [{ product_id: "pdt_quarterly" }],
+        status: "succeeded",
+        total_amount: 17527,
+      },
+    });
+
+    const response = await POST(new Request("https://example.com/api/webhooks/dodo", { body: "{}", method: "POST" }));
+
+    expect(response.status).toBe(200);
+    expect(mocks.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: 17527,
+        currency: "cny",
+        metadata: expect.objectContaining({
+          expected_amount: 2475,
+          paid_amount: 17527,
+          tier: "quarterly",
+        }),
+        provider: "dodo",
+        provider_transaction_id: "pay_cny",
+        user_id: "user_123",
+      }),
+      { onConflict: "provider,provider_transaction_id" },
+    );
+    expect(mocks.extendCloudSyncEntitlementForDonation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        donationId: "donation_123",
+        tierCode: "quarterly",
+        userId: "user_123",
+      }),
+    );
+  });
+
+  it("returns an error when a paid donation is saved but entitlement extension fails", async () => {
+    mocks.verifyDodoWebhook.mockReturnValue({
+      type: "payment.succeeded",
+      data: {
+        currency: "USD",
+        created_at: "2026-04-29T00:00:00.000Z",
+        metadata: {
+          amount: "8640",
+          tier: "yearly",
+          user_id: "user_123",
+        },
+        payment_id: "pay_789",
+        product_cart: [{ product_id: "pdt_yearly" }],
+        status: "succeeded",
+        total_amount: 8640,
+      },
+    });
+    mocks.extendCloudSyncEntitlementForDonation.mockRejectedValue(new Error("rpc failed"));
+
+    const response = await POST(new Request("https://example.com/api/webhooks/dodo", { body: "{}", method: "POST" }));
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ error: "Unable to extend entitlement" });
+    expect(mocks.generateCertificatesForDonation).toHaveBeenCalledWith("donation_123");
+    expect(mocks.extendCloudSyncEntitlementForDonation).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        userId: "user_123",
+        donationId: "donation_123",
+        tierCode: "yearly",
+        paidAt: new Date("2026-04-29T00:00:00.000Z"),
+      },
+    );
   });
 });

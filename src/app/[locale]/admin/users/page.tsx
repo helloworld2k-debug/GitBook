@@ -51,6 +51,7 @@ type AdminPaginatedUsersResult = Omit<
 > & {
   users: AdminPaginatedUser[];
 };
+type AdminUsersPaginatedArgs = Database["public"]["Functions"]["get_admin_users_paginated"]["Args"];
 
 function shortHash(value: string | null) {
   return value ? `${value.slice(0, 10)}...${value.slice(-6)}` : "-";
@@ -134,20 +135,27 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
   const currentPage = Number(feedback?.page ?? 1);
   const sortColumn = feedback?.sort ?? "created_at";
   const sortDirection = feedback?.order ?? "desc";
-
-  // Call RPC for paginated users
-  const { data: paginatedData, error: paginatedError } = await supabase.rpc("get_admin_users_paginated", {
+  const paginatedUserArgs: AdminUsersPaginatedArgs = {
     input_page: currentPage,
     input_per_page: PAGE_SIZE,
-    input_search: feedback?.query ?? null,
-    input_role_filter: feedback?.role ?? null,
-    input_status_filter: feedback?.status ?? null,
-    input_type_filter: feedback?.type ?? null,
-    input_created_from: feedback?.createdFrom ? new Date(feedback.createdFrom).toISOString() : null,
-    input_created_to: feedback?.createdTo ? new Date(feedback.createdTo + "T23:59:59.999Z").toISOString() : null,
     input_sort_column: sortColumn,
     input_sort_direction: sortDirection,
-  });
+  };
+
+  if (feedback?.query) paginatedUserArgs.input_search = feedback.query;
+  if (feedback?.role) paginatedUserArgs.input_role_filter = feedback.role;
+  if (feedback?.status) paginatedUserArgs.input_status_filter = feedback.status;
+  if (feedback?.type) paginatedUserArgs.input_type_filter = feedback.type;
+  if (feedback?.createdFrom) paginatedUserArgs.input_created_from = new Date(feedback.createdFrom).toISOString();
+  if (feedback?.createdTo) {
+    paginatedUserArgs.input_created_to = new Date(feedback.createdTo + "T23:59:59.999Z").toISOString();
+  }
+
+  // Call RPC for paginated users
+  const { data: paginatedData, error: paginatedError } = await supabase.rpc(
+    "get_admin_users_paginated",
+    paginatedUserArgs,
+  );
 
   if (paginatedError) throw paginatedError;
 
