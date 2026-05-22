@@ -35,7 +35,20 @@ export function AdminPagination({ currentPage, totalPages, basePath, labels }: A
   }
 
   const buildPageUrl = (page: number) => {
-    const url = new URL(basePath, "http://dummy");
+    // Parse the basePath to extract pathname and existing search params
+    const [pathname, existingQuery] = basePath.split("?");
+    const url = new URL(pathname, "http://dummy");
+
+    // Add existing query params (if any)
+    if (existingQuery) {
+      const params = new URLSearchParams(existingQuery);
+      params.forEach((value, key) => {
+        if (key !== "page") {
+          url.searchParams.set(key, value);
+        }
+      });
+    }
+
     url.searchParams.set("page", page.toString());
     return `${url.pathname}${url.search}`;
   };

@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { AdminLicenseBulkToolbar, AdminLicenseSelectAllCheckbox } from "@/components/admin/admin-license-bulk-toolbar";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { LicenseDurationFields } from "@/components/admin/license-duration-fields";
 import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
@@ -25,6 +26,7 @@ type AdminLicensesSearchParams = {
   duration?: string;
   error?: string;
   notice?: string;
+  page?: string;
   query?: string;
   redeemed?: string;
   status?: string;
@@ -311,6 +313,14 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   const batches = (batchesResult.error ? [] : (batchesResult.data ?? [])) as LicenseBatchRow[];
   const codes = fallbackCodes ?? ((codesResult.data ?? []) as LicenseCodeRow[]);
   const filteredCodes = filterCodes(codes, feedback);
+
+  // Pagination for license codes
+  const PAGE_SIZE = 50;
+  const currentPage = Number(feedback?.page ?? 1);
+  const totalPages = Math.ceil(filteredCodes.length / PAGE_SIZE);
+  const paginatedCodes = filteredCodes.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const paginationBasePath = "/admin/licenses?" + new URLSearchParams(feedback as Record<string, string>).toString();
+
   const codesByBatch = new Map<string, LicenseCodeRow[]>();
   const redemptionsByCode = new Map<string, number>();
   const cooldownMinutes = Number.parseInt(cooldownSettingResult.data?.value ?? "180", 10);
@@ -702,7 +712,8 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.licenseCodesTitle")}</h2>
           </div>
           {filteredCodes.length > 0 ? (
-            <AdminTableShell label={t("licenses.licenseCodesTitle")}>
+            <>
+              <AdminTableShell label={t("licenses.licenseCodesTitle")}>
               <table aria-label={t("licenses.licenseCodesTitle")} className="min-w-[1560px] table-fixed text-left text-sm">
                 <colgroup>
                   <col className="w-[56px]" />
@@ -729,7 +740,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {filteredCodes.map((code) => (
+                  {paginatedCodes.map((code) => (
                     <tr key={code.id}>
                       <td className="px-5 py-4 align-top">
                         <input className="size-4 rounded border-slate-300" form={bulkFormId} name="license_code_ids" type="checkbox" value={code.id} />
@@ -770,6 +781,20 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                 </tbody>
               </table>
             </AdminTableShell>
+            {totalPages > 1 && (
+              <AdminPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                basePath={paginationBasePath}
+                labels={{
+                  previous: t("licenses.previous"),
+                  next: t("licenses.next"),
+                  page: t("licenses.page"),
+                  of: t("licenses.of"),
+                }}
+              />
+            )}
+            </>
           ) : (
             <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyLicenseCodes")}</p>
           )}

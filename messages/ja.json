@@ -590,7 +590,11 @@
       "allFeedback": "すべてのフィードバック",
       "unread": "未読",
       "unreadFeedback": "未読フィードバック",
-      "searchPlaceholder": "件名、メッセージ、メールで検索"
+      "searchPlaceholder": "件名、メッセージ、メールで検索",
+      "previous": "前へ",
+      "next": "次へ",
+      "page": "ページ",
+      "of": "/ 全"
     },
     "supportSettings": {
       "eyebrow": "管理画面",
@@ -757,7 +761,11 @@
         "partner": "パートナー",
         "other": "その他"
       },
-      "fixedPaidDurationsHelp": "月間コードは1暦月、四半期は3暦月、年間は12暦月を付与します。北京時間で計算されます。日数を設定できるのはトライアルコードだけです（1-7日）。"
+      "fixedPaidDurationsHelp": "月間コードは1暦月、四半期は3暦月、年間は12暦月を付与します。北京時間で計算されます。日数を設定できるのはトライアルコードだけです（1-7日）。",
+      "previous": "前へ",
+      "next": "次へ",
+      "page": "ページ",
+      "of": "/ 全"
     },
     "users": {
       "eyebrow": "管理",

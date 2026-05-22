@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
@@ -15,6 +16,7 @@ type AdminSupportFeedbackPageProps = {
     error?: string;
     filter?: string;
     notice?: string;
+    page?: string;
     query?: string;
   }>;
 };
@@ -68,8 +70,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
   }
 
   const feedbackResult = await query
-    .order("updated_at", { ascending: false })
-    .limit(100);
+    .order("updated_at", { ascending: false });
 
   let feedback = (feedbackResult.data ?? []) as AdminFeedbackRow[];
   let unreadTrackingAvailable = true;
@@ -88,8 +89,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
     }
 
     const fallbackResult = await fallbackQuery
-      .order("updated_at", { ascending: false })
-      .limit(100);
+      .order("updated_at", { ascending: false });
 
     if (fallbackResult.error) {
       throw fallbackResult.error;
@@ -123,6 +123,13 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
     const queryString = params.toString();
     return queryString ? `/admin/support-feedback?${queryString}` : "/admin/support-feedback";
   };
+
+  // Pagination for feedback
+  const PAGE_SIZE = 20;
+  const currentPage = Number(feedbackState?.page ?? 1);
+  const totalPages = Math.ceil(visibleFeedback.length / PAGE_SIZE);
+  const paginatedFeedback = visibleFeedback.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const paginationBasePath = buildFilterUrl(filter === "unread" ? "unread" : null);
 
   return (
     <AdminShell {...shellProps}>
@@ -164,11 +171,12 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
         </div>
         <AdminCard>
           {visibleFeedback.length > 0 ? (
-            <AdminTableShell
-              label={t("supportFeedback.title")}
-              mobileCards={
+            <>
+              <AdminTableShell
+                label={t("supportFeedback.title")}
+                mobileCards={
                 <div className="grid gap-3">
-                  {visibleFeedback.map((item) => (
+                  {paginatedFeedback.map((item) => (
                     <article className={`rounded-lg border bg-white p-4 shadow-sm ${item.isUnread ? "border-rose-200 ring-1 ring-rose-100" : "border-slate-200"}`} key={item.id}>
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -221,7 +229,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {visibleFeedback.map((item) => (
+                  {paginatedFeedback.map((item) => (
                     <tr className={item.isUnread ? "bg-rose-50/40" : ""} key={item.id}>
                       <td className="min-w-56 px-5 py-4 font-medium text-slate-950">
                         <Link className="underline-offset-4 hover:underline" href={`/admin/support-feedback/${item.id}`}>
@@ -275,6 +283,20 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                 </tbody>
               </table>
             </AdminTableShell>
+            {totalPages > 1 && (
+              <AdminPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                basePath={paginationBasePath}
+                labels={{
+                  previous: t("supportFeedback.previous"),
+                  next: t("supportFeedback.next"),
+                  page: t("supportFeedback.page"),
+                  of: t("supportFeedback.of"),
+                }}
+              />
+            )}
+            </>
           ) : (
             <p className="px-5 py-6 text-sm text-slate-600">{t("supportFeedback.empty")}</p>
           )}

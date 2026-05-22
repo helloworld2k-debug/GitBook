@@ -655,7 +655,11 @@
       "allFeedback": "All feedback",
       "unread": "Unread",
       "unreadFeedback": "Unread feedback",
-      "searchPlaceholder": "Search by subject, message, or email"
+      "searchPlaceholder": "Search by subject, message, or email",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page",
+      "of": "of"
     },
     "supportSettings": {
       "eyebrow": "Admin",
@@ -900,7 +904,11 @@
         "partner": "Partner",
         "other": "Other"
       },
-      "fixedPaidDurationsHelp": "Monthly codes grant 1 calendar month from activation. Quarterly grants 3 calendar months; yearly grants 12 calendar months. Calculations use Beijing timezone. Only trial codes allow custom day counts (1-7 days)."
+      "fixedPaidDurationsHelp": "Monthly codes grant 1 calendar month from activation. Quarterly grants 3 calendar months; yearly grants 12 calendar months. Calculations use Beijing timezone. Only trial codes allow custom day counts (1-7 days).",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page",
+      "of": "of"
     },
     "users": {
       "eyebrow": "Admin",

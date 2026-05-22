@@ -219,7 +219,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
           eyebrow={t("eyebrow")}
           title={t("title")}
         />
-        <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
+        <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} getMessage={(key) => adminT(key)} />
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <AdminCard className="p-4">

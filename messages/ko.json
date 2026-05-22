@@ -590,7 +590,11 @@
       "allFeedback": "전체 피드백",
       "unread": "읽지 않음",
       "unreadFeedback": "읽지 않은 피드백",
-      "searchPlaceholder": "제목, 메시지, 이메일로 검색"
+      "searchPlaceholder": "제목, 메시지, 이메일로 검색",
+      "previous": "이전",
+      "next": "다음",
+      "page": "페이지",
+      "of": "/ 전체"
     },
     "supportSettings": {
       "eyebrow": "관리",
@@ -757,7 +761,11 @@
         "partner": "협력사",
         "other": "기타"
       },
-      "fixedPaidDurationsHelp": "월간 코드는 1개월, 분기 코드는 3개월, 연간 코드는 12개월을 부여합니다. 北京时间 기준으로 계산됩니다. 일수 설정은 체험 코드에만 적용됩니다(1-7일)."
+      "fixedPaidDurationsHelp": "월간 코드는 1개월, 분기 코드는 3개월, 연간 코드는 12개월을 부여합니다. 北京时间 기준으로 계산됩니다. 일수 설정은 체험 코드에만 적용됩니다(1-7일).",
+      "previous": "이전",
+      "next": "다음",
+      "page": "페이지",
+      "of": "/ 전체"
     },
     "users": {
       "eyebrow": "관리",

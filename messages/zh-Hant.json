@@ -590,7 +590,11 @@
       "allFeedback": "所有回饋",
       "unread": "未讀",
       "unreadFeedback": "未讀回饋",
-      "searchPlaceholder": "依主旨、訊息或電子郵件搜尋"
+      "searchPlaceholder": "依主旨、訊息或電子郵件搜尋",
+      "previous": "上一頁",
+      "next": "下一頁",
+      "page": "第",
+      "of": "頁，共"
     },
     "supportSettings": {
       "eyebrow": "管理後台",
@@ -757,7 +761,11 @@
         "partner": "合作商",
         "other": "其它"
       },
-      "fixedPaidDurationsHelp": "月度授權碼授予 1 個日曆月，季度授予 3 個日曆月，年度授予 12 個日曆月。使用北京時區計算。只有試用碼可自訂天數（1-7 天）。"
+      "fixedPaidDurationsHelp": "月度授權碼授予 1 個日曆月，季度授予 3 個日曆月，年度授予 12 個日曆月。使用北京時區計算。只有試用碼可自訂天數（1-7 天）。",
+      "previous": "上一頁",
+      "next": "下一頁",
+      "page": "第",
+      "of": "頁，共"
     },
     "users": {
       "eyebrow": "管理後台",
