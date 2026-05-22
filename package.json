@@ -12,7 +12,8 @@
     "e2e": "playwright test",
     "e2e:online": "node scripts/online-full-regression.mjs",
     "audit:china-access": "node scripts/china-access-audit.mjs",
-    "check-config": "bash scripts/check-config.sh"
+    "check-config": "bash scripts/check-config.sh",
+    "verify:rpc": "npx tsx scripts/verify-rpc-functions.ts"
   },
   "dependencies": {
     "@paypal/paypal-server-sdk": "^2.3.0",
