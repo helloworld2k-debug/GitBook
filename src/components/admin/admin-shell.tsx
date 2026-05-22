@@ -401,3 +401,6 @@ export function AdminStatusBadge({ children, tone = "neutral" }: { children: Rea
 
   return <span className={`inline-flex min-h-7 items-center rounded-md border px-2 text-xs font-semibold ${toneClass}`}>{children}</span>;
 }
+
+export { AdminTableSkeleton } from "./admin-table-skeleton";
+
