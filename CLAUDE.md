@@ -112,7 +112,7 @@ A: 登录 [Supabase Dashboard](https://supabase.com/dashboard)，进入项目 �
 ## 已知限制
 
 - `supabase db push` 需要先注释掉 config.toml 中的 email template sections（CLI path bug）
-- 没有 middleware.ts 做 session refresh
+- Next.js 16 使用 `src/proxy.ts` 执行 next-intl 路由和 Supabase session refresh，不使用旧版 `middleware.ts`
 - config.toml 中 email template 的 content_path 要用 `./templates/` 而不是 `./supabase/templates/`
 
 ## Skill routing

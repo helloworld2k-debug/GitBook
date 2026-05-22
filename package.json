@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "e2e:online": "node scripts/online-full-regression.mjs",
+    "canary:production": "node scripts/production-canary.mjs",
     "audit:china-access": "node scripts/china-access-audit.mjs",
     "check-config": "bash scripts/check-config.sh",
     "check-env": "bash scripts/check-env.sh",
