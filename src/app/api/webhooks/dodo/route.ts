@@ -9,6 +9,26 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
+// Helper to log webhook events for debugging
+async function logWebhookEvent(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  event: unknown,
+  status: "received" | "processing" | "success" | "error",
+  metadata?: Record<string, unknown>,
+  errorMessage?: string
+) {
+  try {
+    await supabase.from("webhook_logs").insert({
+      source: "dodo",
+      event_type: (event as { type?: string })?.type ?? "unknown",
+      status,
+      metadata: JSON.stringify({ ...metadata, errorMessage } || {}),
+    });
+  } catch {
+    // Silently fail logging
+  }
+}
+
 function getObject(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
@@ -43,14 +63,18 @@ function getPaidAt(data: Record<string, unknown>) {
 export async function POST(request: Request) {
   const body = await request.text();
   let event;
+  const supabase = createSupabaseAdminClient();
 
   try {
     event = verifyDodoWebhook(body, request.headers);
-  } catch {
-    return jsonError("Invalid Dodo signature");
+    await logWebhookEvent(supabase, event, "received");
+  } catch (error) {
+    await logWebhookEvent(supabase, { error: String(error) }, "error", { errorMessage: String(error) });
+    return jsonError("Invalid Dodo signature", 401);
   }
 
   if (event.type === "payment.succeeded") {
+    await logWebhookEvent(supabase, event, "processing");
     const data = getObject(event.data);
     const metadata = getObject(data.metadata);
     const userId = getString(metadata.user_id);
@@ -63,6 +87,8 @@ export async function POST(request: Request) {
     const expectedProductId = donationTier ? getDodoProductId(donationTier.code) : null;
     const expectedAmount = getPositiveIntegerString(metadata.amount) ?? donationTier?.amount ?? null;
 
+    await logWebhookEvent(supabase, event, "processing", { userId, tierCode, paymentId, amount, currency });
+
     if (
       !userId ||
       !donationTier ||
@@ -73,10 +99,12 @@ export async function POST(request: Request) {
       (productId && productId !== expectedProductId) ||
       (expectedAmount !== null && amount !== expectedAmount)
     ) {
-      return jsonError("Missing required metadata");
+      await logWebhookEvent(supabase, event, "error", metadata, {
+        errorMessage: `Missing metadata: userId=${!!userId}, tierCode=${tierCode}, paymentId=${!!paymentId}, amount=${amount}, currency=${currency}, productId=${productId}, expectedProductId=${expectedProductId}, expectedAmount=${expectedAmount}`,
+      });
+      return jsonError("Missing required metadata", 400);
     }
 
-    const supabase = createSupabaseAdminClient();
     const paidAt = new Date(getPaidAt(data));
     const record = buildDonationRecord({
       userId,
@@ -100,15 +128,39 @@ export async function POST(request: Request) {
       .single();
 
     if (error || !donation) {
+      await logWebhookEvent(supabase, event, "error", metadata, {
+        errorMessage: `Unable to save donation: ${error?.message ?? "Unknown error"}`,
+      });
       return jsonError("Unable to save donation", 500);
     }
 
-    await generateCertificatesForDonation(donation.id);
-    await extendCloudSyncEntitlementForDonation(supabase, {
-      userId,
-      donationId: donation.id,
-      tierCode: donationTier.code,
-      paidAt,
+    await logWebhookEvent(supababse, event, "processing", { donationId: donation.id });
+
+    try {
+      await generateCertificatesForDonation(donation.id);
+      await logWebhookEvent(supabase, event, "processing", { donationId: donation.id, certificates: "generated" });
+    } catch (certError) {
+      await logWebhookEvent(supabase, event, "error", metadata, {
+        errorMessage: `Certificate generation failed: ${String(certError)}`,
+      });
+    }
+
+    try {
+      await extendCloudSyncEntitlementForDonation(supabase, {
+        userId,
+        donationId: donation.id,
+        tierCode: donationTier.code,
+        paidAt,
+      });
+      await logWebhookEvent(supabase, event, "success", { donationId: donation.id });
+    } catch (entitlementError) {
+      await logWebhookEvent(supabase, event, "error", metadata, {
+        errorMessage: `Entitlement extension failed: ${String(entitlementError)}`,
+      });
+    }
+  } else {
+    await logWebhookEvent(supabase, event, "received", undefined, {
+      errorMessage: `Unhandled event type: ${event.type}`,
     });
   }
 
