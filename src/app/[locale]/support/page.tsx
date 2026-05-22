@@ -117,7 +117,7 @@ export default async function SupportPage({ params, searchParams }: SupportPageP
                   {t("message")}
                   <textarea className="min-h-36 rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 py-3 text-white" maxLength={4000} name="message" required />
                 </label>
-                <FormSubmitButton className="neon-button min-h-11 rounded-md px-4 text-sm font-semibold text-white" pendingLabel={t("submit")}>
+                <FormSubmitButton className="neon-button min-h-11 rounded-md px-4 text-sm font-semibold text-white" pendingLabel={t("submitting")}>
                   {t("submit")}
                 </FormSubmitButton>
               </form>

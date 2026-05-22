@@ -65,6 +65,7 @@ export default async function ContributionsPage({ params }: ContributionsPagePro
                 locale={locale}
                 oneTimeNote={t("oneTimeNote")}
                 paymentNote={t("paymentNote")}
+                redirectingLabel={t("redirecting")}
                 tier={tier}
               />
             ))}

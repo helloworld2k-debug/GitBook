@@ -44,7 +44,14 @@ export function ConfirmActionButton({
         {pending ? pendingLabel : confirming ? confirmLabel : children}
       </button>
       {confirming && !pending ? (
-        <p className="text-xs text-amber-200">Click again to confirm this action.</p>
+        <p aria-live="polite" className="text-xs text-amber-200" role="status">
+          Click again to confirm this action.
+        </p>
+      ) : null}
+      {pending ? (
+        <span aria-live="polite" className="sr-only" role="status">
+          {pendingLabel}
+        </span>
       ) : null}
     </div>
   );

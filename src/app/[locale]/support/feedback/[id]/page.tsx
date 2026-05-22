@@ -86,7 +86,7 @@ export default async function SupportFeedbackThreadPage({ params, searchParams }
                 {t("reply")}
                 <textarea className="min-h-32 rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 py-3 text-white" maxLength={4000} name="message" placeholder={t("replyPlaceholder")} required />
               </label>
-              <FormSubmitButton className="neon-button min-h-11 w-fit rounded-md px-4 text-sm font-semibold text-white" pendingLabel={t("sendReply")}>
+              <FormSubmitButton className="neon-button min-h-11 w-fit rounded-md px-4 text-sm font-semibold text-white" pendingLabel={t("sendingReply")}>
                 {t("sendReply")}
               </FormSubmitButton>
             </form>

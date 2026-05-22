@@ -1,9 +1,13 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { act } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AdminExportButton } from "@/components/admin/admin-export-button";
 import { AdminFeedbackBanner } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { CertificateShareButton } from "@/components/certificate-share-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
+import { FormStatusBanner } from "@/components/form-status-banner";
+import { FormSubmitButton } from "@/components/form-submit-button";
 
 const pendingState = vi.hoisted(() => ({ pending: false }));
 
@@ -33,8 +37,29 @@ vi.mock("next-intl/server", () => ({
 }));
 
 describe("interaction components", () => {
+  beforeEach(() => {
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn(() => "blob:csv"),
+      revokeObjectURL: vi.fn(),
+    });
+  });
+
   afterEach(() => {
+    pendingState.pending = false;
     vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("announces form status banners through live regions", () => {
+    const { rerender } = render(<FormStatusBanner message="Saved changes" />);
+
+    expect(screen.getByRole("status")).toHaveAttribute("aria-live", "polite");
+    expect(screen.getByRole("status")).toHaveTextContent("Saved changes");
+
+    rerender(<FormStatusBanner message="Unable to save" tone="error" />);
+
+    expect(screen.getByRole("alert")).toHaveAttribute("aria-live", "assertive");
+    expect(screen.getByRole("alert")).toHaveTextContent("Unable to save");
   });
 
   it("renders notice and error feedback toasts with accessible roles", () => {
@@ -102,6 +127,22 @@ describe("interaction components", () => {
     const button = screen.getByRole("button", { name: "Processing request" });
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("status")).toHaveTextContent("Processing request");
+
+    pendingState.pending = false;
+  });
+
+  it("announces public form submit progress while pending", () => {
+    pendingState.pending = true;
+
+    render(
+      <FormSubmitButton pendingLabel="Sending feedback">
+        Send feedback
+      </FormSubmitButton>,
+    );
+
+    expect(screen.getByRole("button", { name: "Sending feedback" })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Sending feedback");
 
     pendingState.pending = false;
   });
@@ -117,6 +158,62 @@ describe("interaction components", () => {
     fireEvent.click(button);
 
     expect(screen.getByRole("button", { name: "Confirm revoke" })).toBeInTheDocument();
-    expect(screen.getByText("Click again to confirm this action.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Click again to confirm this action.");
+  });
+
+  it("announces CSV export completion", async () => {
+    render(
+      <AdminExportButton
+        data={[{ email: "friend@example.com" }]}
+        filename="users"
+        labels={{ export: "Export users", exporting: "Exporting users" }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Export users" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Export complete.");
+  });
+
+  it("announces share completion when the native share sheet resolves", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: share,
+    });
+
+    render(
+      <CertificateShareButton
+        certificateNumber="CERT-001"
+        certificateUrl="https://example.com/cert"
+        labels={{ copyLink: "Copy link", share: "Share", shared: "Shared" }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+
+    await waitFor(() => {
+      expect(share).toHaveBeenCalled();
+    });
+    expect(await screen.findByRole("status")).toHaveTextContent("Shared");
+  });
+
+  it("announces share failures instead of silently swallowing them", async () => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: vi.fn().mockRejectedValue(new Error("share failed")),
+    });
+
+    render(
+      <CertificateShareButton
+        certificateNumber="CERT-001"
+        certificateUrl="https://example.com/cert"
+        labels={{ copyLink: "Copy link", share: "Share", shared: "Shared" }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unable to share.");
   });
 });

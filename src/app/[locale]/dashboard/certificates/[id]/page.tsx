@@ -16,6 +16,11 @@ type CertificatePageProps = {
 };
 
 type AuthenticatedUser = Awaited<ReturnType<typeof setupUserPage>>["user"];
+type CertificateTierCode = "monthly" | "quarterly" | "yearly";
+
+function isCertificateTierCode(value: string | null | undefined): value is CertificateTierCode {
+  return value === "monthly" || value === "quarterly" || value === "yearly";
+}
 
 function getRecipientName(user: AuthenticatedUser, fallbackRecipient: string) {
   const displayName = user.user_metadata?.name ?? user.user_metadata?.full_name;
@@ -54,7 +59,7 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 
   // Get tier label if available
   const tierCode = donationDetails?.tierCode;
-  const tierLabel = tierCode ? t(`tiers.${tierCode}` as any) : null;
+  const tierLabel = isCertificateTierCode(tierCode) ? t(`tiers.${tierCode}`) : null;
 
   return (
     <>
@@ -95,6 +100,7 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
                 share: t("share"),
                 shared: t("shared"),
                 copyLink: t("copyLink"),
+                shareError: t("shareError"),
               }}
             />
             <Link

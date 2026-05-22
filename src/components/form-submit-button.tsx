@@ -18,14 +18,21 @@ export function FormSubmitButton({
   const { pending } = useFormStatus();
 
   return (
-    <button
-      aria-busy={pending}
-      aria-disabled={pending}
-      className={`${className} disabled:cursor-not-allowed disabled:opacity-60`}
-      disabled={pending}
-      type={type}
-    >
-      {pending ? pendingLabel : children}
-    </button>
+    <>
+      <button
+        aria-busy={pending}
+        aria-disabled={pending}
+        className={`${className} disabled:cursor-not-allowed disabled:opacity-60`}
+        disabled={pending}
+        type={type}
+      >
+        {pending ? pendingLabel : children}
+      </button>
+      {pending ? (
+        <span aria-live="polite" className="sr-only" role="status">
+          {pendingLabel}
+        </span>
+      ) : null}
+    </>
   );
 }

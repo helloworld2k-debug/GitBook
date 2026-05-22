@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { FormSubmitButton } from "@/components/form-submit-button";
 import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -74,9 +75,9 @@ export default async function NotificationsPage({ params }: NotificationsPagePro
                     {auth.user && !isRead ? (
                       <form action={markRead}>
                         <input name="notification_id" type="hidden" value={notification.id} />
-                        <button className="min-h-10 rounded-md border border-cyan-300/20 px-3 text-sm font-medium text-cyan-100 transition-colors hover:bg-cyan-300/10" type="submit">
+                        <FormSubmitButton className="min-h-10 rounded-md border border-cyan-300/20 px-3 text-sm font-medium text-cyan-100 transition-colors hover:bg-cyan-300/10" pendingLabel={t("markingRead")}>
                           {t("markRead")}
-                        </button>
+                        </FormSubmitButton>
                       </form>
                     ) : null}
                   </div>

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { DonationTier } from "@/lib/payments/tier";
 
 type DonationTierCardProps = {
@@ -9,6 +12,7 @@ type DonationTierCardProps = {
   locale: string;
   oneTimeNote: string;
   paymentNote: string;
+  redirectingLabel?: string;
   tier: DonationTier;
 };
 
@@ -21,8 +25,10 @@ export function DonationTierCard({
   locale,
   oneTimeNote,
   paymentNote,
+  redirectingLabel = "Opening secure checkout...",
   tier,
 }: DonationTierCardProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const amount = new Intl.NumberFormat(locale, {
     currency: tier.currency,
     style: "currency",
@@ -55,15 +61,28 @@ export function DonationTierCard({
       <p className="mt-3 text-sm leading-6 text-slate-300">{oneTimeNote}</p>
       <div className="mt-6 grid gap-2">
         {isAuthenticated ? (
-          <form action="/api/checkout/dodo" method="post">
+          <form
+            action="/api/checkout/dodo"
+            method="post"
+            onSubmit={() => {
+              setIsSubmitting(true);
+            }}
+          >
             <input type="hidden" name="tier" value={tier.code} />
             <input type="hidden" name="locale" value={locale} />
             <button
-              className="neon-button flex min-h-11 w-full cursor-pointer items-center justify-center rounded-md px-4 py-2 text-sm font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
+              aria-busy={isSubmitting}
+              className="neon-button flex min-h-11 w-full cursor-pointer items-center justify-center rounded-md px-4 py-2 text-sm font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={isSubmitting}
               type="submit"
             >
-              {checkoutDodoLabel}
+              {isSubmitting ? redirectingLabel : checkoutDodoLabel}
             </button>
+            {isSubmitting ? (
+              <p aria-live="polite" className="mt-2 text-sm text-cyan-100" role="status">
+                {redirectingLabel}
+              </p>
+            ) : null}
           </form>
         ) : (
           <a

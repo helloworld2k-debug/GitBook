@@ -12,6 +12,7 @@ export function FormStatusBanner({ message, tone = "notice" }: FormStatusBannerP
 
   return (
     <p
+      aria-live={tone === "error" ? "assertive" : "polite"}
       className={`rounded-md border px-3 py-2 text-sm ${toneClass}`}
       role={tone === "error" ? "alert" : "status"}
     >

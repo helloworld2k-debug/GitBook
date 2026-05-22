@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 import { DonationTierCard } from "@/components/donation-tier-card";
 import { donationTiers } from "@/config/site";
@@ -68,6 +68,31 @@ describe("DonationTierCard", () => {
       "/en/login?next=%2Fen%2Fcontributions",
     );
     expect(document.querySelector('form[action="/api/checkout/dodo"]')).not.toBeInTheDocument();
+  });
+
+  it("shows checkout redirect feedback after an authenticated supporter submits", () => {
+    render(
+      <DonationTierCard
+        checkoutDodoLabel="Contribute now"
+        isAuthenticated
+        label="Monthly"
+        loginHref="/en/login?next=%2Fen%2Fcontributions"
+        loginLabel="Sign in to contribute"
+        locale="en"
+        oneTimeNote="One-time support"
+        paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
+        redirectingLabel="Opening secure checkout..."
+        tier={donationTiers[0]}
+      />,
+    );
+
+    const form = document.querySelector('form[action="/api/checkout/dodo"]');
+    expect(form).toBeInTheDocument();
+
+    fireEvent.submit(form as HTMLFormElement);
+
+    expect(screen.getByRole("button", { name: "Opening secure checkout..." })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Opening secure checkout...");
   });
 
   it("shows the original price and discount for discounted tiers", () => {

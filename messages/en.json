@@ -135,6 +135,7 @@
     "loginToContribute": "Sign in to support",
     "oneTimeNote": "A one-time support that helps keep downloads available and development moving.",
     "paymentNote": "Secure checkout with Dodo Payments for cards and supported local payment methods. A certificate is issued after successful payment.",
+    "redirecting": "Opening secure checkout...",
     "cancelled": "Checkout was cancelled. You can review the support tiers and try again when ready."
   },
   "news": {
@@ -161,6 +162,7 @@
     "subtitle": "Read product updates, service notices, and account-related announcements.",
     "empty": "No notifications are available right now.",
     "markRead": "Mark as read",
+    "markingRead": "Marking as read...",
     "published": "Published"
   },
   "support": {
@@ -175,6 +177,7 @@
     "subject": "Subject",
     "message": "Message",
     "submit": "Send feedback",
+    "submitting": "Sending feedback...",
     "success": "Feedback sent. We will review it soon.",
     "error": "Could not send feedback. Please try again.",
     "signInRequiredTitle": "Sign in to submit feedback",
@@ -192,6 +195,7 @@
     "reply": "Reply",
     "replyPlaceholder": "Add more context or answer the administrator...",
     "sendReply": "Send reply",
+    "sendingReply": "Sending reply...",
     "replySuccess": "Reply sent.",
     "replyError": "Could not send reply.",
     "statuses": {
@@ -1211,6 +1215,7 @@
     "share": "Share certificate",
     "shared": "Link copied!",
     "copyLink": "Copy link",
+    "shareError": "Unable to share. Copy the link and try again.",
     "download": {
       "title": "Download certificate",
       "svg": "Download SVG",

@@ -123,6 +123,7 @@
     "loginToContribute": "ログインして支援",
     "oneTimeNote": "ダウンロード提供と継続開発を支える一回限りの開発支援です。",
     "paymentNote": "Dodo Payments による安全なチェックアウトで、カードと利用可能なローカル決済方法に対応しています。支払い完了後に証明書が発行されます。",
+    "redirecting": "安全なチェックアウトを開いています...",
     "cancelled": "チェックアウトはキャンセルされました。支援プランを確認し、準備ができたらもう一度お試しください。"
   },
   "news": {
@@ -149,6 +150,7 @@
     "subtitle": "製品更新、サービス告知、アカウント関連のお知らせを確認できます。",
     "empty": "現在、通知はありません。",
     "markRead": "既読にする",
+    "markingRead": "既読にしています...",
     "published": "公開日時"
   },
   "support": {
@@ -163,6 +165,7 @@
     "subject": "件名",
     "message": "メッセージ",
     "submit": "送信",
+    "submitting": "送信しています...",
     "success": "フィードバックを送信しました。",
     "error": "フィードバックを送信できませんでした。",
     "signInRequiredTitle": "ログインして送信",
@@ -180,6 +183,7 @@
     "reply": "返信",
     "replyPlaceholder": "追加情報や管理者への返信を入力...",
     "sendReply": "返信を送信",
+    "sendingReply": "返信を送信しています...",
     "replySuccess": "返信しました。",
     "replyError": "返信を送信できませんでした。",
     "statuses": {
@@ -1197,6 +1201,7 @@
     "share": "証明書をシェア",
     "shared": "リンクをコピーしました！",
     "copyLink": "リンクをコピー",
+    "shareError": "共有できませんでした。リンクをコピーしてもう一度お試しください。",
     "download": {
       "title": "証明書をダウンロード",
       "svg": "SVG をダウンロード",

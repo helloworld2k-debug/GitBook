@@ -123,6 +123,7 @@
     "loginToContribute": "로그인하고 지원",
     "oneTimeNote": "다운로드 제공과 지속적인 개발을 돕는 일회성 개발 지원입니다.",
     "paymentNote": "Dodo Payments를 통한 안전한 결제로 카드와 지원되는 현지 결제 수단을 사용할 수 있습니다. 결제 완료 후 인증서가 발급됩니다.",
+    "redirecting": "안전한 결제를 여는 중...",
     "cancelled": "결제가 취소되었습니다. 지원 등급을 다시 확인하고 준비되면 다시 시도할 수 있습니다."
   },
   "news": {
@@ -149,6 +150,7 @@
     "subtitle": "제품 업데이트, 서비스 공지, 계정 관련 안내를 확인하세요.",
     "empty": "현재 알림이 없습니다.",
     "markRead": "읽음으로 표시",
+    "markingRead": "읽음으로 표시하는 중...",
     "published": "게시일"
   },
   "support": {
@@ -163,6 +165,7 @@
     "subject": "제목",
     "message": "메시지",
     "submit": "피드백 보내기",
+    "submitting": "피드백 보내는 중...",
     "success": "피드백을 보냈습니다.",
     "error": "피드백을 보낼 수 없습니다.",
     "signInRequiredTitle": "로그인 후 제출",
@@ -180,6 +183,7 @@
     "reply": "답변",
     "replyPlaceholder": "추가 정보나 관리자에게 답변을 입력...",
     "sendReply": "답변 보내기",
+    "sendingReply": "답변 보내는 중...",
     "replySuccess": "답변을 보냈습니다.",
     "replyError": "답변을 보낼 수 없습니다.",
     "statuses": {
@@ -1197,6 +1201,7 @@
     "share": "인증서 공유",
     "shared": "링크가 복사되었습니다!",
     "copyLink": "링크 복사",
+    "shareError": "공유할 수 없습니다. 링크를 복사한 뒤 다시 시도해 주세요.",
     "download": {
       "title": "인증서 다운로드",
       "svg": "SVG 다운로드",

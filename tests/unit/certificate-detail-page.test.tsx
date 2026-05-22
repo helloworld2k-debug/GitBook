@@ -46,6 +46,7 @@ vi.mock("next-intl/server", () => ({
       share: "인증서 공유",
       shared: "링크가 복사되었습니다!",
       copyLink: "링크 복사",
+      shareError: "공유할 수 없습니다.",
       types: {
         donation: "후원 인증서",
         honor: "공로 인증서",

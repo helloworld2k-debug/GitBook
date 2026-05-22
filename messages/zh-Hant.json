@@ -123,6 +123,7 @@
     "loginToContribute": "登入後支持",
     "oneTimeNote": "一次性開發支持，協助下載服務維持可用，也讓開發能持續推進。",
     "paymentNote": "透過 Dodo Payments 安全結帳，支援銀行卡與可用的本地支付方式。付款成功後會產生支持證書。",
+    "redirecting": "正在開啟安全結帳...",
     "cancelled": "結帳已取消。你可以重新查看支持方案，準備好後再試一次。"
   },
   "news": {
@@ -149,6 +150,7 @@
     "subtitle": "查看產品更新、服務公告與帳戶相關通知。",
     "empty": "目前沒有通知。",
     "markRead": "標記為已讀",
+    "markingRead": "正在標記為已讀...",
     "published": "發布時間"
   },
   "support": {
@@ -163,6 +165,7 @@
     "subject": "主旨",
     "message": "訊息",
     "submit": "送出回饋",
+    "submitting": "正在送出回饋...",
     "success": "回饋已送出，我們會盡快查看。",
     "error": "無法送出回饋，請稍後再試。",
     "signInRequiredTitle": "登入後提交回饋",
@@ -180,6 +183,7 @@
     "reply": "回覆",
     "replyPlaceholder": "補充更多資訊，或回覆管理員...",
     "sendReply": "送出回覆",
+    "sendingReply": "正在送出回覆...",
     "replySuccess": "回覆已送出。",
     "replyError": "無法送出回覆。",
     "statuses": {
@@ -1197,6 +1201,7 @@
     "share": "分享證書",
     "shared": "連結已複製！",
     "copyLink": "複製連結",
+    "shareError": "無法分享。請複製連結後再試一次。",
     "download": {
       "title": "下載證書",
       "svg": "下載 SVG",
