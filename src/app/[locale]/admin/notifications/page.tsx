@@ -68,18 +68,18 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("notifications.audience")}
                 <select className="min-h-11 rounded-md border border-slate-300 px-3" name="audience" defaultValue="all">
-                  <option value="all">all</option>
-                  <option value="authenticated">authenticated</option>
-                  <option value="admins">admins</option>
+                  <option value="all">{t("notifications.audiences.all")}</option>
+                  <option value="authenticated">{t("notifications.audiences.authenticated")}</option>
+                  <option value="admins">{t("notifications.audiences.admins")}</option>
                 </select>
               </label>
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("notifications.priority")}
                 <select className="min-h-11 rounded-md border border-slate-300 px-3" name="priority" defaultValue="info">
-                  <option value="info">info</option>
-                  <option value="success">success</option>
-                  <option value="warning">warning</option>
-                  <option value="critical">critical</option>
+                  <option value="info">{t("notifications.priorities.info")}</option>
+                  <option value="success">{t("notifications.priorities.success")}</option>
+                  <option value="warning">{t("notifications.priorities.warning")}</option>
+                  <option value="critical">{t("notifications.priorities.critical")}</option>
                 </select>
               </label>
               <label className="grid gap-1 text-sm font-medium text-slate-700">
@@ -124,7 +124,7 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
                         <p className="font-semibold text-slate-950">{notification.title}</p>
                         <p className="mt-1 line-clamp-2 text-sm text-slate-600">{notification.body}</p>
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{notification.audience}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{t(`notifications.audiences.${notification.audience ?? "all"}`)}</td>
                       <td className="whitespace-nowrap px-5 py-4">
                         <AdminStatusBadge tone={notification.published_at ? "success" : "neutral"}>
                           {notification.published_at ? t("notifications.published") : t("notifications.draft")}

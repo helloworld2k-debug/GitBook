@@ -596,7 +596,18 @@
       "publishedAt": "Published",
       "status": "Status",
       "draft": "Draft",
-      "published": "Published"
+      "published": "Published",
+      "audiences": {
+        "all": "All users",
+        "authenticated": "Signed in users",
+        "admins": "Admins only"
+      },
+      "priorities": {
+        "info": "Info",
+        "success": "Success",
+        "warning": "Warning",
+        "critical": "Critical"
+      }
     },
     "news": {
       "eyebrow": "Admin",

@@ -559,7 +559,18 @@
       "publishedAt": "發布時間",
       "status": "狀態",
       "draft": "草稿",
-      "published": "已發布"
+      "published": "已發布",
+      "audiences": {
+        "all": "所有使用者",
+        "authenticated": "已登入使用者",
+        "admins": "僅管理員"
+      },
+      "priorities": {
+        "info": "資訊",
+        "success": "成功",
+        "warning": "警告",
+        "critical": "緊急"
+      }
     },
     "supportFeedback": {
       "eyebrow": "管理後台",

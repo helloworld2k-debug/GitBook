@@ -559,7 +559,18 @@
       "publishedAt": "게시 시간",
       "status": "상태",
       "draft": "초안",
-      "published": "게시됨"
+      "published": "게시됨",
+      "audiences": {
+        "all": "모든 사용자",
+        "authenticated": "로그인한 사용자",
+        "admins": "관리자만"
+      },
+      "priorities": {
+        "info": "정보",
+        "success": "성공",
+        "warning": "경고",
+        "critical": "중요"
+      }
     },
     "supportFeedback": {
       "eyebrow": "관리",

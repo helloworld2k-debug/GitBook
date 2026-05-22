@@ -557,7 +557,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs font-semibold uppercase text-slate-500">{t("licenses.failedAttempts")}</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-950">{failedRedeemAttempts.length} failed attempts</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{failedRedeemAttempts.length}</p>
             </div>
             <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
               <p className="text-xs font-semibold uppercase text-slate-500">{t("licenses.blockedAttempts")}</p>

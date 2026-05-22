@@ -559,7 +559,18 @@
       "publishedAt": "公開日時",
       "status": "状態",
       "draft": "下書き",
-      "published": "公開済み"
+      "published": "公開済み",
+      "audiences": {
+        "all": "すべてのユーザー",
+        "authenticated": "ログインユーザー",
+        "admins": "管理者のみ"
+      },
+      "priorities": {
+        "info": "情報",
+        "success": "成功",
+        "warning": "警告",
+        "critical": "重大"
+      }
     },
     "supportFeedback": {
       "eyebrow": "管理画面",
