@@ -26,7 +26,6 @@ import { signOutAction } from "@/app/[locale]/dashboard/actions";
 import { AdminFeedbackToast } from "./admin-feedback-toast";
 
 type AdminShellLabels = {
-  archivedUsers: string;
   auditLogs: string;
   backToAdmin: string;
   certificates: string;
@@ -74,7 +73,6 @@ function getAdminItems(labels: AdminShellLabels) {
     { href: "/admin/support-settings", label: labels.supportSettings, icon: MessageSquareText },
     { href: "/admin/licenses", label: labels.licenses, icon: KeyRound },
     { href: "/admin/users", label: labels.users, icon: Users },
-    { href: "/admin/archived-users", label: labels.archivedUsers, icon: Users },
     { href: "/admin/registration-security", label: labels.registrationSecurity, icon: ShieldAlert },
     { href: "/admin/audit-logs", label: labels.auditLogs, icon: ClipboardList },
   ];
@@ -404,4 +402,3 @@ export function AdminStatusBadge({ children, tone = "neutral" }: { children: Rea
 
 export { AdminTableSkeleton } from "./admin-table-skeleton";
 export { AdminPageSkeleton } from "./admin-page-skeleton";
-

@@ -51,7 +51,6 @@ export async function getAdminShellProps(locale: Locale, currentPath: string) {
     adminLabel,
     currentPath,
     labels: {
-      archivedUsers: shellT("archivedUsers"),
       auditLogs: shellT("auditLogs"),
       backToAdmin: shellT("backToAdmin"),
       certificates: shellT("certificates"),

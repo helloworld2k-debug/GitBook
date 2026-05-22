@@ -484,6 +484,8 @@ const testMessages = {
         sortBy: "Sort by",
         sortOrder: "Sort order",
         export: "Export CSV",
+        archiveEntry: "Archive",
+        archiveEntryDescription: "Restore archived users or permanently delete records from the user archive.",
         allRoles: "All permissions",
         allTypes: "All user types",
         allStatuses: "All statuses",
@@ -1862,7 +1864,7 @@ describe("admin pages", () => {
   });
 
   it("shows account creation controls and auth status on the users page", async () => {
-    const profilesQuery = createAdminListQuery([
+    const users = [
       {
         id: "user-1",
         email: "invited@example.com",
@@ -1872,15 +1874,30 @@ describe("admin pages", () => {
         is_admin: false,
         created_at: "2026-05-01T00:00:00.000Z",
       },
-    ]);
+    ];
     const emptyQuery = createAdminListQuery([]);
     const operatorQuery = createAdminListQuery({
       admin_role: "operator",
       is_admin: false,
       account_status: "active",
     });
-    const rpc = vi.fn(async () => ({
-      data: [
+    const rpc = vi.fn((fnName: string) => {
+      if (fnName === "get_admin_users_paginated") {
+        return Promise.resolve({
+          data: [
+            {
+              users,
+              total_count: 1,
+              filtered_count: 1,
+            },
+          ],
+          error: null,
+        });
+      }
+
+      if (fnName === "get_admin_auth_user_status") {
+        return Promise.resolve({
+          data: [
         {
           user_id: "user-1",
           email: "invited@example.com",
@@ -1894,12 +1911,16 @@ describe("admin pages", () => {
           deleted_at: null,
           identity_providers: ["email"],
         },
-      ],
-      error: null,
-    }));
+          ],
+          error: null,
+        });
+      }
+
+      return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fnName}` } });
+    });
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
-        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profilesQuery : operatorQuery;
+        return operatorQuery;
       }
 
       if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
@@ -1915,6 +1936,11 @@ describe("admin pages", () => {
     expect(screen.getByRole("radio", { name: "Invite email" })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "Temporary password" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Send invite" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Archive" })).toHaveAttribute("href", "/admin/archived-users");
+    expect(screen.getByRole("link", { name: "Archive" })).toHaveAttribute(
+      "title",
+      "Restore archived users or permanently delete records from the user archive.",
+    );
     expect(screen.getAllByText("Email unconfirmed").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Invited").length).toBeGreaterThan(0);
     expect(screen.getAllByText("No password").length).toBeGreaterThan(0);

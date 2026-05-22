@@ -1,3 +1,4 @@
+import { Archive } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { AdminAccountCreateForm } from "@/components/admin/admin-account-create-form";
 import { AdminUserBulkToolbar, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
@@ -34,6 +35,22 @@ type AdminUsersPageProps = {
 };
 
 type AdminAuthStatus = Database["public"]["Functions"]["get_admin_auth_user_status"]["Returns"][number];
+type AdminPaginatedUser = {
+  id: string;
+  email: string;
+  display_name: string | null;
+  admin_role: string | null;
+  account_status: string | null;
+  is_admin: boolean | null;
+  avatar_url: string | null;
+  created_at: string;
+};
+type AdminPaginatedUsersResult = Omit<
+  Database["public"]["Functions"]["get_admin_users_paginated"]["Returns"][number],
+  "users"
+> & {
+  users: AdminPaginatedUser[];
+};
 
 function shortHash(value: string | null) {
   return value ? `${value.slice(0, 10)}...${value.slice(-6)}` : "-";
@@ -119,7 +136,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
   const sortDirection = feedback?.order ?? "desc";
 
   // Call RPC for paginated users
-  const { data: paginatedData, error: paginatedError } = await (supabase.rpc as any)("get_admin_users_paginated", {
+  const { data: paginatedData, error: paginatedError } = await supabase.rpc("get_admin_users_paginated", {
     input_page: currentPage,
     input_per_page: PAGE_SIZE,
     input_search: feedback?.query ?? null,
@@ -134,21 +151,12 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
 
   if (paginatedError) throw paginatedError;
 
-  const paginatedResult = (paginatedData as any)?.[0];
+  const paginatedResult = paginatedData?.[0] as AdminPaginatedUsersResult | undefined;
   if (!paginatedResult) {
     throw new Error("Failed to get paginated users");
   }
 
-  const users = (paginatedResult.users as any) as Array<{
-    id: string;
-    email: string;
-    display_name: string | null;
-    admin_role: string | null;
-    account_status: string | null;
-    is_admin: boolean | null;
-    avatar_url: string | null;
-    created_at: string;
-  }>;
+  const users = paginatedResult.users;
   const totalCount = Number(paginatedResult.total_count ?? 0);
   const filteredCount = Number(paginatedResult.filtered_count ?? 0);
   const totalPages = Math.max(1, Math.ceil(filteredCount / PAGE_SIZE));
@@ -220,6 +228,17 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
           title={t("title")}
         />
         <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} getMessage={(key) => adminT(key)} />
+
+        <div className="mb-6 flex justify-end">
+          <Link
+            className="inline-flex min-h-10 max-w-full items-center gap-2 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+            href="/admin/archived-users"
+            title={t("archiveEntryDescription")}
+          >
+            <Archive aria-hidden="true" className="size-4 shrink-0" />
+            <span>{t("archiveEntry")}</span>
+          </Link>
+        </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <AdminCard className="p-4">

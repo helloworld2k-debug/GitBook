@@ -50,6 +50,7 @@ describe("AdminShell", () => {
     expect(sidebar).toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: /Overview/ })).toHaveAttribute("href", "/admin");
     expect(within(sidebar).getByRole("link", { name: /Users/ })).toHaveAttribute("href", "/admin/users");
+    expect(within(sidebar).queryByRole("link", { name: /Archived users/ })).not.toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: /News/ })).toHaveAttribute("href", "/admin/news");
     expect(within(sidebar).getByRole("link", { name: /Notifications/ })).toHaveAttribute("href", "/admin/notifications");
     expect(within(sidebar).getByRole("link", { name: /Policy pages/ })).toHaveAttribute("href", "/admin/policies");
