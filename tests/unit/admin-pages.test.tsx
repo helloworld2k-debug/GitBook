@@ -92,6 +92,7 @@ function createOrderedQuery(data: unknown, error: Error | null = null) {
 function createAdminListQuery(data: unknown, error: Error | null = null) {
   const query = {
     eq: vi.fn(() => query),
+    in: vi.fn(() => query),
     is: vi.fn(() => query),
     limit: vi.fn(() => Promise.resolve({ data, error })),
     not: vi.fn(() => query),
@@ -480,6 +481,9 @@ const testMessages = {
         filterType: "User type",
         filterStatus: "Status",
         moreFilters: "More filters",
+        sortBy: "Sort by",
+        sortOrder: "Sort order",
+        export: "Export CSV",
         allRoles: "All permissions",
         allTypes: "All user types",
         allStatuses: "All statuses",
@@ -492,7 +496,12 @@ const testMessages = {
         bulkChangeRole: "Bulk change role",
         bulkSoftDelete: "Bulk soft delete",
         bulkSoftDeleteSelected: "Bulk soft delete selected users",
+        bulkArchiveDelete: "Bulk archive delete",
+        bulkArchiveDeleteSelected: "Bulk archive delete selected users",
         clearSelection: "Clear selection",
+        bulkEnableConfirm: "Confirm enabling {n} users?",
+        bulkDisableConfirm: "Confirm disabling {n} users?",
+        bulkRoleConfirm: "Confirm changing role for {n} users?",
         roleTarget: "Target role",
         summaryTotal: "Total users",
         summaryActive: "Active users",
@@ -527,6 +536,15 @@ const testMessages = {
         validUntil: "Valid until",
         machine: "Machine",
         lastSeen: "Last seen",
+        loginHistoryTitle: "Login history",
+        loginHistoryDescription: "Recent login attempts for this user.",
+        loginHistoryEmpty: "No login history recorded yet.",
+        loginHistoryTime: "Time",
+        loginHistoryStatus: "Status",
+        loginHistoryIP: "IP address",
+        loginHistoryMethod: "Method",
+        loginHistorySuccess: "Success",
+        loginHistoryFailed: "Failed",
         timelineTitle: "Account timeline",
         timelineEmpty: "No timeline activity yet.",
         timelineDonation: "Contribution",
@@ -584,6 +602,7 @@ const testMessages = {
       },
       shell: {
         auditLogs: "Audit Logs",
+        archivedUsers: "Archived Users",
         backToAdmin: "Back to admin",
         certificates: "Certificates",
         contributionPricing: "Contribution pricing",
@@ -1718,17 +1737,44 @@ describe("admin pages", () => {
   });
 
   it("shows role editing controls on the users page only to owner admins", async () => {
-    const profilesQuery = createAdminListQuery([
+    const paginatedRpcResult = [
       {
-        id: "user-1",
-        email: "ada@example.com",
-        display_name: "Ada Lovelace",
-        admin_role: "user",
-        account_status: "active",
-        is_admin: false,
-        created_at: "2026-04-29T00:00:00.000Z",
+        users: [
+          {
+            id: "user-1",
+            email: "ada@example.com",
+            display_name: "Ada Lovelace",
+            admin_role: "user",
+            account_status: "active",
+            is_admin: false,
+            avatar_url: null,
+            created_at: "2026-04-29T00:00:00.000Z",
+          },
+        ],
+        total_count: 1,
+        filtered_count: 1,
       },
-    ]);
+    ];
+    const authStatusRpcResult = [
+      {
+        user_id: "user-1",
+        email_confirmed_at: "2026-05-01T00:00:00.000Z",
+        confirmed_at: null,
+        invited_at: null,
+        has_password: true,
+        recovery_sent_at: null,
+        last_sign_in_at: "2026-05-01T00:00:00.000Z",
+      },
+    ];
+    const rpc = vi.fn((fnName: string) => {
+      if (fnName === "get_admin_users_paginated") {
+        return Promise.resolve({ data: paginatedRpcResult, error: null });
+      }
+      if (fnName === "get_admin_auth_user_status") {
+        return Promise.resolve({ data: authStatusRpcResult, error: null });
+      }
+      return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fnName}` } });
+    });
     const emptyQuery = createAdminListQuery([]);
     const ownerQuery = createAdminListQuery({
       admin_role: "owner",
@@ -1736,14 +1782,14 @@ describe("admin pages", () => {
     });
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
-        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profilesQuery : ownerQuery;
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? ownerQuery : ownerQuery;
       }
 
       if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
 
       throw new Error(`Unexpected table: ${table}`);
     });
-    createSupabaseAdminClientMock.mockReturnValue({ from });
+    createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
     requireAdminMock.mockResolvedValue({ id: "admin-owner" });
 
     render(await AdminUsersPage({ params: Promise.resolve({ locale: "en" }) }));
@@ -1753,17 +1799,44 @@ describe("admin pages", () => {
   });
 
   it("renders user roles as read-only on the users page for operator admins", async () => {
-    const profilesQuery = createAdminListQuery([
+    const paginatedRpcResult = [
       {
-        id: "user-1",
-        email: "ada@example.com",
-        display_name: "Ada Lovelace",
-        admin_role: "owner",
-        account_status: "active",
-        is_admin: true,
-        created_at: "2026-04-29T00:00:00.000Z",
+        users: [
+          {
+            id: "user-1",
+            email: "ada@example.com",
+            display_name: "Ada Lovelace",
+            admin_role: "owner",
+            account_status: "active",
+            is_admin: true,
+            avatar_url: null,
+            created_at: "2026-04-29T00:00:00.000Z",
+          },
+        ],
+        total_count: 1,
+        filtered_count: 1,
       },
-    ]);
+    ];
+    const authStatusRpcResult = [
+      {
+        user_id: "user-1",
+        email_confirmed_at: "2026-05-01T00:00:00.000Z",
+        confirmed_at: null,
+        invited_at: null,
+        has_password: true,
+        recovery_sent_at: null,
+        last_sign_in_at: "2026-05-01T00:00:00.000Z",
+      },
+    ];
+    const rpc = vi.fn((fnName: string) => {
+      if (fnName === "get_admin_users_paginated") {
+        return Promise.resolve({ data: paginatedRpcResult, error: null });
+      }
+      if (fnName === "get_admin_auth_user_status") {
+        return Promise.resolve({ data: authStatusRpcResult, error: null });
+      }
+      return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fnName}` } });
+    });
     const emptyQuery = createAdminListQuery([]);
     const operatorQuery = createAdminListQuery({
       admin_role: "operator",
@@ -1771,14 +1844,14 @@ describe("admin pages", () => {
     });
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
-        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profilesQuery : operatorQuery;
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? operatorQuery : operatorQuery;
       }
 
       if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
 
       throw new Error(`Unexpected table: ${table}`);
     });
-    createSupabaseAdminClientMock.mockReturnValue({ from });
+    createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
     requireAdminMock.mockResolvedValue({ id: "admin-operator" });
 
     render(await AdminUsersPage({ params: Promise.resolve({ locale: "en" }) }));
@@ -1964,6 +2037,7 @@ describe("admin pages", () => {
         created_at: "2026-04-30T10:05:00.000Z",
       },
     ]);
+    const emptyQuery = createAdminListQuery([]);
     const cooldownOverridesQuery = createAdminListQuery([]);
     const recentConflictEventsQuery = createAdminListQuery([
       {
@@ -1989,6 +2063,7 @@ describe("admin pages", () => {
       }
       if (table === "cloud_sync_cooldown_overrides") return cooldownOverridesQuery;
       if (table === "support_feedback") return supportFeedbackQuery;
+      if (table === "user_login_history") return emptyQuery;
       throw new Error(`Unexpected table: ${table}`);
     });
     createSupabaseAdminClientMock.mockReturnValue({ from });
@@ -2059,7 +2134,8 @@ describe("admin pages", () => {
         table === "desktop_sessions" ||
         table === "license_entitlements" ||
         table === "cloud_sync_leases" ||
-        table === "support_feedback"
+        table === "support_feedback" ||
+        table === "user_login_history"
       ) {
         return emptyQuery;
       }
@@ -2081,17 +2157,44 @@ describe("admin pages", () => {
   });
 
   it("renders admin users summary cards and search controls", async () => {
-    const profilesQuery = createAdminListQuery([
+    const paginatedRpcResult = [
       {
-        id: "user-1",
-        email: "alice@example.com",
-        display_name: "Alice",
-        admin_role: "operator",
-        account_status: "deleted",
-        is_admin: false,
-        created_at: "2026-05-01T00:00:00.000Z",
+        users: [
+          {
+            id: "user-1",
+            email: "alice@example.com",
+            display_name: "Alice",
+            admin_role: "operator",
+            account_status: "deleted",
+            is_admin: false,
+            avatar_url: null,
+            created_at: "2026-05-01T00:00:00.000Z",
+          },
+        ],
+        total_count: 1,
+        filtered_count: 1,
       },
-    ]);
+    ];
+    const authStatusRpcResult = [
+      {
+        user_id: "user-1",
+        email_confirmed_at: "2026-05-01T00:00:00.000Z",
+        confirmed_at: null,
+        invited_at: null,
+        has_password: true,
+        recovery_sent_at: null,
+        last_sign_in_at: "2026-05-01T00:00:00.000Z",
+      },
+    ];
+    const rpc = vi.fn((fnName: string) => {
+      if (fnName === "get_admin_users_paginated") {
+        return Promise.resolve({ data: paginatedRpcResult, error: null });
+      }
+      if (fnName === "get_admin_auth_user_status") {
+        return Promise.resolve({ data: authStatusRpcResult, error: null });
+      }
+      return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fnName}` } });
+    });
     const emptyQuery = createAdminListQuery([]);
     const ownerQuery = createAdminListQuery({
       admin_role: "owner",
@@ -2100,14 +2203,14 @@ describe("admin pages", () => {
     });
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
-        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profilesQuery : ownerQuery;
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? ownerQuery : ownerQuery;
       }
 
       if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
 
       throw new Error(`Unexpected table: ${table}`);
     });
-    createSupabaseAdminClientMock.mockReturnValue({ from });
+    createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
     requireAdminMock.mockResolvedValue({ id: "admin-owner" });
 
     render(await AdminUsersPage({
@@ -2131,17 +2234,22 @@ describe("admin pages", () => {
   });
 
   it("shows an empty filtered state with reset action", async () => {
-    const profilesQuery = createAdminListQuery([
+    const paginatedRpcResult = [
       {
-        id: "user-1",
-        email: "alice@example.com",
-        display_name: "Alice",
-        admin_role: "operator",
-        account_status: "active",
-        is_admin: false,
-        created_at: "2026-05-01T00:00:00.000Z",
+        users: [],
+        total_count: 1,
+        filtered_count: 0,
       },
-    ]);
+    ];
+    const rpc = vi.fn((fnName: string) => {
+      if (fnName === "get_admin_users_paginated") {
+        return Promise.resolve({ data: paginatedRpcResult, error: null });
+      }
+      if (fnName === "get_admin_auth_user_status") {
+        return Promise.resolve({ data: [], error: null });
+      }
+      return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fnName}` } });
+    });
     const emptyQuery = createAdminListQuery([]);
     const ownerQuery = createAdminListQuery({
       admin_role: "owner",
@@ -2150,14 +2258,14 @@ describe("admin pages", () => {
     });
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
-        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profilesQuery : ownerQuery;
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? ownerQuery : ownerQuery;
       }
 
       if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
 
       throw new Error(`Unexpected table: ${table}`);
     });
-    createSupabaseAdminClientMock.mockReturnValue({ from });
+    createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
     requireAdminMock.mockResolvedValue({ id: "admin-owner" });
 
     render(await AdminUsersPage({
@@ -2192,7 +2300,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length <= 2 ? profileQuery : ownerQuery;
       }
 
-      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback"].includes(table)) {
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback", "user_login_history"].includes(table)) {
         return emptyQuery;
       }
 
@@ -2251,7 +2359,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profileQuery : operatorQuery;
       }
 
-      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback"].includes(table)) {
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback", "user_login_history"].includes(table)) {
         return emptyQuery;
       }
 
@@ -2295,7 +2403,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profileQuery : operatorQuery;
       }
 
-      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback"].includes(table)) {
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback", "user_login_history"].includes(table)) {
         return emptyQuery;
       }
 
@@ -2336,7 +2444,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profileQuery : operatorQuery;
       }
 
-      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback"].includes(table)) {
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback", "user_login_history"].includes(table)) {
         return emptyQuery;
       }
 
