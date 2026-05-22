@@ -195,6 +195,9 @@ describe("LoginForm", () => {
 
     expect(await screen.findByTestId("turnstile-placeholder")).toBeInTheDocument();
     expect(await screen.findByRole("alert")).toHaveTextContent("Verify that you are human and try again.");
+    await waitFor(() => {
+      expect(window.turnstile?.render).toHaveBeenCalled();
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Sign in with email" }));
 

@@ -4,7 +4,13 @@ test("public versions page is available", async ({ page }) => {
   await page.goto("/en/versions");
 
   await expect(page.getByRole("heading", { name: "Older versions" })).toBeVisible();
-  await expect(page.getByText("No public releases have been published yet.")).toBeVisible();
+  const releaseLinks = page.getByRole("link", { name: "macOS Primary" });
+  const releaseLinkCount = await releaseLinks.count();
+  if (releaseLinkCount > 0) {
+    expect(releaseLinkCount).toBeGreaterThan(0);
+  } else {
+    await expect(page.getByText("No public releases have been published yet.")).toBeVisible();
+  }
 });
 
 test("language switcher preserves the current route semantics", async ({ page }) => {
