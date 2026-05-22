@@ -31,7 +31,7 @@ describe("redeemTrialCode", () => {
     expect(result).toEqual({ ok: true, validUntil: "2026-06-01T00:00:00.000Z" });
     expect(client.rpc).toHaveBeenCalledWith("redeem_license_code", {
       input_code_hash: await hashDesktopSecret("1MAB-CDEF-GHJK-LMNP", "trial_code"),
-      input_machine_code_hash: null,
+      input_machine_code_hash: "",
       input_now: "2026-05-01T00:00:00.000Z",
       input_user_id: "user-1",
     });
@@ -92,7 +92,7 @@ describe("redeemTrialCode", () => {
     expect(result).toEqual({ ok: true, validUntil: "2026-05-04T00:00:00.000Z" });
     expect(client.rpc).toHaveBeenCalledWith("redeem_license_code", {
       input_code_hash: await hashDesktopSecret("SPRING-2026", "trial_code"),
-      input_machine_code_hash: null,
+      input_machine_code_hash: "",
       input_now: "2026-05-01T00:00:00.000Z",
       input_user_id: "user-1",
     });

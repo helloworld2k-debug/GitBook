@@ -61,13 +61,9 @@ describe("register route", () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toEqual({ ok: true, needsClientLogin: true });
     expect(mocks.verifyTurnstileToken).not.toHaveBeenCalled();
-    expect(mocks.registerWithEmailPassword).toHaveBeenCalledWith({
-      callbackUrl: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
-      email: "new@example.com",
-      password: "new-password",
-    });
+    expect(mocks.registerWithEmailPassword).not.toHaveBeenCalled();
   });
 
   it("rejects registration when the Turnstile token is missing", async () => {
@@ -175,12 +171,8 @@ describe("register route", () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
-    expect(mocks.registerWithEmailPassword).toHaveBeenCalledWith({
-      callbackUrl: "https://gitbookai.example/auth/callback?next=%2Fen%2Fcontributions",
-      email: "new@example.com",
-      password: "new-password",
-    });
+    await expect(response.json()).resolves.toEqual({ ok: true, needsClientLogin: true });
+    expect(mocks.registerWithEmailPassword).not.toHaveBeenCalled();
   });
 
   it("creates a confirmed user through the admin API when temporary email confirmation bypass is enabled", async () => {
@@ -209,7 +201,7 @@ describe("register route", () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ emailConfirmationBypassed: true, ok: true });
+    await expect(response.json()).resolves.toEqual({ ok: true, needsClientLogin: true });
     expect(mocks.registerWithEmailPassword).not.toHaveBeenCalled();
     expect(adminClient.auth.admin.createUser).toHaveBeenCalledWith({
       email: "new@example.com",
@@ -293,8 +285,8 @@ describe("register route", () => {
       }),
     );
 
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "register_failed" });
   });
 
   it("confirms and updates the password for an existing unverified user in temporary registration mode", async () => {
@@ -342,7 +334,7 @@ describe("register route", () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ emailConfirmationBypassed: true, ok: true });
+    await expect(response.json()).resolves.toEqual({ ok: true, needsClientLogin: true });
     expect(adminClient.auth.admin.updateUserById).toHaveBeenCalledWith("existing-user-id", {
       email_confirm: true,
       password: "new-password",
@@ -381,17 +373,34 @@ describe("register route", () => {
     );
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: "invalid_request" });
+    await expect(response.json()).resolves.toEqual({ error: "password_too_short" });
   });
 
-  it("returns an explicit existing account error when signup reports an already registered email", async () => {
-    mocks.registerWithEmailPassword.mockResolvedValueOnce({
-      error: {
-        code: "user_already_exists",
-        message: "User already registered",
-        status: 422,
+  it("returns a registration failure when the admin API reports an already registered confirmed email", async () => {
+    const adminClient = {
+      admin: true,
+      auth: {
+        admin: {
+          createUser: vi.fn().mockResolvedValue({
+            data: { user: null },
+            error: { code: "email_exists", message: "User already registered", status: 422 },
+          }),
+          listUsers: vi.fn().mockResolvedValue({
+            data: {
+              users: [
+                {
+                  id: "existing-user-id",
+                  email: "existing@example.com",
+                  email_confirmed_at: "2026-05-18T12:00:00.000Z",
+                },
+              ],
+            },
+            error: null,
+          }),
+        },
       },
-    });
+    };
+    mocks.createSupabaseAdminClient.mockReturnValue(adminClient);
 
     const response = await POST(
       new Request("https://gitbookai.example/api/auth/register", {
@@ -406,18 +415,23 @@ describe("register route", () => {
       }),
     );
 
-    expect(response.status).toBe(409);
-    await expect(response.json()).resolves.toEqual({ error: "account_exists" });
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "register_failed" });
   });
 
-  it("still rejects non-duplicate signup failures", async () => {
-    mocks.registerWithEmailPassword.mockResolvedValueOnce({
-      error: {
-        code: "weak_password",
-        message: "Password should be at least 6 characters",
-        status: 422,
+  it("still rejects non-duplicate admin registration failures", async () => {
+    const adminClient = {
+      admin: true,
+      auth: {
+        admin: {
+          createUser: vi.fn().mockResolvedValue({
+            data: { user: null },
+            error: { code: "weak_password", message: "Password should be at least 6 characters", status: 422 },
+          }),
+        },
       },
-    });
+    };
+    mocks.createSupabaseAdminClient.mockReturnValue(adminClient);
 
     const response = await POST(
       new Request("https://gitbookai.example/api/auth/register", {

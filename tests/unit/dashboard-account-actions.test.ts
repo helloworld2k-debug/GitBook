@@ -56,7 +56,15 @@ vi.mock("next/cache", () => ({
 describe("dashboard account actions", () => {
   beforeEach(() => {
     createSupabaseServerClientMock.mockReset();
-    createSupabaseAdminClientMock.mockReset().mockReturnValue({ admin: true });
+    const profileQuery = {
+      eq: vi.fn(() => profileQuery),
+      select: vi.fn(() => profileQuery),
+      single: vi.fn(async () => ({ data: { email_verified: true }, error: null })),
+    };
+    createSupabaseAdminClientMock.mockReset().mockReturnValue({
+      admin: true,
+      from: vi.fn(() => profileQuery),
+    });
     requireUserMock.mockReset().mockResolvedValue({ id: "user-1", email: "user@example.com" });
     checkLicenseRedeemRiskMock.mockReset().mockResolvedValue({ ok: true });
     recordLicenseRedeemAttemptMock.mockReset().mockResolvedValue(undefined);
@@ -115,21 +123,21 @@ describe("dashboard account actions", () => {
 
     expect(createSupabaseServerClientMock).not.toHaveBeenCalled();
     expect(checkLicenseRedeemRiskMock).toHaveBeenCalledWith(
-      { admin: true },
+      expect.objectContaining({ admin: true }),
       expect.objectContaining({
         ipAddress: "203.0.113.10",
         userId: "user-1",
       }),
     );
     expect(redeemLicenseCodeMock).toHaveBeenCalledWith(
-      { admin: true },
+      expect.objectContaining({ admin: true }),
       {
         userId: "user-1",
         code: "1MAB-CDEF-GHJK-LMNP",
       },
     );
     expect(recordLicenseRedeemAttemptMock).toHaveBeenCalledWith(
-      { admin: true },
+      expect.objectContaining({ admin: true }),
       expect.objectContaining({
         reason: "redeemed",
         result: "success",
@@ -150,7 +158,7 @@ describe("dashboard account actions", () => {
 
     expect(redeemLicenseCodeMock).not.toHaveBeenCalled();
     expect(recordLicenseRedeemAttemptMock).toHaveBeenCalledWith(
-      { admin: true },
+      expect.objectContaining({ admin: true }),
       expect.objectContaining({
         reason: "user_rate_limited",
         result: "blocked",
@@ -166,7 +174,7 @@ describe("dashboard account actions", () => {
     await expect(redeemDashboardLicenseCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=invalid");
 
     expect(recordLicenseRedeemAttemptMock).toHaveBeenCalledWith(
-      { admin: true },
+      expect.objectContaining({ admin: true }),
       expect.objectContaining({
         reason: "trial_code_invalid",
         result: "failure",
@@ -189,7 +197,7 @@ describe("dashboard account actions", () => {
     await expect(redeemDashboardLicenseCode("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?trial=error");
 
     expect(recordLicenseRedeemAttemptMock).toHaveBeenCalledWith(
-      { admin: true },
+      expect.objectContaining({ admin: true }),
       expect.objectContaining({
         reason: "unexpected_error:23503:insert or update on table violates foreign key constraint",
         result: "failure",

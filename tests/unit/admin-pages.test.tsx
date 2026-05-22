@@ -31,6 +31,38 @@ vi.mock("@/i18n/routing", () => ({
   ),
 }));
 
+vi.mock("@/app/[locale]/admin/support-feedback/support-feedback-table-row", () => ({
+  SupportFeedbackTableRow: ({
+    contact,
+    createdAt,
+    email,
+    feedbackId,
+    initialStatus,
+    isUnread,
+    message,
+    subject,
+  }: {
+    contact: string | null;
+    createdAt: string;
+    email: string | null;
+    feedbackId: string;
+    initialStatus: string;
+    isUnread: boolean;
+    message: string;
+    subject: string;
+  }) => (
+    <tr className={isUnread ? "bg-rose-50/40" : ""}>
+      <td>{subject}</td>
+      <td>{isUnread ? "Unread" : "-"}</td>
+      <td>{email ?? "-"} {contact ?? "-"}</td>
+      <td>{message}</td>
+      <td>{initialStatus}</td>
+      <td>{createdAt}</td>
+      <td><a href={`/admin/support-feedback/${feedbackId}`}>Open thread</a></td>
+    </tr>
+  ),
+}));
+
 vi.mock("next-intl/server", () => ({
   getLocale: vi.fn(() => intlState.locale),
   getTranslations: vi.fn((namespace: "admin") => {
@@ -99,6 +131,8 @@ function createAdminListQuery(data: unknown, error: Error | null = null) {
     order: vi.fn(() => query),
     select: vi.fn(() => query),
     single: vi.fn(() => Promise.resolve({ data, error })),
+    then: (resolve: (value: { data: unknown; error: Error | null }) => unknown, reject: (reason: unknown) => unknown) =>
+      Promise.resolve({ data, error }).then(resolve, reject),
   };
 
   return query;
@@ -196,6 +230,8 @@ const testMessages = {
           apply: "Apply filters",
           reset: "Reset",
         },
+        export: "Export CSV",
+        exporting: "Exporting...",
       },
       certificates: {
         eyebrow: "Admin",
@@ -233,6 +269,12 @@ const testMessages = {
           apply: "Apply filters",
           reset: "Reset",
         },
+        export: "Export CSV",
+        exporting: "Exporting...",
+        selectAll: "Select all",
+        selectedCount: "{count} selected",
+        exportSelected: "Export selected",
+        clearSelection: "Clear selection",
       },
       auditLogs: {
         eyebrow: "Admin",
@@ -443,6 +485,7 @@ const testMessages = {
         inviteMode: "Invite email",
         tempPasswordMode: "Temporary password",
         email: "Email",
+        userId: "User ID",
         temporaryPassword: "Temporary password",
         generatePassword: "Generate password",
         createInvite: "Send invite",
@@ -526,6 +569,8 @@ const testMessages = {
         dangerWarning: "Only use this when the account must be fully erased.",
         deleteConfirmation: "Type DELETE or the user email to confirm",
         permanentDelete: "Permanent delete",
+        deleting: "Deleting...",
+        acceptedConfirmation: "Accepted confirmation values:",
         save: "Save",
         saveRole: "Save role",
         viewDetails: "View details",
@@ -717,6 +762,8 @@ const testMessages = {
           apply: "套用篩選",
           reset: "重設",
         },
+        export: "Export CSV",
+        exporting: "Exporting...",
       },
       certificates: {
         eyebrow: "管理後台",
@@ -754,6 +801,12 @@ const testMessages = {
           apply: "套用篩選",
           reset: "重設",
         },
+        export: "Export CSV",
+        exporting: "Exporting...",
+        selectAll: "Select all",
+        selectedCount: "{count} selected",
+        exportSelected: "Export selected",
+        clearSelection: "Clear selection",
       },
       auditLogs: {
         eyebrow: "管理後台",
@@ -880,6 +933,8 @@ const testMessages = {
           apply: "適用",
           reset: "リセット",
         },
+        export: "Export CSV",
+        exporting: "Exporting...",
       },
       certificates: {
         eyebrow: "管理画面",
@@ -917,6 +972,12 @@ const testMessages = {
           apply: "適用",
           reset: "リセット",
         },
+        export: "Export CSV",
+        exporting: "Exporting...",
+        selectAll: "Select all",
+        selectedCount: "{count} selected",
+        exportSelected: "Export selected",
+        clearSelection: "Clear selection",
       },
       auditLogs: {
         eyebrow: "管理画面",
@@ -1043,6 +1104,8 @@ const testMessages = {
           apply: "적용",
           reset: "재설정",
         },
+        export: "Export CSV",
+        exporting: "Exporting...",
       },
       certificates: {
         eyebrow: "관리",
@@ -1080,6 +1143,12 @@ const testMessages = {
           apply: "적용",
           reset: "재설정",
         },
+        export: "Export CSV",
+        exporting: "Exporting...",
+        selectAll: "Select all",
+        selectedCount: "{count} selected",
+        exportSelected: "Export selected",
+        clearSelection: "Clear selection",
       },
       auditLogs: {
         eyebrow: "관리",
@@ -1614,7 +1683,8 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "Cloud sync usage signals" })).toBeInTheDocument();
     expect(screen.getAllByText("1 active sync sessions").length).toBeGreaterThan(0);
     expect(screen.getByText("1 conflict attempts")).toBeInTheDocument();
-    expect(screen.getByText("1 failed attempts")).toBeInTheDocument();
+    expect(screen.getByText("Failed attempts")).toBeInTheDocument();
+    expect(screen.getAllByText("1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("203.0.113.10").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Taobao May monthly").length).toBeGreaterThan(0);
     expect(screen.getAllByText("1MAB-****-****-MNOP").length).toBeGreaterThan(0);
@@ -2100,7 +2170,7 @@ describe("admin pages", () => {
 
     render(element);
 
-    expect(profileQuery.select).toHaveBeenCalledWith("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,created_at");
+    expect(profileQuery.select).toHaveBeenCalledWith("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,avatar_url,created_at");
     expect(screen.getByRole("heading", { name: "User operations" })).toBeInTheDocument();
     expect(screen.getAllByText("ada@example.com").length).toBeGreaterThan(0);
     expect(screen.getByDisplayValue("Ada Lovelace")).toBeInTheDocument();

@@ -16,3 +16,13 @@ export function getEntitlementMonthsForTier(tierCode: string | null | undefined)
 
   return entitlementMonthsByTier[tierCode] ?? null;
 }
+
+export function getEntitlementDaysForTier(tierCode: string | null | undefined) {
+  const months = getEntitlementMonthsForTier(tierCode);
+
+  if (!months) {
+    return null;
+  }
+
+  return months === 12 ? 365 : months * 30;
+}

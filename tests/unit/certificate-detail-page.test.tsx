@@ -42,9 +42,18 @@ vi.mock("next-intl/server", () => ({
       issued: "발급일",
       pendingIssueDate: "발급일 미정",
       fallbackRecipient: "후원자",
+      tier: "지원 등급",
+      share: "인증서 공유",
+      shared: "링크가 복사되었습니다!",
+      copyLink: "링크 복사",
       types: {
         donation: "후원 인증서",
         honor: "공로 인증서",
+      },
+      tiers: {
+        monthly: "월간",
+        quarterly: "분기",
+        yearly: "연간",
       },
       download: {
         title: "인증서 다운로드",

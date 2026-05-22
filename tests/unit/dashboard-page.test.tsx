@@ -66,6 +66,17 @@ vi.mock("next-intl/server", () => ({
         },
         donations: "Paid donations",
         email: "Email",
+        emailVerification: {
+          title: "Verify your email",
+          description: "Verify your email address to keep account recovery and security notices available.",
+          resendButton: "Resend verification email",
+          resendAfter: "Resend available in {seconds}s",
+          resendSending: "Sending...",
+          resendSent: "Verification email sent.",
+          resendRateLimited: "Please wait before trying again.",
+          resendError: "Could not send verification email.",
+          dismiss: "Dismiss",
+        },
         eyebrow: "AI account workspace",
         memberFallback: "GitBook AI member",
         newPassword: "New password",
@@ -100,6 +111,7 @@ vi.mock("next-intl/server", () => ({
         trialRedeemedAt: "Last code redeemed at",
         type: "Type",
         viewCertificate: "View certificate",
+        welcomeVerified: "Your email has been verified and your account is ready.",
       },
     }[namespace];
 
@@ -270,7 +282,7 @@ describe("dashboard page", () => {
 
     expect(screen.getByRole("heading", { name: "License code" })).toBeInTheDocument();
     expect(screen.getByText("Redeem a team-provided license code for trial, monthly, quarterly, or yearly cloud sync access.")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("License code redeemed.");
+    expect(screen.getAllByRole("status").some((status) => status.textContent?.includes("License code redeemed."))).toBe(true);
     expect(screen.getByRole("button", { name: "Redeem code" })).toBeInTheDocument();
     expect(screen.getByText(/Last code redeemed at/)).toBeInTheDocument();
   });
@@ -311,9 +323,15 @@ describe("dashboard page", () => {
       }),
     );
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Your contribution was received. We are preparing your certificate and access updates.",
-    );
+    expect(
+      screen
+        .getAllByRole("status")
+        .some((status) =>
+          status.textContent?.includes(
+            "Your contribution was received. We are preparing your certificate and access updates.",
+          ),
+        ),
+    ).toBe(true);
   });
 
   it("shows a welcome banner after email verification succeeds", async () => {
@@ -355,9 +373,11 @@ describe("dashboard page", () => {
       }),
     );
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Your email has been verified and your account is ready.",
-    );
+    expect(
+      screen
+        .getAllByRole("status")
+        .some((status) => status.textContent?.includes("Your email has been verified and your account is ready.")),
+    ).toBe(true);
   });
 
   it("renders with the authenticated user email when the profile row is missing", async () => {

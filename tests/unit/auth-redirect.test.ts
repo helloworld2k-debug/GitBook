@@ -3,11 +3,25 @@ import { GET } from "@/app/auth/callback/route";
 import { sanitizeNextPath } from "@/lib/auth/guards";
 
 const createSupabaseServerClientMock = vi.hoisted(() => vi.fn());
+const createSupabaseAdminClientMock = vi.hoisted(() => vi.fn());
 const exchangeCodeForSessionMock = vi.hoisted(() => vi.fn());
 const verifyOtpMock = vi.hoisted(() => vi.fn());
 
+vi.mock("@supabase/ssr", () => ({
+  createServerClient: vi.fn(() => ({
+    auth: {
+      exchangeCodeForSession: exchangeCodeForSessionMock,
+      verifyOtp: verifyOtpMock,
+    },
+  })),
+}));
+
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: createSupabaseServerClientMock,
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createSupabaseAdminClient: createSupabaseAdminClientMock,
 }));
 
 describe("auth redirect safety", () => {
@@ -42,8 +56,18 @@ describe("auth redirect safety", () => {
 
 describe("auth callback route", () => {
   beforeEach(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://supabase.example";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
+    const updateQuery = {
+      eq: vi.fn(() => updateQuery),
+      update: vi.fn(() => updateQuery),
+    };
+    createSupabaseAdminClientMock.mockReset().mockReturnValue({
+      from: vi.fn(() => updateQuery),
+    });
     createSupabaseServerClientMock.mockReset();
     exchangeCodeForSessionMock.mockReset();
+    verifyOtpMock.mockReset();
     createSupabaseServerClientMock.mockResolvedValue({
       auth: {
         exchangeCodeForSession: exchangeCodeForSessionMock,
