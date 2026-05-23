@@ -71,12 +71,15 @@ DODO_PAYMENTS_ENV=test
 DODO_PRODUCT_MONTHLY=
 DODO_PRODUCT_QUARTERLY=
 DODO_PRODUCT_YEARLY=
+DODO_LIVE_PRODUCT_MONTHLY=
+DODO_LIVE_PRODUCT_QUARTERLY=
+DODO_LIVE_PRODUCT_YEARLY=
 ```
 
 **For production deployment:**
 - Set `NEXT_PUBLIC_SITE_URL` to your production domain
 - Set `DODO_PAYMENTS_ENV=live` with production credentials
-- Update product IDs to match your live Dodo products
+- Save live Dodo product IDs in Admin > Support pricing, or use the `DODO_LIVE_PRODUCT_*` variables as fallback values
 
 ### Environment Check
 

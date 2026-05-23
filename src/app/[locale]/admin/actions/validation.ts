@@ -26,6 +26,8 @@ export const feedbackStatuses = ["open", "reviewing", "closed"] as const;
 export const supportContactChannelIds = ["telegram", "discord", "qq", "email", "wechat"] as const;
 export const licenseCodeDurationKinds = ["trial_3_day", "month_1", "month_3", "year_1"] as const;
 export const licenseCodeChannelTypes = ["internal", "taobao", "xianyu", "partner", "other"] as const;
+export const paymentProductEnvironments = ["test", "live"] as const;
+export const paymentProductTierCodes = ["monthly", "quarterly", "yearly"] as const;
 
 export function getSafeLocale(locale: FormDataEntryValue | null) {
   return getActionLocale(locale);
@@ -297,6 +299,36 @@ export function getSupportContactChannelId(formData: FormData) {
   }
 
   return channelId as (typeof supportContactChannelIds)[number];
+}
+
+export function getPaymentProductEnvironment(formData: FormData) {
+  const environment = getRequiredString(formData, "environment", "Payment environment is required");
+
+  if (!paymentProductEnvironments.includes(environment as (typeof paymentProductEnvironments)[number])) {
+    throw new Error("Invalid payment environment");
+  }
+
+  return environment as (typeof paymentProductEnvironments)[number];
+}
+
+export function getPaymentProductTierCode(formData: FormData) {
+  const tierCode = getRequiredString(formData, "tier_code", "Payment tier is required");
+
+  if (!paymentProductTierCodes.includes(tierCode as (typeof paymentProductTierCodes)[number])) {
+    throw new Error("Invalid payment tier");
+  }
+
+  return tierCode as (typeof paymentProductTierCodes)[number];
+}
+
+export function getDodoProductIdInput(formData: FormData) {
+  const productId = getRequiredString(formData, "product_id", "Product ID is required");
+
+  if (!/^pdt_[A-Za-z0-9]+$/.test(productId)) {
+    throw new Error("Product ID must start with pdt_");
+  }
+
+  return productId;
 }
 
 export function getPolicyPageSlug(formData: FormData) {

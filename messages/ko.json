@@ -1031,7 +1031,22 @@
       "tierInactive": "비활성",
       "tierStatusHelp": "비활성 티어는 Contributions 페이지에서 숨겨집니다.",
       "save": "티어 저장",
-      "tierSaved": "티어가 저장되었습니다"
+      "tierSaved": "티어가 저장되었습니다",
+      "paymentSettingsTitle": "Dodo 결제 상품 ID",
+      "paymentSettingsDescription": "테스트 및 라이브 Dodo 상품 ID를 관리자 화면에서 저장합니다. 공개 프로덕션 결제는 라이브 상품 ID를 사용합니다.",
+      "paymentEnvironmentTest": "테스트 모드",
+      "paymentEnvironmentLive": "라이브 모드",
+      "paymentProductId": "상품 ID",
+      "paymentProductHelp": "이 티어와 모드에 맞는 Dodo 상품 ID를 입력하세요.",
+      "paymentProductEnabled": "활성",
+      "paymentProductDisabled": "비활성",
+      "paymentProductSaved": "상품 ID가 저장되었습니다",
+      "saveProduct": "상품 ID 저장",
+      "paymentTier": {
+        "monthly": "월간",
+        "quarterly": "분기",
+        "yearly": "연간"
+      }
     },
     "policies": {
       "eyebrow": "Admin",

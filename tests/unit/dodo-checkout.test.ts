@@ -13,11 +13,11 @@ vi.mock("@/lib/auth/csrf", () => ({
 
 vi.mock("@/lib/payments/dodo", () => ({
   createDodoCheckoutSession: mocks.createCheckoutSession,
-  getDodoProductId: (tierCode: string) =>
+  getDodoProductId: async (tierCode: string) =>
     ({
       monthly: process.env.DODO_PRODUCT_MONTHLY,
       quarterly: process.env.DODO_PRODUCT_QUARTERLY,
-      yearly: process.env.DODO_PRODUCT_YEARLY,
+      yearly: process.env.DODO_PAYMENTS_ENV === "live" ? process.env.DODO_LIVE_PRODUCT_YEARLY : process.env.DODO_PRODUCT_YEARLY,
     })[tierCode] ?? null,
 }));
 
@@ -33,9 +33,11 @@ vi.mock("@/lib/supabase/server", () => ({
 describe("Dodo checkout route", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
+    process.env.DODO_PAYMENTS_ENV = "test";
     process.env.DODO_PRODUCT_MONTHLY = "pdt_monthly";
     process.env.DODO_PRODUCT_QUARTERLY = "pdt_quarterly";
     process.env.DODO_PRODUCT_YEARLY = "pdt_yearly";
+    process.env.DODO_LIVE_PRODUCT_YEARLY = "pdt_live_yearly";
     mocks.createCheckoutSession.mockReset();
     mocks.createCheckoutSession.mockResolvedValue({ checkout_url: "https://checkout.dodopayments.test/session" });
     const order = vi.fn(async () => ({
@@ -99,6 +101,32 @@ describe("Dodo checkout route", () => {
       ],
       return_url: expect.stringMatching(/^https:\/\/gitbookai\.example\/ja\/dashboard\/certificates\/latest\?payment=dodo-success&checkout_started_at=/),
     });
+  });
+
+  it("uses the live Dodo product id when checkout runs in live mode", async () => {
+    process.env.DODO_PAYMENTS_ENV = "live";
+    const formData = new FormData();
+    formData.set("tier", "yearly");
+    formData.set("locale", "en");
+
+    const response = await POST(
+      new Request("https://gitbookai.example/api/checkout/dodo", {
+        body: formData,
+        method: "POST",
+      }),
+    );
+
+    expect(response.status).toBe(303);
+    expect(mocks.createCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        product_cart: [
+          {
+            product_id: "pdt_live_yearly",
+            quantity: 1,
+          },
+        ],
+      }),
+    );
   });
 
   it("redirects anonymous checkout attempts to the localized contributions page after login", async () => {

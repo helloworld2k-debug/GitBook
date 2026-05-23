@@ -41,9 +41,10 @@ Do not switch to Dodo live mode until the test checkout open item is complete.
 
 1. Create live Dodo products for the monthly, quarterly, and yearly support tiers.
 2. Configure the live webhook endpoint as `https://gitbookai.ccwu.cc/api/webhooks/dodo`.
-3. Set Vercel production variables: `DODO_PAYMENTS_ENV=live`, `DODO_PAYMENTS_API_KEY`, `DODO_PAYMENTS_WEBHOOK_KEY`, `DODO_PRODUCT_MONTHLY`, `DODO_PRODUCT_QUARTERLY`, and `DODO_PRODUCT_YEARLY`.
-4. Redeploy production and run `npm run canary:production`.
-5. Run one live low-value checkout and confirm donation, certificate, and entitlement records.
+3. Set Vercel production variables: `DODO_PAYMENTS_ENV=live`, `DODO_PAYMENTS_API_KEY`, and `DODO_PAYMENTS_WEBHOOK_KEY`.
+4. Save the monthly, quarterly, and yearly live product IDs in Admin > Support pricing > Dodo payment product IDs. Use `DODO_LIVE_PRODUCT_MONTHLY`, `DODO_LIVE_PRODUCT_QUARTERLY`, and `DODO_LIVE_PRODUCT_YEARLY` only as fallback values if the admin table is not populated yet.
+5. Redeploy production and run `npm run canary:production`.
+6. Run one live low-value checkout and confirm donation, certificate, and entitlement records.
 
 ## Ownership Register
 

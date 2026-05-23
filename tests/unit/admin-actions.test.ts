@@ -19,6 +19,7 @@ import {
   setUserTemporaryPassword,
   softDeleteUser,
   updateDonationTier,
+  updatePaymentProductSetting,
   updateSupportContactChannel,
   updateTrialCode,
   updateUserAccountStatus,
@@ -1110,6 +1111,71 @@ describe("admin actions", () => {
       label: "Yearly Support",
       updated_at: expect.any(String),
     }));
+  });
+
+  it("upserts a Dodo payment product setting and audits the change", async () => {
+    const maybeSingle = vi.fn(async () => ({
+      data: { product_id: "pdt_OldMonthly", is_enabled: false },
+      error: null,
+    }));
+    const eqTier = vi.fn(() => ({ maybeSingle }));
+    const eqEnvironment = vi.fn(() => ({ eq: eqTier }));
+    const eqProvider = vi.fn(() => ({ eq: eqEnvironment }));
+    const select = vi.fn(() => ({ eq: eqProvider }));
+    const upsert = vi.fn(async () => ({ error: null }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "payment_product_settings") {
+        return { select, upsert };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("return_to", "/admin/contribution-pricing?channel=live-monthly");
+    formData.set("environment", "live");
+    formData.set("tier_code", "monthly");
+    formData.set("product_id", "pdt_LiveMonthly");
+    formData.set("is_enabled", "on");
+
+    await expect(updatePaymentProductSetting(formData)).rejects.toThrow("redirect:/en/admin/contribution-pricing?channel=live-monthly&notice=payment-product-updated");
+
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        environment: "live",
+        is_enabled: true,
+        product_id: "pdt_LiveMonthly",
+        provider: "dodo",
+        tier_code: "monthly",
+        updated_by: "admin-1",
+      }),
+      { onConflict: "provider,environment,tier_code" },
+    );
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "update_payment_product_setting",
+      target_id: "live-monthly",
+      target_type: "payment_product_setting",
+    }));
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/contribution-pricing");
+  });
+
+  it("rejects invalid Dodo payment product ids before writing", async () => {
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("environment", "live");
+    formData.set("tier_code", "monthly");
+    formData.set("product_id", "price_live_monthly");
+    formData.set("is_enabled", "on");
+
+    await expect(updatePaymentProductSetting(formData)).rejects.toThrow("Product ID must start with pdt_");
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
   it("requires a stable manual reference for idempotent manual donation creation", async () => {

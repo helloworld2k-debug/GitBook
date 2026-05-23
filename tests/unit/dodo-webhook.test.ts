@@ -11,11 +11,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/payments/dodo", () => ({
-  getDodoProductId: (tierCode: string) =>
+  getDodoProductId: async (tierCode: string) =>
     ({
       monthly: process.env.DODO_PRODUCT_MONTHLY,
       quarterly: process.env.DODO_PRODUCT_QUARTERLY,
-      yearly: process.env.DODO_PRODUCT_YEARLY,
+      yearly: process.env.DODO_PAYMENTS_ENV === "live" ? process.env.DODO_LIVE_PRODUCT_YEARLY : process.env.DODO_PRODUCT_YEARLY,
     })[tierCode] ?? null,
   verifyDodoWebhook: mocks.verifyDodoWebhook,
 }));
@@ -37,6 +37,8 @@ describe("Dodo webhook route", () => {
     process.env.DODO_PRODUCT_MONTHLY = "pdt_monthly";
     process.env.DODO_PRODUCT_QUARTERLY = "pdt_quarterly";
     process.env.DODO_PRODUCT_YEARLY = "pdt_yearly";
+    process.env.DODO_LIVE_PRODUCT_YEARLY = "pdt_live_yearly";
+    process.env.DODO_PAYMENTS_ENV = "test";
     mocks.createSupabaseAdminClient.mockReset();
     mocks.extendCloudSyncEntitlementForDonation.mockReset().mockResolvedValue("2027-04-29T00:00:00.000Z");
     mocks.generateCertificatesForDonation.mockReset();
@@ -107,6 +109,31 @@ describe("Dodo webhook route", () => {
         paidAt: new Date("2026-04-29T00:00:00.000Z"),
       },
     );
+  });
+
+  it("verifies live product ids when webhook processing runs in live mode", async () => {
+    process.env.DODO_PAYMENTS_ENV = "live";
+    mocks.verifyDodoWebhook.mockReturnValue({
+      type: "payment.succeeded",
+      data: {
+        currency: "USD",
+        created_at: "2026-04-29T00:00:00.000Z",
+        metadata: {
+          amount: "8640",
+          tier: "yearly",
+          user_id: "user_123",
+        },
+        payment_id: "pay_live",
+        product_cart: [{ product_id: "pdt_yearly" }],
+        status: "succeeded",
+        total_amount: 8640,
+      },
+    });
+
+    const response = await POST(new Request("https://example.com/api/webhooks/dodo", { body: "{}", method: "POST" }));
+
+    expect(response.status).toBe(400);
+    expect(mocks.upsert).not.toHaveBeenCalled();
   });
 
   it("rejects mismatched amount even when the product id verifies the selected tier", async () => {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api/responses";
 import { validateRequestOrigin } from "@/lib/auth/csrf";
 import { getActionLocale } from "@/lib/i18n/action-locale";
-import { createDodoCheckoutSession, getDodoProductId } from "@/lib/payments/dodo";
+import { createDodoCheckoutSession, getDodoProductId, type PaymentProductSettingsClient } from "@/lib/payments/dodo";
 import { findActiveDonationTier } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     return jsonError("Invalid donation tier");
   }
 
-  const productId = getDodoProductId(tier.code);
+  const productId = await getDodoProductId(tier.code, { client: supabase as unknown as PaymentProductSettingsClient });
 
   if (!productId) {
     return jsonError("Invalid donation tier");
