@@ -6,9 +6,7 @@ import { supportedLocales, type Locale } from "@/config/site";
 
 const languageLabels: Record<Locale, { short: string; label: string }> = {
   en: { short: "EN", label: "English" },
-  "zh-Hant": { short: "ZH", label: "中文" },
-  ja: { short: "JP", label: "日本語" },
-  ko: { short: "KR", label: "한국어" },
+  zh: { short: "ZH", label: "中文" },
 };
 
 function LanguageBadge({ text }: { text: string }) {

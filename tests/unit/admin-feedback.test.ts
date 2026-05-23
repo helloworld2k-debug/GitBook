@@ -3,7 +3,7 @@ import { sanitizeAdminReturnTo } from "@/lib/admin/feedback";
 
 describe("sanitizeAdminReturnTo", () => {
   it("keeps safe admin paths under the action locale", () => {
-    expect(sanitizeAdminReturnTo("ja", "/admin/users", "/admin")).toBe("/ja/admin/users");
+    expect(sanitizeAdminReturnTo("zh", "/admin/users", "/admin")).toBe("/zh/admin/users");
   });
 
   it("falls back to English and the fallback admin path for unsafe input", () => {

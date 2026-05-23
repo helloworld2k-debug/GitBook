@@ -14,8 +14,8 @@ vi.mock("next/navigation", () => ({
 describe("legacy donate page redirect", () => {
   it("redirects the localized donate route to contributions", async () => {
     await expect(
-      DonatePage({ params: Promise.resolve({ locale: "ja" }) }),
-    ).rejects.toThrow("redirect:/ja/contributions");
+      DonatePage({ params: Promise.resolve({ locale: "zh" }) }),
+    ).rejects.toThrow("redirect:/zh/contributions");
   });
 
   it("falls back to English contributions for unsupported locales", async () => {

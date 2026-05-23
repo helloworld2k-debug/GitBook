@@ -672,135 +672,135 @@ const testMessages = {
       },
     },
   },
-  "zh-Hant": {
+  "zh": {
     admin: {
       common: {
-        processing: "處理中...",
-        saving: "儲存中...",
+        processing: "处理中...",
+        saving: "储存中...",
       },
       pagination: {
-        previous: "上一頁",
-        next: "下一頁",
+        previous: "上一页",
+        next: "下一页",
         page: "第",
-        of: "頁，共",
+        of: "页，共",
       },
       overview: {
         eyebrow: "管理工具",
-        title: "管理後台",
-        description: "管理支持記錄、證書、版本、兌換、使用者與稽核活動。",
+        title: "管理后台",
+        description: "管理支持记录、证书、版本、兑换、用户与稽核活动。",
         donationsTitle: "支持",
-        donationsDescription: "檢視支持記錄、狀態與交易 ID。",
-        certificatesTitle: "證書",
-        certificatesDescription: "檢視已頒發的證書編號、類型、狀態與頒發日期。",
-        releasesTitle: "版本發布",
-        releasesDescription: "上傳安裝包並管理版本。",
+        donationsDescription: "检视支持记录、状态与交易 ID。",
+        certificatesTitle: "证书",
+        certificatesDescription: "检视已颁发的证书编号、类型、状态与颁发日期。",
+        releasesTitle: "版本发布",
+        releasesDescription: "上传安装包并管理版本。",
         notificationsTitle: "通知",
-        notificationsDescription: "發布與下架站內通知。",
-        newsTitle: "新聞",
-        newsDescription: "建立、編輯、發布與下架 AI 生成新聞文章。",
-        supportFeedbackTitle: "回饋",
-        supportFeedbackDescription: "檢視帳號問題與支援請求。",
-        contributionPricingTitle: "支持價格設定",
-        contributionPricingDescription: "管理 Contributions 頁面的價格、折扣與開發支持方案文案。",
-        supportSettingsTitle: "支援設定",
-        supportSettingsDescription: "管理公開支援聯絡渠道。",
+        notificationsDescription: "发布与下架站内通知。",
+        newsTitle: "新闻",
+        newsDescription: "建立、编辑、发布与下架 AI 生成新闻文章。",
+        supportFeedbackTitle: "回馈",
+        supportFeedbackDescription: "检视帐号问题与支援请求。",
+        contributionPricingTitle: "支持价格设定",
+        contributionPricingDescription: "管理 Contributions 页面的价格、折扣与开发支持方案文案。",
+        supportSettingsTitle: "支援设定",
+        supportSettingsDescription: "管理公开支援联络渠道。",
         policyPagesTitle: "Policy pages",
         policyPagesDescription: "Edit the English Terms, Privacy, and Refund pages linked from the footer.",
-        licensesTitle: "兌換",
-        licensesDescription: "建立試用兌換碼、檢視權益，並撤銷桌面雲端同步存取。",
-        usersTitle: "使用者",
-        usersDescription: "檢視帳號角色、狀態、試用綁定與桌面裝置。",
-        registrationSecurityTitle: "註冊安全",
-        registrationSecurityDescription: "檢視註冊濫用訊號並封鎖可疑來源。",
-        auditLogsTitle: "稽核紀錄",
-        auditLogsDescription: "檢視管理員修正、撤銷與原因。",
-        metricsTitle: "營運概覽",
-        totalUsersMetric: "使用者總數",
-        activeTrialsMetric: "啟用中的試用碼",
-        pendingFeedbackMetric: "待處理回饋",
+        licensesTitle: "兑换",
+        licensesDescription: "建立试用兑换码、检视权益，并撤销桌面云端同步存取。",
+        usersTitle: "用户",
+        usersDescription: "检视帐号角色、状态、试用绑定与桌面装置。",
+        registrationSecurityTitle: "注册安全",
+        registrationSecurityDescription: "检视注册滥用讯号并封锁可疑来源。",
+        auditLogsTitle: "稽核纪录",
+        auditLogsDescription: "检视管理员修正、撤销与原因。",
+        metricsTitle: "营运概览",
+        totalUsersMetric: "用户总数",
+        activeTrialsMetric: "启用中的试用码",
+        pendingFeedbackMetric: "待处理回馈",
         recentContributionsMetric: "近期支持",
       },
       donations: {
-        eyebrow: "管理後台",
-        title: "管理支持記錄",
-        description: "檢視付款記錄，並新增已驗證的人工支持。",
-        provider: "服務商",
-        status: "狀態",
-        amount: "金額",
-        paidAt: "付款時間（UTC）",
+        eyebrow: "管理后台",
+        title: "管理支持记录",
+        description: "检视付款记录，并新增已验证的人工支持。",
+        provider: "服务商",
+        status: "状态",
+        amount: "金额",
+        paidAt: "付款时间（UTC）",
         transactionId: "交易 ID",
-        manualEntryTitle: "人工已付款支持記錄",
-        manualEntryDescription: "為既有使用者以電子郵件或使用者 ID 建立一筆已付款人工記錄。",
-        userIdentifier: "電子郵件或使用者 ID",
-        amountCents: "金額（美分）",
-        reference: "參考編號",
+        manualEntryTitle: "人工已付款支持记录",
+        manualEntryDescription: "为既有用户以电子邮件或用户 ID 建立一笔已付款人工记录。",
+        userIdentifier: "电子邮件或用户 ID",
+        amountCents: "金额（美分）",
+        reference: "参考编号",
         reason: "原因",
-        submitManualDonation: "新增人工支持記錄",
-        empty: "尚無支持記錄。",
+        submitManualDonation: "新增人工支持记录",
+        empty: "尚无支持记录。",
         providers: {
-          stripe: "舊版 Stripe",
+          stripe: "旧版 Stripe",
           paypal: "PayPal",
-          manual: "人工登錄",
+          manual: "人工登录",
           dodo: "Dodo Payments",
         },
         statuses: {
-          pending: "待處理",
+          pending: "待处理",
           paid: "已付款",
           cancelled: "已取消",
-          failed: "失敗",
+          failed: "失败",
           refunded: "已退款",
         },
         filter: {
-          search: "搜尋",
-          searchPlaceholder: "依交易 ID 搜尋",
-          provider: "服務商",
-          allProviders: "所有服務商",
-          status: "狀態",
-          allStatuses: "所有狀態",
-          dateFrom: "日期從",
+          search: "搜寻",
+          searchPlaceholder: "依交易 ID 搜寻",
+          provider: "服务商",
+          allProviders: "所有服务商",
+          status: "状态",
+          allStatuses: "所有状态",
+          dateFrom: "日期从",
           dateTo: "日期到",
-          moreFilters: "更多篩選",
-          apply: "套用篩選",
-          reset: "重設",
+          moreFilters: "更多筛选",
+          apply: "套用筛选",
+          reset: "重设",
         },
         export: "Export CSV",
         exporting: "Exporting...",
       },
       certificates: {
-        eyebrow: "管理後台",
-        title: "管理證書",
-        description: "檢視已頒發證書，必要時撤銷記錄。",
-        certificateNumber: "證書編號",
-        type: "類型",
-        status: "狀態",
-        issued: "頒發日期",
+        eyebrow: "管理后台",
+        title: "管理证书",
+        description: "检视已颁发证书，必要时撤销记录。",
+        certificateNumber: "证书编号",
+        type: "类型",
+        status: "状态",
+        issued: "颁发日期",
         action: "操作",
         revokeReason: "原因",
-        revoke: "撤銷",
-        revokeAriaLabel: "撤銷證書 {certificateNumber}",
-        notIssued: "尚未頒發",
-        empty: "尚無證書。",
+        revoke: "撤销",
+        revokeAriaLabel: "撤销证书 {certificateNumber}",
+        notIssued: "尚未颁发",
+        empty: "尚无证书。",
         types: {
-          donation: "捐贈證書",
-          honor: "榮譽證書",
+          donation: "捐赠证书",
+          honor: "荣誉证书",
         },
         statuses: {
           active: "有效",
-          revoked: "已撤銷",
-          generation_failed: "產生失敗",
+          revoked: "已撤销",
+          generation_failed: "产生失败",
         },
         filter: {
-          search: "搜尋",
-          searchPlaceholder: "依證書編號搜尋",
-          type: "證書類型",
-          allTypes: "所有類型",
-          status: "狀態",
-          allStatuses: "所有狀態",
-          issuedFrom: "頒發日期從",
-          issuedTo: "頒發日期到",
-          moreFilters: "更多篩選",
-          apply: "套用篩選",
-          reset: "重設",
+          search: "搜寻",
+          searchPlaceholder: "依证书编号搜寻",
+          type: "证书类型",
+          allTypes: "所有类型",
+          status: "状态",
+          allStatuses: "所有状态",
+          issuedFrom: "颁发日期从",
+          issuedTo: "颁发日期到",
+          moreFilters: "更多筛选",
+          apply: "套用筛选",
+          reset: "重设",
         },
         export: "Export CSV",
         exporting: "Exporting...",
@@ -810,381 +810,40 @@ const testMessages = {
         clearSelection: "Clear selection",
       },
       auditLogs: {
-        eyebrow: "管理後台",
-        title: "稽核紀錄",
-        description: "檢視管理變更與支援操作。",
+        eyebrow: "管理后台",
+        title: "稽核纪录",
+        description: "检视管理变更与支援操作。",
         action: "操作",
-        target: "目標",
+        target: "目标",
         reason: "原因",
-        createdAt: "建立時間",
-        admin: "管理員",
-        empty: "尚無稽核紀錄。",
+        createdAt: "建立时间",
+        admin: "管理员",
+        empty: "尚无稽核纪录。",
       },
       shell: {
-        auditLogs: "稽核紀錄",
-        backToAdmin: "返回管理首頁",
-        certificates: "證書",
-        contributionPricing: "支持價格設定",
-        dashboard: "總覽",
+        auditLogs: "稽核纪录",
+        backToAdmin: "返回管理首页",
+        certificates: "证书",
+        contributionPricing: "支持价格设定",
+        dashboard: "总览",
         donations: "支持",
-        language: "語言",
-        licenses: "兌換",
-        menu: "選單",
-        news: "新聞",
+        language: "语言",
+        licenses: "兑换",
+        menu: "选单",
+        news: "新闻",
         notifications: "通知",
         policies: "Policy pages",
-        registrationSecurity: "註冊安全",
-        releases: "版本發布",
-        returnToSite: "返回網站",
+        registrationSecurity: "注册安全",
+        releases: "版本发布",
+        returnToSite: "返回网站",
         signOut: "登出",
-        supportFeedback: "回饋",
-        supportSettings: "支援設定",
-        users: "使用者",
+        supportFeedback: "回馈",
+        supportSettings: "支援设定",
+        users: "用户",
       },
     },
-  },
-  ja: {
-    admin: {
-      common: {
-        processing: "Processing...",
-        saving: "Saving...",
-      },
-      pagination: {
-        previous: "前へ",
-        next: "次へ",
-        page: "ページ",
-        of: "／全",
-      },
-      overview: {
-        eyebrow: "管理ツール",
-        title: "管理画面",
-        description: "応援記録、証明書、リリース、ライセンス、ユーザー、監査履歴を管理します。",
-        donationsTitle: "応援",
-        donationsDescription: "応援記録、ステータス、取引 ID を確認します。",
-        certificatesTitle: "証明書",
-        certificatesDescription: "発行済み証明書の番号、種類、ステータス、発行日を確認します。",
-        releasesTitle: "リリース",
-        releasesDescription: "インストーラーとリリースを管理します。",
-        notificationsTitle: "通知",
-        notificationsDescription: "アプリ内通知を公開・非公開にします。",
-        newsTitle: "ニュース",
-        newsDescription: "AI 生成ニュース記事の作成、編集、公開、非公開を管理します。",
-        supportFeedbackTitle: "フィードバック",
-        supportFeedbackDescription: "アカウント問題とサポート依頼を確認します。",
-        contributionPricingTitle: "応援価格設定",
-        contributionPricingDescription: "Contributions ページの価格、割引、開発サポート文言を管理します。",
-        supportSettingsTitle: "サポート設定",
-        supportSettingsDescription: "公開サポート連絡先を管理します。",
-        policyPagesTitle: "Policy pages",
-        policyPagesDescription: "Edit the English Terms, Privacy, and Refund pages linked from the footer.",
-        licensesTitle: "ライセンス",
-        licensesDescription: "試用コード、権限、デスクトップのクラウド同期アクセスを管理します。",
-        usersTitle: "ユーザー",
-        usersDescription: "アカウント権限、状態、トライアル紐付け、デスクトップ端末を確認します。",
-        registrationSecurityTitle: "登録セキュリティ",
-        registrationSecurityDescription: "登録の不正利用シグナルを確認し、不審な送信元をブロックします。",
-        auditLogsTitle: "監査ログ",
-        auditLogsDescription: "管理者の修正、取り消し、理由を確認します。",
-        metricsTitle: "運用概要",
-        totalUsersMetric: "総ユーザー数",
-        activeTrialsMetric: "有効な試用コード",
-        pendingFeedbackMetric: "未対応フィードバック",
-        recentContributionsMetric: "最近の応援",
-      },
-      donations: {
-        eyebrow: "管理画面",
-        title: "管理者向け応援記録",
-        description: "決済記録を確認し、検証済みの手動応援記録を追加します。",
-        provider: "プロバイダー",
-        status: "ステータス",
-        amount: "金額",
-        paidAt: "支払い日時（UTC）",
-        transactionId: "取引 ID",
-        manualEntryTitle: "手動支払い済み応援記録",
-        manualEntryDescription: "既存ユーザーのメールまたはユーザー ID で支払い済み手動記録を 1 件作成します。",
-        userIdentifier: "メールまたはユーザー ID",
-        amountCents: "金額（セント）",
-        reference: "参照番号",
-        reason: "理由",
-        submitManualDonation: "手動応援記録を追加",
-        empty: "応援記録はまだありません。",
-        providers: {
-          stripe: "旧 Stripe",
-          paypal: "PayPal",
-          manual: "手動",
-          dodo: "Dodo Payments",
-        },
-        statuses: {
-          pending: "保留中",
-          paid: "支払い済み",
-          cancelled: "キャンセル済み",
-          failed: "失敗",
-          refunded: "返金済み",
-        },
-        filter: {
-          search: "検索",
-          searchPlaceholder: "取引 ID で検索",
-          provider: "プロバイダー",
-          allProviders: "すべてのプロバイダー",
-          status: "ステータス",
-          allStatuses: "すべてのステータス",
-          dateFrom: "開始日",
-          dateTo: "終了日",
-          moreFilters: "詳細フィルター",
-          apply: "適用",
-          reset: "リセット",
-        },
-        export: "Export CSV",
-        exporting: "Exporting...",
-      },
-      certificates: {
-        eyebrow: "管理画面",
-        title: "管理者向け証明書",
-        description: "発行済み証明書を確認し、必要に応じて取り消します。",
-        certificateNumber: "証明書番号",
-        type: "種類",
-        status: "ステータス",
-        issued: "発行日",
-        action: "操作",
-        revokeReason: "理由",
-        revoke: "取り消す",
-        revokeAriaLabel: "証明書 {certificateNumber} を取り消す",
-        notIssued: "未発行",
-        empty: "証明書はまだありません。",
-        types: {
-          donation: "寄付証明書",
-          honor: "表彰証明書",
-        },
-        statuses: {
-          active: "有効",
-          revoked: "取り消し済み",
-          generation_failed: "生成失敗",
-        },
-        filter: {
-          search: "検索",
-          searchPlaceholder: "証明書番号で検索",
-          type: "証明書種類",
-          allTypes: "すべての種類",
-          status: "ステータス",
-          allStatuses: "すべてのステータス",
-          issuedFrom: "発行日（開始）",
-          issuedTo: "発行日（終了）",
-          moreFilters: "詳細フィルター",
-          apply: "適用",
-          reset: "リセット",
-        },
-        export: "Export CSV",
-        exporting: "Exporting...",
-        selectAll: "Select all",
-        selectedCount: "{count} selected",
-        exportSelected: "Export selected",
-        clearSelection: "Clear selection",
-      },
-      auditLogs: {
-        eyebrow: "管理画面",
-        title: "監査ログ",
-        description: "管理変更とサポート操作を確認します。",
-        action: "操作",
-        target: "対象",
-        reason: "理由",
-        createdAt: "作成日時",
-        admin: "管理者",
-        empty: "監査ログはまだありません。",
-      },
-      shell: {
-        auditLogs: "監査ログ",
-        backToAdmin: "管理画面へ戻る",
-        certificates: "証明書",
-        contributionPricing: "応援価格設定",
-        dashboard: "概要",
-        donations: "応援",
-        language: "言語",
-        licenses: "ライセンス",
-        menu: "メニュー",
-        news: "ニュース",
-        notifications: "通知",
-        policies: "Policy pages",
-        registrationSecurity: "登録セキュリティ",
-        releases: "リリース",
-        returnToSite: "サイトへ戻る",
-        signOut: "サインアウト",
-        supportFeedback: "フィードバック",
-        supportSettings: "サポート設定",
-        users: "ユーザー",
-      },
-    },
-  },
-  ko: {
-    admin: {
-      common: {
-        processing: "Processing...",
-        saving: "Saving...",
-      },
-      pagination: {
-        previous: "이전",
-        next: "다음",
-        page: "페이지",
-        of: "/ 전체",
-      },
-      overview: {
-        eyebrow: "관리 도구",
-        title: "관리",
-        description: "후원 기록, 인증서, 릴리스, 라이선스, 사용자, 감사 활동을 관리합니다.",
-        donationsTitle: "지원",
-        donationsDescription: "후원 기록, 상태, 거래 ID를 확인합니다.",
-        certificatesTitle: "인증서",
-        certificatesDescription: "발급된 인증서 번호, 유형, 상태, 발급일을 확인합니다.",
-        releasesTitle: "릴리스",
-        releasesDescription: "설치 파일과 릴리스를 관리합니다.",
-        notificationsTitle: "알림",
-        notificationsDescription: "앱 내 공지를 게시하거나 내립니다.",
-        newsTitle: "뉴스",
-        newsDescription: "AI 생성 뉴스 글을 만들고, 편집하고, 게시하거나 게시 해제합니다.",
-        supportFeedbackTitle: "피드백",
-        supportFeedbackDescription: "계정 문제와 지원 요청을 확인합니다.",
-        contributionPricingTitle: "지원 가격 설정",
-        contributionPricingDescription: "Contributions 페이지의 가격, 할인, 개발 지원 문구를 관리합니다.",
-        supportSettingsTitle: "지원 설정",
-        supportSettingsDescription: "공개 지원 연락 채널을 관리합니다.",
-        policyPagesTitle: "Policy pages",
-        policyPagesDescription: "Edit the English Terms, Privacy, and Refund pages linked from the footer.",
-        licensesTitle: "라이선스",
-        licensesDescription: "체험 코드, 권한, 데스크톱 클라우드 동기화 접속을 관리합니다.",
-        usersTitle: "사용자",
-        usersDescription: "계정 역할, 상태, 체험 연결, 데스크톱 기기를 확인합니다.",
-        registrationSecurityTitle: "등록 보안",
-        registrationSecurityDescription: "가입 남용 신호를 확인하고 의심스러운 출처를 차단합니다.",
-        auditLogsTitle: "감사 로그",
-        auditLogsDescription: "관리자 수정, 폐기, 사유를 확인합니다.",
-        metricsTitle: "운영 개요",
-        totalUsersMetric: "전체 사용자",
-        activeTrialsMetric: "활성 체험 코드",
-        pendingFeedbackMetric: "미처리 피드백",
-        recentContributionsMetric: "최근 지원",
-      },
-      donations: {
-        eyebrow: "관리",
-        title: "관리자 후원 기록",
-        description: "결제 기록을 확인하고 검증된 수동 후원 기록을 추가합니다.",
-        provider: "제공업체",
-        status: "상태",
-        amount: "금액",
-        paidAt: "결제 시간(UTC)",
-        transactionId: "거래 ID",
-        manualEntryTitle: "수동 결제 완료 후원 기록",
-        manualEntryDescription: "기존 사용자의 이메일 또는 사용자 ID로 결제 완료 수동 기록을 하나 만듭니다.",
-        userIdentifier: "이메일 또는 사용자 ID",
-        amountCents: "금액(센트)",
-        reference: "참조 번호",
-        reason: "사유",
-        submitManualDonation: "수동 후원 추가",
-        empty: "후원 기록이 없습니다.",
-        providers: {
-          stripe: "이전 Stripe",
-          paypal: "PayPal",
-          manual: "수동",
-          dodo: "Dodo Payments",
-        },
-        statuses: {
-          pending: "대기 중",
-          paid: "결제 완료",
-          cancelled: "취소됨",
-          failed: "실패",
-          refunded: "환불됨",
-        },
-        filter: {
-          search: "검색",
-          searchPlaceholder: "거래 ID로 검색",
-          provider: "제공업체",
-          allProviders: "모든 제공업체",
-          status: "상태",
-          allStatuses: "모든 상태",
-          dateFrom: "시작일",
-          dateTo: "종료일",
-          moreFilters: "더 많은 필터",
-          apply: "적용",
-          reset: "재설정",
-        },
-        export: "Export CSV",
-        exporting: "Exporting...",
-      },
-      certificates: {
-        eyebrow: "관리",
-        title: "관리자 인증서",
-        description: "발급된 인증서를 확인하고 필요한 경우 폐기합니다.",
-        certificateNumber: "인증서 번호",
-        type: "유형",
-        status: "상태",
-        issued: "발급일",
-        action: "작업",
-        revokeReason: "사유",
-        revoke: "폐기",
-        revokeAriaLabel: "인증서 {certificateNumber} 폐기",
-        notIssued: "미발급",
-        empty: "인증서가 없습니다.",
-        types: {
-          donation: "후원 인증서",
-          honor: "공로 인증서",
-        },
-        statuses: {
-          active: "활성",
-          revoked: "폐기됨",
-          generation_failed: "생성 실패",
-        },
-        filter: {
-          search: "검색",
-          searchPlaceholder: "인증서 번호로 검색",
-          type: "인증서 유형",
-          allTypes: "모든 유형",
-          status: "상태",
-          allStatuses: "모든 상태",
-          issuedFrom: "발급일(시작)",
-          issuedTo: "발급일(종료)",
-          moreFilters: "더 많은 필터",
-          apply: "적용",
-          reset: "재설정",
-        },
-        export: "Export CSV",
-        exporting: "Exporting...",
-        selectAll: "Select all",
-        selectedCount: "{count} selected",
-        exportSelected: "Export selected",
-        clearSelection: "Clear selection",
-      },
-      auditLogs: {
-        eyebrow: "관리",
-        title: "감사 로그",
-        description: "관리 변경과 지원 작업을 확인합니다.",
-        action: "작업",
-        target: "대상",
-        reason: "사유",
-        createdAt: "생성일",
-        admin: "관리자",
-        empty: "감사 로그가 없습니다.",
-      },
-      shell: {
-        auditLogs: "감사 로그",
-        backToAdmin: "관리 홈으로 돌아가기",
-        certificates: "인증서",
-        contributionPricing: "지원 가격 설정",
-        dashboard: "개요",
-        donations: "후원",
-        language: "언어",
-        licenses: "라이선스",
-        menu: "메뉴",
-        news: "뉴스",
-        notifications: "알림",
-        policies: "Policy pages",
-        registrationSecurity: "등록 보안",
-        releases: "릴리스",
-        returnToSite: "사이트로 돌아가기",
-        signOut: "로그아웃",
-        supportFeedback: "피드백",
-        supportSettings: "지원 설정",
-        users: "사용자",
-      },
-    },
-  },
+  }
+
 };
 
 describe("admin pages", () => {
@@ -1238,17 +897,17 @@ describe("admin pages", () => {
   });
 
   it("renders localized admin overview copy beyond English", async () => {
-    const element = await AdminPage({ params: Promise.resolve({ locale: "zh-Hant" }) });
+    const element = await AdminPage({ params: Promise.resolve({ locale: "zh" }) });
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("zh-Hant", "/zh-Hant/admin");
+    expect(requireAdminMock).toHaveBeenCalledWith("zh", "/zh/admin");
     expect(screen.getByText("管理工具")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "管理後台" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "管理后台" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /支持/ }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
-    expect(screen.getAllByRole("link", { name: /版本發布/ }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
-    expect(screen.getAllByRole("link", { name: /稽核紀錄/ }).some((link) => link.getAttribute("href") === "/admin/audit-logs")).toBe(true);
-    expect(screen.getByText("檢視支持記錄、狀態與交易 ID。")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /版本发布/ }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /稽核纪录/ }).some((link) => link.getAttribute("href") === "/admin/audit-logs")).toBe(true);
+    expect(screen.getByText("检视支持记录、状态与交易 ID。")).toBeInTheDocument();
   });
 
   it("renders the admin news publishing page with draft and published articles", async () => {
@@ -1319,11 +978,11 @@ describe("admin pages", () => {
     const from = vi.fn(() => donationsQuery);
     createSupabaseServerClientMock.mockResolvedValue({ from });
 
-    const element = await AdminDonationsPage({ params: Promise.resolve({ locale: "zh-Hant" }) });
+    const element = await AdminDonationsPage({ params: Promise.resolve({ locale: "zh" }) });
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("zh-Hant", "/zh-Hant/admin/donations");
+    expect(requireAdminMock).toHaveBeenCalledWith("zh", "/zh/admin/donations");
     expect(createSupabaseServerClientMock).toHaveBeenCalled();
     expect(requireAdminMock.mock.invocationCallOrder[0]).toBeLessThan(
       createSupabaseServerClientMock.mock.invocationCallOrder[0],
@@ -1331,13 +990,13 @@ describe("admin pages", () => {
     expect(from).toHaveBeenCalledWith("donations");
     expect(donationsQuery.select).toHaveBeenCalledWith("id,provider,status,amount,currency,provider_transaction_id,paid_at,created_at");
     expect(donationsQuery.order).toHaveBeenCalledWith("created_at", { ascending: false });
-    expect(screen.getByRole("heading", { name: "管理支持記錄" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "人工已付款支持記錄" })).toBeInTheDocument();
-    expect(screen.getByLabelText("電子郵件或使用者 ID")).toBeRequired();
+    expect(screen.getByRole("heading", { name: "管理支持记录" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "人工已付款支持记录" })).toBeInTheDocument();
+    expect(screen.getByLabelText("电子邮件或用户 ID")).toBeRequired();
     expect(screen.getByLabelText("原因")).toBeRequired();
-    expect(screen.getByRole("button", { name: "新增人工支持記錄" })).toBeInTheDocument();
-    expect(screen.getAllByText("舊版 Stripe").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("人工登錄").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "新增人工支持记录" })).toBeInTheDocument();
+    expect(screen.getAllByText("旧版 Stripe").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("人工登录").length).toBeGreaterThan(0);
     expect(screen.queryByText("stripe")).not.toBeInTheDocument();
     expect(screen.queryByText("manual")).not.toBeInTheDocument();
     expect(screen.getAllByText("已付款").length).toBeGreaterThan(0);
@@ -1465,7 +1124,7 @@ describe("admin pages", () => {
     expect(screen.queryByText("Already read")).not.toBeInTheDocument();
   });
 
-  it("renders Japanese admin donation enum labels", async () => {
+  it("renders Chinese admin donation enum labels", async () => {
     const donationsQuery = createOrderedQuery([
       {
         id: "donation-1",
@@ -1479,17 +1138,17 @@ describe("admin pages", () => {
     const from = vi.fn(() => donationsQuery);
     createSupabaseServerClientMock.mockResolvedValue({ from });
 
-    const element = await AdminDonationsPage({ params: Promise.resolve({ locale: "ja" }) });
+    const element = await AdminDonationsPage({ params: Promise.resolve({ locale: "zh" }) });
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("ja", "/ja/admin/donations");
-    expect(screen.getByRole("heading", { name: "管理者向け応援記録" })).toBeInTheDocument();
+    expect(requireAdminMock).toHaveBeenCalledWith("zh", "/zh/admin/donations");
+    expect(screen.getByRole("heading", { name: "管理支持记录" })).toBeInTheDocument();
     expect(screen.getAllByText("PayPal").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("キャンセル済み").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("已取消").length).toBeGreaterThan(0);
     expect(screen.queryByText("paypal")).not.toBeInTheDocument();
     expect(screen.queryByText("cancelled")).not.toBeInTheDocument();
-    expect(screen.getAllByText("$35.00 USD").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("US$35.00 USD").length).toBeGreaterThan(0);
     expect(screen.getAllByText("paypal_txn_789").length).toBeGreaterThan(0);
   });
 
@@ -1516,11 +1175,11 @@ describe("admin pages", () => {
     const from = vi.fn(() => certificatesQuery);
     createSupabaseServerClientMock.mockResolvedValue({ from });
 
-    const element = await AdminCertificatesPage({ params: Promise.resolve({ locale: "ko" }) });
+    const element = await AdminCertificatesPage({ params: Promise.resolve({ locale: "en" }) });
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("ko", "/ko/admin/certificates");
+    expect(requireAdminMock).toHaveBeenCalledWith("en", "/en/admin/certificates");
     expect(createSupabaseServerClientMock).toHaveBeenCalled();
     expect(requireAdminMock.mock.invocationCallOrder[0]).toBeLessThan(
       createSupabaseServerClientMock.mock.invocationCallOrder[0],
@@ -1528,19 +1187,19 @@ describe("admin pages", () => {
     expect(from).toHaveBeenCalledWith("certificates");
     expect(certificatesQuery.select).toHaveBeenCalledWith("id,certificate_number,type,status,issued_at");
     expect(certificatesQuery.order).toHaveBeenCalledWith("issued_at", { ascending: false });
-    expect(screen.getByRole("heading", { name: "관리자 인증서" })).toBeInTheDocument();
-    expect(screen.getByText("인증서 번호")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Admin certificates" })).toBeInTheDocument();
+    expect(screen.getByText("Certificate number")).toBeInTheDocument();
     expect(screen.getByText("DON-2026-000001")).toBeInTheDocument();
-    expect(screen.getByText("후원 인증서")).toBeInTheDocument();
-    expect(screen.getByText("활성")).toBeInTheDocument();
+    expect(screen.getByText("Donation Certificate")).toBeInTheDocument();
+    expect(screen.getAllByText("Active").length).toBeGreaterThan(0);
     expect(screen.queryByText("donation")).not.toBeInTheDocument();
     expect(screen.queryByText("active")).not.toBeInTheDocument();
-    expect(screen.getByText("2026년 4월 29일")).toBeInTheDocument();
-    expect(screen.getByLabelText("사유")).toBeRequired();
-    expect(screen.getByRole("button", { name: "폐기" })).toBeInTheDocument();
+    expect(screen.getByText("Apr 29, 2026")).toBeInTheDocument();
+    expect(screen.getByLabelText("Reason")).toBeRequired();
+    expect(screen.getByRole("button", { name: "Revoke" })).toBeInTheDocument();
   });
 
-  it("renders Japanese admin certificate enum labels", async () => {
+  it("renders Chinese admin certificate enum labels", async () => {
     const certificatesQuery = createOrderedQuery([
       {
         id: "certificate-1",
@@ -1553,15 +1212,15 @@ describe("admin pages", () => {
     const from = vi.fn(() => certificatesQuery);
     createSupabaseServerClientMock.mockResolvedValue({ from });
 
-    const element = await AdminCertificatesPage({ params: Promise.resolve({ locale: "ja" }) });
+    const element = await AdminCertificatesPage({ params: Promise.resolve({ locale: "zh" }) });
 
     render(element);
 
-    expect(requireAdminMock).toHaveBeenCalledWith("ja", "/ja/admin/certificates");
-    expect(screen.getByRole("heading", { name: "管理者向け証明書" })).toBeInTheDocument();
+    expect(requireAdminMock).toHaveBeenCalledWith("zh", "/zh/admin/certificates");
+    expect(screen.getByRole("heading", { name: "管理证书" })).toBeInTheDocument();
     expect(screen.getByText("HON-2026-000002")).toBeInTheDocument();
-    expect(screen.getByText("表彰証明書")).toBeInTheDocument();
-    expect(screen.getByText("取り消し済み")).toBeInTheDocument();
+    expect(screen.getByText("荣誉证书")).toBeInTheDocument();
+    expect(screen.getByText("已撤销")).toBeInTheDocument();
     expect(screen.queryByText("honor")).not.toBeInTheDocument();
     expect(screen.queryByText("revoked")).not.toBeInTheDocument();
     expect(screen.getByText("2026年4月30日")).toBeInTheDocument();

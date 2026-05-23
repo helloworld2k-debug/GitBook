@@ -52,8 +52,8 @@ describe("auth guards", () => {
   });
 
   it("builds locale-aware login redirects", () => {
-    expect(getLoginRedirectPath("ja", "/ja/contributions?tier=yearly")).toBe(
-      "/ja/login?next=%2Fja%2Fcontributions%3Ftier%3Dyearly",
+    expect(getLoginRedirectPath("zh", "/zh/contributions?tier=yearly")).toBe(
+      "/zh/login?next=%2Fzh%2Fcontributions%3Ftier%3Dyearly",
     );
   });
 
@@ -75,10 +75,10 @@ describe("auth guards", () => {
   it("redirects users to locale-aware login when no user is present", async () => {
     createSupabaseServerClientMock.mockResolvedValue(createAuthClient(null));
 
-    await expect(requireUser("ja", "/ja/contributions?tier=yearly")).rejects.toThrow(
-      "redirect:/ja/login?next=%2Fja%2Fcontributions%3Ftier%3Dyearly",
+    await expect(requireUser("zh", "/zh/contributions?tier=yearly")).rejects.toThrow(
+      "redirect:/zh/login?next=%2Fzh%2Fcontributions%3Ftier%3Dyearly",
     );
-    expect(redirectMock).toHaveBeenCalledWith("/ja/login?next=%2Fja%2Fcontributions%3Ftier%3Dyearly");
+    expect(redirectMock).toHaveBeenCalledWith("/zh/login?next=%2Fzh%2Fcontributions%3Ftier%3Dyearly");
   });
 
   it("redirects anonymous requests without checking Supabase when no auth cookie is present", async () => {
@@ -114,8 +114,8 @@ describe("auth guards", () => {
       .mockResolvedValueOnce(createAuthClient({ id: "user-1" }))
       .mockResolvedValueOnce(createProfileClient({ is_admin: false, admin_role: "user", account_status: "active" }));
 
-    await expect(requireAdmin("ko")).rejects.toThrow("redirect:/ko/dashboard?admin=forbidden");
-    expect(redirectMock).toHaveBeenCalledWith("/ko/dashboard?admin=forbidden");
+    await expect(requireAdmin("en")).rejects.toThrow("redirect:/en/dashboard?admin=forbidden");
+    expect(redirectMock).toHaveBeenCalledWith("/en/dashboard?admin=forbidden");
   });
 
   it("preserves the requested admin page when redirecting anonymous admins to login", async () => {

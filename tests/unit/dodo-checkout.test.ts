@@ -63,7 +63,7 @@ describe("Dodo checkout route", () => {
   it("creates a Dodo checkout session for the selected support tier", async () => {
     const formData = new FormData();
     formData.set("tier", "yearly");
-    formData.set("locale", "ja");
+    formData.set("locale", "zh");
 
     const response = await POST(
       new Request("https://gitbookai.example/api/checkout/dodo", {
@@ -75,7 +75,7 @@ describe("Dodo checkout route", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("https://checkout.dodopayments.test/session");
     expect(mocks.createCheckoutSession).toHaveBeenCalledWith({
-      cancel_url: expect.stringMatching(/^https:\/\/gitbookai\.example\/ja\/contributions\?payment=cancelled&checkout_started_at=/),
+      cancel_url: expect.stringMatching(/^https:\/\/gitbookai\.example\/zh\/contributions\?payment=cancelled&checkout_started_at=/),
       customer: {
         email: "ada@example.com",
       },
@@ -97,7 +97,7 @@ describe("Dodo checkout route", () => {
           quantity: 1,
         },
       ],
-      return_url: expect.stringMatching(/^https:\/\/gitbookai\.example\/ja\/dashboard\/certificates\/latest\?payment=dodo-success&checkout_started_at=/),
+      return_url: expect.stringMatching(/^https:\/\/gitbookai\.example\/zh\/dashboard\/certificates\/latest\?payment=dodo-success&checkout_started_at=/),
     });
   });
 
@@ -105,7 +105,7 @@ describe("Dodo checkout route", () => {
     mocks.getUser.mockResolvedValue({ data: { user: null } });
     const formData = new FormData();
     formData.set("tier", "monthly");
-    formData.set("locale", "zh-Hant");
+    formData.set("locale", "zh");
 
     const response = await POST(
       new Request("https://gitbookai.example/api/checkout/dodo", {
@@ -116,7 +116,7 @@ describe("Dodo checkout route", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "https://gitbookai.example/zh-Hant/login?next=%2Fzh-Hant%2Fcontributions",
+      "https://gitbookai.example/zh/login?next=%2Fzh%2Fcontributions",
     );
     expect(mocks.createCheckoutSession).not.toHaveBeenCalled();
   });

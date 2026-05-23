@@ -417,16 +417,16 @@ describe("admin license actions", () => {
     mocks.createSupabaseAdminClient.mockReturnValue({ from });
 
     const formData = new FormData();
-    formData.set("locale", "ja");
+    formData.set("locale", "zh");
     formData.set("trial_code_id", "trial-1");
     formData.set("is_active", "false");
 
-    await expect(setTrialCodeActive(formData)).rejects.toThrow("redirect:/ja/admin/licenses?notice=trial-code-status-updated");
+    await expect(setTrialCodeActive(formData)).rejects.toThrow("redirect:/zh/admin/licenses?notice=trial-code-status-updated");
 
-    expect(mocks.requireAdmin).toHaveBeenCalledWith("ja");
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("zh");
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ is_active: false, updated_at: expect.any(String) }));
     expect(eq).toHaveBeenCalledWith("id", "trial-1");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/licenses");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh/admin/licenses");
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "set_trial_code_active" }));
   });
 
@@ -530,12 +530,12 @@ describe("admin license actions", () => {
     mocks.createSupabaseAdminClient.mockReturnValue({ from });
 
     const formData = new FormData();
-    formData.set("locale", "zh-Hant");
+    formData.set("locale", "zh");
     formData.set("trial_code_id", "trial-1");
 
-    await expect(deleteTrialCode(formData)).rejects.toThrow("redirect:/zh-Hant/admin/licenses?notice=trial-code-deleted");
+    await expect(deleteTrialCode(formData)).rejects.toThrow("redirect:/zh/admin/licenses?notice=trial-code-deleted");
 
-    expect(mocks.requireAdmin).toHaveBeenCalledWith("zh-Hant");
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("zh");
     expect(update).toHaveBeenCalledWith({
       deleted_at: expect.any(String),
       is_active: false,
@@ -562,17 +562,17 @@ describe("admin license actions", () => {
     mocks.createSupabaseAdminClient.mockReturnValue({ from, rpc });
 
     const formData = new FormData();
-    formData.set("locale", "ko");
+    formData.set("locale", "en");
     formData.set("desktop_session_id", "session-1");
 
-    await expect(revokeDesktopSession(formData)).rejects.toThrow("redirect:/ko/admin/licenses?notice=desktop-session-revoked");
+    await expect(revokeDesktopSession(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=desktop-session-revoked");
 
-    expect(mocks.requireAdmin).toHaveBeenCalledWith("ko");
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
     expect(rpc).toHaveBeenCalledWith("revoke_desktop_session_with_leases", {
       input_desktop_session_id: "session-1",
       input_now: expect.any(String),
     });
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ko/admin/licenses");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/licenses");
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "revoke_desktop_session" }));
   });
 
@@ -589,17 +589,17 @@ describe("admin license actions", () => {
     mocks.createSupabaseAdminClient.mockReturnValue({ from, rpc });
 
     const formData = new FormData();
-    formData.set("locale", "zh-Hant");
+    formData.set("locale", "zh");
     formData.set("cloud_sync_lease_id", "lease-1");
 
-    await expect(revokeCloudSyncLease(formData)).rejects.toThrow("redirect:/zh-Hant/admin/licenses?notice=cloud-sync-lease-revoked");
+    await expect(revokeCloudSyncLease(formData)).rejects.toThrow("redirect:/zh/admin/licenses?notice=cloud-sync-lease-revoked");
 
-    expect(mocks.requireAdmin).toHaveBeenCalledWith("zh-Hant");
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("zh");
     expect(rpc).toHaveBeenCalledWith("revoke_cloud_sync_lease_with_usage", {
       input_cloud_sync_lease_id: "lease-1",
       input_now: expect.any(String),
     });
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh-Hant/admin/licenses");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh/admin/licenses");
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "revoke_cloud_sync_lease" }));
   });
 
@@ -788,13 +788,13 @@ describe("admin license actions", () => {
     mocks.createSupabaseAdminClient.mockReturnValue({ from });
 
     const formData = new FormData();
-    formData.set("locale", "ja");
+    formData.set("locale", "zh");
     formData.set("user_id", "user-1");
     formData.set("admin_role", "operator");
 
-    await expect(updateUserAdminRole(formData)).rejects.toThrow("redirect:/ja/admin/users?notice=role-updated");
+    await expect(updateUserAdminRole(formData)).rejects.toThrow("redirect:/zh/admin/users?notice=role-updated");
 
-    expect(mocks.requireOwner).toHaveBeenCalledWith("ja");
+    expect(mocks.requireOwner).toHaveBeenCalledWith("zh");
     expect(mocks.requireAdmin).not.toHaveBeenCalled();
     expect(update).toHaveBeenCalledWith({
       admin_role: "operator",
@@ -802,7 +802,7 @@ describe("admin license actions", () => {
       updated_at: expect.any(String),
     });
     expect(eq).toHaveBeenCalledWith("id", "user-1");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/users");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh/admin/users");
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "update_user_admin_role" }));
   });
 

@@ -4,7 +4,7 @@ import { donationTiers, siteConfig, sponsorLevels, supportedLocales } from "@/co
 describe("site config", () => {
   it("uses English as the default supported locale", () => {
     expect(supportedLocales[0]).toBe("en");
-    expect(supportedLocales).toEqual(["en", "zh-Hant", "ja", "ko"]);
+    expect(supportedLocales).toEqual(["en", "zh"]);
   });
 
   it("brands the public download site as GitBook AI", () => {

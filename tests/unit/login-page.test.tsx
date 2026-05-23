@@ -94,49 +94,49 @@ describe("LoginPage", () => {
   it("falls back to the default dashboard when next is external", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     const page = await LoginPage({
-      params: Promise.resolve({ locale: "ja" }),
+      params: Promise.resolve({ locale: "zh" }),
       searchParams: Promise.resolve({ next: "https://evil.example/take" }),
     });
 
     render(page);
 
     expect(screen.getByTestId("login-form")).toHaveTextContent(
-      "https://gitbookai.example/auth/callback?next=%2Fja%2Fdashboard",
+      "https://gitbookai.example/auth/callback?next=%2Fzh%2Fdashboard",
     );
   });
 
   it("uses the current locale dashboard when next is absent", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     const page = await LoginPage({
-      params: Promise.resolve({ locale: "ko" }),
+      params: Promise.resolve({ locale: "en" }),
       searchParams: Promise.resolve({}),
     });
 
     render(page);
 
     expect(screen.getByTestId("login-form")).toHaveTextContent(
-      "https://gitbookai.example/auth/callback?next=%2Fko%2Fdashboard",
+      "https://gitbookai.example/auth/callback?next=%2Fen%2Fdashboard",
     );
   });
 
   it("uses the first safe value when next is repeated", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     const page = await LoginPage({
-      params: Promise.resolve({ locale: "ko" }),
-      searchParams: Promise.resolve({ next: ["/ko/dashboard", "https://evil.example/take"] }),
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ next: ["/en/dashboard", "https://evil.example/take"] }),
     });
 
     render(page);
 
     expect(screen.getByTestId("login-form")).toHaveTextContent(
-      "https://gitbookai.example/auth/callback?next=%2Fko%2Fdashboard",
+      "https://gitbookai.example/auth/callback?next=%2Fen%2Fdashboard",
     );
   });
 
   it("shows a callback error status", async () => {
     const page = await LoginPage({
-      params: Promise.resolve({ locale: "ko" }),
-      searchParams: Promise.resolve({ error: "callback", next: "/ko/dashboard" }),
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ error: "callback", next: "/en/dashboard" }),
     });
 
     render(page);

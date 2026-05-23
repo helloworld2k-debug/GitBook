@@ -52,15 +52,15 @@ describe("DesktopLoginPage", () => {
   it("falls back to a harmless desktop authorize path when next is not a desktop authorize path", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     const page = await DesktopLoginPage({
-      params: Promise.resolve({ locale: "ja" }),
-      searchParams: Promise.resolve({ next: "/ja/dashboard" }),
+      params: Promise.resolve({ locale: "zh" }),
+      searchParams: Promise.resolve({ next: "/zh/dashboard" }),
     });
 
     render(page);
 
-    expect(screen.getByTestId("desktop-login-next")).toHaveTextContent("/ja/desktop/authorize");
+    expect(screen.getByTestId("desktop-login-next")).toHaveTextContent("/zh/desktop/authorize");
     expect(screen.getByTestId("desktop-login-callback")).toHaveTextContent(
-      "https://gitbookai.example/auth/callback?next=%2Fja%2Fdesktop%2Fauthorize",
+      "https://gitbookai.example/auth/callback?next=%2Fzh%2Fdesktop%2Fauthorize",
     );
   });
 
@@ -82,7 +82,7 @@ describe("DesktopLoginPage", () => {
 describe("sanitizeDesktopAuthorizeNextPath", () => {
   it("accepts only same-locale desktop authorize paths", () => {
     expect(sanitizeDesktopAuthorizeNextPath("/en/desktop/authorize?state=abc", "en")).toBe("/en/desktop/authorize?state=abc");
-    expect(sanitizeDesktopAuthorizeNextPath("/ja/desktop/authorize?state=abc", "en")).toBe("/en/desktop/authorize");
+    expect(sanitizeDesktopAuthorizeNextPath("/zh/desktop/authorize?state=abc", "en")).toBe("/en/desktop/authorize");
     expect(sanitizeDesktopAuthorizeNextPath("/en/dashboard", "en")).toBe("/en/desktop/authorize");
     expect(sanitizeDesktopAuthorizeNextPath("https://evil.example/en/desktop/authorize", "en")).toBe("/en/desktop/authorize");
     expect(sanitizeDesktopAuthorizeNextPath(["/en/desktop/authorize?state=abc", "/en/dashboard"], "en")).toBe("/en/desktop/authorize?state=abc");

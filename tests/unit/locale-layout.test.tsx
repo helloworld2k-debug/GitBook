@@ -31,7 +31,7 @@ vi.mock("@/components/site-footer", () => ({
 
 vi.mock("@/i18n/routing", () => ({
   routing: {
-    locales: ["en", "ja", "ko", "zh-Hant"],
+    locales: ["en", "zh"],
   },
 }));
 
@@ -64,9 +64,9 @@ describe("LocaleLayout", () => {
   });
 
   it("sets the html lang attribute from the locale param", async () => {
-    render(await LocaleLayout({ children: <main>Japanese page</main>, params: Promise.resolve({ locale: "ja" }) }));
+    render(await LocaleLayout({ children: <main>Chinese page</main>, params: Promise.resolve({ locale: "zh" }) }));
 
     const html = document.querySelector("html");
-    expect(html?.getAttribute("lang")).toBe("ja");
+    expect(html?.getAttribute("lang")).toBe("zh");
   });
 });

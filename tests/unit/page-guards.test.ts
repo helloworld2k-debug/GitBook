@@ -29,15 +29,15 @@ describe("page guard setup helpers", () => {
   });
 
   it("sets up user pages with a resolved locale and user guard", async () => {
-    resolvePageLocaleMock.mockReturnValue("ja");
+    resolvePageLocaleMock.mockReturnValue("zh");
     requireUserMock.mockResolvedValue({ id: "user-1" });
 
-    await expect(setupUserPage("ja", "/ja/dashboard")).resolves.toEqual({
-      locale: "ja",
+    await expect(setupUserPage("zh", "/zh/dashboard")).resolves.toEqual({
+      locale: "zh",
       user: { id: "user-1" },
     });
 
-    expect(resolvePageLocaleMock).toHaveBeenCalledWith("ja");
-    expect(requireUserMock).toHaveBeenCalledWith("ja", "/ja/dashboard");
+    expect(resolvePageLocaleMock).toHaveBeenCalledWith("zh");
+    expect(requireUserMock).toHaveBeenCalledWith("zh", "/zh/dashboard");
   });
 });

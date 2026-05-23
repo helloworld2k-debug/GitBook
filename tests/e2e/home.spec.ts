@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const locales = ["en", "zh-Hant", "ja", "ko"];
+const locales = ["en", "zh"];
 
 test("root redirects to the English public download page", async ({ page }) => {
   await page.goto("/");

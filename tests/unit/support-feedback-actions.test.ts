@@ -80,11 +80,11 @@ describe("support feedback actions", () => {
     const formData = new FormData();
     formData.set("message", "Here is more context.");
 
-    await expect(replySupportFeedback("zh-Hant", "feedback-1", formData)).rejects.toThrow(
-      "NEXT_REDIRECT:/zh-Hant/support/feedback/feedback-1?reply=saved",
+    await expect(replySupportFeedback("zh", "feedback-1", formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/zh/support/feedback/feedback-1?reply=saved",
     );
 
-    expect(mocks.requireUser).toHaveBeenCalledWith("zh-Hant", "/zh-Hant/support/feedback/feedback-1");
+    expect(mocks.requireUser).toHaveBeenCalledWith("zh", "/zh/support/feedback/feedback-1");
     expect(messageInsert).toHaveBeenCalledWith({
       author_role: "user",
       body: "Here is more context.",

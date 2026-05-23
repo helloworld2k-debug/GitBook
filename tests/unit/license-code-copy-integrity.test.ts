@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const locales = ["en", "zh-Hant", "ja", "ko"] as const;
+const locales = ["en", "zh"] as const;
 
 function readMessages(locale: (typeof locales)[number]) {
   return JSON.parse(readFileSync(join(process.cwd(), "messages", `${locale}.json`), "utf8")) as {
@@ -64,8 +64,8 @@ describe("license code copy and page structure", () => {
       dashboard.trialRedeemedAt,
     ].join("\n");
 
-    expect(combinedCopy).toMatch(/license code|兌換碼|ライセンスコード|라이선스 코드/i);
-    expect(combinedCopy).not.toMatch(/trial code|試用碼|試用コード|체험 코드/i);
+    expect(combinedCopy).toMatch(/license code|兑换码/i);
+    expect(combinedCopy).not.toMatch(/trial code|试用码/i);
   });
 
   it("keeps the admin license codes table markup singular", () => {
@@ -75,13 +75,13 @@ describe("license code copy and page structure", () => {
     expect(source.split(licenseCodesTableStart)).toHaveLength(2);
   });
 
-  it("uses redemption copy for the Traditional Chinese admin license area", () => {
-    const admin = readMessages("zh-Hant").admin;
+  it("uses redemption copy for the Simplified Chinese admin license area", () => {
+    const admin = readMessages("zh").admin;
 
-    expect(admin?.overview.description).toContain("兌換");
-    expect(admin?.overview.licensesTitle).toBe("兌換");
-    expect(admin?.shell.licenses).toBe("兌換");
-    expect(admin?.licenses.title).toBe("兌換管理");
+    expect(admin?.overview.description).toContain("兑换");
+    expect(admin?.overview.licensesTitle).toBe("兑换");
+    expect(admin?.shell.licenses).toBe("兑换");
+    expect(admin?.licenses.title).toBe("兑换管理");
 
     const combinedAdminLicenseCopy = [
       admin?.licenses.batchGenerateTitle,
@@ -103,7 +103,7 @@ describe("license code copy and page structure", () => {
       admin?.licenses.fixedPaidDurationsHelp,
     ].join("\n");
 
-    expect(combinedAdminLicenseCopy).toContain("兌換碼");
-    expect(combinedAdminLicenseCopy).not.toContain("授權");
+    expect(combinedAdminLicenseCopy).toContain("兑换码");
+    expect(combinedAdminLicenseCopy).not.toContain("授权");
   });
 });

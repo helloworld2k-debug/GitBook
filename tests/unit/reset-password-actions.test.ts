@@ -52,7 +52,7 @@ describe("reset password actions", () => {
     formData.set("password", "new-password-1");
     formData.set("confirm_password", "new-password-1");
 
-    await expect(updateResetPassword("ja", formData)).rejects.toThrow("NEXT_REDIRECT:/ja/login?password=reset");
+    await expect(updateResetPassword("zh", formData)).rejects.toThrow("NEXT_REDIRECT:/zh/login?password=reset");
 
     expect(updateUser).toHaveBeenCalledWith({ password: "new-password-1" });
   });

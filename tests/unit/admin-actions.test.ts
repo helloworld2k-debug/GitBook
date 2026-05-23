@@ -75,7 +75,7 @@ vi.mock("next/navigation", () => ({
 
 describe("admin action validation helpers", () => {
   it("falls back to English when a form locale is unsupported", () => {
-    expect(getSafeLocale("zh-Hant")).toBe("zh-Hant");
+    expect(getSafeLocale("zh")).toBe("zh");
     expect(getSafeLocale("not-a-locale")).toBe("en");
   });
 
@@ -364,11 +364,11 @@ describe("admin actions", () => {
     });
 
     const formData = new FormData();
-    formData.set("locale", "zh-Hant");
+    formData.set("locale", "zh");
     formData.set("return_to", "/admin/users/user-1");
     formData.set("user_id", "user-1");
 
-    await expect(sendUserPasswordSetupEmail(formData)).rejects.toThrow("redirect:/zh-Hant/admin/users/user-1?notice=user-password-setup-sent");
+    await expect(sendUserPasswordSetupEmail(formData)).rejects.toThrow("redirect:/zh/admin/users/user-1?notice=user-password-setup-sent");
 
     expect(resetPasswordForEmail).toHaveBeenCalledWith("user@example.com", {
       redirectTo: expect.stringContaining("/auth/callback"),
@@ -510,12 +510,12 @@ describe("admin actions", () => {
     mocks.createSupabaseAdminClient.mockReturnValue({ from });
 
     const formData = new FormData();
-    formData.set("locale", "zh-Hant");
+    formData.set("locale", "zh");
     formData.set("user_id", "user-1");
     formData.set("account_status", "disabled");
     formData.set("return_to", "/admin/users/user-1");
 
-    await expect(updateUserAccountStatus(formData)).rejects.toThrow("redirect:/zh-Hant/admin/users/user-1?notice=status-updated");
+    await expect(updateUserAccountStatus(formData)).rejects.toThrow("redirect:/zh/admin/users/user-1?notice=status-updated");
 
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
       action: "update_user_account_status",
@@ -1188,20 +1188,20 @@ describe("admin actions", () => {
     mocks.createSupabaseAdminClient.mockReturnValue({ rpc });
 
     const formData = new FormData();
-    formData.set("locale", "ko");
+    formData.set("locale", "en");
     formData.set("certificate_id", "certificate-1");
     formData.set("reason", "Refund confirmed");
 
-    await expect(revokeCertificate(formData)).rejects.toThrow("redirect:/ko/admin/certificates?notice=certificate-revoked");
+    await expect(revokeCertificate(formData)).rejects.toThrow("redirect:/en/admin/certificates?notice=certificate-revoked");
 
-    expect(mocks.requireAdmin).toHaveBeenCalledWith("ko");
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
     expect(rpc).toHaveBeenCalledWith("revoke_certificate_with_audit", {
       input_admin_user_id: "admin-1",
       input_certificate_id: "certificate-1",
       input_reason: "Refund confirmed",
     });
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ko/admin/certificates");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ko/admin/audit-logs");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/certificates");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/audit-logs");
   });
 
   it("requires a reason before revoking a certificate", async () => {
@@ -1575,17 +1575,17 @@ describe("admin actions", () => {
     mocks.createSupabaseAdminClient.mockReturnValue({ from });
 
     const formData = new FormData();
-    formData.set("locale", "ja");
+    formData.set("locale", "zh");
     formData.set("release_id", "release-1");
     formData.set("is_published", "false");
 
-    await expect(setSoftwareReleasePublished(formData)).rejects.toThrow("redirect:/ja/admin/releases?notice=release-updated");
+    await expect(setSoftwareReleasePublished(formData)).rejects.toThrow("redirect:/zh/admin/releases?notice=release-updated");
 
     expect(update).toHaveBeenCalledWith({ is_published: false });
     expect(eq).toHaveBeenCalledWith("id", "release-1");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/versions");
-    expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/releases");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh/versions");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/zh/admin/releases");
   });
 
   it("audits trial code creation and redirects back to licenses", async () => {

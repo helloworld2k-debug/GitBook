@@ -213,16 +213,16 @@ describe("desktop authorize route", () => {
   it("redirects anonymous users to locale desktop login with the authorize URL as next", async () => {
     const response = await GET(
       new Request(
-        "https://gitbookai.example/ja/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123",
+        "https://gitbookai.example/zh/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123",
       ),
       {
-        params: Promise.resolve({ locale: "ja" }),
+        params: Promise.resolve({ locale: "zh" }),
       },
     );
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
-      "https://gitbookai.example/ja/desktop/login?next=%2Fja%2Fdesktop%2Fauthorize%3Fdevice_session_id%3Dsession-1%26return_url%3Dgitbookai%253A%252F%252Fauth%252Fcallback%26state%3Dstate-123",
+      "https://gitbookai.example/zh/desktop/login?next=%2Fzh%2Fdesktop%2Fauthorize%3Fdevice_session_id%3Dsession-1%26return_url%3Dgitbookai%253A%252F%252Fauth%252Fcallback%26state%3Dstate-123",
     );
     expect(mocks.createSupabaseServerClient).toHaveBeenCalledTimes(1);
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
@@ -234,10 +234,10 @@ describe("desktop authorize route", () => {
 
     const response = await GET(
       new Request(
-        "https://gitbookai.example/ja/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123",
+        "https://gitbookai.example/zh/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123",
       ),
       {
-        params: Promise.resolve({ locale: "ja" }),
+        params: Promise.resolve({ locale: "zh" }),
       },
     );
 

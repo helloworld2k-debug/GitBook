@@ -1,9 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import enMessages from "../../messages/en.json";
-import jaMessages from "../../messages/ja.json";
-import koMessages from "../../messages/ko.json";
-import zhHantMessages from "../../messages/zh-Hant.json";
+import zhMessages from "../../messages/zh.json";
 
 type MessageTree = Record<string, string | MessageTree>;
 
@@ -19,9 +17,16 @@ describe("i18n configuration", () => {
   it("keeps localized message keys aligned with English", () => {
     const expectedKeys = messageKeys(enMessages).sort();
 
-    expect(messageKeys(zhHantMessages).sort()).toEqual(expectedKeys);
-    expect(messageKeys(jaMessages).sort()).toEqual(expectedKeys);
-    expect(messageKeys(koMessages).sort()).toEqual(expectedKeys);
+    expect(messageKeys(zhMessages).sort()).toEqual(expectedKeys);
+  });
+
+  it("uses Simplified Chinese copy for the active Chinese locale", () => {
+    expect(zhMessages.donate.checkoutDodo).toBe("立即支持开发");
+    expect(zhMessages.admin.overview.licensesTitle).toBe("兑换");
+    expect(zhMessages.dashboard.trial.code).toContain("兑换码");
+
+    const serializedMessages = JSON.stringify(zhMessages);
+    expect(serializedMessages).not.toMatch(/[兌開發後臺軟體檢視郵儲選]/);
   });
 
   it("normalizes localized app routes through next-intl proxy without intercepting auth callbacks", () => {

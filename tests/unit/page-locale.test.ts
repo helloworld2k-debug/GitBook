@@ -19,12 +19,15 @@ vi.mock("next-intl/server", () => ({
 describe("resolvePageLocale", () => {
   it("returns supported locales and sets the request locale", () => {
     expect(resolvePageLocale("en")).toBe("en");
-    expect(resolvePageLocale("zh-Hant")).toBe("zh-Hant");
+    expect(resolvePageLocale("zh")).toBe("zh");
     expect(setRequestLocaleMock).toHaveBeenCalledWith("en");
-    expect(setRequestLocaleMock).toHaveBeenCalledWith("zh-Hant");
+    expect(setRequestLocaleMock).toHaveBeenCalledWith("zh");
   });
 
   it("not-founds unsupported locales", () => {
+    expect(() => resolvePageLocale("zh-Hant")).toThrow("NEXT_NOT_FOUND");
+    expect(() => resolvePageLocale("ja")).toThrow("NEXT_NOT_FOUND");
+    expect(() => resolvePageLocale("ko")).toThrow("NEXT_NOT_FOUND");
     expect(() => resolvePageLocale("bad")).toThrow("NEXT_NOT_FOUND");
   });
 });

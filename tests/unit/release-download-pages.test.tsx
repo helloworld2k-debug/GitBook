@@ -91,9 +91,7 @@ describe("release download pages", () => {
   it("pre-renders the release archive for every supported locale", () => {
     expect(generateVersionStaticParams()).toEqual([
       { locale: "en" },
-      { locale: "zh-Hant" },
-      { locale: "ja" },
-      { locale: "ko" },
+      { locale: "zh" },
     ]);
   });
 

@@ -103,7 +103,7 @@ function createCertificateClient() {
 }
 
 function params(format = "svg") {
-  return Promise.resolve({ id: "cert-1", locale: "ja", format });
+  return Promise.resolve({ id: "cert-1", locale: "zh", format });
 }
 
 describe("certificate export route", () => {
@@ -114,7 +114,7 @@ describe("certificate export route", () => {
     mocks.notFound.mockClear();
     mocks.redirect.mockClear();
     mocks.setupUserPage.mockReset().mockResolvedValue({
-      locale: "ja",
+      locale: "zh",
       user: { id: "user-1", email: "ada@example.com", user_metadata: {} },
     });
     mocks.tierMaybeSingle.mockReset();
@@ -122,14 +122,14 @@ describe("certificate export route", () => {
 
   it("redirects unauthenticated users to localized login with the certificate download path", async () => {
     mocks.setupUserPage.mockRejectedValueOnce(
-      new Error("redirect:/ja/login?next=%2Fja%2Fdashboard%2Fcertificates%2Fcert-1%2Fdownload%2Fsvg"),
+      new Error("redirect:/zh/login?next=%2Fja%2Fdashboard%2Fcertificates%2Fcert-1%2Fdownload%2Fsvg"),
     );
 
     await expect(
-      GET(new Request("https://gitbookai.example/ja/dashboard/certificates/cert-1/download/svg"), {
+      GET(new Request("https://gitbookai.example/zh/dashboard/certificates/cert-1/download/svg"), {
         params: params(),
       }),
-    ).rejects.toThrow("redirect:/ja/login?next=%2Fja%2Fdashboard%2Fcertificates%2Fcert-1%2Fdownload%2Fsvg");
+    ).rejects.toThrow("redirect:/zh/login?next=%2Fja%2Fdashboard%2Fcertificates%2Fcert-1%2Fdownload%2Fsvg");
     expect(mocks.createSupabaseServerClient).not.toHaveBeenCalled();
   });
 
@@ -139,7 +139,7 @@ describe("certificate export route", () => {
     mocks.maybeSingle.mockResolvedValue({ data: null, error: null });
 
     await expect(
-      GET(new Request("https://gitbookai.example/ja/dashboard/certificates/cert-1/download/svg"), {
+      GET(new Request("https://gitbookai.example/zh/dashboard/certificates/cert-1/download/svg"), {
         params: params(),
       }),
     ).rejects.toThrow("notFound");
@@ -153,7 +153,7 @@ describe("certificate export route", () => {
   it("downloads a localized SVG certificate with attachment headers", async () => {
     const certificateClient = createCertificateClient();
     mocks.setupUserPage.mockResolvedValueOnce({
-      locale: "ja",
+      locale: "zh",
       user: {
           id: "user-1",
           email: "ada@example.com",
@@ -174,7 +174,7 @@ describe("certificate export route", () => {
     mocks.tierMaybeSingle.mockResolvedValue({ data: { code: "quarterly" }, error: null });
 
     const response = await GET(
-      new Request("https://gitbookai.example/ja/dashboard/certificates/cert-1/download/svg"),
+      new Request("https://gitbookai.example/zh/dashboard/certificates/cert-1/download/svg"),
       { params: params() },
     );
     const body = await response.text();
@@ -197,7 +197,7 @@ describe("certificate export route", () => {
 
   it("does not advertise unsupported binary formats", async () => {
     await expect(
-      GET(new Request("https://gitbookai.example/ja/dashboard/certificates/cert-1/download/png"), {
+      GET(new Request("https://gitbookai.example/zh/dashboard/certificates/cert-1/download/png"), {
         params: params("png"),
       }),
     ).rejects.toThrow("notFound");

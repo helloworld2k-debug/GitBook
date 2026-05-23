@@ -96,8 +96,8 @@ describe("latest certificate redirect page", () => {
     mocks.maybeSingle.mockResolvedValue({ data: null, error: null });
 
     await expect(
-      LatestCertificatePage({ params: Promise.resolve({ locale: "zh-Hant" }) }),
-    ).rejects.toThrow("redirect:/zh-Hant/dashboard?payment=dodo-success");
+      LatestCertificatePage({ params: Promise.resolve({ locale: "zh" }) }),
+    ).rejects.toThrow("redirect:/zh/dashboard?payment=dodo-success");
   });
 
   it("keeps the payment success flow pending when the current checkout has not produced a new paid record yet", async () => {

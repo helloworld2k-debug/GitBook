@@ -110,7 +110,7 @@ describe("dashboard account actions", () => {
     formData.set("password", "new-password-1");
     formData.set("confirm_password", "new-password-1");
 
-    await expect(updateDashboardPassword("ko", formData)).rejects.toThrow("NEXT_REDIRECT:/ko/dashboard?password=saved");
+    await expect(updateDashboardPassword("en", formData)).rejects.toThrow("NEXT_REDIRECT:/en/dashboard?password=saved");
 
     expect(updateUser).toHaveBeenCalledWith({ password: "new-password-1" });
   });
@@ -209,7 +209,7 @@ describe("dashboard account actions", () => {
     const signOut = vi.fn(async () => ({ error: null }));
     createSupabaseServerClientMock.mockResolvedValue({ auth: { signOut } });
 
-    await expect(signOutAction("ja")).rejects.toThrow("NEXT_REDIRECT:/ja");
+    await expect(signOutAction("zh")).rejects.toThrow("NEXT_REDIRECT:/zh");
 
     expect(signOut).toHaveBeenCalled();
   });

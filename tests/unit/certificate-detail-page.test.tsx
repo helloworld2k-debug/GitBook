@@ -34,37 +34,37 @@ vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async (namespace: "certificate") => {
     const messages = {
       brand: "GitBook AI",
-      title: "감사장",
-      description: "독립 소프트웨어 개발을 위한 의미 있는 후원에 감사드리며 이 인증서를 드립니다.",
-      amount: "후원 금액",
-      presentedTo: "수여 대상",
-      certificateNumber: "인증서 번호",
+      title: "Certificate of Appreciation",
+      description: "Presented with gratitude for meaningful support of independent software development.",
+      amount: "Contribution amount",
+      presentedTo: "Presented to",
+      certificateNumber: "Certificate number",
       issued: "발급일",
-      pendingIssueDate: "발급일 미정",
-      fallbackRecipient: "후원자",
-      tier: "지원 등급",
-      share: "인증서 공유",
-      shared: "링크가 복사되었습니다!",
-      copyLink: "링크 복사",
-      shareError: "공유할 수 없습니다.",
+      pendingIssueDate: "Issue date pending",
+      fallbackRecipient: "Supporter",
+      tier: "Support tier",
+      share: "Share certificate",
+      shared: "Link copied!",
+      copyLink: "Copy link",
+      shareError: "Unable to share.",
       types: {
-        donation: "후원 인증서",
-        honor: "공로 인증서",
+        donation: "Donation certificate",
+        honor: "Honor certificate",
       },
       tiers: {
-        monthly: "월간",
-        quarterly: "분기",
-        yearly: "연간",
+        monthly: "Monthly",
+        quarterly: "Quarterly",
+        yearly: "Yearly",
       },
       download: {
-        title: "인증서 다운로드",
-        svg: "SVG 다운로드",
+        title: "Certificate downloads",
+        svg: "Download SVG",
         note: "SVG 파일은 브라우저에서 열거나 인쇄할 수 있습니다.",
       },
       navigation: {
-        title: "인증서 탐색",
-        home: "홈으로 돌아가기",
-        dashboard: "대시보드로 돌아가기",
+        title: "Certificate navigation",
+        home: "Back home",
+        dashboard: "Back to dashboard",
       },
     };
 
@@ -147,22 +147,22 @@ describe("certificate detail page", () => {
     mocks.donationMaybeSingle.mockResolvedValue({ data: { amount: 5000, currency: "usd", tier_id: "tier-yearly" }, error: null });
     mocks.tierMaybeSingle.mockResolvedValue({ data: { code: "yearly" }, error: null });
 
-    render(await CertificatePage({ params: Promise.resolve({ id: "cert-1", locale: "ko" }) }));
+    render(await CertificatePage({ params: Promise.resolve({ id: "cert-1", locale: "en" }) }));
 
-    expect(screen.getByRole("heading", { name: "감사장" })).toBeInTheDocument();
-    expect(screen.getByLabelText("후원 인증서")).toHaveClass("overflow-hidden", "rounded-lg");
-    expect(screen.getByLabelText("후원 인증서")).toHaveAttribute("data-certificate-template", "yearly");
+    expect(screen.getByRole("heading", { name: "Certificate of Appreciation" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Donation certificate")).toHaveClass("overflow-hidden", "rounded-lg");
+    expect(screen.getByLabelText("Donation certificate")).toHaveAttribute("data-certificate-template", "yearly");
     expect(screen.getByTestId("certificate-background")).toHaveStyle({
       backgroundImage: "url(/certificates/yearly-bg.webp)",
     });
     expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
     expect(screen.getByText("GBAI-2026-D-000001")).toBeInTheDocument();
-    expect(screen.getByText("US$50.00")).toBeInTheDocument();
-    expect(screen.getByText("2026년 4월 30일 오전 12:00:00 UTC")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "SVG 다운로드" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "인증서 다운로드" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "홈으로 돌아가기" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "대시보드로 돌아가기" })).toHaveAttribute("href", "/dashboard");
+    expect(screen.getByText("$50.00")).toBeInTheDocument();
+    expect(screen.getByText("April 30, 2026 at 12:00:00 AM UTC")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Download SVG" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Certificate downloads" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back home" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Back to dashboard" })).toHaveAttribute("href", "/dashboard");
   });
 
   it("uses donation metadata tier for the certificate template while showing the actual paid amount", async () => {
@@ -191,9 +191,9 @@ describe("certificate detail page", () => {
       error: null,
     });
 
-    render(await CertificatePage({ params: Promise.resolve({ id: "cert-2", locale: "ko" }) }));
+    render(await CertificatePage({ params: Promise.resolve({ id: "cert-2", locale: "en" }) }));
 
-    expect(screen.getByLabelText("후원 인증서")).toHaveAttribute("data-certificate-template", "yearly");
-    expect(screen.getByText("US$12.00")).toBeInTheDocument();
+    expect(screen.getByLabelText("Donation certificate")).toHaveAttribute("data-certificate-template", "yearly");
+    expect(screen.getByText("$12.00")).toBeInTheDocument();
   });
 });
