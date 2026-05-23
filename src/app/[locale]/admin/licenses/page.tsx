@@ -1,23 +1,24 @@
 import { getTranslations } from "next-intl/server";
+import { AdminLicenseActionsMenu } from "@/components/admin/admin-license-actions-menu";
 import { AdminLicenseBulkToolbar, AdminLicenseSelectAllCheckbox } from "@/components/admin/admin-license-bulk-toolbar";
+import { AdminLicenseTabs } from "@/components/admin/admin-license-tabs";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { LicenseDurationFields } from "@/components/admin/license-duration-fields";
 import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
+import { buildAdminLicenseUrl, getAdminLicenseCodesPage, getCloudSyncUsageEventLabel, parseAdminLicenseSearchParams } from "@/lib/admin/license-management";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   bulkUpdateLicenseCodes,
-  deleteTrialCode,
   generateLicenseCodeBatch,
   revokeCloudSyncLease,
   revokeDesktopSession,
   setTrialCodeActive,
   updateCloudSyncCooldownSetting,
-  updateTrialCode,
 } from "../actions";
 
 type AdminLicensesSearchParams = {
@@ -251,19 +252,23 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   const shellProps = await getAdminShellProps(locale, "/admin/licenses");
   const supabase = createSupabaseAdminClient();
   const bulkFormId = "license-codes-bulk-action-form";
+  const parsedSearch = parseAdminLicenseSearchParams(feedback);
 
-  const [cooldownSettingResult, batchesResult, codesResult, trialRedemptionsResult, redeemAttemptsResult, entitlementsResult, sessionsResult, leasesResult, usageSessionsResult, usageEventsResult] = await Promise.all([
+  const [cooldownSettingResult, batchesResult, codesPageResult, trialRedemptionsResult, redeemAttemptsResult, entitlementsResult, sessionsResult, leasesResult, usageSessionsResult, usageEventsResult] = await Promise.all([
     supabase.from("cloud_sync_settings").select("key,value").eq("key", "cloud_sync_device_switch_cooldown_minutes").single(),
     supabase
       .from("license_code_batches")
       .select("id,label,channel_type,channel_note,duration_kind,trial_days,code_count,created_by,created_at,deleted_at,updated_by")
       .order("created_at", { ascending: false })
       .limit(100),
-    supabase
-      .from("trial_codes")
-      .select("id,batch_id,label,trial_days,duration_kind,channel_type,channel_note,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by,created_by")
-      .order("created_at", { ascending: false })
-      .limit(300),
+    getAdminLicenseCodesPage<LicenseCodeRow>({
+      filters: parsedSearch.filters,
+      order: parsedSearch.order,
+      page: parsedSearch.page,
+      pageSize: parsedSearch.pageSize,
+      sort: parsedSearch.sort,
+      supabase,
+    }).then((page) => ({ data: page.rows, error: null, page }), (error) => ({ data: null, error, page: null })),
     supabase
       .from("trial_code_redemptions")
       .select("id,user_id,machine_code_hash,device_id,redeemed_at,trial_valid_until,bound_at,trial_code_id")
@@ -283,7 +288,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
 
   if (cooldownSettingResult.error) throw cooldownSettingResult.error;
   if (batchesResult.error && !isLicenseCodeBatchSchemaError(batchesResult.error)) throw batchesResult.error;
-  if (codesResult.error && !isLicenseCodeMetadataSchemaError(codesResult.error)) throw codesResult.error;
+  if (codesPageResult.error && !isLicenseCodeMetadataSchemaError(codesPageResult.error)) throw codesPageResult.error;
   if (trialRedemptionsResult.error) throw trialRedemptionsResult.error;
   if (redeemAttemptsResult.error && !isLicenseSecuritySchemaError(redeemAttemptsResult.error)) throw redeemAttemptsResult.error;
   if (entitlementsResult.error) throw entitlementsResult.error;
@@ -294,7 +299,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
 
   let fallbackCodes: LicenseCodeRow[] | null = null;
 
-  if (codesResult.error && isLicenseCodeMetadataSchemaError(codesResult.error)) {
+  if (codesPageResult.error && isLicenseCodeMetadataSchemaError(codesPageResult.error)) {
     const fallbackCodesResult = await supabase
       .from("trial_codes")
       .select("id,batch_id,label,trial_days,duration_kind,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by,created_by")
@@ -313,15 +318,21 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   }
 
   const batches = (batchesResult.error ? [] : (batchesResult.data ?? [])) as LicenseBatchRow[];
-  const codes = fallbackCodes ?? ((codesResult.data ?? []) as LicenseCodeRow[]);
-  const filteredCodes = filterCodes(codes, feedback);
-
-  // Pagination for license codes
-  const PAGE_SIZE = 50;
-  const currentPage = Number(feedback?.page ?? 1);
-  const totalPages = Math.ceil(filteredCodes.length / PAGE_SIZE);
-  const paginatedCodes = filteredCodes.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  const paginationBasePath = "/admin/licenses?" + new URLSearchParams(feedback as Record<string, string>).toString();
+  const fallbackFilteredCodes = fallbackCodes ? filterCodes(fallbackCodes, feedback) : null;
+  const codesPage = fallbackFilteredCodes
+    ? {
+      currentPage: parsedSearch.page,
+      rows: fallbackFilteredCodes.slice((parsedSearch.page - 1) * parsedSearch.pageSize, parsedSearch.page * parsedSearch.pageSize),
+      totalCount: fallbackFilteredCodes.length,
+      totalPages: Math.max(1, Math.ceil(fallbackFilteredCodes.length / parsedSearch.pageSize)),
+    }
+    : codesPageResult.page!;
+  const codes = codesPage.rows;
+  const filteredCodes = codesPage.rows;
+  const paginatedCodes = codesPage.rows;
+  const currentPage = codesPage.currentPage;
+  const totalPages = codesPage.totalPages;
+  const paginationBasePath = buildAdminLicenseUrl("/admin/licenses", parsedSearch);
 
   const codesByBatch = new Map<string, LicenseCodeRow[]>();
   const redemptionsByCode = new Map<string, number>();
@@ -372,6 +383,17 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           title={t("licenses.title")}
         />
         <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
+        <AdminLicenseTabs
+          basePath="/admin/licenses"
+          labels={{
+            access: t("licenses.tabs.access"),
+            batches: t("licenses.tabs.batches"),
+            codes: t("licenses.tabs.codes"),
+            diagnostics: t("licenses.tabs.diagnostics"),
+            redemptions: t("licenses.tabs.redemptions"),
+          }}
+          parsed={parsedSearch}
+        />
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {[
@@ -382,7 +404,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             },
             {
               title: t("licenses.findMaintainCodes"),
-              body: t("licenses.managementSummary", { shown: String(filteredCodes.length), total: String(codes.length) }),
+              body: t("licenses.managementSummary", { shown: String(filteredCodes.length), total: String(codesPage.totalCount) }),
               href: "#license-code-workbench",
             },
             {
@@ -403,7 +425,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           ))}
         </div>
 
-        <section className="mt-6" id="license-usage-access">
+        <section className={`mt-6 ${parsedSearch.tab === "diagnostics" ? "" : "hidden"}`} id="license-usage-access">
           <h2 className="sr-only">{t("licenses.usageAccess")}</h2>
         <AdminCard className="">
           <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
@@ -437,8 +459,9 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <div className="mt-4 grid gap-2 md:grid-cols-2">
               {usageEvents.slice(0, 4).map((event) => (
                 <div key={event.id} className="rounded-md border border-slate-200 p-3 text-xs text-slate-600">
-                  <p className="font-semibold text-slate-950">{event.event_type}</p>
+                  <p className="font-semibold text-slate-950">{getCloudSyncUsageEventLabel(event.event_type)}</p>
                   <p className="mt-1">{formatDateTime(event.occurred_at, locale)} / {shortId(event.user_id)}</p>
+                  <p className="mt-1 text-slate-500">{t("licenses.rawEvent")}: {event.event_type}</p>
                   <p className="mt-1 break-words">{event.device_id ?? "-"} / {shortHash(event.machine_code_hash)}</p>
                 </div>
               ))}
@@ -469,7 +492,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
         </AdminCard>
         </section>
 
-        <section className="mt-6" id="license-issue-codes">
+        <section className={`mt-6 ${parsedSearch.tab === "codes" ? "" : "hidden"}`} id="license-issue-codes">
           <h2 className="mb-3 text-base font-semibold text-slate-950">{t("licenses.issueCodes")}</h2>
         <AdminCard className="mt-6">
           <div>
@@ -518,7 +541,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
         </AdminCard>
         </section>
 
-        <section className="mt-6" id="license-code-workbench">
+        <section className={`mt-6 ${parsedSearch.tab === "codes" ? "" : "hidden"}`} id="license-code-workbench">
           <h2 className="mb-3 text-base font-semibold text-slate-950">{t("licenses.findMaintainCodes")}</h2>
         <form action={`/${locale}/admin/licenses`} className="mt-6 grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
           <label className="grid gap-1 text-sm font-medium text-slate-700">
@@ -583,13 +606,41 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               </label>
             </div>
           </details>
+          <div className="grid gap-3 md:grid-cols-3 lg:col-span-5">
+            <label className="grid gap-1 text-sm font-medium text-slate-700">
+              {t("licenses.sortBy")}
+              <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={parsedSearch.sort} name="sort">
+                <option value="created_at">{t("licenses.generatedAt")}</option>
+                <option value="label">{t("licenses.label")}</option>
+                <option value="duration_kind">{t("licenses.duration")}</option>
+                <option value="channel_type">{t("licenses.channel")}</option>
+                <option value="is_active">{t("licenses.status")}</option>
+                <option value="redemption_count">{t("licenses.redemptions")}</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm font-medium text-slate-700">
+              {t("licenses.sortOrder")}
+              <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={parsedSearch.order} name="order">
+                <option value="desc">{t("licenses.descending")}</option>
+                <option value="asc">{t("licenses.ascending")}</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm font-medium text-slate-700">
+              {t("licenses.pageSize")}
+              <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={String(parsedSearch.pageSize)} name="pageSize">
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+          </div>
           <div className="flex flex-wrap gap-3 lg:col-span-5">
             <button className="inline-flex min-h-11 items-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" type="submit">{t("licenses.applyFilters")}</button>
             <a className="inline-flex min-h-11 items-center rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700" href={`/${locale}/admin/licenses`}>{t("licenses.resetFilters")}</a>
           </div>
         </form>
 
-        <div id="license-redemption-health">
+        <div className={parsedSearch.tab === "diagnostics" ? "" : "hidden"} id="license-redemption-health">
         <AdminCard className="mt-6">
           <h2 className="sr-only">{t("licenses.redemptionHealth")}</h2>
           <div>
@@ -641,6 +692,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
         </AdminCard>
         </div>
 
+        <section className={parsedSearch.tab === "batches" ? "" : "hidden"}>
         <AdminCard className="mt-6">
           <div className="border-b border-slate-200 px-5 py-4">
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.batchesTitle")}</h2>
@@ -726,7 +778,9 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyBatches")}</p>
           )}
         </AdminCard>
+        </section>
 
+        <div className={parsedSearch.tab === "codes" ? "" : "hidden"}>
         <AdminLicenseBulkToolbar
           formId={bulkFormId}
           labels={{
@@ -745,6 +799,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             xianyu: t("licenses.channels.xianyu"),
           }}
         />
+        </div>
 
         <form action={bulkUpdateLicenseCodes} className="hidden" id={bulkFormId}>
           <input name="locale" type="hidden" value={locale} />
@@ -754,7 +809,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
         <AdminCard className="mt-6">
           <div className="border-b border-slate-200 px-5 py-4">
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.licenseCodesTitle")}</h2>
-            <p className="mt-1 text-sm text-slate-600">{t("licenses.managementSummary", { shown: String(filteredCodes.length), total: String(codes.length) })}</p>
+            <p className="mt-1 text-sm text-slate-600">{t("licenses.managementSummary", { shown: String(filteredCodes.length), total: String(codesPage.totalCount) })}</p>
           </div>
           {filteredCodes.length > 0 ? (
             <>
@@ -808,60 +863,53 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                       <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{code.redemption_count} / {code.max_redemptions ?? t("licenses.unlimited")}</td>
                       <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{formatDateTime(code.created_at, locale)}</td>
                       <td className="sticky right-0 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <TrialCodeRevealButton copiedLabel={t("licenses.copied")} copyLabel={t("licenses.copy")} errorLabel={t("licenses.revealError")} hideLabel={t("licenses.hide")} locale={locale} revealLabel={t("licenses.reveal")} trialCodeId={code.id} />
-                          <details className="relative">
-                            <summary className="inline-flex min-h-10 cursor-pointer list-none items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 [&::-webkit-details-marker]:hidden" role="button">
-                              {t("licenses.editCode")}
-                            </summary>
-                            <div className="absolute right-0 z-20 mt-2 w-[min(24rem,80vw)] rounded-md border border-slate-200 bg-white p-4 text-left shadow-xl">
-                              <form action={updateTrialCode} className="grid gap-3">
-                                <input name="locale" type="hidden" value={locale} />
-                                <input name="return_to" type="hidden" value="/admin/licenses" />
-                                <input name="trial_code_id" type="hidden" value={code.id} />
-                                <label className="grid gap-1 text-xs font-medium text-slate-700">
-                                  {t("licenses.label")}
-                                  <input className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-normal text-slate-950" defaultValue={code.label} maxLength={120} name="label" required />
-                                </label>
-                                <label className="grid gap-1 text-xs font-medium text-slate-700">
-                                  {t("licenses.channel")}
-                                  <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-normal text-slate-950" defaultValue={code.channel_type ?? "internal"} name="channel_type">
-                                    <option value="internal">{t("licenses.channels.internal")}</option>
-                                    <option value="taobao">{t("licenses.channels.taobao")}</option>
-                                    <option value="xianyu">{t("licenses.channels.xianyu")}</option>
-                                    <option value="partner">{t("licenses.channels.partner")}</option>
-                                    <option value="other">{t("licenses.channels.other")}</option>
-                                  </select>
-                                </label>
-                                <label className="grid gap-1 text-xs font-medium text-slate-700">
-                                  {t("licenses.trialDays")}
-                                  <input className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-normal text-slate-950 disabled:bg-slate-100 disabled:text-slate-500" defaultValue={code.trial_days} disabled={code.duration_kind !== "trial_3_day"} max="7" min="1" name="trial_days" required={code.duration_kind === "trial_3_day"} type="number" />
-                                </label>
-                                {code.duration_kind !== "trial_3_day" ? <input name="trial_days" type="hidden" value={code.trial_days} /> : null}
-                                <AdminSubmitButton className="inline-flex min-h-10 items-center justify-center rounded-md bg-slate-950 px-3 text-sm font-semibold text-white" pendingLabel={t("common.processing")}>
-                                  {t("licenses.updateCode")}
-                                </AdminSubmitButton>
-                              </form>
-                            </div>
-                          </details>
-                          <form action={setTrialCodeActive}>
-                            <input name="locale" type="hidden" value={locale} />
-                            <input name="return_to" type="hidden" value="/admin/licenses" />
-                            <input name="trial_code_id" type="hidden" value={code.id} />
-                            <input name="is_active" type="hidden" value={code.is_active ? "false" : "true"} />
-                            <AdminSubmitButton className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={t("common.processing")}>
-                              {code.is_active ? t("licenses.deactivate") : t("licenses.activate")}
-                            </AdminSubmitButton>
-                          </form>
-                          <form action={deleteTrialCode}>
-                            <input name="locale" type="hidden" value={locale} />
-                            <input name="return_to" type="hidden" value="/admin/licenses" />
-                            <input name="trial_code_id" type="hidden" value={code.id} />
-                            <ConfirmActionButton className="inline-flex min-h-10 items-center rounded-md border border-red-200 px-3 text-sm font-semibold text-red-700" confirmLabel={t("licenses.deleteCodeConfirm")} pendingLabel={t("common.processing")}>
-                              {t("licenses.deleteCode")}
-                            </ConfirmActionButton>
-                          </form>
-                        </div>
+                        <AdminLicenseActionsMenu
+                          channels={{
+                            internal: t("licenses.channels.internal"),
+                            other: t("licenses.channels.other"),
+                            partner: t("licenses.channels.partner"),
+                            taobao: t("licenses.channels.taobao"),
+                            xianyu: t("licenses.channels.xianyu"),
+                          }}
+                          code={{
+                            batchId: code.batch_id,
+                            channelType: code.channel_type ?? "internal",
+                            codeMask: code.code_mask,
+                            deletedAt: code.deleted_at,
+                            durationKind: code.duration_kind,
+                            durationLabel: formatDuration(code, t),
+                            id: code.id,
+                            isActive: code.is_active,
+                            label: code.label,
+                            maxRedemptions: code.max_redemptions,
+                            redemptionCount: code.redemption_count,
+                            trialDays: code.trial_days,
+                          }}
+                          labels={{
+                            action: t("licenses.action"),
+                            activate: t("licenses.activate"),
+                            active: t("licenses.active"),
+                            channel: t("licenses.channel"),
+                            close: t("licenses.close"),
+                            code: t("licenses.code"),
+                            confirmDeleteHelp: t("licenses.confirmDeleteHelp"),
+                            copied: t("licenses.copied"),
+                            copy: t("licenses.copy"),
+                            deactivate: t("licenses.deactivate"),
+                            deleteCode: t("licenses.deleteCode"),
+                            deleteCodeConfirm: t("licenses.deleteCodeConfirm"),
+                            duration: t("licenses.duration"),
+                            editCode: t("licenses.editCode"),
+                            hide: t("licenses.hide"),
+                            inactive: t("licenses.inactive"),
+                            redemptions: t("licenses.redemptions"),
+                            reveal: t("licenses.reveal"),
+                            revealError: t("licenses.revealError"),
+                            save: t("licenses.save"),
+                            trialDays: t("licenses.trialDays"),
+                          }}
+                          locale={locale}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -888,7 +936,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
         </AdminCard>
         </section>
 
-        <AdminCard className="mt-6">
+        <AdminCard className={`mt-6 ${parsedSearch.tab === "redemptions" ? "" : "hidden"}`}>
           <div className="border-b border-slate-200 px-5 py-4">
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.trialRedemptionsTitle")}</h2>
           </div>
@@ -934,6 +982,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           )}
         </AdminCard>
 
+        <section className={parsedSearch.tab === "access" ? "" : "hidden"}>
         <AdminCard className="mt-6">
           <div className="border-b border-slate-200 px-5 py-4">
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.entitlementsTitle")}</h2>
@@ -1063,6 +1112,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyLeases")}</p>
           )}
         </AdminCard>
+        </section>
       </section>
     </AdminShell>
   );
