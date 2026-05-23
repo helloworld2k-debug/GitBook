@@ -228,7 +228,7 @@ export default async function AdminContributionPricingPage({ params, searchParam
                     return (
                       <form
                         action={updatePaymentProductSetting}
-                        className="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(8rem,0.75fr)_minmax(20rem,1.7fr)_minmax(10rem,180px)_minmax(9rem,170px)]"
+                        className="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(8rem,0.75fr)_minmax(20rem,1.7fr)_minmax(10rem,180px)_minmax(9rem,170px)] xl:items-start"
                         key={channel}
                       >
                         <input name="locale" type="hidden" value={locale} />
@@ -254,7 +254,7 @@ export default async function AdminContributionPricingPage({ params, searchParam
                             </span>
                           </span>
                         </label>
-                        <div className="flex min-w-0 items-end md:col-span-2 xl:col-span-1 xl:justify-end">
+                        <div className="flex min-w-0 items-start md:col-span-2 xl:col-span-1 xl:justify-end xl:pt-7">
                           <div className="flex w-full flex-col gap-2 sm:max-w-48">
                             <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800" pendingLabel={t("common.saving")}>
                               {t("contributionPricing.saveProduct")}
