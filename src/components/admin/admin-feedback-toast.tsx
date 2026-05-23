@@ -33,6 +33,18 @@ function VisibleAdminFeedbackToast({ isError, message }: Pick<AdminFeedbackToast
     return () => window.clearTimeout(timeoutId);
   }, [isError]);
 
+  const dismiss = () => {
+    setVisible(false);
+
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.delete("error");
+    searchParams.delete("notice");
+
+    const search = searchParams.toString();
+    const cleanPath = `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`;
+    window.history.replaceState(window.history.state, "", cleanPath);
+  };
+
   if (!visible) {
     return null;
   }
@@ -48,7 +60,7 @@ function VisibleAdminFeedbackToast({ isError, message }: Pick<AdminFeedbackToast
         <button
           aria-label="Dismiss feedback"
           className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-current transition-colors hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-          onClick={() => setVisible(false)}
+          onClick={dismiss}
           type="button"
         >
           <X aria-hidden="true" className="size-4" />

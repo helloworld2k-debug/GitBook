@@ -185,8 +185,8 @@ describe("AdminContributionPricingPage", () => {
 
     const productInput = screen.getByDisplayValue("pdt_LiveMonthly");
     const productForm = productInput.closest("form");
-    expect(productForm).toHaveClass("grid-cols-1", "xl:grid-cols-[minmax(8rem,0.75fr)_minmax(20rem,1.7fr)_minmax(10rem,180px)_minmax(9rem,170px)]");
-    expect(productForm?.querySelector("button")?.parentElement?.parentElement).toHaveClass("xl:justify-end");
+    expect(productForm).toHaveClass("grid-cols-1", "xl:items-start", "xl:grid-cols-[minmax(8rem,0.75fr)_minmax(20rem,1.7fr)_minmax(10rem,180px)_minmax(9rem,170px)]");
+    expect(productForm?.querySelector("button")?.parentElement?.parentElement).toHaveClass("items-start", "xl:justify-end", "xl:pt-7");
   });
 
   it("renders donation tiers when the original price column has not been migrated yet", async () => {

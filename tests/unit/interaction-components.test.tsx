@@ -96,6 +96,17 @@ describe("interaction components", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
+  it("clears admin feedback query params when dismissed", () => {
+    window.history.pushState({}, "", "/admin/contribution-pricing?channel=live-monthly&error=payment-product-update-failed&notice=payment-product-updated");
+
+    render(<AdminFeedbackBanner error="payment-product-update-failed" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss feedback" }));
+
+    expect(window.location.search).toBe("?channel=live-monthly");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("auto-dismisses success feedback while keeping errors visible", () => {
     vi.useFakeTimers();
     const { rerender } = render(<AdminFeedbackBanner notice="manual-donation-added" />);
