@@ -88,4 +88,13 @@ describe("payment product settings", () => {
     expect(migration).toContain("'yearly', 'pdt_0NfSI4XGVWDVQ4Kt08DEz'");
     expect(migration).toContain("on conflict (provider, environment, tier_code)");
   });
+
+  it("seeds the test Dodo product IDs for all public support tiers", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0058_seed_test_dodo_product_settings.sql"), "utf8");
+
+    expect(migration).toContain("'monthly', 'pdt_0Ne1tWOH7HdGEH1kyyAKx'");
+    expect(migration).toContain("'quarterly', 'pdt_0Ne1tebquro8ZGf0Chqjv'");
+    expect(migration).toContain("'yearly', 'pdt_0Ne1tm1B9YujqPv0e9QOI'");
+    expect(migration).toContain("on conflict (provider, environment, tier_code)");
+  });
 });
