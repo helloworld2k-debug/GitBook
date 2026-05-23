@@ -45,6 +45,7 @@ vi.mock("next-intl/server", () => ({
       subtitle: "Choose a one-time contribution.",
       checkoutDodo: "Contribute now",
       loginToContribute: "Sign in to contribute",
+      "tiers.one_day": "1-Day Dev Support",
       "tiers.monthly": "Monthly Support",
       "tiers.quarterly": "Quarterly Support",
       "tiers.yearly": "Yearly Support",
@@ -114,6 +115,20 @@ describe("ContributionsPage", () => {
     );
 
     expect(screen.getByText("Monthly Support 900 no-original anonymous available")).toBeInTheDocument();
+  });
+
+  it("shows the temporary 1-day support tier when database access falls back to config", async () => {
+    mocks.createSupabaseServerClient.mockRejectedValueOnce(new Error("local supabase unavailable"));
+
+    render(
+      await ContributionsPage({
+        params: Promise.resolve({ locale: "en" }),
+      } as {
+        params: Promise<{ locale: string }>;
+      }),
+    );
+
+    expect(screen.getByText("1-Day Dev Support 100 no-original anonymous available")).toBeInTheDocument();
   });
 
   it("passes signed-in auth state to contribution cards", async () => {

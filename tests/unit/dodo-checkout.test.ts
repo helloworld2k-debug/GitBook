@@ -16,6 +16,7 @@ vi.mock("@/lib/payments/dodo", () => ({
   createDodoCheckoutSession: mocks.createCheckoutSession,
   getDodoProductId: async (tierCode: string) =>
     ({
+      one_day: process.env.DODO_PAYMENTS_ENV === "live" ? process.env.DODO_LIVE_PRODUCT_ONE_DAY : process.env.DODO_PRODUCT_ONE_DAY,
       monthly: process.env.DODO_PRODUCT_MONTHLY,
       quarterly: process.env.DODO_PRODUCT_QUARTERLY,
       yearly: process.env.DODO_PAYMENTS_ENV === "live" ? process.env.DODO_LIVE_PRODUCT_YEARLY : process.env.DODO_PRODUCT_YEARLY,
@@ -39,9 +40,11 @@ describe("Dodo checkout route", () => {
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://gitbookai.example";
     process.env.DODO_PAYMENTS_ENV = "test";
+    process.env.DODO_PRODUCT_ONE_DAY = "pdt_one_day";
     process.env.DODO_PRODUCT_MONTHLY = "pdt_monthly";
     process.env.DODO_PRODUCT_QUARTERLY = "pdt_quarterly";
     process.env.DODO_PRODUCT_YEARLY = "pdt_yearly";
+    process.env.DODO_LIVE_PRODUCT_ONE_DAY = "pdt_live_one_day";
     process.env.DODO_LIVE_PRODUCT_YEARLY = "pdt_live_yearly";
     mocks.createCheckoutSession.mockReset();
     mocks.createCheckoutSession.mockResolvedValue({ checkout_url: "https://checkout.dodopayments.test/session" });
@@ -112,8 +115,26 @@ describe("Dodo checkout route", () => {
 
   it("uses the live Dodo product id when checkout runs in live mode", async () => {
     process.env.DODO_PAYMENTS_ENV = "live";
+    const order = vi.fn(async () => ({
+      data: [
+        {
+          amount: 100,
+          code: "one_day",
+          compare_at_amount: null,
+          currency: "usd",
+          description: "1-day support",
+          id: "tier-one-day",
+          label: "1-Day Support",
+          sort_order: 0,
+        },
+      ],
+      error: null,
+    }));
+    const eq = vi.fn(() => ({ order }));
+    const select = vi.fn(() => ({ eq }));
+    mocks.from.mockReturnValueOnce({ select });
     const formData = new FormData();
-    formData.set("tier", "yearly");
+    formData.set("tier", "one_day");
     formData.set("locale", "en");
 
     const response = await POST(
@@ -128,10 +149,15 @@ describe("Dodo checkout route", () => {
       expect.objectContaining({
         product_cart: [
           {
-            product_id: "pdt_live_yearly",
+            product_id: "pdt_live_one_day",
             quantity: 1,
           },
         ],
+        metadata: expect.objectContaining({
+          amount: "100",
+          donation_tier_id: "tier-one-day",
+          tier: "one_day",
+        }),
       }),
     );
   });

@@ -62,7 +62,7 @@ export default async function ContributionsPage({ params }: ContributionsPagePro
               </div>
             ) : null}
           </div>
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {tiers.map((tier) => (
               <DonationTierCard
                 checkoutDodoLabel={t("checkoutDodo")}

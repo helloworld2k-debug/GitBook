@@ -27,7 +27,7 @@ export const supportContactChannelIds = ["telegram", "discord", "qq", "email", "
 export const licenseCodeDurationKinds = ["trial_3_day", "month_1", "month_3", "year_1"] as const;
 export const licenseCodeChannelTypes = ["internal", "taobao", "xianyu", "partner", "other"] as const;
 export const paymentProductEnvironments = ["test", "live"] as const;
-export const paymentProductTierCodes = ["monthly", "quarterly", "yearly"] as const;
+export const paymentProductTierCodes = ["one_day", "monthly", "quarterly", "yearly"] as const;
 
 export function getSafeLocale(locale: FormDataEntryValue | null) {
   return getActionLocale(locale);

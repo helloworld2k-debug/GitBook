@@ -16,10 +16,10 @@ type CertificatePageProps = {
 };
 
 type AuthenticatedUser = Awaited<ReturnType<typeof setupUserPage>>["user"];
-type CertificateTierCode = "monthly" | "quarterly" | "yearly";
+type CertificateTierCode = "one_day" | "monthly" | "quarterly" | "yearly";
 
 function isCertificateTierCode(value: string | null | undefined): value is CertificateTierCode {
-  return value === "monthly" || value === "quarterly" || value === "yearly";
+  return value === "one_day" || value === "monthly" || value === "quarterly" || value === "yearly";
 }
 
 function getRecipientName(user: AuthenticatedUser, fallbackRecipient: string) {

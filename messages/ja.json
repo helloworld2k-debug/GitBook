@@ -118,6 +118,7 @@
     "title": "GitBook AI の開発を支援する",
     "subtitle": "製品リリース、AI ナレッジ更新、クラウド同期基盤、開発支援証明書を支える一回限りの支援金額を選択してください。",
     "tiers": {
+      "one_day": "1日開発支援",
       "monthly": "月次開発支援",
       "quarterly": "四半期開発支援",
       "yearly": "年次開発支援"
@@ -1099,6 +1100,7 @@
       "paymentProductSaved": "商品 ID を保存しました",
       "saveProduct": "商品 ID を保存",
       "paymentTier": {
+        "one_day": "1日",
         "monthly": "月額",
         "quarterly": "四半期",
         "yearly": "年額"
@@ -1297,6 +1299,7 @@
       "honor": "表彰証明書"
     },
     "tiers": {
+      "one_day": "1日開発支援",
       "monthly": "月次開発支援",
       "quarterly": "四半期開発支援",
       "yearly": "年次開発支援"

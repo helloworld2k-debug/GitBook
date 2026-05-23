@@ -118,6 +118,7 @@
     "title": "支持 GitBook AI 開發",
     "subtitle": "選擇一次性開發支持金額，用於產品版本發布、AI 知識更新、雲端同步基礎設施與開發支持證書。",
     "tiers": {
+      "one_day": "1 天開發支持",
       "monthly": "月度開發支持",
       "quarterly": "季度開發支持",
       "yearly": "年度開發支持"
@@ -1099,6 +1100,7 @@
       "paymentProductSaved": "產品 ID 已儲存",
       "saveProduct": "儲存產品 ID",
       "paymentTier": {
+        "one_day": "1 天",
         "monthly": "月度",
         "quarterly": "季度",
         "yearly": "年度"
@@ -1297,6 +1299,7 @@
       "honor": "榮譽證書"
     },
     "tiers": {
+      "one_day": "1 天開發支持",
       "monthly": "月度開發支持",
       "quarterly": "季度開發支持",
       "yearly": "年度開發支持"

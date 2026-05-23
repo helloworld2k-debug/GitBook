@@ -6,9 +6,11 @@ import { getDodoProductId } from "@/lib/payments/dodo";
 describe("payment product settings", () => {
   afterEach(() => {
     delete process.env.DODO_PAYMENTS_ENV;
+    delete process.env.DODO_PRODUCT_ONE_DAY;
     delete process.env.DODO_PRODUCT_MONTHLY;
     delete process.env.DODO_PRODUCT_QUARTERLY;
     delete process.env.DODO_PRODUCT_YEARLY;
+    delete process.env.DODO_LIVE_PRODUCT_ONE_DAY;
     delete process.env.DODO_LIVE_PRODUCT_MONTHLY;
     delete process.env.DODO_LIVE_PRODUCT_QUARTERLY;
     delete process.env.DODO_LIVE_PRODUCT_YEARLY;
@@ -41,10 +43,10 @@ describe("payment product settings", () => {
 
   it("uses live-specific environment variables for live checkout fallback", async () => {
     process.env.DODO_PAYMENTS_ENV = "live";
-    process.env.DODO_PRODUCT_MONTHLY = "pdt_test_monthly";
-    process.env.DODO_LIVE_PRODUCT_MONTHLY = "pdt_live_monthly";
+    process.env.DODO_PRODUCT_ONE_DAY = "pdt_test_one_day";
+    process.env.DODO_LIVE_PRODUCT_ONE_DAY = "pdt_live_one_day";
 
-    await expect(getDodoProductId("monthly")).resolves.toBe("pdt_live_monthly");
+    await expect(getDodoProductId("one_day")).resolves.toBe("pdt_live_one_day");
   });
 
   it("keeps legacy Dodo product variables as a fallback when no database row exists", async () => {
@@ -78,6 +80,17 @@ describe("payment product settings", () => {
     expect(migration).toContain("unique (provider, environment, tier_code)");
     expect(migration).toContain("environment in ('test', 'live')");
     expect(migration).toContain("tier_code in ('monthly', 'quarterly', 'yearly')");
+  });
+
+  it("adds the one-day live payment test product and day entitlement RPC", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0061_one_day_live_payment_test.sql"), "utf8");
+
+    expect(migration).toContain("tier_code in ('one_day', 'monthly', 'quarterly', 'yearly')");
+    expect(migration).toContain("'one_day'");
+    expect(migration).toContain("'pdt_0NfT90n9WltsyhcDAaVoj'");
+    expect(migration).toContain("Public reads enabled Dodo payment product settings");
+    expect(migration).toContain("grant_cloud_sync_day_entitlement_for_donation");
+    expect(migration).toContain("input_days integer");
   });
 
   it("seeds the live Dodo product IDs for all public support tiers", () => {

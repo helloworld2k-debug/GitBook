@@ -4,11 +4,12 @@ import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { getManageableDonationTiers } from "@/lib/payments/tier";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { updateDonationTier, updatePaymentProductSetting } from "../actions";
 
 type PaymentProductEnvironment = "test" | "live";
-type PaymentProductTierCode = "monthly" | "quarterly" | "yearly";
+type PaymentProductTierCode = "one_day" | "monthly" | "quarterly" | "yearly";
 
 type PaymentProductSettingRow = {
   environment: PaymentProductEnvironment;
@@ -19,11 +20,13 @@ type PaymentProductSettingRow = {
 
 const defaultDodoProductIds: Record<PaymentProductEnvironment, Record<PaymentProductTierCode, string>> = {
   test: {
+    one_day: "",
     monthly: "pdt_0Ne1tWOH7HdGEH1kyyAKx",
     quarterly: "pdt_0Ne1tebquro8ZGf0Chqjv",
     yearly: "pdt_0Ne1tm1B9YujqPv0e9QOI",
   },
   live: {
+    one_day: "pdt_0NfT90n9WltsyhcDAaVoj",
     monthly: "pdt_0NfSHqPkQZGNWArp4uJAF",
     quarterly: "pdt_0NfSHxjFX1RpH7lW8fk6k",
     yearly: "pdt_0NfSI4XGVWDVQ4Kt08DEz",
@@ -49,8 +52,9 @@ function getDiscountPercent(amount: number, compareAtAmount: number | null) {
   return Math.round((1 - amount / compareAtAmount) * 100);
 }
 
-async function getPaymentProductSettings(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>) {
+async function getPaymentProductSettings() {
   try {
+    const supabase = createSupabaseAdminClient();
     const { data } = await supabase
       .from("payment_product_settings")
       .select("environment,tier_code,product_id,is_enabled")
@@ -72,11 +76,13 @@ function findPaymentProductSetting(
 
 function getPaymentProductEnvFallback(environment: PaymentProductEnvironment, tierCode: PaymentProductTierCode) {
   const envByTier: Record<PaymentProductTierCode, string> = {
+    one_day: "DODO_PRODUCT_ONE_DAY",
     monthly: "DODO_PRODUCT_MONTHLY",
     quarterly: "DODO_PRODUCT_QUARTERLY",
     yearly: "DODO_PRODUCT_YEARLY",
   };
   const liveEnvByTier: Record<PaymentProductTierCode, string> = {
+    one_day: "DODO_LIVE_PRODUCT_ONE_DAY",
     monthly: "DODO_LIVE_PRODUCT_MONTHLY",
     quarterly: "DODO_LIVE_PRODUCT_QUARTERLY",
     yearly: "DODO_LIVE_PRODUCT_YEARLY",
@@ -95,9 +101,9 @@ export default async function AdminContributionPricingPage({ params, searchParam
   const shellProps = await getAdminShellProps(locale, "/admin/contribution-pricing");
   const supabase = await createSupabaseServerClient();
   const donationTierRows = await getManageableDonationTiers(supabase);
-  const paymentProductRows = await getPaymentProductSettings(supabase);
+  const paymentProductRows = await getPaymentProductSettings();
   const paymentEnvironments: PaymentProductEnvironment[] = ["test", "live"];
-  const paymentTierCodes: PaymentProductTierCode[] = ["monthly", "quarterly", "yearly"];
+  const paymentTierCodes: PaymentProductTierCode[] = ["one_day", "monthly", "quarterly", "yearly"];
 
   return (
     <AdminShell {...shellProps}>

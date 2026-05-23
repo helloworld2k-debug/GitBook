@@ -33,6 +33,25 @@ function createEntitlementClient(current: CurrentEntitlement, rpcValidUntil = "2
 }
 
 describe("extendCloudSyncEntitlementForDonation", () => {
+  it("delegates one-day grants to the day-based entitlement RPC", async () => {
+    const client = createEntitlementClient(null, "2026-05-02T00:00:00.000Z");
+
+    const validUntil = await extendCloudSyncEntitlementForDonation(client, {
+      userId: "user-1",
+      donationId: "donation-one-day",
+      tierCode: "one_day",
+      paidAt: new Date("2026-05-01T00:00:00.000Z"),
+    });
+
+    expect(validUntil).toBe("2026-05-02T00:00:00.000Z");
+    expect(client.rpc).toHaveBeenCalledWith("grant_cloud_sync_day_entitlement_for_donation", {
+      input_days: 1,
+      input_donation_id: "donation-one-day",
+      input_paid_at: "2026-05-01T00:00:00.000Z",
+      input_user_id: "user-1",
+    });
+  });
+
   it("delegates monthly grants to the atomic entitlement RPC", async () => {
     const client = createEntitlementClient(null);
 

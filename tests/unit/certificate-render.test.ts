@@ -22,6 +22,7 @@ describe("certificate rendering helpers", () => {
   });
 
   it("infers donation certificate tiers from paid amounts when old records lack tier links", () => {
+    expect(inferDonationTierCodeFromAmount(100, "usd")).toBe("one_day");
     expect(inferDonationTierCodeFromAmount(900, "usd")).toBe("monthly");
     expect(inferDonationTierCodeFromAmount(2430, "usd")).toBe("quarterly");
     expect(inferDonationTierCodeFromAmount(8640, "usd")).toBe("yearly");
@@ -29,6 +30,10 @@ describe("certificate rendering helpers", () => {
   });
 
   it("selects donation certificate templates from tier codes", () => {
+    expect(getCertificateTemplate("donation", "one_day")).toMatchObject({
+      code: "one_day",
+      backgroundUrl: "/certificates/monthly-bg.webp",
+    });
     expect(getCertificateTemplate("donation", "monthly")).toMatchObject({
       code: "monthly",
       backgroundUrl: "/certificates/monthly-bg.webp",

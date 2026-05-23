@@ -3,6 +3,7 @@ import { findDonationTier, getActiveDonationTiers, getManageableDonationTiers } 
 
 describe("findDonationTier", () => {
   it("returns a tier by code", () => {
+    expect(findDonationTier("one_day")?.amount).toBe(100);
     expect(findDonationTier("yearly")?.amount).toBe(8640);
   });
 
@@ -21,6 +22,7 @@ describe("getManageableDonationTiers", () => {
     const client = { from: vi.fn(() => ({ select })) };
 
     await expect(getManageableDonationTiers(client)).resolves.toEqual([
+      expect.objectContaining({ amount: 100, code: "one_day", compareAtAmount: null, isActive: true }),
       expect.objectContaining({ amount: 900, code: "monthly", compareAtAmount: null, isActive: true }),
       expect.objectContaining({ amount: 2430, code: "quarterly", compareAtAmount: 2700, isActive: true }),
       expect.objectContaining({ amount: 8640, code: "yearly", compareAtAmount: 10800, isActive: true }),
@@ -35,6 +37,7 @@ describe("getManageableDonationTiers", () => {
     };
 
     await expect(getManageableDonationTiers(client)).resolves.toEqual([
+      expect.objectContaining({ amount: 100, code: "one_day", compareAtAmount: null, isActive: true }),
       expect.objectContaining({ amount: 900, code: "monthly", compareAtAmount: null, isActive: true }),
       expect.objectContaining({ amount: 2430, code: "quarterly", compareAtAmount: 2700, isActive: true }),
       expect.objectContaining({ amount: 8640, code: "yearly", compareAtAmount: 10800, isActive: true }),
@@ -130,6 +133,7 @@ describe("getActiveDonationTiers", () => {
     const client = { from: vi.fn(() => ({ select })) };
 
     await expect(getActiveDonationTiers(client)).resolves.toEqual([
+      expect.objectContaining({ amount: 100, code: "one_day", compareAtAmount: null }),
       expect.objectContaining({ amount: 900, code: "monthly", compareAtAmount: null }),
       expect.objectContaining({ amount: 2430, code: "quarterly", compareAtAmount: 2700 }),
       expect.objectContaining({ amount: 8640, code: "yearly", compareAtAmount: 10800 }),
@@ -144,6 +148,7 @@ describe("getActiveDonationTiers", () => {
     };
 
     await expect(getActiveDonationTiers(client)).resolves.toEqual([
+      expect.objectContaining({ amount: 100, code: "one_day", compareAtAmount: null }),
       expect.objectContaining({ amount: 900, code: "monthly", compareAtAmount: null }),
       expect.objectContaining({ amount: 2430, code: "quarterly", compareAtAmount: 2700 }),
       expect.objectContaining({ amount: 8640, code: "yearly", compareAtAmount: 10800 }),

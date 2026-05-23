@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import AdminContributionPricingPage from "@/app/[locale]/admin/contribution-pricing/page";
 
 const mocks = vi.hoisted(() => ({
+  createSupabaseAdminClient: vi.fn(),
   createSupabaseServerClient: vi.fn(),
   requireAdmin: vi.fn(),
 }));
@@ -52,6 +53,7 @@ vi.mock("next-intl/server", () => ({
       "admin.contributionPricing.paymentProductDisabled": "Disabled",
       "admin.contributionPricing.paymentProductSaved": "Product ID saved",
       "admin.contributionPricing.saveProduct": "Save product ID",
+      "admin.contributionPricing.paymentTier.one_day": "1 Day",
       "admin.shell.backToAdmin": "Back to admin",
       "admin.shell.dashboard": "Overview",
       "admin.shell.donations": "Donations",
@@ -85,12 +87,41 @@ vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: mocks.createSupabaseServerClient,
 }));
 
+vi.mock("@/lib/supabase/admin", () => ({
+  createSupabaseAdminClient: mocks.createSupabaseAdminClient,
+}));
+
+function createPaymentProductSettingsClient(rows: Array<{
+  environment: string;
+  is_enabled: boolean;
+  product_id: string;
+  tier_code: string;
+}>) {
+  return {
+    from: (table: string) => {
+      if (table !== "payment_product_settings") {
+        throw new Error(`Unexpected admin table: ${table}`);
+      }
+
+      return {
+        select: () => ({
+          order: async () => ({
+            data: rows,
+            error: null,
+          }),
+        }),
+      };
+    },
+  };
+}
+
 describe("AdminContributionPricingPage", () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     vi.resetModules();
     process.env = { ...originalEnv };
+    mocks.createSupabaseAdminClient.mockReset().mockReturnValue(createPaymentProductSettingsClient([]));
   });
 
   it("renders donation tier pricing without support channel settings", async () => {
@@ -105,6 +136,17 @@ describe("AdminContributionPricingPage", () => {
             select: () => ({
               order: async () => ({
                 data: [
+                  {
+                    amount: 100,
+                    code: "one_day",
+                    compare_at_amount: null,
+                    currency: "usd",
+                    description: "1-day live payment test support",
+                    id: "tier-one-day",
+                    is_active: true,
+                    label: "1-Day Support",
+                    sort_order: 0,
+                  },
                   {
                     amount: 900,
                     code: "monthly",
@@ -123,33 +165,29 @@ describe("AdminContributionPricingPage", () => {
           };
         }
 
-        if (table === "payment_product_settings") {
-          return {
-            select: () => ({
-              order: async () => ({
-                data: [
-                  {
-                    environment: "test",
-                    is_enabled: true,
-                    product_id: "pdt_test_monthly",
-                    tier_code: "monthly",
-                  },
-                  {
-                    environment: "live",
-                    is_enabled: true,
-                    product_id: "pdt_LiveMonthly",
-                    tier_code: "monthly",
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          };
-        }
-
         throw new Error(`Unexpected table: ${table}`);
       },
     });
+    mocks.createSupabaseAdminClient.mockReturnValue(createPaymentProductSettingsClient([
+      {
+        environment: "live",
+        is_enabled: true,
+        product_id: "pdt_live_one_day",
+        tier_code: "one_day",
+      },
+      {
+        environment: "test",
+        is_enabled: true,
+        product_id: "pdt_test_monthly",
+        tier_code: "monthly",
+      },
+      {
+        environment: "live",
+        is_enabled: true,
+        product_id: "pdt_LiveMonthly",
+        tier_code: "monthly",
+      },
+    ]));
 
     render(
       await AdminContributionPricingPage({
@@ -160,9 +198,11 @@ describe("AdminContributionPricingPage", () => {
 
     expect(screen.getAllByRole("heading", { name: "Contribution pricing" }).length).toBeGreaterThan(0);
     expect(screen.getByText("Development support tiers")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("1-Day Support")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("1")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Monthly Support")).toBeInTheDocument();
     expect(screen.getByDisplayValue("9")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("0")).toBeInTheDocument();
+    expect(screen.getAllByDisplayValue("0").some((input) => input.getAttribute("name") === "discount_percent")).toBe(true);
     expect(screen.queryByText("Channel settings")).not.toBeInTheDocument();
     expect(screen.queryByDisplayValue("Telegram")).not.toBeInTheDocument();
 
@@ -175,6 +215,7 @@ describe("AdminContributionPricingPage", () => {
     expect(screen.getByText("Live mode")).toBeInTheDocument();
     expect(screen.getByText("Use these IDs for local or preview testing.")).toBeInTheDocument();
     expect(screen.getByText("Use these IDs for real customer payments.")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("pdt_live_one_day")).toBeInTheDocument();
     expect(screen.getByDisplayValue("pdt_test_monthly")).toBeInTheDocument();
     expect(screen.getByDisplayValue("pdt_LiveMonthly")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Save product ID" }).length).toBeGreaterThan(0);
@@ -225,17 +266,6 @@ describe("AdminContributionPricingPage", () => {
           return { select: tierSelect };
         }
 
-        if (table === "payment_product_settings") {
-          return {
-            select: () => ({
-              order: async () => ({
-                data: [],
-                error: null,
-              }),
-            }),
-          };
-        }
-
         throw new Error(`Unexpected table: ${table}`);
       },
     });
@@ -253,6 +283,7 @@ describe("AdminContributionPricingPage", () => {
   });
 
   it("prefills payment product IDs from environment fallbacks when database rows are empty", async () => {
+    process.env.DODO_LIVE_PRODUCT_ONE_DAY = "pdt_LiveOneDay";
     process.env.DODO_PRODUCT_MONTHLY = "pdt_TestMonthly";
     process.env.DODO_LIVE_PRODUCT_MONTHLY = "pdt_LiveMonthly";
     mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
@@ -284,17 +315,6 @@ describe("AdminContributionPricingPage", () => {
           };
         }
 
-        if (table === "payment_product_settings") {
-          return {
-            select: () => ({
-              order: async () => ({
-                data: [],
-                error: null,
-              }),
-            }),
-          };
-        }
-
         throw new Error(`Unexpected table: ${table}`);
       },
     });
@@ -307,10 +327,12 @@ describe("AdminContributionPricingPage", () => {
     );
 
     expect(screen.getByDisplayValue("pdt_TestMonthly")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("pdt_LiveOneDay")).toBeInTheDocument();
     expect(screen.getByDisplayValue("pdt_LiveMonthly")).toBeInTheDocument();
   });
 
   it("prefills the known live Dodo product IDs when database and env rows are empty", async () => {
+    delete process.env.DODO_LIVE_PRODUCT_ONE_DAY;
     delete process.env.DODO_PRODUCT_MONTHLY;
     delete process.env.DODO_LIVE_PRODUCT_MONTHLY;
     mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
@@ -342,17 +364,6 @@ describe("AdminContributionPricingPage", () => {
           };
         }
 
-        if (table === "payment_product_settings") {
-          return {
-            select: () => ({
-              order: async () => ({
-                data: [],
-                error: null,
-              }),
-            }),
-          };
-        }
-
         throw new Error(`Unexpected table: ${table}`);
       },
     });
@@ -364,6 +375,7 @@ describe("AdminContributionPricingPage", () => {
       }),
     );
 
+    expect(screen.getByDisplayValue("pdt_0NfT90n9WltsyhcDAaVoj")).toBeInTheDocument();
     expect(screen.getByDisplayValue("pdt_0NfSHqPkQZGNWArp4uJAF")).toBeInTheDocument();
   });
 });

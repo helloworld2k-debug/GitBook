@@ -18,6 +18,7 @@ export const siteConfig = {
 };
 
 export const donationTiers = [
+  { code: "one_day", labelKey: "donate.tiers.one_day", amount: 100, currency: "usd", compareAtAmount: null },
   { code: "monthly", labelKey: "donate.tiers.monthly", amount: 900, currency: "usd", compareAtAmount: null },
   { code: "quarterly", labelKey: "donate.tiers.quarterly", amount: 2430, currency: "usd", compareAtAmount: 2700 },
   { code: "yearly", labelKey: "donate.tiers.yearly", amount: 8640, currency: "usd", compareAtAmount: 10800 },

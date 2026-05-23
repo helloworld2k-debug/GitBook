@@ -132,6 +132,7 @@
     "title": "Support GitBook AI Development",
     "subtitle": "Choose a one-time support amount to help with product releases, AI knowledge updates, cloud sync infrastructure, and supporter certificates.",
     "tiers": {
+      "one_day": "1-Day Dev Support",
       "monthly": "Monthly Dev Support",
       "quarterly": "Quarterly Dev Support",
       "yearly": "Yearly Dev Support"
@@ -1249,6 +1250,7 @@
       "paymentProductSaved": "Product ID saved",
       "saveProduct": "Save product ID",
       "paymentTier": {
+        "one_day": "1 Day",
         "monthly": "Monthly",
         "quarterly": "Quarterly",
         "yearly": "Yearly"
@@ -1311,6 +1313,7 @@
       "honor": "Honor Certificate"
     },
     "tiers": {
+      "one_day": "1-Day Dev Support",
       "monthly": "Monthly Dev Support",
       "quarterly": "Quarterly Dev Support",
       "yearly": "Yearly Dev Support"
