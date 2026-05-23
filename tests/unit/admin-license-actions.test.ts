@@ -430,8 +430,8 @@ describe("admin license actions", () => {
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "set_trial_code_active" }));
   });
 
-  it("updates trial code labels and redemption limits without activation windows", async () => {
-    const single = vi.fn(async () => ({ data: { label: "Old", trial_days: 3 }, error: null }));
+  it("updates trial code labels, trial duration, and channel metadata without activation windows", async () => {
+    const single = vi.fn(async () => ({ data: { channel_type: "internal", label: "Old", trial_days: 3 }, error: null }));
     const selectEq = vi.fn(() => ({ single }));
     const select = vi.fn(() => ({ eq: selectEq }));
     const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
@@ -455,17 +455,23 @@ describe("admin license actions", () => {
     formData.set("trial_code_id", "trial-1");
     formData.set("label", "Spring maintenance trial");
     formData.set("trial_days", "7");
+    formData.set("channel_type", "partner");
 
     await expect(updateTrialCode(formData)).rejects.toThrow("redirect:/en/admin/licenses?notice=trial-code-updated");
 
     expect(update).toHaveBeenCalledWith({
+      channel_type: "partner",
       label: "Spring maintenance trial",
       trial_days: 7,
       updated_at: expect.any(String),
     });
     expect(eq).toHaveBeenCalledWith("id", "trial-1");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/licenses");
-    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "update_trial_code" }));
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "update_trial_code",
+      after: { channel_type: "partner", label: "Spring maintenance trial", trial_days: 7 },
+      before: { channel_type: "internal", label: "Old", trial_days: 3 },
+    }));
   });
 
   it("reveals an encrypted trial code for admin delivery and audits the view", async () => {

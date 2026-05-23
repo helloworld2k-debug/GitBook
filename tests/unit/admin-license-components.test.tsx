@@ -9,6 +9,7 @@ const labels = {
   clearSelection: "Clear selection",
   deactivate: "Deactivate",
   delete: "Delete",
+  deleteConfirm: "Delete selected license codes?",
   internal: "Internal",
   other: "Other",
   partner: "Partner",
@@ -28,6 +29,7 @@ describe("AdminLicenseBulkToolbar", () => {
     `;
     const form = document.getElementById("bulk-license-form") as HTMLFormElement;
     const submit = vi.fn((event: SubmitEvent) => event.preventDefault());
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(true);
     form.addEventListener("submit", submit);
 
     render(<AdminLicenseBulkToolbar formId="bulk-license-form" labels={labels} />);
@@ -40,6 +42,8 @@ describe("AdminLicenseBulkToolbar", () => {
     expect(submittedData.get("bulk_action")).toBe("delete");
     expect(submittedData.get("channel_type")).toBeNull();
     expect(Array.from(form.querySelectorAll<HTMLInputElement>('input[data-bulk-generated="true"][name="license_code_ids"]')).map((input) => input.value)).toEqual(["code-1", "code-2"]);
+    expect(confirm).toHaveBeenCalledWith("Delete selected license codes?");
+    confirm.mockRestore();
   });
 
   it("submits channel metadata only for the metadata action", () => {
@@ -61,5 +65,28 @@ describe("AdminLicenseBulkToolbar", () => {
     expect(submittedData.get("bulk_action")).toBe("metadata");
     expect(submittedData.get("channel_type")).toBe("xianyu");
     expect(form.querySelector<HTMLInputElement>('input[data-bulk-generated="true"][name="license_code_ids"]')?.value).toBe("code-1");
+  });
+
+  it("asks for confirmation before submitting bulk delete", () => {
+    document.body.innerHTML = `
+      <form id="bulk-license-form">
+        <input name="locale" type="hidden" value="en" />
+      </form>
+      <input form="bulk-license-form" type="checkbox" name="license_code_ids" value="code-1" checked />
+    `;
+    const form = document.getElementById("bulk-license-form") as HTMLFormElement;
+    const submit = vi.fn((event: SubmitEvent) => event.preventDefault());
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false);
+    form.addEventListener("submit", submit);
+
+    render(<AdminLicenseBulkToolbar formId="bulk-license-form" labels={labels} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(confirm).toHaveBeenCalledWith("Delete selected license codes?");
+    expect(submit).not.toHaveBeenCalled();
+    expect(new FormData(form).get("bulk_action")).toBeNull();
+
+    confirm.mockRestore();
   });
 });

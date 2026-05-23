@@ -11,11 +11,13 @@ import { setupAdminPage } from "@/lib/auth/page-guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   bulkUpdateLicenseCodes,
+  deleteTrialCode,
   generateLicenseCodeBatch,
   revokeCloudSyncLease,
   revokeDesktopSession,
   setTrialCodeActive,
   updateCloudSyncCooldownSetting,
+  updateTrialCode,
 } from "../actions";
 
 type AdminLicensesSearchParams = {
@@ -693,6 +695,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             clearSelection: t("licenses.clearSelection"),
             deactivate: t("licenses.deactivate"),
             delete: t("licenses.delete"),
+            deleteConfirm: t("licenses.bulkDeleteConfirm"),
             internal: t("licenses.channels.internal"),
             other: t("licenses.channels.other"),
             partner: t("licenses.channels.partner"),
@@ -710,6 +713,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
         <AdminCard className="mt-6">
           <div className="border-b border-slate-200 px-5 py-4">
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.licenseCodesTitle")}</h2>
+            <p className="mt-1 text-sm text-slate-600">{t("licenses.managementSummary", { shown: String(filteredCodes.length), total: String(codes.length) })}</p>
           </div>
           {filteredCodes.length > 0 ? (
             <>
@@ -765,6 +769,40 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                       <td className="sticky right-0 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                         <div className="flex flex-wrap justify-end gap-2">
                           <TrialCodeRevealButton copiedLabel={t("licenses.copied")} copyLabel={t("licenses.copy")} errorLabel={t("licenses.revealError")} hideLabel={t("licenses.hide")} locale={locale} revealLabel={t("licenses.reveal")} trialCodeId={code.id} />
+                          <details className="relative">
+                            <summary className="inline-flex min-h-10 cursor-pointer list-none items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 [&::-webkit-details-marker]:hidden" role="button">
+                              {t("licenses.editCode")}
+                            </summary>
+                            <div className="absolute right-0 z-20 mt-2 w-[min(24rem,80vw)] rounded-md border border-slate-200 bg-white p-4 text-left shadow-xl">
+                              <form action={updateTrialCode} className="grid gap-3">
+                                <input name="locale" type="hidden" value={locale} />
+                                <input name="return_to" type="hidden" value="/admin/licenses" />
+                                <input name="trial_code_id" type="hidden" value={code.id} />
+                                <label className="grid gap-1 text-xs font-medium text-slate-700">
+                                  {t("licenses.label")}
+                                  <input className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-normal text-slate-950" defaultValue={code.label} maxLength={120} name="label" required />
+                                </label>
+                                <label className="grid gap-1 text-xs font-medium text-slate-700">
+                                  {t("licenses.channel")}
+                                  <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-normal text-slate-950" defaultValue={code.channel_type ?? "internal"} name="channel_type">
+                                    <option value="internal">{t("licenses.channels.internal")}</option>
+                                    <option value="taobao">{t("licenses.channels.taobao")}</option>
+                                    <option value="xianyu">{t("licenses.channels.xianyu")}</option>
+                                    <option value="partner">{t("licenses.channels.partner")}</option>
+                                    <option value="other">{t("licenses.channels.other")}</option>
+                                  </select>
+                                </label>
+                                <label className="grid gap-1 text-xs font-medium text-slate-700">
+                                  {t("licenses.trialDays")}
+                                  <input className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-normal text-slate-950 disabled:bg-slate-100 disabled:text-slate-500" defaultValue={code.trial_days} disabled={code.duration_kind !== "trial_3_day"} max="7" min="1" name="trial_days" required={code.duration_kind === "trial_3_day"} type="number" />
+                                </label>
+                                {code.duration_kind !== "trial_3_day" ? <input name="trial_days" type="hidden" value={code.trial_days} /> : null}
+                                <AdminSubmitButton className="inline-flex min-h-10 items-center justify-center rounded-md bg-slate-950 px-3 text-sm font-semibold text-white" pendingLabel={t("common.processing")}>
+                                  {t("licenses.updateCode")}
+                                </AdminSubmitButton>
+                              </form>
+                            </div>
+                          </details>
                           <form action={setTrialCodeActive}>
                             <input name="locale" type="hidden" value={locale} />
                             <input name="return_to" type="hidden" value="/admin/licenses" />
@@ -773,6 +811,14 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                             <AdminSubmitButton className="inline-flex min-h-10 items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" pendingLabel={t("common.processing")}>
                               {code.is_active ? t("licenses.deactivate") : t("licenses.activate")}
                             </AdminSubmitButton>
+                          </form>
+                          <form action={deleteTrialCode}>
+                            <input name="locale" type="hidden" value={locale} />
+                            <input name="return_to" type="hidden" value="/admin/licenses" />
+                            <input name="trial_code_id" type="hidden" value={code.id} />
+                            <ConfirmActionButton className="inline-flex min-h-10 items-center rounded-md border border-red-200 px-3 text-sm font-semibold text-red-700" confirmLabel={t("licenses.deleteCodeConfirm")} pendingLabel={t("common.processing")}>
+                              {t("licenses.deleteCode")}
+                            </ConfirmActionButton>
                           </form>
                         </div>
                       </td>

@@ -418,6 +418,7 @@ export async function updateTrialCode(formData: FormData) {
   const admin = await requireAdmin(locale);
   const trialCodeId = getRequiredString(formData, "trial_code_id", "Trial code is required");
   const label = getRequiredString(formData, "label", "Label is required");
+  const channelType = getLicenseCodeChannelType(formData);
 
   if (label.length > MAX_TRIAL_LABEL_LENGTH) {
     throw new Error("Label must be 120 characters or fewer");
@@ -427,12 +428,13 @@ export async function updateTrialCode(formData: FormData) {
   const supabase = createSupabaseAdminClient();
   const { data: before } = await supabase
     .from("trial_codes")
-    .select("label,trial_days")
+    .select("channel_type,label,trial_days")
     .eq("id", trialCodeId)
     .single();
   const { error } = await supabase
     .from("trial_codes")
     .update({
+      channel_type: channelType,
       label,
       trial_days: trialDays,
       updated_at: new Date().toISOString(),
@@ -452,7 +454,7 @@ export async function updateTrialCode(formData: FormData) {
   await insertAdminAuditLog({
     action: "update_trial_code",
     adminUserId: admin.id,
-    after: { label, trial_days: trialDays },
+    after: { channel_type: channelType, label, trial_days: trialDays },
     before: before ?? null,
     reason: "Updated trial code",
     targetId: trialCodeId,
