@@ -64,7 +64,7 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
               {t("notifications.body")}
               <textarea className="min-h-32 rounded-md border border-slate-300 px-3 py-2" maxLength={4000} name="body" required />
             </label>
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-4 md:items-start">
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 {t("notifications.audience")}
                 <select className="min-h-11 rounded-md border border-slate-300 px-3" name="audience" defaultValue="all">
@@ -86,7 +86,7 @@ export default async function AdminNotificationsPage({ params, searchParams }: A
                 {t("notifications.expiresAt")}
                 <input className="min-h-11 rounded-md border border-slate-300 px-3" name="expires_at" type="datetime-local" />
               </label>
-              <label className="flex min-h-11 items-end gap-2 text-sm font-medium text-slate-700">
+              <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700 md:mt-6">
                 <input className="size-4" name="publish_now" type="checkbox" />
                 {t("notifications.publish")}
               </label>

@@ -120,7 +120,7 @@ export default async function AdminContributionPricingPage({ params, searchParam
             {donationTierRows.map((tier) => (
               <form
                 action={updateDonationTier}
-                className={`grid gap-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-5 xl:grid-cols-12 ${
+                className={`grid gap-4 rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-5 xl:grid-cols-12 xl:items-start ${
                   feedback?.notice === "donation-tier-updated" && feedback?.channel === tier.id
                     ? "border-emerald-200 bg-emerald-50/60"
                     : ""
@@ -175,7 +175,7 @@ export default async function AdminContributionPricingPage({ params, searchParam
                   </span>
                   <span className="text-xs text-slate-500">{t("contributionPricing.tierStatusHelp")}</span>
                 </label>
-                <div className="flex min-w-0 items-end sm:col-span-1 xl:col-span-9 xl:justify-end">
+                <div className="flex min-w-0 items-start sm:col-span-1 xl:col-span-9 xl:justify-end xl:pt-7">
                   <div className="flex w-full flex-col gap-2 sm:max-w-56">
                     <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800" pendingLabel={t("common.saving")}>
                       {t("contributionPricing.save")}

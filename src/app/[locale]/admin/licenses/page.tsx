@@ -419,7 +419,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.cloudSyncCooldownTitle")}</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.cloudSyncCooldownDescription")}</p>
           </div>
-          <form action={updateCloudSyncCooldownSetting} className="mt-4 grid gap-4 lg:grid-cols-[minmax(12rem,16rem)_minmax(18rem,1fr)_auto] lg:items-end">
+          <form action={updateCloudSyncCooldownSetting} className="mt-4 grid gap-4 lg:grid-cols-[minmax(12rem,16rem)_minmax(18rem,1fr)_auto] lg:items-start">
             <input name="locale" type="hidden" value={locale} />
             <input name="return_to" type="hidden" value="/admin/licenses" />
             <label className="grid gap-1 text-sm font-medium text-slate-700">
@@ -430,7 +430,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               {t("licenses.reason")}
               <input className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" name="reason" placeholder={t("licenses.cooldownReasonPlaceholder")} />
             </label>
-            <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 lg:w-fit" pendingLabel={t("common.processing")}>
+            <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 lg:mt-6 lg:w-fit" pendingLabel={t("common.processing")}>
               {t("licenses.save")}
             </AdminSubmitButton>
           </form>
