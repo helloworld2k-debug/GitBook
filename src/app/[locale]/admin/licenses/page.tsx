@@ -373,6 +373,38 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
         />
         <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
 
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              title: t("licenses.issueCodes"),
+              body: t("licenses.batchGenerateDescription"),
+              href: "#license-issue-codes",
+            },
+            {
+              title: t("licenses.findMaintainCodes"),
+              body: t("licenses.managementSummary", { shown: String(filteredCodes.length), total: String(codes.length) }),
+              href: "#license-code-workbench",
+            },
+            {
+              title: t("licenses.redemptionHealth"),
+              body: t("licenses.securitySignalsDescription"),
+              href: "#license-redemption-health",
+            },
+            {
+              title: t("licenses.usageAccess"),
+              body: t("licenses.cloudSyncUsageSignalsDescription"),
+              href: "#license-usage-access",
+            },
+          ].map((item) => (
+            <a className="rounded-md border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" href={item.href} key={item.href}>
+              <p className="text-sm font-semibold text-slate-950">{item.title}</p>
+              <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">{item.body}</p>
+            </a>
+          ))}
+        </div>
+
+        <section className="mt-6" id="license-usage-access">
+          <h2 className="sr-only">{t("licenses.usageAccess")}</h2>
         <AdminCard className="">
           <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
             <div>
@@ -435,7 +467,10 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             </AdminSubmitButton>
           </form>
         </AdminCard>
+        </section>
 
+        <section className="mt-6" id="license-issue-codes">
+          <h2 className="mb-3 text-base font-semibold text-slate-950">{t("licenses.issueCodes")}</h2>
         <AdminCard className="mt-6">
           <div>
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.batchGenerateTitle")}</h2>
@@ -481,7 +516,10 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             </AdminSubmitButton>
           </form>
         </AdminCard>
+        </section>
 
+        <section className="mt-6" id="license-code-workbench">
+          <h2 className="mb-3 text-base font-semibold text-slate-950">{t("licenses.findMaintainCodes")}</h2>
         <form action={`/${locale}/admin/licenses`} className="mt-6 grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
           <label className="grid gap-1 text-sm font-medium text-slate-700">
             {t("licenses.search")}
@@ -551,7 +589,9 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           </div>
         </form>
 
+        <div id="license-redemption-health">
         <AdminCard className="mt-6">
+          <h2 className="sr-only">{t("licenses.redemptionHealth")}</h2>
           <div>
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.securitySignalsTitle")}</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">{t("licenses.securitySignalsDescription")}</p>
@@ -599,6 +639,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             </div>
           ) : null}
         </AdminCard>
+        </div>
 
         <AdminCard className="mt-6">
           <div className="border-b border-slate-200 px-5 py-4">
@@ -845,6 +886,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <p className="px-5 py-6 text-sm text-slate-600">{t("licenses.emptyLicenseCodes")}</p>
           )}
         </AdminCard>
+        </section>
 
         <AdminCard className="mt-6">
           <div className="border-b border-slate-200 px-5 py-4">
