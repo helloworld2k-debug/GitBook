@@ -79,4 +79,13 @@ describe("payment product settings", () => {
     expect(migration).toContain("environment in ('test', 'live')");
     expect(migration).toContain("tier_code in ('monthly', 'quarterly', 'yearly')");
   });
+
+  it("seeds the live Dodo product IDs for all public support tiers", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0057_seed_live_dodo_product_settings.sql"), "utf8");
+
+    expect(migration).toContain("'monthly', 'pdt_0NfSHqPkQZGNWArp4uJAF'");
+    expect(migration).toContain("'quarterly', 'pdt_0NfSHxjFX1RpH7lW8fk6k'");
+    expect(migration).toContain("'yearly', 'pdt_0NfSI4XGVWDVQ4Kt08DEz'");
+    expect(migration).toContain("on conflict (provider, environment, tier_code)");
+  });
 });
