@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MoreHorizontal, X } from "lucide-react";
 import {
@@ -52,6 +52,11 @@ type Labels = {
   trialDays: string;
 };
 
+const ACTION_MENU_GAP = 8;
+const ACTION_MENU_MARGIN = 12;
+const ACTION_MENU_MIN_HEIGHT = 220;
+const ACTION_MENU_WIDTH = 224;
+
 export function AdminLicenseActionsMenu({
   channels,
   code,
@@ -66,33 +71,87 @@ export function AdminLicenseActionsMenu({
   const [menuOpen, setMenuOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ left: number; maxHeight: number; top: number; width: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+
+  const updateMenuPosition = useCallback(() => {
+    if (typeof window === "undefined" || !buttonRef.current) {
+      return;
+    }
+
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const menuWidth = Math.min(ACTION_MENU_WIDTH, Math.max(160, viewportWidth - ACTION_MENU_MARGIN * 2));
+    const maxLeft = Math.max(ACTION_MENU_MARGIN, viewportWidth - menuWidth - ACTION_MENU_MARGIN);
+    const left = Math.min(Math.max(ACTION_MENU_MARGIN, buttonRect.right - menuWidth), maxLeft);
+    const availableBelow = viewportHeight - buttonRect.bottom - ACTION_MENU_GAP - ACTION_MENU_MARGIN;
+    const availableAbove = buttonRect.top - ACTION_MENU_GAP - ACTION_MENU_MARGIN;
+    const shouldOpenAbove = availableBelow < ACTION_MENU_MIN_HEIGHT && availableAbove > availableBelow;
+    const maxHeight = Math.max(160, shouldOpenAbove ? availableAbove : availableBelow);
+    const top = shouldOpenAbove
+      ? Math.max(ACTION_MENU_MARGIN, buttonRect.top - ACTION_MENU_GAP - maxHeight)
+      : Math.min(buttonRect.bottom + ACTION_MENU_GAP, viewportHeight - ACTION_MENU_MARGIN - maxHeight);
+
+    setMenuPosition({
+      left,
+      maxHeight,
+      top,
+      width: menuWidth,
+    });
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
 
+    updateMenuPosition();
+
     const onPointerDown = (event: PointerEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      if (!menuRef.current?.contains(target) && !triggerRef.current?.contains(target)) {
+        setMenuOpen(false);
+        setConfirmDelete(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
         setMenuOpen(false);
         setConfirmDelete(false);
       }
     };
 
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [menuOpen]);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [menuOpen, updateMenuPosition]);
 
   return (
-    <div className="relative flex justify-end" ref={menuRef}>
+    <div className="relative flex justify-end" ref={triggerRef}>
       <button
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         aria-controls={menuId}
         className="inline-flex min-h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+        ref={buttonRef}
         onClick={() => {
-          setMenuOpen((open) => !open);
           setConfirmDelete(false);
+          if (menuOpen) {
+            setMenuOpen(false);
+          } else {
+            updateMenuPosition();
+            setMenuOpen(true);
+          }
         }}
         type="button"
       >
@@ -100,11 +159,13 @@ export function AdminLicenseActionsMenu({
         {labels.action}
       </button>
 
-      {menuOpen ? (
+      {menuOpen && menuPosition && typeof document !== "undefined" ? createPortal(
         <div
-          className="absolute right-0 top-12 z-50 w-56 rounded-md border border-slate-200 bg-white p-2 text-left shadow-xl"
+          className="fixed z-[100] overflow-y-auto rounded-md border border-slate-200 bg-white p-2 text-left shadow-xl"
           id={menuId}
+          ref={menuRef}
           role="menu"
+          style={{ left: menuPosition.left, maxHeight: menuPosition.maxHeight, top: menuPosition.top, width: menuPosition.width }}
         >
           <div className="px-2 py-2">
             <TrialCodeRevealButton
@@ -160,7 +221,8 @@ export function AdminLicenseActionsMenu({
               {confirmDelete ? <p className="px-3 pb-2 text-xs text-amber-700">{labels.confirmDeleteHelp}</p> : null}
             </form>
           )}
-        </div>
+        </div>,
+        document.body,
       ) : null}
 
       <AdminLicenseEditDrawer

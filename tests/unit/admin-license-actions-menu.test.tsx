@@ -35,6 +35,39 @@ const channels = {
 };
 
 describe("AdminLicenseActionsMenu", () => {
+  it("renders the row action menu outside clipping table containers", () => {
+    render(
+      <div data-testid="clipping-table-shell" className="max-w-40 overflow-hidden">
+        <AdminLicenseActionsMenu
+          channels={channels}
+          code={{
+            batchId: "batch-1",
+            channelType: "taobao",
+            codeMask: "1MAB-****-****-MNOP",
+            deletedAt: null,
+            durationKind: "month_1",
+            durationLabel: "1 month",
+            id: "license-code-1",
+            isActive: true,
+            label: "Taobao May monthly",
+            maxRedemptions: 1,
+            redemptionCount: 0,
+            trialDays: 30,
+          }}
+          labels={labels}
+          locale="en"
+        />
+      </div>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Action" }));
+
+    const clippingShell = screen.getByTestId("clipping-table-shell");
+    const menu = screen.getByRole("menu");
+
+    expect(clippingShell).not.toContainElement(menu);
+  });
+
   it("opens a row action menu and submits delete only after confirmation", () => {
     render(
       <AdminLicenseActionsMenu
