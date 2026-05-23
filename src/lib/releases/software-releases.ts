@@ -1,12 +1,15 @@
 export const SOFTWARE_RELEASES_BUCKET = "software-releases";
 
-export type ReleasePlatform = "macos" | "windows";
+export type ReleasePlatform = "macos_arm64" | "macos_x64" | "windows";
+export type LegacyReleasePlatform = ReleasePlatform | "macos";
 export type ReleaseDeliveryMode = "file" | "link";
 export type ReleaseStatus = "draft" | "uploading" | "ready" | "failed";
 
+export const RELEASE_PLATFORMS = ["macos_arm64", "macos_x64", "windows"] as const satisfies readonly ReleasePlatform[];
+
 export type SoftwareReleaseAsset = {
   id: string;
-  platform: ReleasePlatform;
+  platform: LegacyReleasePlatform;
   fileName: string;
   storagePath: string;
   fileSize: number | null;
@@ -25,6 +28,10 @@ export type SoftwareRelease = {
   releasedAt: string;
   notes: string | null;
   deliveryMode: ReleaseDeliveryMode;
+  macosArm64PrimaryUrl: string | null;
+  macosArm64BackupUrl: string | null;
+  macosX64PrimaryUrl: string | null;
+  macosX64BackupUrl: string | null;
   macosPrimaryUrl: string | null;
   macosBackupUrl: string | null;
   windowsPrimaryUrl: string | null;
@@ -35,7 +42,7 @@ export type SoftwareRelease = {
 };
 
 export function getReleaseAsset(release: SoftwareRelease | null, platform: ReleasePlatform) {
-  return release?.assets.find((asset) => asset.platform === platform) ?? null;
+  return release?.assets.find((asset) => asset.platform === platform || (platform === "macos_arm64" && asset.platform === "macos")) ?? null;
 }
 
 export function getPlatformDelivery(release: SoftwareRelease | null, platform: ReleasePlatform): PlatformDelivery | null {
@@ -44,17 +51,27 @@ export function getPlatformDelivery(release: SoftwareRelease | null, platform: R
   }
 
   if (release.deliveryMode === "link") {
-    return platform === "macos"
-      ? {
-          backupUrl: release.macosBackupUrl,
-          primaryUrl: release.macosPrimaryUrl,
-          source: "link",
-        }
-      : {
-          backupUrl: release.windowsBackupUrl,
-          primaryUrl: release.windowsPrimaryUrl,
-          source: "link",
-        };
+    if (platform === "macos_arm64") {
+      return {
+        backupUrl: release.macosArm64BackupUrl ?? release.macosBackupUrl,
+        primaryUrl: release.macosArm64PrimaryUrl ?? release.macosPrimaryUrl,
+        source: "link",
+      };
+    }
+
+    if (platform === "macos_x64") {
+      return {
+        backupUrl: release.macosX64BackupUrl ?? release.macosBackupUrl,
+        primaryUrl: release.macosX64PrimaryUrl ?? release.macosPrimaryUrl,
+        source: "link",
+      };
+    }
+
+    return {
+      backupUrl: release.windowsBackupUrl,
+      primaryUrl: release.windowsPrimaryUrl,
+      source: "link",
+    };
   }
 
   const asset = getReleaseAsset(release, platform);
@@ -71,6 +88,10 @@ type ReleaseRow = {
   released_at: string;
   notes: string | null;
   delivery_mode?: ReleaseDeliveryMode;
+  macos_arm64_primary_url?: string | null;
+  macos_arm64_backup_url?: string | null;
+  macos_x64_primary_url?: string | null;
+  macos_x64_backup_url?: string | null;
   macos_primary_url?: string | null;
   macos_backup_url?: string | null;
   windows_primary_url?: string | null;
@@ -79,7 +100,7 @@ type ReleaseRow = {
   release_status?: ReleaseStatus;
   software_release_assets?: {
     id: string;
-    platform: ReleasePlatform;
+    platform: LegacyReleasePlatform;
     file_name: string;
     storage_path: string;
     file_size: number | null;
@@ -107,7 +128,7 @@ export type ReleaseClient = {
 };
 
 const RELEASE_SELECT =
-  "id,version,released_at,notes,delivery_mode,macos_primary_url,macos_backup_url,windows_primary_url,windows_backup_url,is_published,release_status,software_release_assets(id,platform,file_name,storage_path,file_size)";
+  "id,version,released_at,notes,delivery_mode,macos_arm64_primary_url,macos_arm64_backup_url,macos_x64_primary_url,macos_x64_backup_url,macos_primary_url,macos_backup_url,windows_primary_url,windows_backup_url,is_published,release_status,software_release_assets(id,platform,file_name,storage_path,file_size)";
 
 function mapRelease(row: ReleaseRow, client: ReleaseClient): SoftwareRelease {
   return {
@@ -116,6 +137,10 @@ function mapRelease(row: ReleaseRow, client: ReleaseClient): SoftwareRelease {
     releasedAt: row.released_at,
     notes: row.notes,
     deliveryMode: row.delivery_mode ?? "file",
+    macosArm64PrimaryUrl: row.macos_arm64_primary_url ?? null,
+    macosArm64BackupUrl: row.macos_arm64_backup_url ?? null,
+    macosX64PrimaryUrl: row.macos_x64_primary_url ?? null,
+    macosX64BackupUrl: row.macos_x64_backup_url ?? null,
     macosPrimaryUrl: row.macos_primary_url ?? null,
     macosBackupUrl: row.macos_backup_url ?? null,
     windowsPrimaryUrl: row.windows_primary_url ?? null,

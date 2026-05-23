@@ -219,7 +219,7 @@ export function getUploadFile(formData: FormData, key: string) {
   return file;
 }
 
-export function getReleaseFileMetadata(formData: FormData, platform: "macos" | "windows") {
+export function getReleaseFileMetadata(formData: FormData, platform: "macos_arm64" | "macos_x64" | "windows") {
   const fileName = getRequiredString(formData, `${platform}_file_name`, "Installer file name is required");
   const rawSize = getRequiredString(formData, `${platform}_file_size`, "Installer file size is required");
   const fileSize = Number(rawSize);
@@ -236,7 +236,7 @@ export function getReleaseFileMetadata(formData: FormData, platform: "macos" | "
   return { contentType, fileName, fileSize };
 }
 
-export function getReleaseStoragePath(formData: FormData, platform: "macos" | "windows") {
+export function getReleaseStoragePath(formData: FormData, platform: "macos_arm64" | "macos_x64" | "windows") {
   const storagePath = getRequiredString(formData, `${platform}_storage_path`, "Uploaded installer is required");
 
   if (storagePath.includes("..") || storagePath.includes("\\") || storagePath.includes("\0") || !storagePath.includes(`/${platform}/`)) {

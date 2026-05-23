@@ -115,28 +115,28 @@ describe("admin action validation helpers", () => {
 
   it("accepts optional HTTP release URLs and rejects unsupported protocols", () => {
     const formData = new FormData();
-    formData.set("macos_primary_url", "https://downloads.example/mac.dmg");
+    formData.set("macos_arm64_primary_url", "https://downloads.example/mac.dmg");
 
-    expect(getOptionalReleaseUrl(formData, "macos_primary_url")).toBe("https://downloads.example/mac.dmg");
+    expect(getOptionalReleaseUrl(formData, "macos_arm64_primary_url")).toBe("https://downloads.example/mac.dmg");
 
-    formData.set("macos_primary_url", "ftp://downloads.example/mac.dmg");
-    expect(() => getOptionalReleaseUrl(formData, "macos_primary_url")).toThrow("Enter a valid URL");
+    formData.set("macos_arm64_primary_url", "ftp://downloads.example/mac.dmg");
+    expect(() => getOptionalReleaseUrl(formData, "macos_arm64_primary_url")).toThrow("Enter a valid URL");
   });
 
   it("limits software release uploads to 50 MB per file", () => {
     const formData = new FormData();
-    formData.set("macos_file_name", "GitBook.dmg");
-    formData.set("macos_file_size", String(MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES));
-    formData.set("macos_file_type", "application/x-apple-diskimage");
+    formData.set("macos_arm64_file_name", "GitBook.dmg");
+    formData.set("macos_arm64_file_size", String(MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES));
+    formData.set("macos_arm64_file_type", "application/x-apple-diskimage");
 
-    expect(getReleaseFileMetadata(formData, "macos")).toEqual({
+    expect(getReleaseFileMetadata(formData, "macos_arm64")).toEqual({
       fileName: "GitBook.dmg",
       fileSize: 50_000_000,
       contentType: "application/x-apple-diskimage",
     });
 
-    formData.set("macos_file_size", String(MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES + 1));
-    expect(() => getReleaseFileMetadata(formData, "macos")).toThrow("Installer files must be 50 MB or smaller");
+    formData.set("macos_arm64_file_size", String(MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES + 1));
+    expect(() => getReleaseFileMetadata(formData, "macos_arm64")).toThrow("Installer files must be 50 MB or smaller");
   });
 
   it("validates support contact values for URL and email channels", () => {
@@ -1241,7 +1241,8 @@ describe("admin actions", () => {
     formData.set("notes", "Fast AI indexing");
     formData.set("delivery_mode", "file");
     formData.set("is_published", "on");
-    formData.set("macos_file", new File(["mac"], "GitBook AI.dmg"));
+    formData.set("macos_arm64_file", new File(["mac-arm"], "GitBook AI arm64.dmg"));
+    formData.set("macos_x64_file", new File(["mac-intel"], "GitBook AI intel.dmg"));
     formData.set("windows_file", new File(["win"], "GitBook AI.exe"));
 
     await expect(createSoftwareRelease(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-created");
@@ -1251,8 +1252,12 @@ describe("admin actions", () => {
       created_by: "admin-1",
       delivery_mode: "file",
       is_published: true,
+      macos_arm64_backup_url: null,
+      macos_arm64_primary_url: null,
       macos_backup_url: null,
       macos_primary_url: null,
+      macos_x64_backup_url: null,
+      macos_x64_primary_url: null,
       notes: "Fast AI indexing",
       released_at: "2026-04-30",
       release_status: "ready",
@@ -1261,10 +1266,11 @@ describe("admin actions", () => {
       windows_primary_url: null,
     });
     expect(storageFrom).toHaveBeenCalledWith("software-releases");
-    expect(upload).toHaveBeenCalledTimes(2);
+    expect(upload).toHaveBeenCalledTimes(3);
     expect(assetInsert).toHaveBeenCalledWith(
       expect.arrayContaining([
-        expect.objectContaining({ file_name: "GitBook AI.dmg", platform: "macos", release_id: "release-1" }),
+        expect.objectContaining({ file_name: "GitBook AI arm64.dmg", platform: "macos_arm64", release_id: "release-1" }),
+        expect.objectContaining({ file_name: "GitBook AI intel.dmg", platform: "macos_x64", release_id: "release-1" }),
         expect.objectContaining({ file_name: "GitBook AI.exe", platform: "windows", release_id: "release-1" }),
       ]),
     );
@@ -1297,9 +1303,12 @@ describe("admin actions", () => {
     formData.set("released_at", "2026-05-10");
     formData.set("notes", "Resumable upload");
     formData.set("is_published", "on");
-    formData.set("macos_file_name", "GitBook AI.dmg");
-    formData.set("macos_file_size", "50000000");
-    formData.set("macos_file_type", "application/x-apple-diskimage");
+    formData.set("macos_arm64_file_name", "GitBook AI arm64.dmg");
+    formData.set("macos_arm64_file_size", "50000000");
+    formData.set("macos_arm64_file_type", "application/x-apple-diskimage");
+    formData.set("macos_x64_file_name", "GitBook AI intel.dmg");
+    formData.set("macos_x64_file_size", "42");
+    formData.set("macos_x64_file_type", "application/x-apple-diskimage");
     formData.set("windows_file_name", "GitBook AI.exe");
     formData.set("windows_file_size", "42");
     formData.set("windows_file_type", "application/vnd.microsoft.portable-executable");
@@ -1308,10 +1317,15 @@ describe("admin actions", () => {
       bucket: "software-releases",
       releaseId: "release-1",
       assets: {
-        macos: {
-          fileName: "GitBook AI.dmg",
+        macos_arm64: {
+          fileName: "GitBook AI arm64.dmg",
           fileSize: 50_000_000,
-          storagePath: "release-1/macos/GitBook-AI.dmg",
+          storagePath: "release-1/macos_arm64/GitBook-AI-arm64.dmg",
+        },
+        macos_x64: {
+          fileName: "GitBook AI intel.dmg",
+          fileSize: 42,
+          storagePath: "release-1/macos_x64/GitBook-AI-intel.dmg",
         },
         windows: {
           fileName: "GitBook AI.exe",
@@ -1325,8 +1339,12 @@ describe("admin actions", () => {
       created_by: "admin-1",
       delivery_mode: "file",
       is_published: false,
+      macos_arm64_backup_url: null,
+      macos_arm64_primary_url: null,
       macos_backup_url: null,
       macos_primary_url: null,
+      macos_x64_backup_url: null,
+      macos_x64_primary_url: null,
       notes: "Resumable upload",
       released_at: "2026-05-10",
       release_status: "uploading",
@@ -1342,8 +1360,10 @@ describe("admin actions", () => {
     formData.set("locale", "en");
     formData.set("version", "v1.4.0");
     formData.set("released_at", "2026-05-10");
-    formData.set("macos_file_name", "TooBig.dmg");
-    formData.set("macos_file_size", "50000001");
+    formData.set("macos_arm64_file_name", "TooBig.dmg");
+    formData.set("macos_arm64_file_size", "50000001");
+    formData.set("macos_x64_file_name", "GitBook-intel.dmg");
+    formData.set("macos_x64_file_size", "42");
     formData.set("windows_file_name", "GitBook.exe");
     formData.set("windows_file_size", "42");
 
@@ -1377,9 +1397,11 @@ describe("admin actions", () => {
       throw new Error(`Unexpected table: ${table}`);
     });
     const list = vi.fn(async (prefix: string) => ({
-      data: prefix === "release-1/macos"
-        ? [{ name: "GitBook-AI.dmg", metadata: { size: 50_000_000 } }]
-        : [{ name: "GitBook-AI.exe", metadata: { size: 42 } }],
+      data: prefix === "release-1/macos_arm64"
+        ? [{ name: "GitBook-AI-arm64.dmg", metadata: { size: 50_000_000 } }]
+        : prefix === "release-1/macos_x64"
+          ? [{ name: "GitBook-AI-intel.dmg", metadata: { size: 42 } }]
+          : [{ name: "GitBook-AI.exe", metadata: { size: 42 } }],
       error: null,
     }));
     const storageFrom = vi.fn(() => ({ list }));
@@ -1389,19 +1411,24 @@ describe("admin actions", () => {
     formData.set("locale", "en");
     formData.set("release_id", "release-1");
     formData.set("is_published", "true");
-    formData.set("macos_file_name", "GitBook AI.dmg");
-    formData.set("macos_file_size", "50000000");
-    formData.set("macos_storage_path", "release-1/macos/GitBook-AI.dmg");
+    formData.set("macos_arm64_file_name", "GitBook AI arm64.dmg");
+    formData.set("macos_arm64_file_size", "50000000");
+    formData.set("macos_arm64_storage_path", "release-1/macos_arm64/GitBook-AI-arm64.dmg");
+    formData.set("macos_x64_file_name", "GitBook AI intel.dmg");
+    formData.set("macos_x64_file_size", "42");
+    formData.set("macos_x64_storage_path", "release-1/macos_x64/GitBook-AI-intel.dmg");
     formData.set("windows_file_name", "GitBook AI.exe");
     formData.set("windows_file_size", "42");
     formData.set("windows_storage_path", "release-1/windows/GitBook-AI.exe");
 
     await expect(finalizeSoftwareReleaseUpload(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-created");
 
-    expect(list).toHaveBeenCalledWith("release-1/macos", { search: "GitBook-AI.dmg", limit: 1 });
+    expect(list).toHaveBeenCalledWith("release-1/macos_arm64", { search: "GitBook-AI-arm64.dmg", limit: 1 });
+    expect(list).toHaveBeenCalledWith("release-1/macos_x64", { search: "GitBook-AI-intel.dmg", limit: 1 });
     expect(list).toHaveBeenCalledWith("release-1/windows", { search: "GitBook-AI.exe", limit: 1 });
     expect(assetInsert).toHaveBeenCalledWith([
-      expect.objectContaining({ file_name: "GitBook AI.dmg", file_size: 50_000_000, platform: "macos" }),
+      expect.objectContaining({ file_name: "GitBook AI arm64.dmg", file_size: 50_000_000, platform: "macos_arm64" }),
+      expect.objectContaining({ file_name: "GitBook AI intel.dmg", file_size: 42, platform: "macos_x64" }),
       expect.objectContaining({ file_name: "GitBook AI.exe", file_size: 42, platform: "windows" }),
     ]);
     expect(releaseUpdate).toHaveBeenCalledWith({ is_published: true, release_status: "ready" });
@@ -1422,7 +1449,7 @@ describe("admin actions", () => {
       throw new Error(`Unexpected table: ${table}`);
     });
     const list = vi.fn(async (prefix: string) => ({
-      data: prefix === "release-1/macos"
+      data: prefix === "release-1/macos_arm64"
         ? [{ name: "TooBig.dmg", metadata: { size: 50_000_001 } }]
         : [{ name: "GitBook.exe", metadata: { size: 42 } }],
       error: null,
@@ -1432,9 +1459,12 @@ describe("admin actions", () => {
     const formData = new FormData();
     formData.set("locale", "en");
     formData.set("release_id", "release-1");
-    formData.set("macos_file_name", "TooBig.dmg");
-    formData.set("macos_file_size", "50000000");
-    formData.set("macos_storage_path", "release-1/macos/TooBig.dmg");
+    formData.set("macos_arm64_file_name", "TooBig.dmg");
+    formData.set("macos_arm64_file_size", "50000000");
+    formData.set("macos_arm64_storage_path", "release-1/macos_arm64/TooBig.dmg");
+    formData.set("macos_x64_file_name", "GitBook-intel.dmg");
+    formData.set("macos_x64_file_size", "42");
+    formData.set("macos_x64_storage_path", "release-1/macos_x64/GitBook-intel.dmg");
     formData.set("windows_file_name", "GitBook.exe");
     formData.set("windows_file_size", "42");
     formData.set("windows_storage_path", "release-1/windows/GitBook.exe");
@@ -1448,7 +1478,8 @@ describe("admin actions", () => {
         id: "release-1",
         release_status: "failed",
         software_release_assets: [
-          { storage_path: "release-1/macos/GitBook.dmg" },
+          { storage_path: "release-1/macos_arm64/GitBook.dmg" },
+          { storage_path: "release-1/macos_x64/GitBook-intel.dmg" },
           { storage_path: "release-1/windows/GitBook.exe" },
         ],
       },
@@ -1469,7 +1500,8 @@ describe("admin actions", () => {
     await expect(deleteDraftSoftwareRelease(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-deleted");
 
     expect(remove).toHaveBeenCalledWith([
-      "release-1/macos/GitBook.dmg",
+      "release-1/macos_arm64/GitBook.dmg",
+      "release-1/macos_x64/GitBook-intel.dmg",
       "release-1/windows/GitBook.exe",
     ]);
     expect(deleteEq).toHaveBeenCalledWith("id", "release-1");
@@ -1498,8 +1530,10 @@ describe("admin actions", () => {
     formData.set("version", "v1.3.0");
     formData.set("released_at", "2026-05-01");
     formData.set("delivery_mode", "link");
-    formData.set("macos_primary_url", "https://downloads.example/mac.dmg");
-    formData.set("macos_backup_url", "https://mirror.example/mac.dmg");
+    formData.set("macos_arm64_primary_url", "https://downloads.example/mac.dmg");
+    formData.set("macos_arm64_backup_url", "https://mirror.example/mac.dmg");
+    formData.set("macos_x64_primary_url", "https://downloads.example/mac-intel.dmg");
+    formData.set("macos_x64_backup_url", "https://mirror.example/mac-intel.dmg");
     formData.set("windows_primary_url", "https://downloads.example/win.exe");
     formData.set("windows_backup_url", "https://mirror.example/win.exe");
 
@@ -1507,8 +1541,12 @@ describe("admin actions", () => {
 
     expect(releaseInsert).toHaveBeenCalledWith(expect.objectContaining({
       delivery_mode: "link",
+      macos_arm64_primary_url: "https://downloads.example/mac.dmg",
+      macos_arm64_backup_url: "https://mirror.example/mac.dmg",
       macos_primary_url: "https://downloads.example/mac.dmg",
       macos_backup_url: "https://mirror.example/mac.dmg",
+      macos_x64_primary_url: "https://downloads.example/mac-intel.dmg",
+      macos_x64_backup_url: "https://mirror.example/mac-intel.dmg",
       windows_primary_url: "https://downloads.example/win.exe",
       windows_backup_url: "https://mirror.example/win.exe",
     }));
@@ -1521,8 +1559,9 @@ describe("admin actions", () => {
     formData.set("version", "v1.3.0");
     formData.set("released_at", "2026-05-01");
     formData.set("delivery_mode", "link");
-    formData.set("macos_primary_url", "https://downloads.example/mac.dmg");
-    formData.set("macos_backup_url", "https://downloads.example/mac.dmg");
+    formData.set("macos_arm64_primary_url", "https://downloads.example/mac.dmg");
+    formData.set("macos_arm64_backup_url", "https://downloads.example/mac.dmg");
+    formData.set("macos_x64_primary_url", "https://downloads.example/mac-intel.dmg");
     formData.set("windows_primary_url", "https://downloads.example/win.exe");
 
     await expect(createSoftwareRelease(formData)).rejects.toThrow("Backup URL must be different from the primary URL");

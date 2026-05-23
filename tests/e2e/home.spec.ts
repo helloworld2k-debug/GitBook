@@ -7,7 +7,8 @@ test("root redirects to the English public download page", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/en\/?$/);
   await expect(page.getByRole("heading", { name: "GitBook AI" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Download for macOS" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download for macOS M chip" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download for macOS Intel" })).toBeVisible();
 });
 
 test("localized public download pages load directly", async ({ page }) => {

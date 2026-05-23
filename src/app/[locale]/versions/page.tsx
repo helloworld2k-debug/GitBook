@@ -50,7 +50,8 @@ export default async function VersionsPage({ params }: VersionsPageProps) {
           {releases.length > 0 ? (
             <div className="mt-10 space-y-4">
               {releases.map((release) => {
-                const macDelivery = getPlatformDelivery(release, "macos");
+                const macArmDelivery = getPlatformDelivery(release, "macos_arm64");
+                const macIntelDelivery = getPlatformDelivery(release, "macos_x64");
                 const windowsDelivery = getPlatformDelivery(release, "windows");
 
                 return (
@@ -62,8 +63,10 @@ export default async function VersionsPage({ params }: VersionsPageProps) {
                         {release.notes ? <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-300">{release.notes}</p> : null}
                       </div>
                       <div className="flex flex-wrap gap-3">
-                        {macDelivery?.primaryUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/50" href={macDelivery.primaryUrl}>{t("downloadMac")} {t("releases.primaryLink")}</a> : null}
-                        {macDelivery?.backupUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-300/20 bg-slate-900/50 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/50" href={macDelivery.backupUrl}>{t("downloadMac")} {t("releases.backupLink")}</a> : null}
+                        {macArmDelivery?.primaryUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/50" href={macArmDelivery.primaryUrl}>{t("downloadMacAppleSilicon")} {t("releases.primaryLink")}</a> : null}
+                        {macArmDelivery?.backupUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-300/20 bg-slate-900/50 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/50" href={macArmDelivery.backupUrl}>{t("downloadMacAppleSilicon")} {t("releases.backupLink")}</a> : null}
+                        {macIntelDelivery?.primaryUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/50" href={macIntelDelivery.primaryUrl}>{t("downloadMacIntel")} {t("releases.primaryLink")}</a> : null}
+                        {macIntelDelivery?.backupUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-300/20 bg-slate-900/50 px-4 text-sm font-semibold text-cyan-100 transition-colors hover:border-cyan-300/50" href={macIntelDelivery.backupUrl}>{t("downloadMacIntel")} {t("releases.backupLink")}</a> : null}
                         {windowsDelivery?.primaryUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-violet-300/20 bg-violet-300/10 px-4 text-sm font-semibold text-violet-100 transition-colors hover:border-violet-300/50" href={windowsDelivery.primaryUrl}>{t("downloadWindows")} {t("releases.primaryLink")}</a> : null}
                         {windowsDelivery?.backupUrl ? <a className="inline-flex min-h-11 items-center justify-center rounded-md border border-violet-300/20 bg-slate-900/50 px-4 text-sm font-semibold text-violet-100 transition-colors hover:border-violet-300/50" href={windowsDelivery.backupUrl}>{t("downloadWindows")} {t("releases.backupLink")}</a> : null}
                       </div>

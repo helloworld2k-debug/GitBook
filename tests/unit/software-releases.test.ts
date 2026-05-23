@@ -35,10 +35,17 @@ describe("software release queries", () => {
         windows_backup_url: null,
         software_release_assets: [
           {
-            id: "asset-mac",
-            platform: "macos",
-            file_name: "GitBookAI.dmg",
-            storage_path: "release-2/macos/GitBookAI.dmg",
+            id: "asset-mac-arm",
+            platform: "macos_arm64",
+            file_name: "GitBookAI-arm64.dmg",
+            storage_path: "release-2/macos_arm64/GitBookAI-arm64.dmg",
+            file_size: 2048,
+          },
+          {
+            id: "asset-mac-intel",
+            platform: "macos_x64",
+            file_name: "GitBookAI-x64.dmg",
+            storage_path: "release-2/macos_x64/GitBookAI-x64.dmg",
             file_size: 1024,
           },
         ],
@@ -49,13 +56,18 @@ describe("software release queries", () => {
 
     expect(from).toHaveBeenCalledWith("software_releases");
     expect(limit).toHaveBeenCalledWith(1);
-    expect(getPublicUrl).toHaveBeenCalledWith("release-2/macos/GitBookAI.dmg");
+    expect(getPublicUrl).toHaveBeenCalledWith("release-2/macos_arm64/GitBookAI-arm64.dmg");
+    expect(getPublicUrl).toHaveBeenCalledWith("release-2/macos_x64/GitBookAI-x64.dmg");
     expect(release).toEqual({
       id: "release-2",
       version: "v1.2.0",
       releasedAt: "2026-04-30",
       notes: "Fast AI indexing",
       deliveryMode: "file",
+      macosArm64PrimaryUrl: null,
+      macosArm64BackupUrl: null,
+      macosX64PrimaryUrl: null,
+      macosX64BackupUrl: null,
       macosPrimaryUrl: null,
       macosBackupUrl: null,
       windowsPrimaryUrl: null,
@@ -64,12 +76,20 @@ describe("software release queries", () => {
       releaseStatus: "ready",
       assets: [
         {
-          id: "asset-mac",
-          platform: "macos",
-          fileName: "GitBookAI.dmg",
-          storagePath: "release-2/macos/GitBookAI.dmg",
+          id: "asset-mac-arm",
+          platform: "macos_arm64",
+          fileName: "GitBookAI-arm64.dmg",
+          storagePath: "release-2/macos_arm64/GitBookAI-arm64.dmg",
+          fileSize: 2048,
+          downloadUrl: "https://cdn.example/release-2/macos_arm64/GitBookAI-arm64.dmg",
+        },
+        {
+          id: "asset-mac-intel",
+          platform: "macos_x64",
+          fileName: "GitBookAI-x64.dmg",
+          storagePath: "release-2/macos_x64/GitBookAI-x64.dmg",
           fileSize: 1024,
-          downloadUrl: "https://cdn.example/release-2/macos/GitBookAI.dmg",
+          downloadUrl: "https://cdn.example/release-2/macos_x64/GitBookAI-x64.dmg",
         },
       ],
     });
@@ -109,7 +129,12 @@ describe("software release queries", () => {
     expect(releases).toHaveLength(2);
     expect(releases[0]?.version).toBe("v1.2.0");
     expect(releases[0]?.deliveryMode).toBe("link");
-    expect(getPlatformDelivery(releases[0]!, "macos")).toMatchObject({
+    expect(getPlatformDelivery(releases[0]!, "macos_arm64")).toMatchObject({
+      backupUrl: "https://mirror.example/mac-backup.dmg",
+      primaryUrl: "https://downloads.example/mac-primary.dmg",
+      source: "link",
+    });
+    expect(getPlatformDelivery(releases[0]!, "macos_x64")).toMatchObject({
       backupUrl: "https://mirror.example/mac-backup.dmg",
       primaryUrl: "https://downloads.example/mac-primary.dmg",
       source: "link",

@@ -26,7 +26,9 @@ function formatReleaseDate(value: string, locale: string) {
 }
 
 function getFallbackDownload(platform: ReleasePlatform) {
-  return platform === "macos" ? siteConfig.downloadLinks.macos : siteConfig.downloadLinks.windows;
+  if (platform === "macos_arm64") return siteConfig.downloadLinks.macosArm64;
+  if (platform === "macos_x64") return siteConfig.downloadLinks.macosX64;
+  return siteConfig.downloadLinks.windows;
 }
 
 export function generateStaticParams() {
@@ -46,7 +48,8 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
     latestRelease = null;
   }
 
-  const macDelivery = getPlatformDelivery(latestRelease, "macos");
+  const macArmDelivery = getPlatformDelivery(latestRelease, "macos_arm64");
+  const macIntelDelivery = getPlatformDelivery(latestRelease, "macos_x64");
   const windowsDelivery = getPlatformDelivery(latestRelease, "windows");
   const latestVersionLabel = latestRelease
     ? t("latestVersion", {
@@ -56,11 +59,19 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
     : t("latestVersionPending");
   const downloads = [
     {
-      label: t("downloadMac"),
-      href: macDelivery?.primaryUrl ?? getFallbackDownload("macos"),
-      backupHref: macDelivery?.backupUrl ?? null,
-      backupLabel: "macOS Backup",
-      unavailable: latestRelease ? !macDelivery?.primaryUrl : false,
+      label: t("downloadMacAppleSilicon"),
+      href: macArmDelivery?.primaryUrl ?? getFallbackDownload("macos_arm64"),
+      backupHref: macArmDelivery?.backupUrl ?? null,
+      backupLabel: "macOS M chip Backup",
+      unavailable: latestRelease ? !macArmDelivery?.primaryUrl : false,
+      className: `${downloadLinkClass} neon-button text-white`,
+    },
+    {
+      label: t("downloadMacIntel"),
+      href: macIntelDelivery?.primaryUrl ?? getFallbackDownload("macos_x64"),
+      backupHref: macIntelDelivery?.backupUrl ?? null,
+      backupLabel: "macOS Intel Backup",
+      unavailable: latestRelease ? !macIntelDelivery?.primaryUrl : false,
       className: `${downloadLinkClass} neon-button text-white`,
     },
     {

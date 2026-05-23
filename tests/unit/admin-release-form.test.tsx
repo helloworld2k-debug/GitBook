@@ -46,12 +46,15 @@ vi.mock("tus-js-client", () => ({
 const labels = {
   deliveryMode: "Delivery mode",
   deliveryModeFile: "Upload files",
-  deliveryModeFileHelp: "Upload one installer for macOS and one for Windows.",
+  deliveryModeFileHelp: "Upload installers for macOS Apple Silicon, macOS Intel, and Windows.",
   deliveryModeLink: "Use download links",
-  deliveryModeLinkHelp: "Provide primary download links for both platforms. Backup links are optional.",
-  macBackupUrl: "macOS backup URL",
-  macFile: "macOS installer",
-  macPrimaryUrl: "macOS primary URL",
+  deliveryModeLinkHelp: "Provide primary download links for each platform. Backup links are optional.",
+  macAppleSiliconBackupUrl: "macOS M chip backup URL",
+  macAppleSiliconFile: "macOS M chip installer",
+  macAppleSiliconPrimaryUrl: "macOS M chip primary URL",
+  macIntelBackupUrl: "macOS Intel backup URL",
+  macIntelFile: "macOS Intel installer",
+  macIntelPrimaryUrl: "macOS Intel primary URL",
   maxFileSizeHelp: "Max 50 MB per file. Use download links for larger installers.",
   pauseUpload: "Pause",
   retryUpload: "Retry",
@@ -82,11 +85,17 @@ describe("AdminReleaseDeliveryModeFields", () => {
       releaseId: "release-1",
       storageEndpoint: "https://project.storage.supabase.co/storage/v1/upload/resumable",
       assets: {
-        macos: {
+        macos_arm64: {
           contentType: "application/octet-stream",
-          fileName: "GitBook.dmg",
+          fileName: "GitBook-arm64.dmg",
           fileSize: 42,
-          storagePath: "release-1/macos/GitBook.dmg",
+          storagePath: "release-1/macos_arm64/GitBook-arm64.dmg",
+        },
+        macos_x64: {
+          contentType: "application/octet-stream",
+          fileName: "GitBook-x64.dmg",
+          fileSize: 42,
+          storagePath: "release-1/macos_x64/GitBook-x64.dmg",
         },
         windows: {
           contentType: "application/octet-stream",
@@ -102,10 +111,11 @@ describe("AdminReleaseDeliveryModeFields", () => {
   it("shows only upload fields when file mode is selected", () => {
     render(<AdminReleaseDeliveryModeFields labels={labels} locale="en" />);
 
-    expect(screen.getByLabelText("macOS installer")).toBeInTheDocument();
+    expect(screen.getByLabelText("macOS M chip installer")).toBeInTheDocument();
+    expect(screen.getByLabelText("macOS Intel installer")).toBeInTheDocument();
     expect(screen.getByLabelText("Windows installer")).toBeInTheDocument();
     expect(screen.getByText("Max 50 MB per file. Use download links for larger installers.")).toBeInTheDocument();
-    expect(screen.queryByLabelText("macOS primary URL")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("macOS M chip primary URL")).not.toBeInTheDocument();
   });
 
   it("shows only link fields when link mode is selected", () => {
@@ -113,8 +123,10 @@ describe("AdminReleaseDeliveryModeFields", () => {
 
     fireEvent.click(screen.getByLabelText("Use download links"));
 
-    expect(screen.queryByLabelText("macOS installer")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("macOS primary URL")).toBeInTheDocument();
+    expect(screen.queryByLabelText("macOS M chip installer")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("macOS Intel installer")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("macOS M chip primary URL")).toBeInTheDocument();
+    expect(screen.getByLabelText("macOS Intel primary URL")).toBeInTheDocument();
     expect(screen.getByLabelText("Windows backup URL")).toBeInTheDocument();
   });
 
@@ -124,7 +136,7 @@ describe("AdminReleaseDeliveryModeFields", () => {
     const oversizedFile = new File(["x"], "TooBig.dmg");
     Object.defineProperty(oversizedFile, "size", { value: 50_000_001 });
 
-    fireEvent.change(screen.getByLabelText("macOS installer"), {
+    fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
       target: { files: [oversizedFile] },
     });
 
@@ -141,8 +153,11 @@ describe("AdminReleaseDeliveryModeFields", () => {
       </form>,
     );
 
-    fireEvent.change(screen.getByLabelText("macOS installer"), {
-      target: { files: [new File(["mac"], "GitBook.dmg")] },
+    fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
+      target: { files: [new File(["mac-arm"], "GitBook-arm64.dmg")] },
+    });
+    fireEvent.change(screen.getByLabelText("macOS Intel installer"), {
+      target: { files: [new File(["mac-intel"], "GitBook-x64.dmg")] },
     });
     fireEvent.change(screen.getByLabelText("Windows installer"), {
       target: { files: [new File(["win"], "GitBook.exe")] },
@@ -150,7 +165,7 @@ describe("AdminReleaseDeliveryModeFields", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create release" }));
 
     await waitFor(() => expect(uploadMocks.prepareSoftwareReleaseUpload).toHaveBeenCalled());
-    expect(uploadMocks.start).toHaveBeenCalledTimes(2);
+    expect(uploadMocks.start).toHaveBeenCalledTimes(3);
 
     act(() => {
       latestUploadOptions[0]?.onProgress?.(25, 100);
@@ -171,15 +186,18 @@ describe("AdminReleaseDeliveryModeFields", () => {
       </form>,
     );
 
-    fireEvent.change(screen.getByLabelText("macOS installer"), {
-      target: { files: [new File(["mac"], "GitBook.dmg")] },
+    fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
+      target: { files: [new File(["mac-arm"], "GitBook-arm64.dmg")] },
+    });
+    fireEvent.change(screen.getByLabelText("macOS Intel installer"), {
+      target: { files: [new File(["mac-intel"], "GitBook-x64.dmg")] },
     });
     fireEvent.change(screen.getByLabelText("Windows installer"), {
       target: { files: [new File(["win"], "GitBook.exe")] },
     });
     fireEvent.click(screen.getByRole("button", { name: "Create release" }));
 
-    await waitFor(() => expect(uploadMocks.start).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(uploadMocks.start).toHaveBeenCalledTimes(3));
     latestUploadOptions[0]?.onSuccess?.();
 
     await waitFor(() => expect(uploadMocks.finalizeSoftwareReleaseUpload).not.toHaveBeenCalled());

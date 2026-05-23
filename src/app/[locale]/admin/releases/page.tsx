@@ -4,7 +4,7 @@ import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatu
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
-import { SOFTWARE_RELEASES_BUCKET, getPlatformDelivery, type ReleaseClient, type ReleaseDeliveryMode, type ReleasePlatform, type ReleaseStatus, type SoftwareRelease } from "@/lib/releases/software-releases";
+import { RELEASE_PLATFORMS, SOFTWARE_RELEASES_BUCKET, getPlatformDelivery, type ReleaseClient, type ReleaseDeliveryMode, type ReleasePlatform, type ReleaseStatus, type SoftwareRelease } from "@/lib/releases/software-releases";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSoftwareRelease, deleteDraftSoftwareRelease, setSoftwareReleasePublished } from "../actions";
 
@@ -50,7 +50,7 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
       .from("software_releases")
-      .select("id,version,released_at,notes,delivery_mode,macos_primary_url,macos_backup_url,windows_primary_url,windows_backup_url,is_published,release_status,software_release_assets(id,platform,file_name,storage_path,file_size)")
+      .select("id,version,released_at,notes,delivery_mode,macos_arm64_primary_url,macos_arm64_backup_url,macos_x64_primary_url,macos_x64_backup_url,macos_primary_url,macos_backup_url,windows_primary_url,windows_backup_url,is_published,release_status,software_release_assets(id,platform,file_name,storage_path,file_size)")
       .order("released_at", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -65,6 +65,10 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
       releasedAt: row.released_at,
       notes: row.notes,
       deliveryMode: row.delivery_mode as ReleaseDeliveryMode,
+      macosArm64PrimaryUrl: row.macos_arm64_primary_url,
+      macosArm64BackupUrl: row.macos_arm64_backup_url,
+      macosX64PrimaryUrl: row.macos_x64_primary_url,
+      macosX64BackupUrl: row.macos_x64_backup_url,
       macosPrimaryUrl: row.macos_primary_url,
       macosBackupUrl: row.macos_backup_url,
       windowsPrimaryUrl: row.windows_primary_url,
@@ -128,9 +132,12 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                   deliveryModeLinkHelp: t("releases.deliveryModeLinkHelp"),
                   create: t("releases.create"),
                   createLink: t("releases.createLinkRelease"),
-                  macBackupUrl: t("releases.macBackupUrl"),
-                  macFile: t("releases.macFile"),
-                  macPrimaryUrl: t("releases.macPrimaryUrl"),
+                  macAppleSiliconBackupUrl: t("releases.macAppleSiliconBackupUrl"),
+                  macAppleSiliconFile: t("releases.macAppleSiliconFile"),
+                  macAppleSiliconPrimaryUrl: t("releases.macAppleSiliconPrimaryUrl"),
+                  macIntelBackupUrl: t("releases.macIntelBackupUrl"),
+                  macIntelFile: t("releases.macIntelFile"),
+                  macIntelPrimaryUrl: t("releases.macIntelPrimaryUrl"),
                   maxFileSizeHelp: t("releases.maxFileSizeHelp"),
                   pauseUpload: t("releases.pauseUpload"),
                   retryUpload: t("releases.retryUpload"),
@@ -177,12 +184,17 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                         {release.notes ? <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">{release.notes}</p> : null}
                         <p className="mt-3 text-sm font-medium text-slate-950">{t("releases.assets")}</p>
                         <div className="mt-2 grid gap-3 md:grid-cols-2">
-                          {(["macos", "windows"] as const).map((platform) => {
+                          {RELEASE_PLATFORMS.map((platform) => {
                             const delivery = getPlatformDelivery(release, platform);
                             const asset = release.assets.find((entry) => entry.platform === platform);
+                            const platformLabel = platform === "macos_arm64"
+                              ? t("releases.macAppleSiliconFile")
+                              : platform === "macos_x64"
+                                ? t("releases.macIntelFile")
+                                : t("releases.windowsFile");
                             return (
                               <div className="rounded-md border border-slate-200 p-3" key={platform}>
-                                <p className="text-sm font-semibold text-slate-950">{platform === "macos" ? t("releases.macFile") : t("releases.windowsFile")}</p>
+                                <p className="text-sm font-semibold text-slate-950">{platformLabel}</p>
                                 <div className="mt-2 flex flex-wrap gap-2">
                                   {delivery?.source === "link" ? (
                                     <>

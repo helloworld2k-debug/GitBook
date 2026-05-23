@@ -1413,11 +1413,15 @@ export type Database = {
           created_at: string
           created_by: string | null
           delivery_mode: string
-          id: string
-          is_published: boolean
-          macos_backup_url: string | null
-          macos_primary_url: string | null
-          notes: string | null
+	          id: string
+	          is_published: boolean
+	          macos_arm64_backup_url: string | null
+	          macos_arm64_primary_url: string | null
+	          macos_backup_url: string | null
+	          macos_primary_url: string | null
+	          macos_x64_backup_url: string | null
+	          macos_x64_primary_url: string | null
+	          notes: string | null
           release_status: string
           released_at: string
           updated_at: string
@@ -1429,11 +1433,15 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           delivery_mode?: string
-          id?: string
-          is_published?: boolean
-          macos_backup_url?: string | null
-          macos_primary_url?: string | null
-          notes?: string | null
+	          id?: string
+	          is_published?: boolean
+	          macos_arm64_backup_url?: string | null
+	          macos_arm64_primary_url?: string | null
+	          macos_backup_url?: string | null
+	          macos_primary_url?: string | null
+	          macos_x64_backup_url?: string | null
+	          macos_x64_primary_url?: string | null
+	          notes?: string | null
           release_status?: string
           released_at: string
           updated_at?: string
@@ -1445,11 +1453,15 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           delivery_mode?: string
-          id?: string
-          is_published?: boolean
-          macos_backup_url?: string | null
-          macos_primary_url?: string | null
-          notes?: string | null
+	          id?: string
+	          is_published?: boolean
+	          macos_arm64_backup_url?: string | null
+	          macos_arm64_primary_url?: string | null
+	          macos_backup_url?: string | null
+	          macos_primary_url?: string | null
+	          macos_x64_backup_url?: string | null
+	          macos_x64_primary_url?: string | null
+	          notes?: string | null
           release_status?: string
           released_at?: string
           updated_at?: string
@@ -2310,7 +2322,7 @@ export type Database = {
       license_feature_code: "cloud_sync"
       notification_audience: "all" | "authenticated" | "admins"
       notification_priority: "info" | "success" | "warning" | "critical"
-      software_release_platform: "macos" | "windows"
+	      software_release_platform: "macos" | "macos_arm64" | "macos_x64" | "windows"
       support_feedback_status: "open" | "reviewing" | "closed"
     }
     CompositeTypes: {
@@ -2460,7 +2472,7 @@ export const Constants = {
       license_feature_code: ["cloud_sync"],
       notification_audience: ["all", "authenticated", "admins"],
       notification_priority: ["info", "success", "warning", "critical"],
-      software_release_platform: ["macos", "windows"],
+	      software_release_platform: ["macos", "macos_arm64", "macos_x64", "windows"],
       support_feedback_status: ["open", "reviewing", "closed"],
     },
   },

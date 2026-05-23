@@ -4,9 +4,10 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Upload } from "tus-js-client";
 import { finalizeSoftwareReleaseUpload, prepareSoftwareReleaseUpload } from "@/app/[locale]/admin/actions/releases";
 import { MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES } from "@/app/[locale]/admin/actions/validation";
+import { RELEASE_PLATFORMS, type ReleasePlatform } from "@/lib/releases/software-releases";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-type Platform = "macos" | "windows";
+type Platform = ReleasePlatform;
 type UploadStatus = "idle" | "uploading" | "paused" | "complete" | "error";
 
 type PreparedAsset = {
@@ -41,9 +42,12 @@ type AdminReleaseDeliveryModeFieldsProps = {
     deliveryModeFileHelp: string;
     deliveryModeLink: string;
     deliveryModeLinkHelp: string;
-    macBackupUrl: string;
-    macFile: string;
-    macPrimaryUrl: string;
+    macAppleSiliconBackupUrl: string;
+    macAppleSiliconFile: string;
+    macAppleSiliconPrimaryUrl: string;
+    macIntelBackupUrl: string;
+    macIntelFile: string;
+    macIntelPrimaryUrl: string;
     maxFileSizeHelp?: string;
     pauseUpload?: string;
     retryUpload?: string;
@@ -80,7 +84,8 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
   const [formError, setFormError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [uploads, setUploads] = useState<Record<Platform, PlatformUploadState>>({
-    macos: { ...emptyUploadState },
+    macos_arm64: { ...emptyUploadState },
+    macos_x64: { ...emptyUploadState },
     windows: { ...emptyUploadState },
   });
   const uploadsRef = useRef(uploads);
@@ -95,8 +100,8 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
   }
 
   const limitError = labels.uploadLimitError ?? "Installer files must be 50 MB or smaller. Use download links for larger installers.";
-  const allFilesSelected = Boolean(uploads.macos.file && uploads.windows.file);
-  const hasFileError = Boolean(uploads.macos.error || uploads.windows.error);
+  const allFilesSelected = RELEASE_PLATFORMS.every((platform) => Boolean(uploads[platform].file));
+  const hasFileError = RELEASE_PLATFORMS.some((platform) => Boolean(uploads[platform].error));
   const createLabel = labels.create ?? "Create release";
   const createLinkLabel = labels.createLink ?? createLabel;
 
@@ -247,7 +252,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
   function maybeFinalize(prepared: PreparedUpload) {
     queueMicrotask(() => {
       const current = uploadsRef.current;
-      if (current.macos.status !== "complete" || current.windows.status !== "complete") {
+      if (!RELEASE_PLATFORMS.every((platform) => current[platform].status === "complete")) {
         return;
       }
 
@@ -257,7 +262,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
       formData.set("release_id", prepared.releaseId);
       formData.set("is_published", formData.get("is_published") === "on" ? "true" : "false");
 
-      (["macos", "windows"] as const).forEach((platform) => {
+      RELEASE_PLATFORMS.forEach((platform) => {
         const file = current[platform].file;
         if (file) {
           appendMetadata(formData, platform, file, prepared.assets[platform].storagePath);
@@ -282,7 +287,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
     const formData = new FormData(form ?? undefined);
     formData.set("locale", locale);
 
-    (["macos", "windows"] as const).forEach((platform) => {
+    RELEASE_PLATFORMS.forEach((platform) => {
       const file = uploadsRef.current[platform].file;
       if (file) {
         appendMetadata(formData, platform, file);
@@ -293,8 +298,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
       try {
         const prepared = await prepareSoftwareReleaseUpload(formData);
         setPreparedUpload(prepared);
-        startUpload("macos", prepared);
-        startUpload("windows", prepared);
+        RELEASE_PLATFORMS.forEach((platform) => startUpload(platform, prepared));
       } catch (error) {
         setFormError(error instanceof Error ? error.message : "Unable to prepare release upload");
       }
@@ -382,8 +386,9 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
       {deliveryMode === "file" ? (
         <div className="grid gap-4">
           <p className="text-sm text-slate-600">{labels.maxFileSizeHelp ?? "Max 50 MB per file. Use download links for larger installers."}</p>
-          <div className="grid gap-4 md:grid-cols-2">
-            {renderUploadRow("macos", labels.macFile)}
+          <div className="grid gap-4 md:grid-cols-3">
+            {renderUploadRow("macos_arm64", labels.macAppleSiliconFile)}
+            {renderUploadRow("macos_x64", labels.macIntelFile)}
             {renderUploadRow("windows", labels.windowsFile)}
           </div>
           {formError ? <p className="text-sm font-medium text-red-700">{formError}</p> : null}
@@ -396,7 +401,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
             {isPending ? labels.uploadUploading ?? "Uploading" : createLabel}
           </button>
           <div hidden>
-            {(["macos", "windows"] as const).flatMap((platform) => {
+            {RELEASE_PLATFORMS.flatMap((platform) => {
               const state = uploads[platform];
               if (!state.file) {
                 return [];
@@ -417,12 +422,22 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
         <>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm font-medium text-slate-950">
-              {labels.macPrimaryUrl}
-              <input aria-label={labels.macPrimaryUrl} className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" name="macos_primary_url" placeholder="https://downloads.example/mac.dmg" />
+              {labels.macAppleSiliconPrimaryUrl}
+              <input aria-label={labels.macAppleSiliconPrimaryUrl} className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" name="macos_arm64_primary_url" placeholder="https://downloads.example/mac-arm64.dmg" />
             </label>
             <label className="text-sm font-medium text-slate-950">
-              {labels.macBackupUrl}
-              <input aria-label={labels.macBackupUrl} className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" name="macos_backup_url" placeholder="https://mirror.example/mac.dmg" />
+              {labels.macAppleSiliconBackupUrl}
+              <input aria-label={labels.macAppleSiliconBackupUrl} className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" name="macos_arm64_backup_url" placeholder="https://mirror.example/mac-arm64.dmg" />
+            </label>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="text-sm font-medium text-slate-950">
+              {labels.macIntelPrimaryUrl}
+              <input aria-label={labels.macIntelPrimaryUrl} className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" name="macos_x64_primary_url" placeholder="https://downloads.example/mac-intel.dmg" />
+            </label>
+            <label className="text-sm font-medium text-slate-950">
+              {labels.macIntelBackupUrl}
+              <input aria-label={labels.macIntelBackupUrl} className="mt-2 min-h-11 w-full rounded-md border border-slate-300 px-3 text-sm" name="macos_x64_backup_url" placeholder="https://mirror.example/mac-intel.dmg" />
             </label>
           </div>
           <div className="grid gap-4 md:grid-cols-2">

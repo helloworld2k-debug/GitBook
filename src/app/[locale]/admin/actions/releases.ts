@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirectWithAdminFeedback } from "@/lib/admin/feedback";
 import { requireAdmin } from "@/lib/auth/guards";
-import { SOFTWARE_RELEASES_BUCKET, type ReleasePlatform } from "@/lib/releases/software-releases";
+import { RELEASE_PLATFORMS, SOFTWARE_RELEASES_BUCKET, type ReleasePlatform } from "@/lib/releases/software-releases";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getOptionalReleaseUrl, getReleaseDate, getReleaseDeliveryMode, getReleaseFileMetadata, getReleaseNotes, getReleaseStoragePath, getRequiredReleaseUrl, getRequiredString, getSafeLocale, getUploadFile, MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES, sanitizeFileName } from "./validation";
 
@@ -67,27 +67,35 @@ export async function createSoftwareRelease(formData: FormData) {
   const notes = getReleaseNotes(formData);
   const deliveryMode = getReleaseDeliveryMode(formData);
   let files: { platform: ReleasePlatform; file: File }[] = [];
-  let macosPrimaryUrl: string | null = null;
-  let macosBackupUrl: string | null = null;
+  let macosArm64PrimaryUrl: string | null = null;
+  let macosArm64BackupUrl: string | null = null;
+  let macosX64PrimaryUrl: string | null = null;
+  let macosX64BackupUrl: string | null = null;
   let windowsPrimaryUrl: string | null = null;
   let windowsBackupUrl: string | null = null;
 
   if (deliveryMode === "file") {
-    files = [
-      { platform: "macos", file: getUploadFile(formData, "macos_file") as File },
-      { platform: "windows", file: getUploadFile(formData, "windows_file") as File },
-    ].filter((entry): entry is { platform: ReleasePlatform; file: File } => Boolean(entry.file));
+    files = RELEASE_PLATFORMS.map((platform) => ({
+      platform,
+      file: getUploadFile(formData, `${platform}_file`) as File,
+    })).filter((entry): entry is { platform: ReleasePlatform; file: File } => Boolean(entry.file));
 
-    if (files.length !== 2) {
-      throw new Error("Upload both macOS and Windows installer files");
+    if (files.length !== RELEASE_PLATFORMS.length) {
+      throw new Error("Upload macOS M chip, macOS Intel, and Windows installer files");
     }
   } else {
-    macosPrimaryUrl = getRequiredReleaseUrl(formData, "macos_primary_url");
-    macosBackupUrl = getOptionalReleaseUrl(formData, "macos_backup_url");
+    macosArm64PrimaryUrl = getRequiredReleaseUrl(formData, "macos_arm64_primary_url");
+    macosArm64BackupUrl = getOptionalReleaseUrl(formData, "macos_arm64_backup_url");
+    macosX64PrimaryUrl = getRequiredReleaseUrl(formData, "macos_x64_primary_url");
+    macosX64BackupUrl = getOptionalReleaseUrl(formData, "macos_x64_backup_url");
     windowsPrimaryUrl = getRequiredReleaseUrl(formData, "windows_primary_url");
     windowsBackupUrl = getOptionalReleaseUrl(formData, "windows_backup_url");
 
-    if (macosBackupUrl && macosBackupUrl === macosPrimaryUrl) {
+    if (macosArm64BackupUrl && macosArm64BackupUrl === macosArm64PrimaryUrl) {
+      throw new Error("Backup URL must be different from the primary URL");
+    }
+
+    if (macosX64BackupUrl && macosX64BackupUrl === macosX64PrimaryUrl) {
       throw new Error("Backup URL must be different from the primary URL");
     }
 
@@ -103,8 +111,12 @@ export async function createSoftwareRelease(formData: FormData) {
       created_by: admin.id,
       delivery_mode: deliveryMode,
       is_published: formData.get("is_published") === "on",
-      macos_backup_url: macosBackupUrl,
-      macos_primary_url: macosPrimaryUrl,
+      macos_arm64_backup_url: macosArm64BackupUrl,
+      macos_arm64_primary_url: macosArm64PrimaryUrl,
+      macos_backup_url: macosArm64BackupUrl,
+      macos_primary_url: macosArm64PrimaryUrl,
+      macos_x64_backup_url: macosX64BackupUrl,
+      macos_x64_primary_url: macosX64PrimaryUrl,
       notes,
       released_at: releasedAt,
       release_status: "ready",
@@ -180,8 +192,7 @@ export async function prepareSoftwareReleaseUpload(formData: FormData) {
   const version = getRequiredString(formData, "version", "Version is required");
   const releasedAt = getReleaseDate(formData);
   const notes = getReleaseNotes(formData);
-  const macos = getReleaseFileMetadata(formData, "macos");
-  const windows = getReleaseFileMetadata(formData, "windows");
+  const fileMetadata = Object.fromEntries(RELEASE_PLATFORMS.map((platform) => [platform, getReleaseFileMetadata(formData, platform)])) as Record<ReleasePlatform, PreparedUploadAsset>;
   const supabase = createSupabaseAdminClient();
   const { data: release, error: releaseError } = await supabase
     .from("software_releases")
@@ -189,8 +200,12 @@ export async function prepareSoftwareReleaseUpload(formData: FormData) {
       created_by: admin.id,
       delivery_mode: "file",
       is_published: false,
+      macos_arm64_backup_url: null,
+      macos_arm64_primary_url: null,
       macos_backup_url: null,
       macos_primary_url: null,
+      macos_x64_backup_url: null,
+      macos_x64_primary_url: null,
       notes,
       released_at: releasedAt,
       release_status: "uploading",
@@ -205,16 +220,15 @@ export async function prepareSoftwareReleaseUpload(formData: FormData) {
     throw new Error("Unable to prepare release upload");
   }
 
-  const assets: Record<ReleasePlatform, PreparedUploadAsset> = {
-    macos: {
-      ...macos,
-      storagePath: `${release.id}/macos/${sanitizeFileName(macos.fileName)}`,
-    },
-    windows: {
-      ...windows,
-      storagePath: `${release.id}/windows/${sanitizeFileName(windows.fileName)}`,
-    },
-  };
+  const assets = Object.fromEntries(
+    RELEASE_PLATFORMS.map((platform) => [
+      platform,
+      {
+        ...fileMetadata[platform],
+        storagePath: `${release.id}/${platform}/${sanitizeFileName(fileMetadata[platform].fileName)}`,
+      },
+    ]),
+  ) as Record<ReleasePlatform, PreparedUploadAsset>;
 
   return {
     assets,
@@ -229,7 +243,7 @@ export async function finalizeSoftwareReleaseUpload(formData: FormData) {
   await requireAdmin(locale);
   const releaseId = getRequiredString(formData, "release_id", "Release is required");
   const isPublished = String(formData.get("is_published") ?? "false") === "true";
-  const files = (["macos", "windows"] as const).map((platform) => ({
+  const files = RELEASE_PLATFORMS.map((platform) => ({
     metadata: getReleaseFileMetadata(formData, platform),
     platform,
     storagePath: getReleaseStoragePath(formData, platform),

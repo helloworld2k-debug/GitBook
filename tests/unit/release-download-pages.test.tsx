@@ -32,7 +32,8 @@ vi.mock("next-intl/server", () => ({
         eyebrow: "AI coding book tool",
         title: "GitBook AI",
         subtitle: "Download the AI-powered coding book companion.",
-        downloadMac: "Download for macOS",
+        downloadMacAppleSilicon: "Download for macOS M chip",
+        downloadMacIntel: "Download for macOS Intel",
         downloadWindows: "Download for Windows",
         latestVersion: "Latest version {version} · {date}",
         latestVersionPending: "Latest version is being prepared",
@@ -70,7 +71,8 @@ vi.mock("next-intl/server", () => ({
         title: "Older versions",
         subtitle: "Download previous builds.",
         empty: "No public releases have been published yet.",
-        downloadMac: "macOS",
+        downloadMacAppleSilicon: "macOS M chip",
+        downloadMacIntel: "macOS Intel",
         downloadWindows: "Windows",
         "releases.primaryLink": "Primary",
         "releases.backupLink": "Backup",
@@ -112,9 +114,11 @@ describe("release download pages", () => {
 
     render(await HomePage({ params: Promise.resolve({ locale: "en" }) }));
 
-    expect(screen.getByRole("link", { name: "Download for macOS" })).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
+    expect(screen.getByRole("link", { name: "Download for macOS M chip" })).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
+    expect(screen.getByRole("link", { name: "Download for macOS Intel" })).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
     expect(screen.getByRole("link", { name: "Download for Windows" })).toHaveAttribute("href", "https://downloads.example/win-primary.exe");
-    expect(screen.getByRole("link", { name: "macOS Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
+    expect(screen.getByRole("link", { name: "macOS M chip Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
+    expect(screen.getByRole("link", { name: "macOS Intel Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
     expect(screen.getByRole("link", { name: "Windows Backup" })).toHaveAttribute("href", "https://mirror.example/win-backup.exe");
   });
 
@@ -146,8 +150,10 @@ describe("release download pages", () => {
 
     render(await VersionsPage({ params: Promise.resolve({ locale: "en" }) }));
 
-    expect(screen.getByRole("link", { name: "macOS Primary" })).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
-    expect(screen.getByRole("link", { name: "macOS Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
+    expect(screen.getByRole("link", { name: "macOS M chip Primary" })).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
+    expect(screen.getByRole("link", { name: "macOS M chip Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
+    expect(screen.getByRole("link", { name: "macOS Intel Primary" })).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
+    expect(screen.getByRole("link", { name: "macOS Intel Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
     expect(screen.getByRole("link", { name: "Windows Primary" })).toHaveAttribute("href", "https://downloads.example/win-primary.exe");
   });
 });

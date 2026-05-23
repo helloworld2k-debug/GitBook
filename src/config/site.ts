@@ -10,6 +10,8 @@ export const siteConfig = {
   githubReleasesUrl: "https://github.com/helloworld2k-debug/GitBook/releases/latest",
   downloadLinks: {
     macos: "https://github.com/helloworld2k-debug/GitBook/releases/latest",
+    macosArm64: "https://github.com/helloworld2k-debug/GitBook/releases/latest",
+    macosX64: "https://github.com/helloworld2k-debug/GitBook/releases/latest",
     windows: "https://github.com/helloworld2k-debug/GitBook/releases/latest",
     linux: "https://github.com/helloworld2k-debug/GitBook/releases/latest",
   },
