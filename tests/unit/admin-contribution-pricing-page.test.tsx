@@ -309,4 +309,61 @@ describe("AdminContributionPricingPage", () => {
     expect(screen.getByDisplayValue("pdt_TestMonthly")).toBeInTheDocument();
     expect(screen.getByDisplayValue("pdt_LiveMonthly")).toBeInTheDocument();
   });
+
+  it("prefills the known live Dodo product IDs when database and env rows are empty", async () => {
+    delete process.env.DODO_PRODUCT_MONTHLY;
+    delete process.env.DODO_LIVE_PRODUCT_MONTHLY;
+    mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
+    mocks.createSupabaseServerClient.mockResolvedValue({
+      auth: {
+        getUser: async () => ({ data: { user: { id: "admin-1", email: "admin@example.com" } } }),
+      },
+      from: (table: string) => {
+        if (table === "donation_tiers") {
+          return {
+            select: () => ({
+              order: async () => ({
+                data: [
+                  {
+                    amount: 900,
+                    code: "monthly",
+                    compare_at_amount: null,
+                    currency: "usd",
+                    description: "Monthly support",
+                    id: "tier-monthly",
+                    is_active: true,
+                    label: "Monthly Support",
+                    sort_order: 1,
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          };
+        }
+
+        if (table === "payment_product_settings") {
+          return {
+            select: () => ({
+              order: async () => ({
+                data: [],
+                error: null,
+              }),
+            }),
+          };
+        }
+
+        throw new Error(`Unexpected table: ${table}`);
+      },
+    });
+
+    render(
+      await AdminContributionPricingPage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({}),
+      }),
+    );
+
+    expect(screen.getByDisplayValue("pdt_0NfSHqPkQZGNWArp4uJAF")).toBeInTheDocument();
+  });
 });

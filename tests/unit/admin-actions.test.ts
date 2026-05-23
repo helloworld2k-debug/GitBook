@@ -955,7 +955,9 @@ describe("admin actions", () => {
   });
 
   it("creates a missing support contact channel row through upsert", async () => {
-    const upsert = vi.fn(async () => ({ error: null }));
+    const upsertSingle = vi.fn(async () => ({ data: { id: "11111111-1111-1111-1111-111111111111" }, error: null }));
+    const upsertSelect = vi.fn(() => ({ single: upsertSingle }));
+    const upsert = vi.fn(() => ({ select: upsertSelect }));
     const auditInsert = vi.fn(async () => ({ error: null }));
     const selectSingle = vi.fn(async () => ({ data: null, error: null }));
     const selectEq = vi.fn(() => ({ single: selectSingle }));
@@ -1122,7 +1124,9 @@ describe("admin actions", () => {
     const eqEnvironment = vi.fn(() => ({ eq: eqTier }));
     const eqProvider = vi.fn(() => ({ eq: eqEnvironment }));
     const select = vi.fn(() => ({ eq: eqProvider }));
-    const upsert = vi.fn(async () => ({ error: null }));
+    const upsertSingle = vi.fn(async () => ({ data: { id: "11111111-1111-1111-1111-111111111111" }, error: null }));
+    const upsertSelect = vi.fn(() => ({ single: upsertSingle }));
+    const upsert = vi.fn(() => ({ select: upsertSelect }));
     const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "payment_product_settings") {
@@ -1158,9 +1162,10 @@ describe("admin actions", () => {
       }),
       { onConflict: "provider,environment,tier_code" },
     );
+    expect(upsertSelect).toHaveBeenCalledWith("id");
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
       action: "update_payment_product_setting",
-      target_id: "live-monthly",
+      target_id: "11111111-1111-1111-1111-111111111111",
       target_type: "payment_product_setting",
     }));
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/contribution-pricing");
