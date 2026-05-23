@@ -40,7 +40,7 @@ const adminLabels = {
 
 describe("AdminShell", () => {
   it("renders professional admin navigation and top-bar actions", () => {
-    render(
+    const { container } = render(
       <AdminShell adminLabel="admin@example.com" currentPath="/admin/users" labels={adminLabels} locale="en">
         <p>Admin content</p>
       </AdminShell>,
@@ -51,6 +51,8 @@ describe("AdminShell", () => {
     expect(within(sidebar).getByRole("link", { name: /Overview/ })).toHaveAttribute("href", "/admin");
     expect(within(sidebar).getByRole("link", { name: /Users/ })).toHaveAttribute("href", "/admin/users");
     expect(within(sidebar).queryByRole("link", { name: /Archived users/ })).not.toBeInTheDocument();
+    expect(within(sidebar).queryByRole("link", { name: /Certificates/ })).not.toBeInTheDocument();
+    expect(container.querySelector('a[href="/admin/certificates"]')).not.toBeInTheDocument();
     expect(within(sidebar).getByRole("link", { name: /News/ })).toHaveAttribute("href", "/admin/news");
     expect(within(sidebar).getByRole("link", { name: /Notifications/ })).toHaveAttribute("href", "/admin/notifications");
     expect(within(sidebar).getByRole("link", { name: /Policy pages/ })).toHaveAttribute("href", "/admin/policies");

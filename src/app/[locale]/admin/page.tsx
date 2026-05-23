@@ -70,11 +70,6 @@ export default async function AdminPage({ params }: AdminPageProps) {
       description: t("overview.donationsDescription"),
     },
     {
-      href: "/admin/certificates",
-      title: t("overview.certificatesTitle"),
-      description: t("overview.certificatesDescription"),
-    },
-    {
       href: "/admin/releases",
       title: t("overview.releasesTitle"),
       description: t("overview.releasesDescription"),

@@ -1,6 +1,5 @@
 import {
   ArrowLeft,
-  BadgeCheck,
   Bell,
   ClipboardList,
   CircleDollarSign,
@@ -64,7 +63,6 @@ function getAdminItems(labels: AdminShellLabels) {
     { href: "/admin", label: labels.dashboard, icon: Gauge },
     { href: "/admin/donations", label: labels.donations, icon: Gift },
     { href: "/admin/contribution-pricing", label: labels.contributionPricing, icon: CircleDollarSign },
-    { href: "/admin/certificates", label: labels.certificates, icon: BadgeCheck },
     { href: "/admin/releases", label: labels.releases, icon: Package },
     { href: "/admin/news", label: labels.news, icon: Newspaper },
     { href: "/admin/notifications", label: labels.notifications, icon: Bell },
