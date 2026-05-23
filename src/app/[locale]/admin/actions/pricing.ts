@@ -5,7 +5,7 @@ import { redirectWithAdminFeedback } from "@/lib/admin/feedback";
 import { requireAdmin } from "@/lib/auth/guards";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { insertAdminAuditLog } from "./audit";
-import { getBoundedString, getDiscountPercent, getPositiveDollarAmountInCents, getRequiredString, getSafeLocale, MAX_DONATION_TIER_DESCRIPTION_LENGTH, MAX_DONATION_TIER_LABEL_LENGTH } from "./validation";
+import { getBoundedString, getDiscountPercent, getDodoProductIdInput, getPaymentProductEnvironment, getPaymentProductTierCode, getPositiveDollarAmountInCents, getRequiredString, getSafeLocale, MAX_DONATION_TIER_DESCRIPTION_LENGTH, MAX_DONATION_TIER_LABEL_LENGTH } from "./validation";
 
 export async function updateDonationTier(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
@@ -71,6 +71,66 @@ export async function updateDonationTier(formData: FormData) {
     fallbackPath: "/admin/contribution-pricing",
     formData,
     key: "donation-tier-updated",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function updatePaymentProductSetting(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const environment = getPaymentProductEnvironment(formData);
+  const tierCode = getPaymentProductTierCode(formData);
+  const productId = getDodoProductIdInput(formData);
+  const isEnabled = formData.get("is_enabled") === "on";
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("payment_product_settings")
+    .select("product_id,is_enabled")
+    .eq("provider", "dodo")
+    .eq("environment", environment)
+    .eq("tier_code", tierCode)
+    .maybeSingle();
+  const next = {
+    environment,
+    is_enabled: isEnabled,
+    product_id: productId,
+    provider: "dodo",
+    tier_code: tierCode,
+    updated_at: new Date().toISOString(),
+    updated_by: admin.id,
+  };
+  const { error } = await supabase
+    .from("payment_product_settings")
+    .upsert(next, { onConflict: "provider,environment,tier_code" });
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/contribution-pricing",
+      formData,
+      key: "payment-product-update-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "update_payment_product_setting",
+    adminUserId: admin.id,
+    after: next,
+    before: before ?? null,
+    reason: `Updated Dodo ${environment} product ${tierCode}`,
+    targetId: `${environment}-${tierCode}`,
+    targetType: "payment_product_setting",
+  });
+
+  revalidatePath(`/${locale}/contributions`);
+  revalidatePath(`/${locale}/admin/contribution-pricing`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/contribution-pricing",
+    formData,
+    key: "payment-product-updated",
     locale,
     tone: "notice",
   });

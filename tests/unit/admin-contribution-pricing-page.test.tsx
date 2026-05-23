@@ -38,6 +38,16 @@ vi.mock("next-intl/server", () => ({
       "admin.contributionPricing.tierStatusHelp": "Inactive tiers are hidden from the Contributions page.",
       "admin.contributionPricing.save": "Save tier",
       "admin.contributionPricing.tierSaved": "Tier saved",
+      "admin.contributionPricing.paymentSettingsTitle": "Dodo payment product IDs",
+      "admin.contributionPricing.paymentSettingsDescription": "Save test and live Dodo product IDs without redeploying.",
+      "admin.contributionPricing.paymentEnvironmentTest": "Test mode",
+      "admin.contributionPricing.paymentEnvironmentLive": "Live mode",
+      "admin.contributionPricing.paymentProductId": "Product ID",
+      "admin.contributionPricing.paymentProductHelp": "Use the Dodo product ID for this tier and mode.",
+      "admin.contributionPricing.paymentProductEnabled": "Enabled",
+      "admin.contributionPricing.paymentProductDisabled": "Disabled",
+      "admin.contributionPricing.paymentProductSaved": "Product ID saved",
+      "admin.contributionPricing.saveProduct": "Save product ID",
       "admin.shell.backToAdmin": "Back to admin",
       "admin.shell.dashboard": "Overview",
       "admin.shell.donations": "Donations",
@@ -102,6 +112,30 @@ describe("AdminContributionPricingPage", () => {
           };
         }
 
+        if (table === "payment_product_settings") {
+          return {
+            select: () => ({
+              order: async () => ({
+                data: [
+                  {
+                    environment: "test",
+                    is_enabled: true,
+                    product_id: "pdt_test_monthly",
+                    tier_code: "monthly",
+                  },
+                  {
+                    environment: "live",
+                    is_enabled: true,
+                    product_id: "pdt_LiveMonthly",
+                    tier_code: "monthly",
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          };
+        }
+
         throw new Error(`Unexpected table: ${table}`);
       },
     });
@@ -124,6 +158,12 @@ describe("AdminContributionPricingPage", () => {
     const tierForm = screen.getByDisplayValue("Monthly Support").closest("form");
     expect(tierForm).toHaveClass("sm:grid-cols-2", "xl:grid-cols-12");
     expect(tierForm?.className).not.toContain("lg:grid-cols-[minmax(0,0.8fr)");
+    expect(screen.getByText("Dodo payment product IDs")).toBeInTheDocument();
+    expect(screen.getByText("Test mode")).toBeInTheDocument();
+    expect(screen.getByText("Live mode")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("pdt_test_monthly")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("pdt_LiveMonthly")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Save product ID" }).length).toBeGreaterThan(0);
   });
 
   it("renders donation tiers when the original price column has not been migrated yet", async () => {
@@ -160,6 +200,17 @@ describe("AdminContributionPricingPage", () => {
       from: (table: string) => {
         if (table === "donation_tiers") {
           return { select: tierSelect };
+        }
+
+        if (table === "payment_product_settings") {
+          return {
+            select: () => ({
+              order: async () => ({
+                data: [],
+                error: null,
+              }),
+            }),
+          };
         }
 
         throw new Error(`Unexpected table: ${table}`);

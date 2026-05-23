@@ -1037,7 +1037,22 @@
       "tierInactive": "停用",
       "tierStatusHelp": "停用的方案會從開發支持頁面隱藏。",
       "save": "儲存方案",
-      "tierSaved": "方案已儲存"
+      "tierSaved": "方案已儲存",
+      "paymentSettingsTitle": "Dodo 支付產品 ID",
+      "paymentSettingsDescription": "在後台儲存測試與真實 Dodo 產品 ID，不需要重新部署。正式前台結帳會使用真實產品 ID。",
+      "paymentEnvironmentTest": "測試模式",
+      "paymentEnvironmentLive": "真實模式",
+      "paymentProductId": "產品 ID",
+      "paymentProductHelp": "填入此方案與模式對應的 Dodo 產品 ID。",
+      "paymentProductEnabled": "啟用",
+      "paymentProductDisabled": "停用",
+      "paymentProductSaved": "產品 ID 已儲存",
+      "saveProduct": "儲存產品 ID",
+      "paymentTier": {
+        "monthly": "月度",
+        "quarterly": "季度",
+        "yearly": "年度"
+      }
     },
     "policies": {
       "eyebrow": "Admin",

@@ -1509,6 +1509,50 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_product_settings: {
+        Row: {
+          created_at: string
+          environment: string
+          id: string
+          is_enabled: boolean
+          product_id: string
+          provider: string
+          tier_code: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          environment: string
+          id?: string
+          is_enabled?: boolean
+          product_id: string
+          provider?: string
+          tier_code: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          id?: string
+          is_enabled?: boolean
+          product_id?: string
+          provider?: string
+          tier_code?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_product_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_contact_channels: {
         Row: {
           created_at: string

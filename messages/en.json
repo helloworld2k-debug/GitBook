@@ -1187,7 +1187,22 @@
       "tierInactive": "Inactive",
       "tierStatusHelp": "Inactive tiers are hidden from the Development Support page.",
       "save": "Save tier",
-      "tierSaved": "Tier saved"
+      "tierSaved": "Tier saved",
+      "paymentSettingsTitle": "Dodo payment product IDs",
+      "paymentSettingsDescription": "Save test and live Dodo product IDs without redeploying. Public production checkout uses live product IDs.",
+      "paymentEnvironmentTest": "Test mode",
+      "paymentEnvironmentLive": "Live mode",
+      "paymentProductId": "Product ID",
+      "paymentProductHelp": "Use the Dodo product ID for this tier and mode.",
+      "paymentProductEnabled": "Enabled",
+      "paymentProductDisabled": "Disabled",
+      "paymentProductSaved": "Product ID saved",
+      "saveProduct": "Save product ID",
+      "paymentTier": {
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "yearly": "Yearly"
+      }
     },
     "registrationSecurity": {
       "activeBlocks": "Active blocks",

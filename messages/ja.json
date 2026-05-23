@@ -1037,7 +1037,22 @@
       "tierInactive": "無効",
       "tierStatusHelp": "無効なプランは Contributions ページで非表示になります。",
       "save": "プランを保存",
-      "tierSaved": "プランを保存しました"
+      "tierSaved": "プランを保存しました",
+      "paymentSettingsTitle": "Dodo 決済商品 ID",
+      "paymentSettingsDescription": "テスト用と本番用の Dodo 商品 ID を管理画面で保存します。本番の公開チェックアウトは本番商品 ID を使用します。",
+      "paymentEnvironmentTest": "テストモード",
+      "paymentEnvironmentLive": "本番モード",
+      "paymentProductId": "商品 ID",
+      "paymentProductHelp": "このプランとモードに対応する Dodo 商品 ID を入力します。",
+      "paymentProductEnabled": "有効",
+      "paymentProductDisabled": "無効",
+      "paymentProductSaved": "商品 ID を保存しました",
+      "saveProduct": "商品 ID を保存",
+      "paymentTier": {
+        "monthly": "月額",
+        "quarterly": "四半期",
+        "yearly": "年額"
+      }
     },
     "policies": {
       "eyebrow": "Admin",

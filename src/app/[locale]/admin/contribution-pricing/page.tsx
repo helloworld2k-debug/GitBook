@@ -5,7 +5,17 @@ import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { getManageableDonationTiers } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { updateDonationTier } from "../actions";
+import { updateDonationTier, updatePaymentProductSetting } from "../actions";
+
+type PaymentProductEnvironment = "test" | "live";
+type PaymentProductTierCode = "monthly" | "quarterly" | "yearly";
+
+type PaymentProductSettingRow = {
+  environment: PaymentProductEnvironment;
+  is_enabled: boolean;
+  product_id: string;
+  tier_code: PaymentProductTierCode;
+};
 
 type AdminContributionPricingPageProps = {
   params: Promise<{ locale: string }>;
@@ -26,6 +36,27 @@ function getDiscountPercent(amount: number, compareAtAmount: number | null) {
   return Math.round((1 - amount / compareAtAmount) * 100);
 }
 
+async function getPaymentProductSettings(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>) {
+  try {
+    const { data } = await supabase
+      .from("payment_product_settings")
+      .select("environment,tier_code,product_id,is_enabled")
+      .order("environment", { ascending: true });
+
+    return (data ?? []) as PaymentProductSettingRow[];
+  } catch {
+    return [];
+  }
+}
+
+function findPaymentProductSetting(
+  rows: PaymentProductSettingRow[],
+  environment: PaymentProductEnvironment,
+  tierCode: PaymentProductTierCode,
+) {
+  return rows.find((row) => row.environment === environment && row.tier_code === tierCode);
+}
+
 export default async function AdminContributionPricingPage({ params, searchParams }: AdminContributionPricingPageProps) {
   const { locale: localeParam } = await params;
   const feedback = await searchParams;
@@ -35,6 +66,9 @@ export default async function AdminContributionPricingPage({ params, searchParam
   const shellProps = await getAdminShellProps(locale, "/admin/contribution-pricing");
   const supabase = await createSupabaseServerClient();
   const donationTierRows = await getManageableDonationTiers(supabase);
+  const paymentProductRows = await getPaymentProductSettings(supabase);
+  const paymentEnvironments: PaymentProductEnvironment[] = ["test", "live"];
+  const paymentTierCodes: PaymentProductTierCode[] = ["monthly", "quarterly", "yearly"];
 
   return (
     <AdminShell {...shellProps}>
@@ -125,6 +159,70 @@ export default async function AdminContributionPricingPage({ params, searchParam
                   </div>
                 </div>
               </form>
+            ))}
+          </div>
+        </AdminCard>
+
+        <AdminCard className="mt-6 overflow-hidden">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h2 className="text-base font-semibold text-slate-950">{t("contributionPricing.paymentSettingsTitle")}</h2>
+            <p className="mt-2 text-sm text-slate-600">{t("contributionPricing.paymentSettingsDescription")}</p>
+          </div>
+          <div className="grid gap-5 bg-slate-50/60 p-4 sm:p-5 lg:grid-cols-2">
+            {paymentEnvironments.map((environment) => (
+              <section className="rounded-md border border-slate-200 bg-white shadow-sm" key={environment}>
+                <div className="border-b border-slate-200 px-4 py-3">
+                  <h3 className="text-sm font-semibold text-slate-950">
+                    {environment === "live" ? t("contributionPricing.paymentEnvironmentLive") : t("contributionPricing.paymentEnvironmentTest")}
+                  </h3>
+                </div>
+                <div className="divide-y divide-slate-200">
+                  {paymentTierCodes.map((tierCode) => {
+                    const setting = findPaymentProductSetting(paymentProductRows, environment, tierCode);
+                    const channel = `${environment}-${tierCode}`;
+
+                    return (
+                      <form action={updatePaymentProductSetting} className="grid gap-4 px-4 py-4 md:grid-cols-[minmax(7rem,0.8fr)_minmax(12rem,1.4fr)_minmax(8rem,120px)_minmax(9rem,150px)]" key={channel}>
+                        <input name="locale" type="hidden" value={locale} />
+                        <input name="return_to" type="hidden" value={`/admin/contribution-pricing?channel=${channel}`} />
+                        <input name="environment" type="hidden" value={environment} />
+                        <input name="tier_code" type="hidden" value={tierCode} />
+                        <label className="grid min-w-0 gap-1 text-sm font-medium text-slate-700">
+                          {t("contributionPricing.tierLabel")}
+                          <input className="min-h-11 min-w-0 rounded-md border border-slate-300 bg-slate-50 px-3 text-sm" readOnly value={t(`contributionPricing.paymentTier.${tierCode}`)} />
+                        </label>
+                        <label className="grid min-w-0 gap-1 text-sm font-medium text-slate-700">
+                          {t("contributionPricing.paymentProductId")}
+                          <input className="min-h-11 min-w-0 rounded-md border border-slate-300 px-3 font-mono text-sm" defaultValue={setting?.product_id ?? ""} name="product_id" placeholder="pdt_..." required />
+                          <span className="text-xs leading-5 text-slate-500">{t("contributionPricing.paymentProductHelp")}</span>
+                        </label>
+                        <label className="grid min-w-0 gap-1 text-sm font-medium text-slate-700">
+                          {t("contributionPricing.status")}
+                          <span className="inline-flex min-h-11 items-center justify-between gap-3 rounded-md border border-slate-300 px-3">
+                            <span className="text-sm text-slate-700">{setting?.is_enabled !== false ? t("contributionPricing.paymentProductEnabled") : t("contributionPricing.paymentProductDisabled")}</span>
+                            <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${setting?.is_enabled !== false ? "bg-slate-950" : "bg-slate-300"}`}>
+                              <span className={`absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform ${setting?.is_enabled !== false ? "translate-x-5" : "translate-x-0"}`} />
+                              <input className="absolute inset-0 cursor-pointer opacity-0" defaultChecked={setting?.is_enabled !== false} name="is_enabled" type="checkbox" />
+                            </span>
+                          </span>
+                        </label>
+                        <div className="flex min-w-0 items-end">
+                          <div className="flex w-full flex-col gap-2">
+                            <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800" pendingLabel={t("common.saving")}>
+                              {t("contributionPricing.saveProduct")}
+                            </AdminSubmitButton>
+                            {feedback?.notice === "payment-product-updated" && feedback?.channel === channel ? (
+                              <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                                <p className="font-semibold">{t("contributionPricing.paymentProductSaved")}</p>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </form>
+                    );
+                  })}
+                </div>
+              </section>
             ))}
           </div>
         </AdminCard>

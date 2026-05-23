@@ -3,7 +3,7 @@ import { generateCertificatesForDonation } from "@/lib/certificates/service";
 import { buildDonationRecord } from "@/lib/donations/record";
 import type { Json } from "@/lib/database.types";
 import { extendCloudSyncEntitlementForDonation } from "@/lib/license/entitlements";
-import { getDodoProductId, verifyDodoWebhook } from "@/lib/payments/dodo";
+import { getDodoProductId, type PaymentProductSettingsClient, verifyDodoWebhook } from "@/lib/payments/dodo";
 import { findDonationTier } from "@/lib/payments/tier";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     const amount = getNumber(data.total_amount) ?? getNumber(data.amount);
     const currency = getString(data.currency)?.toLowerCase() ?? null;
     const productId = getProductId(data);
-    const expectedProductId = donationTier ? getDodoProductId(donationTier.code) : null;
+    const expectedProductId = donationTier ? await getDodoProductId(donationTier.code, { client: supabase as unknown as PaymentProductSettingsClient }) : null;
     const expectedAmount = getPositiveIntegerString(metadata.amount) ?? donationTier?.amount ?? null;
     const expectedCurrency = getString(metadata.currency)?.toLowerCase() ?? donationTier?.currency.toLowerCase() ?? null;
     const shouldValidateAmount = Boolean(currency && expectedCurrency && currency === expectedCurrency);
