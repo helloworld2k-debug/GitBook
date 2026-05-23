@@ -167,14 +167,28 @@ export default async function AdminContributionPricingPage({ params, searchParam
           <div className="border-b border-slate-200 px-5 py-4">
             <h2 className="text-base font-semibold text-slate-950">{t("contributionPricing.paymentSettingsTitle")}</h2>
             <p className="mt-2 text-sm text-slate-600">{t("contributionPricing.paymentSettingsDescription")}</p>
+            <div className="mt-4 rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3">
+              <p className="text-sm font-semibold text-cyan-950">{t("contributionPricing.paymentSettingsRuntimeTitle")}</p>
+              <p className="mt-1 text-sm leading-6 text-cyan-900">{t("contributionPricing.paymentSettingsRuntimeBody")}</p>
+            </div>
           </div>
-          <div className="grid gap-5 bg-slate-50/60 p-4 sm:p-5 lg:grid-cols-2">
+          <div className="grid gap-5 bg-slate-50/60 p-4 sm:p-5">
             {paymentEnvironments.map((environment) => (
               <section className="rounded-md border border-slate-200 bg-white shadow-sm" key={environment}>
-                <div className="border-b border-slate-200 px-4 py-3">
-                  <h3 className="text-sm font-semibold text-slate-950">
-                    {environment === "live" ? t("contributionPricing.paymentEnvironmentLive") : t("contributionPricing.paymentEnvironmentTest")}
-                  </h3>
+                <div className="border-b border-slate-200 px-4 py-4 sm:px-5">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-950">
+                        {environment === "live" ? t("contributionPricing.paymentEnvironmentLive") : t("contributionPricing.paymentEnvironmentTest")}
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        {environment === "live" ? t("contributionPricing.paymentEnvironmentLiveHelp") : t("contributionPricing.paymentEnvironmentTestHelp")}
+                      </p>
+                    </div>
+                    <span className={`inline-flex w-fit rounded-md px-2.5 py-1 text-xs font-semibold ${environment === "live" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>
+                      {environment === "live" ? "LIVE" : "TEST"}
+                    </span>
+                  </div>
                 </div>
                 <div className="divide-y divide-slate-200">
                   {paymentTierCodes.map((tierCode) => {
@@ -182,7 +196,11 @@ export default async function AdminContributionPricingPage({ params, searchParam
                     const channel = `${environment}-${tierCode}`;
 
                     return (
-                      <form action={updatePaymentProductSetting} className="grid gap-4 px-4 py-4 md:grid-cols-[minmax(7rem,0.8fr)_minmax(12rem,1.4fr)_minmax(8rem,120px)_minmax(9rem,150px)]" key={channel}>
+                      <form
+                        action={updatePaymentProductSetting}
+                        className="grid grid-cols-1 gap-4 px-4 py-4 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(8rem,0.75fr)_minmax(20rem,1.7fr)_minmax(10rem,180px)_minmax(9rem,170px)]"
+                        key={channel}
+                      >
                         <input name="locale" type="hidden" value={locale} />
                         <input name="return_to" type="hidden" value={`/admin/contribution-pricing?channel=${channel}`} />
                         <input name="environment" type="hidden" value={environment} />
@@ -206,8 +224,8 @@ export default async function AdminContributionPricingPage({ params, searchParam
                             </span>
                           </span>
                         </label>
-                        <div className="flex min-w-0 items-end">
-                          <div className="flex w-full flex-col gap-2">
+                        <div className="flex min-w-0 items-end md:col-span-2 xl:col-span-1 xl:justify-end">
+                          <div className="flex w-full flex-col gap-2 sm:max-w-48">
                             <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800" pendingLabel={t("common.saving")}>
                               {t("contributionPricing.saveProduct")}
                             </AdminSubmitButton>
