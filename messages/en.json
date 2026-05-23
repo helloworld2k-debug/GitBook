@@ -17,6 +17,7 @@
     "title": "Sign in to your AI workspace",
     "subtitle": "Use email and password, or a trusted OAuth provider, to continue to downloads, development support, certificates, and your dashboard.",
     "privacyNote": "Your account keeps support records, certificates, and dashboard settings tied to you.",
+    "adminAccessNotice": "Use an administrator account to access the admin console.",
     "formTitle": "Email and password",
     "signInTab": "Sign in",
     "registerTab": "Register",
@@ -349,6 +350,7 @@
     },
     "welcomeVerified": "Your email has been verified and your account is ready.",
     "welcomeUnverified": "Welcome! Your account is ready. Verify your email to enable full account security.",
+    "adminForbidden": "This account does not have admin access. Switch to an administrator account or contact the site owner.",
     "passwordUnverified": "Please verify your email before changing your password. Check your inbox for the verification email."
   },
   "admin": {

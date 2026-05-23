@@ -31,6 +31,10 @@ function getPasswordResetCallbackUrl(locale: string) {
   return callbackUrl.toString();
 }
 
+function isLocaleAdminPath(path: string, locale: string) {
+  return path === `/${locale}/admin` || path.startsWith(`/${locale}/admin/`);
+}
+
 export default async function LoginPage({ params, searchParams }: LoginPageProps) {
   const { locale: localeParam } = await params;
   const locale = resolvePageLocale(localeParam);
@@ -38,6 +42,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
   const query = await searchParams;
   const t = await getTranslations("login");
   const nextPath = sanitizeNextPath(query.next, getLocaleDashboardPath(locale));
+  const isAdminLogin = isLocaleAdminPath(nextPath, locale);
   const providerNames = {
     github: t("github"),
     google: t("google"),
@@ -128,6 +133,14 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
                 role="status"
               >
                 {t("passwordResetComplete")}
+              </p>
+            ) : null}
+            {isAdminLogin ? (
+              <p
+                className="mb-3 rounded-md border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-sm text-amber-100"
+                role="status"
+              >
+                {t("adminAccessNotice")}
               </p>
             ) : null}
             <LoginForm

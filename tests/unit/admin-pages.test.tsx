@@ -344,6 +344,7 @@ const testMessages = {
         allFeedback: "All feedback",
         unread: "Unread",
         unreadFeedback: "Unread feedback",
+        confirmChange: "Change feedback status from {old} to {new}?",
         statuses: {
           open: "Open",
           reviewing: "Reviewing",

@@ -1,6 +1,5 @@
 "use client";
 
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AdminStatusBadge } from "@/components/admin/admin-shell";
@@ -8,6 +7,17 @@ import { SupportFeedbackStatusForm } from "@/components/admin/support-feedback-s
 import { updateSupportFeedbackStatus } from "../actions";
 
 type FeedbackStatus = "open" | "reviewing" | "closed";
+
+export type SupportFeedbackTableRowLabels = {
+  closed: string;
+  confirmChange: string;
+  open: string;
+  reviewing: string;
+  save: string;
+  saving: string;
+  unread: string;
+  view: string;
+};
 
 type SupportFeedbackTableRowProps = {
   children?: ReactNode;
@@ -17,12 +27,13 @@ type SupportFeedbackTableRowProps = {
   feedbackId: string;
   initialStatus: FeedbackStatus;
   isUnread: boolean;
+  labels: SupportFeedbackTableRowLabels;
   locale: string;
   message: string;
   subject: string;
 };
 
-export async function SupportFeedbackTableRow({
+export function SupportFeedbackTableRow({
   children,
   contact,
   createdAt,
@@ -30,21 +41,11 @@ export async function SupportFeedbackTableRow({
   feedbackId,
   initialStatus,
   isUnread,
+  labels,
   locale,
   message,
   subject,
 }: SupportFeedbackTableRowProps) {
-  const t = await getTranslations("admin");
-
-  const labels = {
-    open: t("supportFeedback.statuses.open"),
-    reviewing: t("supportFeedback.statuses.reviewing"),
-    closed: t("supportFeedback.statuses.closed"),
-    save: t("supportFeedback.save"),
-    saving: t("common.saving"),
-    confirmChange: t("supportFeedback.confirmChange"),
-  };
-
   function statusTone(status: FeedbackStatus) {
     if (status === "closed") return "success";
     if (status === "reviewing") return "warning";
@@ -61,7 +62,7 @@ export async function SupportFeedbackTableRow({
       <td className="whitespace-nowrap px-5 py-4">
         {isUnread ? (
           <span className="inline-flex min-h-7 items-center rounded-md border border-rose-200 bg-rose-50 px-2 text-xs font-semibold text-rose-700">
-            {t("supportFeedback.unread")}
+            {labels.unread}
           </span>
         ) : (
           <span className="text-xs text-slate-400">-</span>
@@ -96,7 +97,7 @@ export async function SupportFeedbackTableRow({
           </div>
         </SupportFeedbackStatusForm>
         <Link className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700" href={`/admin/support-feedback/${feedbackId}`}>
-          {t("supportFeedback.view")}
+          {labels.view}
         </Link>
       </td>
     </tr>

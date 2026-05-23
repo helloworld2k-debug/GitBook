@@ -109,13 +109,13 @@ describe("auth guards", () => {
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
-  it("redirects non-admin users to the locale dashboard", async () => {
+  it("redirects non-admin users to the locale dashboard with an admin access notice", async () => {
     createSupabaseServerClientMock
       .mockResolvedValueOnce(createAuthClient({ id: "user-1" }))
       .mockResolvedValueOnce(createProfileClient({ is_admin: false, admin_role: "user", account_status: "active" }));
 
-    await expect(requireAdmin("ko")).rejects.toThrow("redirect:/ko/dashboard");
-    expect(redirectMock).toHaveBeenCalledWith("/ko/dashboard");
+    await expect(requireAdmin("ko")).rejects.toThrow("redirect:/ko/dashboard?admin=forbidden");
+    expect(redirectMock).toHaveBeenCalledWith("/ko/dashboard?admin=forbidden");
   });
 
   it("preserves the requested admin page when redirecting anonymous admins to login", async () => {

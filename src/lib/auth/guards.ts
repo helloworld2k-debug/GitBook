@@ -37,6 +37,10 @@ export function getLoginRedirectPath(locale: Locale | string, nextPath: string) 
   return `/${locale}/login?next=${encodeURIComponent(nextPath)}`;
 }
 
+export function getAdminForbiddenRedirectPath(locale: Locale | string) {
+  return `/${locale}/dashboard?admin=forbidden`;
+}
+
 export function isAdminProfile(profile: AdminLike) {
   const accountStatus = profile?.account_status ?? "active";
   return accountStatus === "active" && (profile?.is_admin === true || profile?.admin_role === "owner" || profile?.admin_role === "operator");
@@ -82,7 +86,7 @@ export async function requireOperator(locale: Locale | string, nextPath?: string
     admin_role: profile?.admin_role as AdminRole | null,
     account_status: profile?.account_status as AccountStatus | null,
   })) {
-    redirect(`/${locale}/dashboard`);
+    redirect(getAdminForbiddenRedirectPath(locale));
   }
 
   return user;

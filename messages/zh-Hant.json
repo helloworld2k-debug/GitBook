@@ -17,6 +17,7 @@
     "title": "登入你的 AI 工作區",
     "subtitle": "使用電子郵件與密碼，或透過可信任的 OAuth 服務商繼續下載、開發支持、證書與儀表板流程。",
     "privacyNote": "你的帳戶用於保存開發支持記錄、證書與儀表板設定。",
+    "adminAccessNotice": "請使用管理員帳號登入以存取後台系統。",
     "formTitle": "電子郵件與密碼",
     "signInTab": "登入",
     "registerTab": "註冊",
@@ -337,6 +338,7 @@
     },
     "welcomeVerified": "您的電子郵件已驗證，帳號已準備就緒。",
     "welcomeUnverified": "歡迎！您的帳號已準備就緒。請驗證您的電子郵件以啟用完整的帳號安全功能。",
+    "adminForbidden": "目前帳號沒有後台存取權限。請切換到管理員帳號，或聯絡站點負責人。",
     "passwordUnverified": "修改密碼前請先驗證您的電子郵件。請檢查收件匣中的驗證郵件。"
   },
   "admin": {

@@ -18,6 +18,7 @@ type DashboardPageProps = {
     locale: string;
   }>;
   searchParams?: Promise<{
+    admin?: string;
     payment?: string;
     profile?: string;
     password?: string;
@@ -72,6 +73,7 @@ function DashboardCard({ children, className = "" }: { children: React.ReactNode
 export default async function DashboardPage({ params, searchParams }: DashboardPageProps) {
   const { locale: localeParam } = await params;
   const statusParams = await searchParams;
+  const adminStatus = statusParams?.admin;
   const paymentStatus = statusParams?.payment;
   const profileStatus = statusParams?.profile;
   const passwordStatus = statusParams?.password;
@@ -224,6 +226,9 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                       ) : null}
                       {welcomeStatus === "unverified" ? (
                         <FormStatusBanner message={t("welcomeUnverified")} tone="warning" />
+                      ) : null}
+                      {adminStatus === "forbidden" ? (
+                        <FormStatusBanner message={t("adminForbidden")} tone="warning" />
                       ) : null}
                       {paymentStatus === "dodo-success" ? (
                         <FormStatusBanner message="Your contribution was received. We are preparing your certificate and access updates." />

@@ -58,6 +58,16 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, "/admin/support-feedback");
   const supabase = await createSupabaseServerClient();
+  const tableRowLabels = {
+    open: t("supportFeedback.statuses.open"),
+    reviewing: t("supportFeedback.statuses.reviewing"),
+    closed: t("supportFeedback.statuses.closed"),
+    save: t("supportFeedback.save"),
+    saving: t("common.saving"),
+    confirmChange: t("supportFeedback.confirmChange"),
+    unread: t("supportFeedback.unread"),
+    view: t("supportFeedback.view"),
+  };
 
   const queryParam = feedbackState?.query;
   let query = supabase
@@ -237,6 +247,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
                       feedbackId={item.id}
                       initialStatus={item.status as FeedbackStatus}
                       isUnread={item.isUnread}
+                      labels={tableRowLabels}
                       locale={locale}
                       message={item.message}
                       subject={item.subject}

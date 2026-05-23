@@ -46,6 +46,7 @@ vi.mock("next-intl/server", () => ({
         accessNotActive: "No active cloud sync access yet",
         accessValidUntil: "Valid until",
         accountTitle: "Account profile",
+        adminForbidden: "This account does not have admin access. Switch to an administrator account or contact the site owner.",
         amount: "Amount",
         certificateNumber: "Certificate number",
         certificates: "Active certificates",
@@ -329,6 +330,47 @@ describe("dashboard page", () => {
         .some((status) =>
           status.textContent?.includes(
             "Your contribution was received. We are preparing your certificate and access updates.",
+          ),
+        ),
+    ).toBe(true);
+  });
+
+  it("shows an admin access warning after a non-admin visits an admin page", async () => {
+    const emptyQuery = createThenableQuery({ data: [], error: null });
+    const countQuery = createThenableQuery({ count: 0, error: null });
+    const profileQuery = createThenableQuery({
+      data: {
+        display_name: "Ada Lovelace",
+        email: "ada@example.com",
+      },
+      error: null,
+    });
+    const entitlementQuery = createThenableQuery({ data: null, error: null });
+    const trialQuery = createThenableQuery({ data: null, error: null });
+    const tableQueues = {
+      certificates: [countQuery],
+      donations: [countQuery, emptyQuery],
+      license_entitlements: [entitlementQuery],
+      profiles: [profileQuery],
+      trial_code_redemptions: [trialQuery],
+    };
+    const from = vi.fn((table: keyof typeof tableQueues) => tableQueues[table].shift());
+
+    mocks.createSupabaseServerClient.mockResolvedValue({ from });
+
+    render(
+      await DashboardPage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({ admin: "forbidden" }),
+      }),
+    );
+
+    expect(
+      screen
+        .getAllByRole("status")
+        .some((status) =>
+          status.textContent?.includes(
+            "This account does not have admin access. Switch to an administrator account or contact the site owner.",
           ),
         ),
     ).toBe(true);

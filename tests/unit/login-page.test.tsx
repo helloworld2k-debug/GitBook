@@ -18,6 +18,7 @@ vi.mock("@/app/[locale]/login/login-form", () => ({
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (key: string, values?: Record<string, string>) => {
     const messages: Record<string, string> = {
+      adminAccessNotice: "Use an administrator account to access the admin console.",
       callbackError: "The sign-in link could not be verified.",
       confirmPassword: "Confirm password",
       confirmPasswordPlaceholder: "Repeat your password",
@@ -152,5 +153,16 @@ describe("LoginPage", () => {
     render(page);
 
     expect(screen.getByRole("status")).toHaveTextContent("Password updated. You can now sign in.");
+  });
+
+  it("shows an admin account notice when an admin URL sends the user to login", async () => {
+    const page = await LoginPage({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ next: "/en/admin/support-feedback" }),
+    });
+
+    render(page);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Use an administrator account to access the admin console.");
   });
 });
