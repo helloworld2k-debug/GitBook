@@ -80,6 +80,26 @@ describe("AdminShell", () => {
 
     expect(screen.getAllByLabelText("3 feedback threads need follow-up").length).toBeGreaterThan(0);
   });
+
+  it("keeps admin chrome fixed while the content pane owns page scrolling", () => {
+    render(
+      <AdminShell adminLabel="admin@example.com" currentPath="/admin/users" labels={adminLabels} locale="en">
+        <p>Admin content</p>
+      </AdminShell>,
+    );
+
+    const shell = screen.getByTestId("admin-shell");
+    const sidebar = screen.getByLabelText("Admin sidebar");
+    const header = screen.getByRole("banner", { name: "Admin top bar" });
+    const content = screen.getByRole("main", { name: "Admin content" });
+    const mobileNav = screen.getByRole("navigation", { name: "Admin mobile" });
+
+    expect(shell).toHaveClass("h-dvh", "overflow-hidden");
+    expect(sidebar).toHaveClass("sticky", "top-0", "h-dvh", "overflow-y-auto");
+    expect(header).toHaveClass("sticky", "top-0", "shrink-0");
+    expect(content).toHaveClass("min-h-0", "flex-1", "overflow-y-auto", "overscroll-contain");
+    expect(mobileNav).toHaveClass("max-h-[calc(100dvh-5rem)]", "overflow-y-auto");
+  });
 });
 
 describe("AdminPageHeader", () => {

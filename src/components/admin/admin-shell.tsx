@@ -130,9 +130,12 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
   const items = getAdminItems(labels);
 
   return (
-    <main className="min-h-dvh overflow-x-hidden bg-slate-100 text-slate-950">
-      <div className="mx-auto flex min-h-dvh w-full max-w-[1800px]">
-        <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-white lg:block" aria-label="Admin sidebar">
+    <div className="h-dvh overflow-hidden bg-slate-100 text-slate-950" data-testid="admin-shell">
+      <div className="mx-auto flex h-full w-full max-w-[1800px]">
+        <aside
+          className="sticky top-0 hidden h-dvh w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white lg:block"
+          aria-label="Admin sidebar"
+        >
           <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-5">
             <span className="flex size-10 items-center justify-center rounded-md bg-slate-950 text-sm font-semibold text-white">AI</span>
             <div>
@@ -149,8 +152,8 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
             />
           </nav>
         </aside>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <header aria-label="Admin top bar" className="sticky top-0 z-30 shrink-0 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
             <div className="flex min-h-16 flex-col items-stretch gap-3 px-4 py-3 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <details className="group relative lg:hidden">
@@ -162,7 +165,7 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
                   </summary>
                   <nav
                     aria-label="Admin mobile"
-                    className="absolute left-0 top-12 z-50 w-[min(82vw,20rem)] space-y-1 rounded-md border border-slate-200 bg-white p-2 shadow-xl"
+                    className="absolute left-0 top-12 z-50 max-h-[calc(100dvh-5rem)] w-[min(82vw,20rem)] space-y-1 overflow-y-auto rounded-md border border-slate-200 bg-white p-2 shadow-xl"
                   >
                     <AdminNavList
                       currentPath={currentPath}
@@ -198,10 +201,15 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
               </div>
             </div>
           </header>
-          <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+          <main
+            aria-label="Admin content"
+            className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 lg:px-8"
+          >
+            {children}
+          </main>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
