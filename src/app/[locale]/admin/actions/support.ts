@@ -7,6 +7,9 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { insertAdminAuditLog } from "./audit";
 import { feedbackStatuses, getBoundedString, getPositiveInteger, getRequiredString, getSafeLocale, getSupportContactChannelId, MAX_NOTIFICATION_BODY_LENGTH, validateSupportContactValue } from "./validation";
 
+const paymentMaintenanceTargetId = "22222222-2222-2222-2222-222222222222";
+const maxPaymentMaintenanceMessageLength = 280;
+
 export async function updateSupportContactChannel(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);
@@ -65,6 +68,65 @@ export async function updateSupportContactChannel(formData: FormData) {
     fallbackPath: "/admin/support-settings",
     formData,
     key: "support-contact-updated",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function updatePaymentCheckoutMaintenance(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const isPaused = formData.get("is_paused") === "on";
+  const message = getBoundedString(
+    formData,
+    "message",
+    "Maintenance message",
+    maxPaymentMaintenanceMessageLength,
+  );
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("operational_settings")
+    .select("value")
+    .eq("key", "payment_checkout")
+    .maybeSingle();
+  const next = {
+    is_paused: isPaused,
+    message,
+  };
+  const { error } = await supabase.from("operational_settings").upsert({
+    key: "payment_checkout",
+    updated_at: new Date().toISOString(),
+    updated_by: admin.id,
+    value: next,
+  }, { onConflict: "key" });
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/support-settings",
+      formData,
+      key: "payment-maintenance-update-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "update_payment_checkout_maintenance",
+    adminUserId: admin.id,
+    after: next,
+    before: before ?? null,
+    reason: isPaused ? "Paused new payment checkout sessions" : "Resumed new payment checkout sessions",
+    targetId: paymentMaintenanceTargetId,
+    targetType: "operational_setting",
+  });
+
+  revalidatePath(`/${locale}/contributions`);
+  revalidatePath(`/${locale}/admin/support-settings`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/support-settings",
+    formData,
+    key: "payment-maintenance-updated",
     locale,
     tone: "notice",
   });

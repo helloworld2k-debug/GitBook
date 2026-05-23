@@ -7,9 +7,21 @@ vi.mock("@/components/site-header", () => ({
 }));
 
 vi.mock("@/components/donation-tier-card", () => ({
-  DonationTierCard: ({ isAuthenticated, label, tier }: { isAuthenticated: boolean; label: string; tier: { amount: number; compareAtAmount: number | null } }) => (
+  DonationTierCard: ({
+    isAuthenticated,
+    isPaymentPaused,
+    label,
+    paymentMaintenanceMessage,
+    tier,
+  }: {
+    isAuthenticated: boolean;
+    isPaymentPaused?: boolean;
+    label: string;
+    paymentMaintenanceMessage?: string | null;
+    tier: { amount: number; compareAtAmount: number | null };
+  }) => (
     <div>
-      {label} {tier.amount} {tier.compareAtAmount ?? "no-original"} {isAuthenticated ? "authenticated" : "anonymous"}
+      {label} {tier.amount} {tier.compareAtAmount ?? "no-original"} {isAuthenticated ? "authenticated" : "anonymous"} {isPaymentPaused ? `paused:${paymentMaintenanceMessage}` : "available"}
     </div>
   ),
 }));
@@ -38,6 +50,8 @@ vi.mock("next-intl/server", () => ({
       "tiers.yearly": "Yearly Support",
       oneTimeNote: "One-time support.",
       paymentNote: "Secure checkout with Dodo Payments.",
+      paymentMaintenanceTitle: "Checkout temporarily paused",
+      paymentMaintenanceMessage: "Checkout is temporarily paused while we investigate a payment issue. Existing payments will continue to be processed.",
       cancelled: "Checkout was cancelled. You can review the support tiers and try again when ready.",
     };
 
@@ -99,7 +113,7 @@ describe("ContributionsPage", () => {
       }),
     );
 
-    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Monthly Support 900 no-original anonymous available")).toBeInTheDocument();
   });
 
   it("passes signed-in auth state to contribution cards", async () => {
@@ -138,7 +152,68 @@ describe("ContributionsPage", () => {
       }),
     );
 
-    expect(screen.getByText("Quarterly Support 2430 2700 authenticated")).toBeInTheDocument();
+    expect(screen.getByText("Quarterly Support 2430 2700 authenticated available")).toBeInTheDocument();
+  });
+
+  it("passes payment maintenance state to the contribution cards and shows a page notice", async () => {
+    mocks.createSupabaseServerClient.mockResolvedValueOnce({
+      auth: {
+        getUser: async () => ({ data: { user: { id: "user-1" } } }),
+      },
+      from: (table: string) => {
+        if (table === "operational_settings") {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: {
+                    value: {
+                      is_paused: true,
+                      message: "Checkout is paused for emergency maintenance.",
+                    },
+                  },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+
+        return {
+          select: () => ({
+            eq: () => ({
+              order: async () => ({
+                data: [
+                  {
+                    amount: 900,
+                    code: "monthly",
+                    compare_at_amount: null,
+                    currency: "usd",
+                    description: "Monthly support",
+                    id: "tier-monthly",
+                    label: "Monthly Support",
+                    sort_order: 1,
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          }),
+        };
+      },
+    });
+
+    render(
+      await ContributionsPage({
+        params: Promise.resolve({ locale: "en" }),
+      } as {
+        params: Promise<{ locale: string }>;
+      }),
+    );
+
+    expect(screen.getByText("Checkout temporarily paused")).toBeInTheDocument();
+    expect(screen.getByText("Checkout is paused for emergency maintenance.")).toBeInTheDocument();
+    expect(screen.getByText("Monthly Support 900 no-original authenticated paused:Checkout is paused for emergency maintenance.")).toBeInTheDocument();
   });
 
   it("treats slow auth lookup as anonymous so payment buttons do not appear while signed out is shown", async () => {
@@ -180,7 +255,7 @@ describe("ContributionsPage", () => {
 
     render(await page);
 
-    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Monthly Support 900 no-original anonymous available")).toBeInTheDocument();
     vi.useRealTimers();
   });
 
@@ -228,7 +303,7 @@ describe("ContributionsPage", () => {
       }),
     );
 
-    expect(screen.getByText("Yearly Support 8640 10800 anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Yearly Support 8640 10800 anonymous available")).toBeInTheDocument();
   });
 
   it("renders configured tiers when the production database query fails", async () => {
@@ -256,9 +331,9 @@ describe("ContributionsPage", () => {
       }),
     );
 
-    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
-    expect(screen.getByText("Quarterly Support 2430 2700 anonymous")).toBeInTheDocument();
-    expect(screen.getByText("Yearly Support 8640 10800 anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Monthly Support 900 no-original anonymous available")).toBeInTheDocument();
+    expect(screen.getByText("Quarterly Support 2430 2700 anonymous available")).toBeInTheDocument();
+    expect(screen.getByText("Yearly Support 8640 10800 anonymous available")).toBeInTheDocument();
   });
 
   it("renders configured tiers when auth lookup fails", async () => {
@@ -288,7 +363,7 @@ describe("ContributionsPage", () => {
       }),
     );
 
-    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Monthly Support 900 no-original anonymous available")).toBeInTheDocument();
   });
 
   it("renders configured tiers when Supabase throws during tier query construction", async () => {
@@ -309,9 +384,9 @@ describe("ContributionsPage", () => {
       }),
     );
 
-    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
-    expect(screen.getByText("Quarterly Support 2430 2700 anonymous")).toBeInTheDocument();
-    expect(screen.getByText("Yearly Support 8640 10800 anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Monthly Support 900 no-original anonymous available")).toBeInTheDocument();
+    expect(screen.getByText("Quarterly Support 2430 2700 anonymous available")).toBeInTheDocument();
+    expect(screen.getByText("Yearly Support 8640 10800 anonymous available")).toBeInTheDocument();
   });
 
   it("renders configured tiers when Supabase server configuration is missing", async () => {
@@ -327,8 +402,8 @@ describe("ContributionsPage", () => {
       }),
     );
 
-    expect(screen.getByText("Monthly Support 900 no-original anonymous")).toBeInTheDocument();
-    expect(screen.getByText("Quarterly Support 2430 2700 anonymous")).toBeInTheDocument();
-    expect(screen.getByText("Yearly Support 8640 10800 anonymous")).toBeInTheDocument();
+    expect(screen.getByText("Monthly Support 900 no-original anonymous available")).toBeInTheDocument();
+    expect(screen.getByText("Quarterly Support 2430 2700 anonymous available")).toBeInTheDocument();
+    expect(screen.getByText("Yearly Support 8640 10800 anonymous available")).toBeInTheDocument();
   });
 });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api/responses";
 import { validateRequestOrigin } from "@/lib/auth/csrf";
 import { getActionLocale } from "@/lib/i18n/action-locale";
+import { defaultPaymentMaintenanceMessage, getPaymentCheckoutStatus, type PaymentCheckoutStatusClient } from "@/lib/payments/maintenance";
 import { createDodoCheckoutSession, getDodoProductId, type PaymentProductSettingsClient } from "@/lib/payments/dodo";
 import { findActiveDonationTier } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -29,6 +30,11 @@ export async function POST(request: Request) {
   const checkoutStartedAt = new Date().toISOString();
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
+  const paymentCheckoutStatus = await getPaymentCheckoutStatus(supabase as unknown as PaymentCheckoutStatusClient);
+
+  if (paymentCheckoutStatus.isPaused) {
+    return jsonError(paymentCheckoutStatus.message ?? defaultPaymentMaintenanceMessage, 503);
+  }
 
   if (!data.user) {
     return NextResponse.redirect(`${origin}/${locale}/login?next=${encodeURIComponent(`/${locale}/contributions`)}`, 303);

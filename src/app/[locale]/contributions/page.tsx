@@ -6,6 +6,7 @@ import { donationTiers, supportedLocales } from "@/config/site";
 import { optionalTimeout } from "@/lib/async/optional-timeout";
 import { getLoginRedirectPath } from "@/lib/auth/guards";
 import { resolvePageLocale } from "@/lib/i18n/page-locale";
+import { defaultPaymentMaintenanceMessage, getPaymentCheckoutStatus, type PaymentCheckoutStatusClient } from "@/lib/payments/maintenance";
 import { getActiveDonationTiers } from "@/lib/payments/tier";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -27,17 +28,19 @@ export default async function ContributionsPage({ params }: ContributionsPagePro
   const fallbackTiers = donationTiers.map((tier, index) => ({ ...tier, sortOrder: index + 1 }));
   const supabase = await createSupabaseServerClient().catch(() => null);
 
-  const [tiersResult, authResult] = supabase
+  const [tiersResult, authResult, paymentCheckoutStatus] = supabase
     ? await Promise.all([
         getActiveDonationTiers(supabase),
         optionalTimeout(supabase.auth.getUser(), 900).catch(() => null),
+        getPaymentCheckoutStatus(supabase as unknown as PaymentCheckoutStatusClient),
       ])
-    : [fallbackTiers, null];
+    : [fallbackTiers, null, { isPaused: false, message: null }];
 
   const tiers = tiersResult;
   const user = authResult?.data.user ?? null;
   const isAuthenticated = Boolean(user);
   const loginHref = getLoginRedirectPath(locale, `/${locale}/contributions`);
+  const paymentMaintenanceMessage = paymentCheckoutStatus.message ?? defaultPaymentMaintenanceMessage;
 
   return (
     <>
@@ -52,18 +55,26 @@ export default async function ContributionsPage({ params }: ContributionsPagePro
             <Suspense fallback={null}>
               <PaymentStatusBanner message={t("cancelled")} />
             </Suspense>
+            {paymentCheckoutStatus.isPaused ? (
+              <div className="mt-5 rounded-md border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-amber-50">
+                <p className="text-sm font-semibold">{t("paymentMaintenanceTitle")}</p>
+                <p className="mt-1 text-sm leading-6 text-amber-100">{paymentMaintenanceMessage}</p>
+              </div>
+            ) : null}
           </div>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {tiers.map((tier) => (
               <DonationTierCard
                 checkoutDodoLabel={t("checkoutDodo")}
                 isAuthenticated={isAuthenticated}
+                isPaymentPaused={paymentCheckoutStatus.isPaused}
                 key={tier.code}
                 label={t(`tiers.${tier.code}`)}
                 loginHref={loginHref}
                 loginLabel={t("loginToContribute")}
                 locale={locale}
                 oneTimeNote={t("oneTimeNote")}
+                paymentMaintenanceMessage={paymentMaintenanceMessage}
                 paymentNote={t("paymentNote")}
                 redirectingLabel={t("redirecting")}
                 tier={tier}

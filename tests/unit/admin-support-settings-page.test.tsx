@@ -42,6 +42,14 @@ vi.mock("next-intl/server", () => ({
       "admin.supportSettings.valueHintEmail": "Use the public mailbox users should email for support",
       "admin.supportSettings.previewTitle": "Channel settings",
       "admin.supportSettings.previewDescription": "Edit each support channel below.",
+      "admin.supportSettings.paymentMaintenanceTitle": "Payment maintenance",
+      "admin.supportSettings.paymentMaintenanceDescription": "Pause new checkout sessions without changing live or test payment credentials.",
+      "admin.supportSettings.paymentMaintenanceStatus": "Checkout status",
+      "admin.supportSettings.paymentMaintenanceAvailable": "Accepting payments",
+      "admin.supportSettings.paymentMaintenancePaused": "Paused",
+      "admin.supportSettings.paymentMaintenanceMessage": "Maintenance message",
+      "admin.supportSettings.paymentMaintenanceMessageHelp": "Shown to visitors while checkout is paused.",
+      "admin.supportSettings.paymentMaintenanceSave": "Save payment status",
       "admin.supportSettings.publicPreviewTitle": "Public preview",
       "admin.supportSettings.publicPreviewDescription": "This is how the enabled support channels will appear to visitors on the Support page.",
       "admin.supportSettings.rowSaved": "Saved",
@@ -98,6 +106,24 @@ describe("AdminSupportSettingsPage", () => {
           };
         }
 
+        if (table === "operational_settings") {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: {
+                    value: {
+                      is_paused: true,
+                      message: "Checkout is paused while we investigate a payment issue.",
+                    },
+                  },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+
         throw new Error(`Unexpected table: ${table}`);
       },
     });
@@ -119,6 +145,9 @@ describe("AdminSupportSettingsPage", () => {
     expect(screen.queryByDisplayValue("Monthly Support")).not.toBeInTheDocument();
     expect(screen.getByText("This is the public support mailbox shown on the Support page.")).toBeInTheDocument();
     expect(screen.getByText("This is how the enabled support channels will appear to visitors on the Support page.")).toBeInTheDocument();
+    expect(screen.getByText("Payment maintenance")).toBeInTheDocument();
+    expect(screen.getByText("Paused")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Checkout is paused while we investigate a payment issue.")).toBeInTheDocument();
   });
 
   it("opens with default settings when support settings tables are temporarily unavailable", async () => {

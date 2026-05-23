@@ -21,6 +21,7 @@ import {
   updateDonationTier,
   updatePaymentProductSetting,
   updateSupportContactChannel,
+  updatePaymentCheckoutMaintenance,
   updateTrialCode,
   updateUserAccountStatus,
   updateUserAdminRole,
@@ -1004,6 +1005,57 @@ describe("admin actions", () => {
 
     await expect(updateSupportContactChannel(formData)).rejects.toThrow("Enter a valid URL");
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
+  });
+
+  it("updates payment checkout maintenance and redirects with a success notice", async () => {
+    const upsert = vi.fn(async () => ({ error: null }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const selectSingle = vi.fn(async () => ({
+      data: {
+        value: {
+          is_paused: false,
+          message: null,
+        },
+      },
+      error: null,
+    }));
+    const selectEq = vi.fn(() => ({ maybeSingle: selectSingle }));
+    const select = vi.fn(() => ({ eq: selectEq }));
+    const from = vi.fn((table: string) => {
+      if (table === "operational_settings") {
+        return { select, upsert };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("return_to", "/admin/support-settings");
+    formData.set("is_paused", "on");
+    formData.set("message", "Checkout is paused while we investigate a payment issue.");
+
+    await expect(updatePaymentCheckoutMaintenance(formData)).rejects.toThrow("redirect:/en/admin/support-settings?notice=payment-maintenance-updated");
+
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      key: "payment_checkout",
+      updated_by: "admin-1",
+      value: {
+        is_paused: true,
+        message: "Checkout is paused while we investigate a payment issue.",
+      },
+    }), { onConflict: "key" });
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "update_payment_checkout_maintenance",
+      target_type: "operational_setting",
+    }));
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/contributions");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/support-settings");
   });
 
   it("updates a development support tier and audits the change", async () => {

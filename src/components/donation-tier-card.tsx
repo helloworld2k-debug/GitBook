@@ -6,11 +6,13 @@ import type { DonationTier } from "@/lib/payments/tier";
 type DonationTierCardProps = {
   checkoutDodoLabel: string;
   isAuthenticated: boolean;
+  isPaymentPaused?: boolean;
   label: string;
   loginHref: string;
   loginLabel: string;
   locale: string;
   oneTimeNote: string;
+  paymentMaintenanceMessage?: string | null;
   paymentNote: string;
   redirectingLabel?: string;
   tier: DonationTier;
@@ -19,11 +21,13 @@ type DonationTierCardProps = {
 export function DonationTierCard({
   checkoutDodoLabel,
   isAuthenticated,
+  isPaymentPaused = false,
   label,
   loginHref,
   loginLabel,
   locale,
   oneTimeNote,
+  paymentMaintenanceMessage,
   paymentNote,
   redirectingLabel = "Opening secure checkout...",
   tier,
@@ -60,7 +64,11 @@ export function DonationTierCard({
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-300">{oneTimeNote}</p>
       <div className="mt-6 grid gap-2">
-        {isAuthenticated ? (
+        {isPaymentPaused ? (
+          <p className="rounded-md border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-sm leading-6 text-amber-100" role="status">
+            {paymentMaintenanceMessage}
+          </p>
+        ) : isAuthenticated ? (
           <form
             action="/api/checkout/dodo"
             method="post"

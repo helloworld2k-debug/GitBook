@@ -3,6 +3,7 @@ import { POST } from "@/app/api/checkout/dodo/route";
 
 const mocks = vi.hoisted(() => ({
   createCheckoutSession: vi.fn(),
+  getPaymentCheckoutStatus: vi.fn(),
   getUser: vi.fn(),
   from: vi.fn(),
 }));
@@ -19,6 +20,10 @@ vi.mock("@/lib/payments/dodo", () => ({
       quarterly: process.env.DODO_PRODUCT_QUARTERLY,
       yearly: process.env.DODO_PAYMENTS_ENV === "live" ? process.env.DODO_LIVE_PRODUCT_YEARLY : process.env.DODO_PRODUCT_YEARLY,
     })[tierCode] ?? null,
+}));
+
+vi.mock("@/lib/payments/maintenance", () => ({
+  getPaymentCheckoutStatus: mocks.getPaymentCheckoutStatus,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -40,6 +45,8 @@ describe("Dodo checkout route", () => {
     process.env.DODO_LIVE_PRODUCT_YEARLY = "pdt_live_yearly";
     mocks.createCheckoutSession.mockReset();
     mocks.createCheckoutSession.mockResolvedValue({ checkout_url: "https://checkout.dodopayments.test/session" });
+    mocks.getPaymentCheckoutStatus.mockReset();
+    mocks.getPaymentCheckoutStatus.mockResolvedValue({ isPaused: false, message: null });
     const order = vi.fn(async () => ({
       data: [
         {
@@ -146,6 +153,27 @@ describe("Dodo checkout route", () => {
     expect(response.headers.get("location")).toBe(
       "https://gitbookai.example/zh-Hant/login?next=%2Fzh-Hant%2Fcontributions",
     );
+    expect(mocks.createCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it("rejects new checkout sessions while payments are paused", async () => {
+    mocks.getPaymentCheckoutStatus.mockResolvedValueOnce({
+      isPaused: true,
+      message: "Checkout is temporarily paused.",
+    });
+    const formData = new FormData();
+    formData.set("tier", "yearly");
+    formData.set("locale", "en");
+
+    const response = await POST(
+      new Request("https://gitbookai.example/api/checkout/dodo", {
+        body: formData,
+        method: "POST",
+      }),
+    );
+
+    await expect(response.json()).resolves.toEqual({ error: "Checkout is temporarily paused." });
+    expect(response.status).toBe(503);
     expect(mocks.createCheckoutSession).not.toHaveBeenCalled();
   });
 });

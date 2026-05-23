@@ -70,6 +70,28 @@ describe("DonationTierCard", () => {
     expect(document.querySelector('form[action="/api/checkout/dodo"]')).not.toBeInTheDocument();
   });
 
+  it("shows payment maintenance copy instead of checkout actions while paused", () => {
+    render(
+      <DonationTierCard
+        checkoutDodoLabel="Contribute now"
+        isAuthenticated
+        isPaymentPaused
+        label="Monthly"
+        loginHref="/en/login?next=%2Fen%2Fcontributions"
+        loginLabel="Sign in to contribute"
+        locale="en"
+        oneTimeNote="One-time support"
+        paymentMaintenanceMessage="Checkout is temporarily paused while we investigate a payment issue."
+        paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
+        tier={donationTiers[0]}
+      />,
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("Checkout is temporarily paused while we investigate a payment issue.");
+    expect(screen.queryByRole("button", { name: "Contribute now" })).not.toBeInTheDocument();
+    expect(document.querySelector('form[action="/api/checkout/dodo"]')).not.toBeInTheDocument();
+  });
+
   it("shows checkout redirect feedback after an authenticated supporter submits", () => {
     render(
       <DonationTierCard
