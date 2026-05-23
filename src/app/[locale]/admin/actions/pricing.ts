@@ -100,9 +100,11 @@ export async function updatePaymentProductSetting(formData: FormData) {
     updated_at: new Date().toISOString(),
     updated_by: admin.id,
   };
-  const { error } = await supabase
+  const { data: savedSetting, error } = await supabase
     .from("payment_product_settings")
-    .upsert(next, { onConflict: "provider,environment,tier_code" });
+    .upsert(next, { onConflict: "provider,environment,tier_code" })
+    .select("id")
+    .single();
 
   if (error) {
     redirectWithAdminFeedback({
@@ -120,7 +122,7 @@ export async function updatePaymentProductSetting(formData: FormData) {
     after: next,
     before: before ?? null,
     reason: `Updated Dodo ${environment} product ${tierCode}`,
-    targetId: `${environment}-${tierCode}`,
+    targetId: savedSetting.id,
     targetType: "payment_product_setting",
   });
 

@@ -17,6 +17,19 @@ type PaymentProductSettingRow = {
   tier_code: PaymentProductTierCode;
 };
 
+const defaultDodoProductIds: Record<PaymentProductEnvironment, Record<PaymentProductTierCode, string>> = {
+  test: {
+    monthly: "pdt_0Ne1tWOH7HdGEH1kyyAKx",
+    quarterly: "pdt_0Ne1tebquro8ZGf0Chqjv",
+    yearly: "pdt_0Ne1tm1B9YujqPv0e9QOI",
+  },
+  live: {
+    monthly: "pdt_0NfSHqPkQZGNWArp4uJAF",
+    quarterly: "pdt_0NfSHxjFX1RpH7lW8fk6k",
+    yearly: "pdt_0NfSI4XGVWDVQ4Kt08DEz",
+  },
+};
+
 type AdminContributionPricingPageProps = {
   params: Promise<{ locale: string }>;
   searchParams?: Promise<{ channel?: string; error?: string; notice?: string }>;
@@ -70,7 +83,7 @@ function getPaymentProductEnvFallback(environment: PaymentProductEnvironment, ti
   };
   const envName = environment === "live" ? liveEnvByTier[tierCode] : envByTier[tierCode];
 
-  return process.env[envName] ?? "";
+  return process.env[envName] ?? defaultDodoProductIds[environment][tierCode];
 }
 
 export default async function AdminContributionPricingPage({ params, searchParams }: AdminContributionPricingPageProps) {
