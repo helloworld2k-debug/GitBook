@@ -39,9 +39,13 @@ vi.mock("next-intl/server", () => ({
       "admin.contributionPricing.save": "Save tier",
       "admin.contributionPricing.tierSaved": "Tier saved",
       "admin.contributionPricing.paymentSettingsTitle": "Dodo payment product IDs",
-      "admin.contributionPricing.paymentSettingsDescription": "Save test and live Dodo product IDs without redeploying.",
+      "admin.contributionPricing.paymentSettingsDescription": "Save test and live Dodo product IDs without redeploying. Enabling both is normal: the app chooses one environment at runtime.",
+      "admin.contributionPricing.paymentSettingsRuntimeTitle": "How checkout chooses a mode",
+      "admin.contributionPricing.paymentSettingsRuntimeBody": "Production checkout uses live IDs when DODO_PAYMENTS_ENV is live. Test checkout uses test IDs only when the app is running in test mode.",
       "admin.contributionPricing.paymentEnvironmentTest": "Test mode",
       "admin.contributionPricing.paymentEnvironmentLive": "Live mode",
+      "admin.contributionPricing.paymentEnvironmentTestHelp": "Use these IDs for local or preview testing.",
+      "admin.contributionPricing.paymentEnvironmentLiveHelp": "Use these IDs for real customer payments.",
       "admin.contributionPricing.paymentProductId": "Product ID",
       "admin.contributionPricing.paymentProductHelp": "Use the Dodo product ID for this tier and mode.",
       "admin.contributionPricing.paymentProductEnabled": "Enabled",
@@ -159,11 +163,23 @@ describe("AdminContributionPricingPage", () => {
     expect(tierForm).toHaveClass("sm:grid-cols-2", "xl:grid-cols-12");
     expect(tierForm?.className).not.toContain("lg:grid-cols-[minmax(0,0.8fr)");
     expect(screen.getByText("Dodo payment product IDs")).toBeInTheDocument();
+    expect(screen.getByText("How checkout chooses a mode")).toBeInTheDocument();
     expect(screen.getByText("Test mode")).toBeInTheDocument();
     expect(screen.getByText("Live mode")).toBeInTheDocument();
+    expect(screen.getByText("Use these IDs for local or preview testing.")).toBeInTheDocument();
+    expect(screen.getByText("Use these IDs for real customer payments.")).toBeInTheDocument();
     expect(screen.getByDisplayValue("pdt_test_monthly")).toBeInTheDocument();
     expect(screen.getByDisplayValue("pdt_LiveMonthly")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Save product ID" }).length).toBeGreaterThan(0);
+
+    const paymentSection = screen.getByText("Dodo payment product IDs").closest("section");
+    expect(paymentSection).toHaveClass("overflow-hidden");
+    expect(paymentSection?.querySelector(".lg\\:grid-cols-2")).toBeNull();
+
+    const productInput = screen.getByDisplayValue("pdt_LiveMonthly");
+    const productForm = productInput.closest("form");
+    expect(productForm).toHaveClass("grid-cols-1", "xl:grid-cols-[minmax(8rem,0.75fr)_minmax(20rem,1.7fr)_minmax(10rem,180px)_minmax(9rem,170px)]");
+    expect(productForm?.querySelector("button")?.parentElement?.parentElement).toHaveClass("xl:justify-end");
   });
 
   it("renders donation tiers when the original price column has not been migrated yet", async () => {
