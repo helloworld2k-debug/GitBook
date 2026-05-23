@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import AdminPage from "@/app/[locale]/admin/page";
 import AdminAuditLogsPage from "@/app/[locale]/admin/audit-logs/page";
@@ -371,6 +371,10 @@ const testMessages = {
         trialDays: "Trial days",
         fixedPaidDurationsHelp: "Monthly codes use a fixed 30-day duration. Quarterly uses 90 days; yearly uses 365 days.",
         label: "Batch name",
+        issueCodes: "Issue codes",
+        findMaintainCodes: "Find and maintain codes",
+        redemptionHealth: "Redemption health",
+        usageAccess: "Usage and access",
         batchGenerateTitle: "Batch generate license codes",
         batchGenerateDescription: "Generate trial, monthly, quarterly, or yearly license codes.",
         generateBatch: "Generate codes",
@@ -550,6 +554,9 @@ const testMessages = {
         bulkSoftDeleteSelected: "Bulk soft delete selected users",
         bulkArchiveDelete: "Bulk archive delete",
         bulkArchiveDeleteSelected: "Bulk archive delete selected users",
+        changeStatusToActive: "Enable account",
+        changeStatusToDeleted: "Mark deleted",
+        changeStatusToDisabled: "Disable account",
         clearSelection: "Clear selection",
         bulkEnableConfirm: "Confirm enabling {n} users?",
         bulkDisableConfirm: "Confirm disabling {n} users?",
@@ -1695,7 +1702,7 @@ describe("admin pages", () => {
     expect(screen.getAllByText("203.0.113.10").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Taobao May monthly").length).toBeGreaterThan(0);
     expect(screen.getAllByText("1MAB-****-****-MNOP").length).toBeGreaterThan(0);
-    expect(screen.getByText("1 of 1 codes shown")).toBeInTheDocument();
+    expect(screen.getAllByText("1 of 1 codes shown").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: "Reveal" }).length).toBeGreaterThan(0);
     expect(screen.getByText("Edit code")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete code" })).toBeInTheDocument();
@@ -1706,6 +1713,10 @@ describe("admin pages", () => {
     expect(screen.getAllByRole("table", { name: "License codes" })).toHaveLength(1);
     expect(screen.getAllByTestId("admin-table-shell")[0]).toHaveClass("overflow-x-auto", "overscroll-x-contain");
     expect(screen.getAllByRole("columnheader", { name: "Action" }).some((header) => header.className.includes("sticky") && header.className.includes("right-0"))).toBe(true);
+    expect(screen.getAllByText("Issue codes").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Find and maintain codes").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Redemption health").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Usage and access").length).toBeGreaterThan(0);
   });
 
   it("keeps license management available when the batch table migration has not reached Supabase yet", async () => {
@@ -2330,10 +2341,15 @@ describe("admin pages", () => {
     fireEvent.click(screen.getByLabelText("Select alice@example.com"));
     expect(screen.queryByRole("button", { name: "Bulk soft delete" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Bulk soft delete selected users" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "Manage user" })[0]).toHaveAttribute("href", "/admin/users/user-1");
+    expect(screen.getByRole("link", { name: "alice@example.com" })).toHaveAttribute("href", "/admin/users/user-1");
+    expect(screen.queryByRole("link", { name: "Manage user" })).not.toBeInTheDocument();
+    expect(document.querySelector('select[name="account_status"]')).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
     const moreActions = screen.getAllByRole("group", { name: "More actions" })[0];
     expect(moreActions).not.toHaveAttribute("open");
     expect(screen.getAllByRole("button", { name: "More actions" }).length).toBeGreaterThan(0);
+    expect(within(moreActions).getByRole("link", { name: "View details" })).toHaveAttribute("href", "/admin/users/user-1");
+    expect(moreActions).toContainElement(screen.getAllByRole("button", { name: "Enable account" })[0]);
     expect(moreActions).toContainElement(screen.getAllByRole("button", { name: "Soft delete" })[0]);
     expect(screen.queryByText("Detailed account, contributions, certificates, and devices")).not.toBeInTheDocument();
     expect(screen.getByTestId("admin-mobile-cards")).toHaveTextContent("alice@example.com");

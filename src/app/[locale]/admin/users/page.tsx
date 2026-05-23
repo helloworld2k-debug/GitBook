@@ -120,6 +120,14 @@ function AdminAuthStatusBadges({
   );
 }
 
+function nextAccountStatusActions(accountStatus: string, t: Awaited<ReturnType<typeof getTranslations>>) {
+  return [
+    { label: t("changeStatusToActive"), value: "active" },
+    { label: t("changeStatusToDisabled"), value: "disabled" },
+    { label: t("changeStatusToDeleted"), value: "deleted" },
+  ].filter((action) => action.value !== accountStatus);
+}
+
 export default async function AdminUsersPage({ params, searchParams }: AdminUsersPageProps) {
   const { locale: localeParam } = await params;
   const feedback = await searchParams;
@@ -399,7 +407,9 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                               </svg>
                             </div>
                             <div className="min-w-0">
-                              <p className="break-all text-sm font-semibold text-slate-950">{profile.email}</p>
+                              <Link aria-label={t("viewDetails")} className="break-all text-sm font-semibold text-slate-950 underline-offset-4 hover:underline" href={`/admin/users/${profile.id}`}>
+                                {profile.email}
+                              </Link>
                               <p className="mt-1 text-sm text-slate-600">{profile.display_name ?? "-"}</p>
                               <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
                               <AdminAuthStatusBadges locale={locale} status={authStatus} t={t} />
@@ -432,14 +442,25 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           </div>
                         </dl>
                         <div className="mt-4 flex flex-wrap gap-2">
-                          <Link className="inline-flex min-h-10 flex-1 items-center justify-center rounded-md bg-slate-950 px-3 text-sm font-medium text-white" href={`/admin/users/${profile.id}`}>
-                            {t("manageUser")}
-                          </Link>
                           <details aria-label={t("moreActions")} className="relative flex-1">
                             <summary className="inline-flex min-h-10 w-full cursor-pointer list-none items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" role="button">
                               {t("moreActions")}
                             </summary>
                             <div className="mt-2 grid gap-3 rounded-md border border-slate-200 bg-white p-3 text-left shadow-lg">
+                              <Link className="text-sm font-semibold text-slate-950" href={`/admin/users/${profile.id}`}>
+                                {t("viewDetails")}
+                              </Link>
+                              {nextAccountStatusActions(accountStatus, t).map((action) => (
+                                <form action={updateUserAccountStatus} key={action.value}>
+                                  <input name="locale" type="hidden" value={locale} />
+                                  <input name="return_to" type="hidden" value="/admin/users" />
+                                  <input name="user_id" type="hidden" value={profile.id} />
+                                  <input name="account_status" type="hidden" value={action.value} />
+                                  <AdminSubmitButton className="text-sm font-semibold text-slate-700" pendingLabel={adminT("common.saving")}>
+                                    {action.label}
+                                  </AdminSubmitButton>
+                                </form>
+                              ))}
                               {trials[0]?.machine_code_hash ? (
                                 <form action={unbindTrialMachine}>
                                   <input name="locale" type="hidden" value={locale} />
@@ -515,7 +536,9 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                             </div>
                           </td>
                           <td className="px-5 py-4 align-top">
-                            <p className="break-all font-medium text-slate-950">{profile.email}</p>
+                            <Link className="break-all font-medium text-slate-950 underline-offset-4 hover:underline" href={`/admin/users/${profile.id}`}>
+                              {profile.email}
+                            </Link>
                             <p className="mt-1 text-slate-600">{profile.display_name ?? "-"}</p>
                             <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
                             <AdminAuthStatusBadges locale={locale} status={authStatus} t={t} />
@@ -547,24 +570,9 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           </AdminStatusBadge>
                         </td>
                         <td className="px-5 py-4 align-top">
-                          <div className="space-y-2">
-                            <AdminStatusBadge tone={accountStatus === "deleted" ? "warning" : accountStatus === "active" ? "success" : "danger"}>
-                              {accountStatus === "deleted" ? t("deletedPill") : t(`statuses.${accountStatus}`)}
-                            </AdminStatusBadge>
-                            <form action={updateUserAccountStatus} className="flex gap-2">
-                                <input name="locale" type="hidden" value={locale} />
-                                <input name="return_to" type="hidden" value="/admin/users" />
-                                <input name="user_id" type="hidden" value={profile.id} />
-                                <select className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="account_status" defaultValue={accountStatus}>
-                                  <option value="active">{t("statuses.active")}</option>
-                                  <option value="disabled">{t("statuses.disabled")}</option>
-                                  <option value="deleted">{t("deletedPill")}</option>
-                                </select>
-                                <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
-                                  {t("save")}
-                                </AdminSubmitButton>
-                            </form>
-                          </div>
+                          <AdminStatusBadge tone={accountStatus === "deleted" ? "warning" : accountStatus === "active" ? "success" : "danger"}>
+                            {accountStatus === "deleted" ? t("deletedPill") : t(`statuses.${accountStatus}`)}
+                          </AdminStatusBadge>
                         </td>
                         <td className="min-w-56 px-5 py-4 align-top">
                           <p className="text-sm text-slate-700">{sessions.length} {t("devices")}</p>
@@ -574,14 +582,25 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                         <td className="whitespace-nowrap px-5 py-4 align-top text-sm text-slate-700">{formatDate(profile.created_at, locale)}</td>
                           <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                             <div className="flex min-w-[260px] flex-wrap justify-end gap-2">
-                              <Link className="inline-flex min-h-10 items-center rounded-md bg-slate-950 px-3 text-sm font-medium text-white" href={`/admin/users/${profile.id}`}>
-                                {t("manageUser")}
-                              </Link>
                               <details aria-label={t("moreActions")} className="relative">
                                 <summary className="inline-flex min-h-10 cursor-pointer list-none items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" role="button">
                                   {t("moreActions")}
                                 </summary>
                                 <div className="absolute right-0 z-20 mt-2 grid w-56 gap-3 rounded-md border border-slate-200 bg-white p-3 text-left shadow-lg">
+                                  <Link className="text-sm font-semibold text-slate-950" href={`/admin/users/${profile.id}`}>
+                                    {t("viewDetails")}
+                                  </Link>
+                                  {nextAccountStatusActions(accountStatus, t).map((action) => (
+                                    <form action={updateUserAccountStatus} key={action.value}>
+                                      <input name="locale" type="hidden" value={locale} />
+                                      <input name="return_to" type="hidden" value="/admin/users" />
+                                      <input name="user_id" type="hidden" value={profile.id} />
+                                      <input name="account_status" type="hidden" value={action.value} />
+                                      <AdminSubmitButton className="text-sm font-semibold text-slate-700" pendingLabel={adminT("common.saving")}>
+                                        {action.label}
+                                      </AdminSubmitButton>
+                                    </form>
+                                  ))}
                                   {trials[0]?.machine_code_hash ? (
                                     <form action={unbindTrialMachine}>
                                       <input name="locale" type="hidden" value={locale} />
