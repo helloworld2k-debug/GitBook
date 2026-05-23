@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import AdminSupportSettingsPage from "@/app/[locale]/admin/support-settings/page";
+import AdminSupportSettingsPage, { SupportChannelSettingsForm } from "@/app/[locale]/admin/support-settings/page";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
@@ -142,5 +142,47 @@ describe("AdminSupportSettingsPage", () => {
     expect(screen.getByDisplayValue("Telegram")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Email")).toBeInTheDocument();
     expect(screen.queryByText("Development support tiers")).not.toBeInTheDocument();
+  });
+});
+
+describe("SupportChannelSettingsForm", () => {
+  const translate = (key: string) => {
+    const messages: Record<string, string> = {
+      "supportSettings.channel": "Channel",
+      "supportSettings.emailHelp": "This is the public support mailbox shown on the Support page.",
+      "supportSettings.enabled": "Enabled",
+      "supportSettings.save": "Save",
+      "supportSettings.sortOrder": "Sort order",
+      "supportSettings.sortOrderHelp": "Smaller numbers appear first in the public channel list.",
+      "supportSettings.status": "Status",
+      "supportSettings.statusHelp": "Switch this channel on only when the value is ready for public display.",
+      "supportSettings.value": "Value",
+      "supportSettings.valueHintEmail": "Use the public mailbox users should email for support",
+    };
+
+    return messages[key] ?? key;
+  };
+
+  it("uses a responsive form grid that stacks controls before the content gets cramped", () => {
+    render(
+      <SupportChannelSettingsForm
+        channel={{
+          id: "email",
+          is_enabled: true,
+          label: "Email",
+          sort_order: 40,
+          value: "support@example.com",
+        }}
+        channelHintKey={{ email: "supportSettings.valueHintEmail" }}
+        channelPlaceholders={{ email: "support@example.com" }}
+        locale="en"
+        t={translate}
+      />,
+    );
+
+    const form = screen.getByRole("form", { name: "Email" });
+    expect(form).toHaveClass("grid-cols-1", "xl:grid-cols-[minmax(8rem,0.85fr)_minmax(14rem,1.55fr)_minmax(12rem,240px)_minmax(8rem,120px)_minmax(9rem,160px)]");
+    expect(form).not.toHaveClass("lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.55fr)_240px_120px_160px]");
+    expect(screen.getByRole("button", { name: "Save" }).parentElement?.parentElement).toHaveClass("md:col-span-2", "xl:col-span-1");
   });
 });
