@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import AdminContributionPricingPage from "@/app/[locale]/admin/contribution-pricing/page";
 
 const mocks = vi.hoisted(() => ({
@@ -86,6 +86,13 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 describe("AdminContributionPricingPage", () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    vi.resetModules();
+    process.env = { ...originalEnv };
+  });
+
   it("renders donation tier pricing without support channel settings", async () => {
     mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
     mocks.createSupabaseServerClient.mockResolvedValue({
@@ -243,5 +250,63 @@ describe("AdminContributionPricingPage", () => {
     expect(screen.getByDisplayValue("Quarterly Support")).toBeInTheDocument();
     expect(screen.getByDisplayValue("27")).toBeInTheDocument();
     expect(screen.getAllByDisplayValue("10").some((input) => input.getAttribute("name") === "discount_percent")).toBe(true);
+  });
+
+  it("prefills payment product IDs from environment fallbacks when database rows are empty", async () => {
+    process.env.DODO_PRODUCT_MONTHLY = "pdt_TestMonthly";
+    process.env.DODO_LIVE_PRODUCT_MONTHLY = "pdt_LiveMonthly";
+    mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
+    mocks.createSupabaseServerClient.mockResolvedValue({
+      auth: {
+        getUser: async () => ({ data: { user: { id: "admin-1", email: "admin@example.com" } } }),
+      },
+      from: (table: string) => {
+        if (table === "donation_tiers") {
+          return {
+            select: () => ({
+              order: async () => ({
+                data: [
+                  {
+                    amount: 900,
+                    code: "monthly",
+                    compare_at_amount: null,
+                    currency: "usd",
+                    description: "Monthly support",
+                    id: "tier-monthly",
+                    is_active: true,
+                    label: "Monthly Support",
+                    sort_order: 1,
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          };
+        }
+
+        if (table === "payment_product_settings") {
+          return {
+            select: () => ({
+              order: async () => ({
+                data: [],
+                error: null,
+              }),
+            }),
+          };
+        }
+
+        throw new Error(`Unexpected table: ${table}`);
+      },
+    });
+
+    render(
+      await AdminContributionPricingPage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({}),
+      }),
+    );
+
+    expect(screen.getByDisplayValue("pdt_TestMonthly")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("pdt_LiveMonthly")).toBeInTheDocument();
   });
 });

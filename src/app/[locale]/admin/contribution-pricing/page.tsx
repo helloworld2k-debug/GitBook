@@ -57,6 +57,22 @@ function findPaymentProductSetting(
   return rows.find((row) => row.environment === environment && row.tier_code === tierCode);
 }
 
+function getPaymentProductEnvFallback(environment: PaymentProductEnvironment, tierCode: PaymentProductTierCode) {
+  const envByTier: Record<PaymentProductTierCode, string> = {
+    monthly: "DODO_PRODUCT_MONTHLY",
+    quarterly: "DODO_PRODUCT_QUARTERLY",
+    yearly: "DODO_PRODUCT_YEARLY",
+  };
+  const liveEnvByTier: Record<PaymentProductTierCode, string> = {
+    monthly: "DODO_LIVE_PRODUCT_MONTHLY",
+    quarterly: "DODO_LIVE_PRODUCT_QUARTERLY",
+    yearly: "DODO_LIVE_PRODUCT_YEARLY",
+  };
+  const envName = environment === "live" ? liveEnvByTier[tierCode] : envByTier[tierCode];
+
+  return process.env[envName] ?? "";
+}
+
 export default async function AdminContributionPricingPage({ params, searchParams }: AdminContributionPricingPageProps) {
   const { locale: localeParam } = await params;
   const feedback = await searchParams;
@@ -194,6 +210,7 @@ export default async function AdminContributionPricingPage({ params, searchParam
                   {paymentTierCodes.map((tierCode) => {
                     const setting = findPaymentProductSetting(paymentProductRows, environment, tierCode);
                     const channel = `${environment}-${tierCode}`;
+                    const productId = setting?.product_id ?? getPaymentProductEnvFallback(environment, tierCode);
 
                     return (
                       <form
@@ -211,7 +228,7 @@ export default async function AdminContributionPricingPage({ params, searchParam
                         </label>
                         <label className="grid min-w-0 gap-1 text-sm font-medium text-slate-700">
                           {t("contributionPricing.paymentProductId")}
-                          <input className="min-h-11 min-w-0 rounded-md border border-slate-300 px-3 font-mono text-sm" defaultValue={setting?.product_id ?? ""} name="product_id" placeholder="pdt_..." required />
+                          <input className="min-h-11 min-w-0 rounded-md border border-slate-300 px-3 font-mono text-sm" defaultValue={productId} name="product_id" placeholder="pdt_..." required />
                           <span className="text-xs leading-5 text-slate-500">{t("contributionPricing.paymentProductHelp")}</span>
                         </label>
                         <label className="grid min-w-0 gap-1 text-sm font-medium text-slate-700">
