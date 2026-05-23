@@ -57,7 +57,7 @@ export function SupportChannelSettingsForm({
     <form
       action={updateSupportContactChannel}
       aria-label={channel.label}
-      className={`grid grid-cols-1 gap-4 px-4 py-5 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(8rem,0.85fr)_minmax(14rem,1.55fr)_minmax(12rem,240px)_minmax(8rem,120px)_minmax(9rem,160px)] ${
+      className={`grid grid-cols-1 gap-4 px-4 py-5 sm:px-5 md:grid-cols-2 xl:grid-cols-[minmax(8rem,0.85fr)_minmax(14rem,1.55fr)_minmax(12rem,240px)_minmax(8rem,120px)_minmax(9rem,160px)] xl:items-start ${
         isSaved ? "bg-emerald-50/60" : ""
       }`}
     >
@@ -95,7 +95,7 @@ export function SupportChannelSettingsForm({
         <input className="min-h-11 min-w-0 rounded-md border border-slate-300 px-3 text-sm" defaultValue={channel.sort_order} min="1" name="sort_order" type="number" />
         <span className="text-xs leading-5 text-slate-500">{t("supportSettings.sortOrderHelp")}</span>
       </label>
-      <div className="flex items-end md:col-span-2 xl:col-span-1">
+      <div className="flex items-start md:col-span-2 xl:col-span-1 xl:pt-7">
         <div className="flex w-full flex-col gap-2">
           <AdminSubmitButton className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" pendingLabel={t("common.saving")}>
             {t("supportSettings.save")}

@@ -165,7 +165,7 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
               <h2 className="text-base font-semibold text-slate-950">{t("donations.manualEntryTitle")}</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">{t("donations.manualEntryDescription")}</p>
             </div>
-            <form action={addManualDonation} className="mt-4 grid gap-3 md:grid-cols-[1fr_11rem_1fr_1fr_auto]">
+            <form action={addManualDonation} className="mt-4 grid gap-3 md:grid-cols-[1fr_11rem_1fr_1fr_auto] md:items-start">
               <input name="locale" type="hidden" value={locale} />
               <input name="return_to" type="hidden" value="/admin/donations" />
               <label className="grid gap-1 text-sm font-medium text-slate-700">
@@ -205,7 +205,7 @@ export default async function AdminDonationsPage({ params, searchParams }: Admin
                 />
               </label>
               <ConfirmActionButton
-                className="min-h-11 self-end rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                className="min-h-11 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 md:mt-6"
                 confirmLabel={t("donations.submitManualDonation")}
                 pendingLabel={t("common.processing")}
               >
