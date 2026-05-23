@@ -72,7 +72,7 @@
     "eyebrow": "AI 코딩 북 도구",
     "title": "GitBook AI",
     "subtitle": "구조화된 프로그래밍 지식, 릴리스 노트, 개발자 학습 흐름을 위한 AI 기반 코딩 북 companion을 다운로드하세요.",
-    "downloadMac": "macOS용 다운로드",
+    "downloadMac": "macOS용 다운로드(M 칩 또는 Intel)",
     "downloadWindows": "Windows용 다운로드",
     "supportPrompt": "다운로드는 계속 무료입니다. 자발적인 지원은 AI 지식 엔진 개선을 돕습니다.",
     "featureOneTitle": "AI 준비형 읽기 흐름",
@@ -84,7 +84,7 @@
     "relatedTitle": "관련 콘텐츠",
     "relatedSubtitle": "릴리스 기록, 지원, 계정 도구, 제품 업데이트를 이어서 확인하세요.",
     "relatedVersionsTitle": "릴리스 아카이브",
-    "relatedVersionsText": "특정 버전이 필요할 때 이전 macOS 및 Windows 빌드를 다운로드하세요.",
+    "relatedVersionsText": "특정 버전이 필요할 때 Mac 칩에 맞는 이전 macOS 빌드 또는 Windows 빌드를 다운로드하세요.",
     "relatedContributionsTitle": "개발 지원",
     "relatedContributionsText": "일회성 개발 지원으로 지속적인 개발을 돕고 인증서를 받을 수 있습니다.",
     "relatedSupportTitle": "지원",
@@ -103,7 +103,7 @@
   "footer": {
     "tagline": "AI 코딩 지식, 안전한 다운로드, 계정 지원을 하나의 작업 공간에서 제공합니다.",
     "status": "안전한 다운로드와 계정 지원",
-    "availability": "macOS 및 Windows 릴리스",
+    "availability": "macOS M 칩, macOS Intel, Windows 릴리스",
     "contact": "지원은 로그인된 피드백 대화에서 이어집니다",
     "copyright": "독립 소프트웨어 지원 사이트입니다.",
     "terms": "이용약관",
@@ -200,8 +200,8 @@
       "title": "시작하기",
       "download": {
         "title": "앱 다운로드",
-        "description": "홈페이지에서 OS에 맞는 최신 버전의 GitBook AI를 다운로드하세요.",
-        "step1": "홈페이지로 이동하여 macOS 또� Windows 다운로드 버튼 클릭",
+        "description": "홈페이지에서 운영체제와 기기 칩에 맞는 최신 버전의 GitBook AI를 다운로드하세요.",
+        "step1": "홈페이지로 이동하여 Mac 칩에 맞는 macOS 버전 또는 Windows 버전 선택",
         "step2": "다운로드가 완료될 때까지 대기",
         "step3": "다운로드한 파일을 열어 설치 시작"
       },
@@ -210,7 +210,7 @@
         "description": "OS에 따라 설치 진행:",
         "mac": {
           "title": "macOS",
-          "description": ".dmg 파일을 열고 GitBook AI를 '응용 프로그램' 폴더로 드래그합니다. 시스템 환경설정에서 식별되지 않은 개발자의 앱을 허용해야 할 수 있습니다."
+          "description": "Mac 칩에 맞는 .dmg를 다운로드하세요. 최신 Apple Silicon/M 시리즈 Mac은 M 칩 버전, 이전 Intel Mac은 Intel 버전을 선택합니다. 파일을 열고 GitBook AI를 '응용 프로그램' 폴더로 드래그합니다. 시스템 설정에서 식별되지 않은 개발자의 앱을 허용해야 할 수 있습니다."
         },
         "windows": {
           "title": "Windows",
@@ -509,11 +509,11 @@
       "deliveryMode": "배포 방식",
       "deliveryModeFile": "파일 업로드",
       "deliveryModeLink": "다운로드 링크 사용",
-      "deliveryModeFileHelp": "macOS와 Windows 설치 파일을 각각 업로드하세요.",
-      "deliveryModeLinkHelp": "두 플랫폼 모두 기본 다운로드 링크가 필요하며, 백업 링크는 선택 사항입니다.",
-      "macFile": "macOS 설치 파일",
+      "deliveryModeFileHelp": "공개 다운로드 페이지에 필요한 설치 파일을 업로드하세요. macOS 빌드가 분리되어 있다면 M 칩용인지 Intel용인지 명확히 표시하세요.",
+      "deliveryModeLinkHelp": "공개할 각 플랫폼 선택지의 기본 다운로드 링크를 입력하세요. 백업 링크는 선택 사항입니다.",
+      "macFile": "macOS 설치 파일(M 칩 또는 Intel 표시)",
       "windowsFile": "Windows 설치 파일",
-      "macPrimaryUrl": "macOS 기본 링크",
+      "macPrimaryUrl": "macOS 기본 링크(M 칩 또는 Intel)",
       "macBackupUrl": "macOS 백업 링크",
       "windowsPrimaryUrl": "Windows 기본 링크",
       "windowsBackupUrl": "Windows 백업 링크",
@@ -1225,8 +1225,8 @@
   "versions": {
     "eyebrow": "릴리스 기록",
     "title": "이전 버전",
-    "subtitle": "GitBook AI의 이전 macOS 및 Windows 빌드를 다운로드하세요.",
-    "downloadMac": "macOS",
+    "subtitle": "GitBook AI의 이전 버전을 다운로드하세요. macOS는 Mac 칩에 맞는 패키지를 선택하세요.",
+    "downloadMac": "macOS(M 칩 또는 Intel)",
     "downloadWindows": "Windows",
     "releases": {
       "primaryLink": "기본 링크",

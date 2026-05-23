@@ -72,7 +72,7 @@
     "eyebrow": "AI 編程書籍工具",
     "title": "GitBook AI",
     "subtitle": "下載 AI 驅動的編程書籍伴侶，用於結構化程式知識、版本資訊與開發者學習流程。",
-    "downloadMac": "下載 macOS 版",
+    "downloadMac": "下載 macOS 版（M 芯片或 Intel）",
     "downloadWindows": "下載 Windows 版",
     "supportPrompt": "下載保持免費。你的自願支持將持續幫助 AI 知識引擎改進。",
     "featureOneTitle": "AI 就緒閱讀流程",
@@ -84,7 +84,7 @@
     "relatedTitle": "相關內容",
     "relatedSubtitle": "繼續查看版本歷史、支持入口、帳戶工具與產品更新。",
     "relatedVersionsTitle": "版本封存",
-    "relatedVersionsText": "需要特定版本時，可下載先前的 macOS 與 Windows 構建。",
+    "relatedVersionsText": "需要特定版本時，請依 Mac 芯片選擇舊版 macOS 安裝包，或下載 Windows 構建。",
     "relatedContributionsTitle": "開發支持",
     "relatedContributionsText": "透過一次性開發支持協助持續開發，並取得開發支持證書。",
     "relatedSupportTitle": "支援",
@@ -103,7 +103,7 @@
   "footer": {
     "tagline": "AI 編程知識、安全下載與帳戶支援集中在同一工作區。",
     "status": "安全下載與帳戶支援",
-    "availability": "macOS 與 Windows 版本",
+    "availability": "macOS M 芯片、macOS Intel 與 Windows 版本",
     "contact": "支援會跟進已登入帳戶的回饋對話",
     "copyright": "獨立軟體支援網站。",
     "terms": "使用條款",
@@ -200,8 +200,8 @@
       "title": "開始使用",
       "download": {
         "title": "下載應用程式",
-        "description": "前往首頁下載最新版本的 GitBook AI。",
-        "step1": "前往首頁，點擊 macOS 或 Windows 的下載按鈕",
+        "description": "前往首頁下載適合你的作業系統與裝置芯片的最新版 GitBook AI。",
+        "step1": "前往首頁，依 Mac 芯片選擇 macOS 版本，或選擇 Windows 版本",
         "step2": "等待下載完成",
         "step3": "開啟下載的檔案開始安裝"
       },
@@ -210,7 +210,7 @@
         "description": "依照您的作業系統進行安裝：",
         "mac": {
           "title": "macOS",
-          "description": "開啟 .dmg 檔案，將 GitBook AI 拖曳至「應用程式」資料夾。您可能需要在系統偏好設定中允許來自未識別開發人員的應用程式。"
+          "description": "請先下載符合 Mac 芯片的 .dmg：較新的 Apple Silicon/M 系列選 M 芯片版，較舊的 Intel Mac 選 Intel 版。開啟檔案後，將 GitBook AI 拖曳至「應用程式」資料夾。您可能需要在系統設定中允許來自未識別開發人員的應用程式。"
         },
         "windows": {
           "title": "Windows",
@@ -509,11 +509,11 @@
       "deliveryMode": "下載方式",
       "deliveryModeFile": "上傳檔案",
       "deliveryModeLink": "使用下載連結",
-      "deliveryModeFileHelp": "請分別上傳 macOS 與 Windows 的安裝檔。",
-      "deliveryModeLinkHelp": "請為兩個平台都填寫主下載連結；備用連結可選。",
-      "macFile": "macOS 安裝包",
+      "deliveryModeFileHelp": "請上傳公開下載頁需要的安裝檔。若 macOS 拆分版本，請在檔名或說明中清楚標示 M 芯片或 Intel。",
+      "deliveryModeLinkHelp": "請為每個公開平台選項填寫主下載連結；備用連結可選。",
+      "macFile": "macOS 安裝包（請標示 M 芯片或 Intel）",
       "windowsFile": "Windows 安裝包",
-      "macPrimaryUrl": "macOS 主下載連結",
+      "macPrimaryUrl": "macOS 主下載連結（M 芯片或 Intel）",
       "macBackupUrl": "macOS 備用連結",
       "windowsPrimaryUrl": "Windows 主下載連結",
       "windowsBackupUrl": "Windows 備用連結",
@@ -1225,8 +1225,8 @@
   "versions": {
     "eyebrow": "版本封存",
     "title": "舊版本",
-    "subtitle": "下載 GitBook AI 的 macOS 與 Windows 歷史版本。",
-    "downloadMac": "macOS",
+    "subtitle": "下載 GitBook AI 的歷史版本。macOS 請依你的 Mac 芯片選擇安裝包。",
+    "downloadMac": "macOS（M 芯片或 Intel）",
     "downloadWindows": "Windows",
     "releases": {
       "primaryLink": "主連結",

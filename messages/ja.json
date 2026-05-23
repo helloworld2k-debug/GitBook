@@ -72,7 +72,7 @@
     "eyebrow": "AI コーディングブックツール",
     "title": "GitBook AI",
     "subtitle": "構造化されたプログラミング知識、リリースノート、開発者学習フローのための AI 搭載コーディングブック companion をダウンロードできます。",
-    "downloadMac": "macOS 版をダウンロード",
+    "downloadMac": "macOS 版をダウンロード（M チップ / Intel）",
     "downloadWindows": "Windows 版をダウンロード",
     "supportPrompt": "ダウンロードは無料のままです。応援は AI ナレッジエンジンの改善を支えます。",
     "featureOneTitle": "AI 対応の読書フロー",
@@ -84,7 +84,7 @@
     "relatedTitle": "関連コンテンツ",
     "relatedSubtitle": "リリース履歴、支援、アカウントツール、製品更新を続けて確認できます。",
     "relatedVersionsTitle": "リリースアーカイブ",
-    "relatedVersionsText": "特定バージョンが必要なとき、過去の macOS / Windows ビルドを取得できます。",
+    "relatedVersionsText": "特定バージョンが必要なときは、Mac のチップに合う過去の macOS 版、または Windows 版を取得できます。",
     "relatedContributionsTitle": "開発支援",
     "relatedContributionsText": "一回限りの開発支援で継続開発を支え、証明書を受け取れます。",
     "relatedSupportTitle": "サポート",
@@ -103,7 +103,7 @@
   "footer": {
     "tagline": "AI コーディング知識、安全なダウンロード、アカウントサポートを一つのワークスペースに集約します。",
     "status": "安全なダウンロードとアカウントサポート",
-    "availability": "macOS / Windows リリース",
+    "availability": "macOS M チップ、macOS Intel、Windows リリース",
     "contact": "サポートはログイン済みのフィードバックスレッドで対応します",
     "copyright": "独立したソフトウェアサポートサイトです。",
     "terms": "利用規約",
@@ -200,8 +200,8 @@
       "title": "はじめに",
       "download": {
         "title": "アプリをダウンロード",
-        "description": "ホームページから、OSに対応した最新版の GitBook AI をダウンロードします。",
-        "step1": "ホームページへ移動し、macOS または Windows のダウンロードボタンをクリック",
+        "description": "ホームページから、OS とデバイスのチップに合う最新版の GitBook AI をダウンロードします。",
+        "step1": "ホームページへ移動し、Mac のチップに合う macOS 版、または Windows 版を選択",
         "step2": "ダウンロードが完了するまで待ちます",
         "step3": "ダウンロードしたファイルを開き、インストールを開始します"
       },
@@ -210,7 +210,7 @@
         "description": "OSに合わせてインストールします：",
         "mac": {
           "title": "macOS",
-          "description": ".dmg ファイルを開き、GitBook AI を「アプリケーション」フォルダにドラッグします。システム環境設定で、識別不明な開発者からのアプリを許可する必要がある場合があります。"
+          "description": "Mac のチップに合う .dmg をダウンロードしてください。新しい Apple Silicon/M シリーズ Mac は M チップ版、古い Intel Mac は Intel 版を選びます。ファイルを開き、GitBook AI を「アプリケーション」フォルダにドラッグします。システム設定で、識別不明な開発者からのアプリを許可する必要がある場合があります。"
         },
         "windows": {
           "title": "Windows",
@@ -509,11 +509,11 @@
       "deliveryMode": "配布方式",
       "deliveryModeFile": "ファイルをアップロード",
       "deliveryModeLink": "ダウンロードリンクを使う",
-      "deliveryModeFileHelp": "macOS と Windows のインストーラーをそれぞれアップロードしてください。",
-      "deliveryModeLinkHelp": "両プラットフォームの主ダウンロードリンクが必要です。予備リンクは任意です。",
-      "macFile": "macOS インストーラー",
+      "deliveryModeFileHelp": "公開ダウンロードページに必要なインストーラーをアップロードします。macOS 版を分ける場合は、M チップ版か Intel 版かを明確に示してください。",
+      "deliveryModeLinkHelp": "公開する各プラットフォーム選択肢の主ダウンロードリンクを入力します。予備リンクは任意です。",
+      "macFile": "macOS インストーラー（M チップ / Intel を明記）",
       "windowsFile": "Windows インストーラー",
-      "macPrimaryUrl": "macOS 主リンク",
+      "macPrimaryUrl": "macOS 主リンク（M チップ / Intel）",
       "macBackupUrl": "macOS 予備リンク",
       "windowsPrimaryUrl": "Windows 主リンク",
       "windowsBackupUrl": "Windows 予備リンク",
@@ -1225,8 +1225,8 @@
   "versions": {
     "eyebrow": "リリース履歴",
     "title": "旧バージョン",
-    "subtitle": "GitBook AI の過去の macOS / Windows ビルドをダウンロードできます。",
-    "downloadMac": "macOS",
+    "subtitle": "GitBook AI の過去バージョンをダウンロードできます。macOS は Mac のチップに合うパッケージを選んでください。",
+    "downloadMac": "macOS（M チップ / Intel）",
     "downloadWindows": "Windows",
     "releases": {
       "primaryLink": "主リンク",
