@@ -376,6 +376,11 @@ const testMessages = {
         generateBatch: "Generate codes",
         batchesTitle: "License batches",
         licenseCodesTitle: "License codes",
+        managementSummary: "{shown} of {total} codes shown",
+        editCode: "Edit code",
+        updateCode: "Update code",
+        deleteCode: "Delete code",
+        deleteCodeConfirm: "Delete this license code?",
         search: "Search",
         searchPlaceholder: "Search labels, codes, notes",
         channel: "Channel",
@@ -394,6 +399,7 @@ const testMessages = {
         resetFilters: "Reset filters",
         applyMetadata: "Apply channel",
         clearSelection: "Clear selection",
+        bulkDeleteConfirm: "Delete selected license codes?",
         selectedCount: "{count} selected",
         selectAll: "Select all license codes",
         securitySignalsTitle: "Security signals",
@@ -1673,7 +1679,7 @@ describe("admin pages", () => {
     expect(codesQuery.select).toHaveBeenCalledWith("id,batch_id,label,trial_days,duration_kind,channel_type,channel_note,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by,created_by");
     expect(screen.getByRole("heading", { name: "License management" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Batch generate license codes" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Batch name")).toBeInTheDocument();
+    expect(screen.getAllByLabelText("Batch name").length).toBeGreaterThan(0);
     expect(screen.queryByLabelText("Channel note")).not.toBeInTheDocument();
     expect(screen.getAllByLabelText("Trial days")[0]).toHaveAttribute("max", "7");
     expect(screen.getByText("Monthly codes use a fixed 30-day duration. Quarterly uses 90 days; yearly uses 365 days.")).toBeInTheDocument();
@@ -1689,7 +1695,10 @@ describe("admin pages", () => {
     expect(screen.getAllByText("203.0.113.10").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Taobao May monthly").length).toBeGreaterThan(0);
     expect(screen.getAllByText("1MAB-****-****-MNOP").length).toBeGreaterThan(0);
+    expect(screen.getByText("1 of 1 codes shown")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Reveal" }).length).toBeGreaterThan(0);
+    expect(screen.getByText("Edit code")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete code" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Select all license codes" })).toBeInTheDocument();
 
     const licenseCodesTable = screen.getByRole("table", { name: "License codes" });

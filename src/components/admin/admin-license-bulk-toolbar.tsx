@@ -83,6 +83,14 @@ function submitBulkAction(formId: string, action: string) {
   form.requestSubmit();
 }
 
+function submitDestructiveBulkAction(formId: string, action: string, confirmLabel?: string) {
+  if (confirmLabel && !window.confirm(confirmLabel)) {
+    return;
+  }
+
+  submitBulkAction(formId, action);
+}
+
 export function AdminLicenseSelectAllCheckbox({ formId, label }: { formId: string; label: string }) {
   const [checked, setChecked] = useState(false);
 
@@ -127,6 +135,7 @@ export function AdminLicenseBulkToolbar({
     clearSelection: string;
     deactivate: string;
     delete: string;
+    deleteConfirm?: string;
     internal: string;
     other: string;
     partner: string;
@@ -175,7 +184,7 @@ export function AdminLicenseBulkToolbar({
             {labels.applyMetadata}
           </button>
         </div>
-        <button className="inline-flex min-h-10 items-center rounded-md bg-red-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-red-400" onClick={() => submitBulkAction(formId, "delete")} type="button">
+        <button className="inline-flex min-h-10 items-center rounded-md bg-red-500 px-3 text-sm font-semibold text-white transition-colors hover:bg-red-400" onClick={() => submitDestructiveBulkAction(formId, "delete", labels.deleteConfirm)} type="button">
           {labels.delete}
         </button>
         <button
