@@ -13,7 +13,7 @@ import { isOwnerProfile, type AccountStatus, type AdminRole } from "@/lib/auth/g
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import type { Database } from "@/lib/database.types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { bulkProcessUsers, createUserWithTemporaryPassword, inviteUserAccount, softDeleteUser, unbindTrialMachine, updateUserAccountStatus, updateUserAdminRole } from "../actions";
+import { bulkProcessUsers, createUserWithTemporaryPassword, inviteUserAccount, softDeleteUser, unbindTrialMachine, updateUserAccountStatus } from "../actions";
 
 type AdminUsersSearchParams = {
   createdFrom?: string;
@@ -544,25 +544,9 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                             <AdminAuthStatusBadges locale={locale} status={authStatus} t={t} />
                           </td>
                         <td className="px-5 py-4 align-top">
-                          {canManageRoles ? (
-                            <form action={updateUserAdminRole} className="flex gap-2">
-                                <input name="locale" type="hidden" value={locale} />
-                                <input name="return_to" type="hidden" value="/admin/users" />
-                                <input name="user_id" type="hidden" value={profile.id} />
-                                <select aria-label={t("role")} className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="admin_role" defaultValue={resolvedRole}>
-                                  <option value="user">{t("roles.user")}</option>
-                                  <option value="operator">{t("roles.operator")}</option>
-                                  <option value="owner">{t("roles.owner")}</option>
-                                </select>
-                                <AdminSubmitButton aria-label={t("saveRole")} className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
-                                  {t("save")}
-                                </AdminSubmitButton>
-                            </form>
-                          ) : (
-                            <AdminStatusBadge tone={resolvedRole === "owner" ? "success" : resolvedRole === "operator" ? "warning" : "neutral"}>
-                              {resolvedRole === "owner" ? t("ownerPill") : resolvedRole === "operator" ? t("operatorPill") : t("userPill")}
-                            </AdminStatusBadge>
-                          )}
+                          <AdminStatusBadge tone={resolvedRole === "owner" ? "success" : resolvedRole === "operator" ? "warning" : "neutral"}>
+                            {resolvedRole === "owner" ? t("ownerPill") : resolvedRole === "operator" ? t("operatorPill") : t("userPill")}
+                          </AdminStatusBadge>
                         </td>
                         <td className="px-5 py-4 align-top">
                           <AdminStatusBadge tone={profile.is_admin ? "success" : "neutral"}>

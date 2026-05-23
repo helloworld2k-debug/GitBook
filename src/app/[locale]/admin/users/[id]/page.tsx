@@ -15,6 +15,7 @@ import {
   addManualDonation,
   grantCloudSyncCooldownOverride,
   permanentlyDeleteUser,
+  revokeCertificate,
   revokeCloudSyncLease,
   revokeDesktopSession,
   sendUserPasswordSetupEmail,
@@ -74,6 +75,48 @@ type LoginHistoryRow = {
   login_method: string | null;
   logged_in_at: string;
 };
+
+type DonationRow = {
+  id: string;
+  provider: string;
+  status: string;
+  amount: number;
+  currency: string;
+  provider_transaction_id: string;
+  paid_at: string | null;
+  created_at: string;
+};
+
+type CertificateRow = {
+  id: string;
+  certificate_number: string;
+  donation_id: string | null;
+  type: string;
+  status: string;
+  issued_at: string | null;
+};
+
+type SupportCertificateRow =
+  | {
+      kind: "donation";
+      id: string;
+      record: string;
+      paymentStatus: string;
+      amount: string;
+      reference: string;
+      certificate: CertificateRow | null;
+      time: string | null;
+    }
+  | {
+      kind: "honor";
+      id: string;
+      record: string;
+      paymentStatus: string;
+      amount: string;
+      reference: string;
+      certificate: CertificateRow;
+      time: string | null;
+    };
 
 function formatDateTime(value: string | null, locale: string) {
   if (!value) {
@@ -135,6 +178,55 @@ function usageSeconds(session: CloudSyncUsageSessionRow, now = new Date()) {
 
 function isOwnerUserProfile(profile: { admin_role?: string | null; is_admin?: boolean | null }) {
   return profile.is_admin === true || profile.admin_role === "owner";
+}
+
+function getCertificateStatusTone(status: string | null | undefined) {
+  if (status === "active") return "success";
+  if (status === "revoked") return "danger";
+  if (status === "generation_failed") return "warning";
+  return "neutral";
+}
+
+function getSupportCertificateRows({
+  certificates,
+  donations,
+  locale,
+  t,
+}: {
+  certificates: CertificateRow[];
+  donations: DonationRow[];
+  locale: string;
+  t: Awaited<ReturnType<typeof getTranslations>>;
+}) {
+  const donationCertificateByDonationId = new Map(
+    certificates
+      .filter((certificate) => certificate.type === "donation" && certificate.donation_id)
+      .map((certificate) => [certificate.donation_id as string, certificate]),
+  );
+  const donationRows: SupportCertificateRow[] = donations.map((donation) => ({
+    kind: "donation",
+    id: `donation-${donation.id}`,
+    record: `${donation.provider} / ${donation.provider_transaction_id}`,
+    paymentStatus: donation.status,
+    amount: formatAmount(donation.amount, donation.currency, locale),
+    reference: donation.provider_transaction_id,
+    certificate: donationCertificateByDonationId.get(donation.id) ?? null,
+    time: donation.paid_at ?? donation.created_at,
+  }));
+  const honorRows: SupportCertificateRow[] = certificates
+    .filter((certificate) => certificate.type === "honor")
+    .map((certificate) => ({
+      kind: "honor",
+      id: `certificate-${certificate.id}`,
+      record: t("supportCertificateHonorRecord"),
+      paymentStatus: "-",
+      amount: "-",
+      reference: t("supportCertificateHonorSource"),
+      certificate,
+      time: certificate.issued_at,
+    }));
+
+  return [...donationRows, ...honorRows].sort((a, b) => new Date(b.time ?? "").getTime() - new Date(a.time ?? "").getTime());
 }
 
 function isOptionalCloudSyncDetailSchemaError(error: { code?: string; message?: string } | null) {
@@ -247,7 +339,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .limit(50),
     supabase
       .from("certificates")
-      .select("id,certificate_number,type,status,issued_at")
+      .select("id,certificate_number,donation_id,type,status,issued_at")
       .eq("user_id", id)
       .order("issued_at", { ascending: false })
       .limit(50),
@@ -331,8 +423,8 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
 
   const profile = profileResult.data;
   const authStatus = await getAuthStatus(supabase, profile.id);
-  const donations = donationsResult.data ?? [];
-  const certificates = certificatesResult.data ?? [];
+  const donations = (donationsResult.data ?? []) as DonationRow[];
+  const certificates = (certificatesResult.data ?? []) as CertificateRow[];
   const trials = trialsResult.data ?? [];
   const sessions = sessionsResult.data ?? [];
   const entitlements = entitlementsResult.data ?? [];
@@ -355,6 +447,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   const cooldownBlocks = usageEvents.filter((event) => event.event_type === "cooldown_waiting").length;
   const recentForceSwitchCandidate = usageEvents.find((event) => event.event_type === "activate_conflict" && event.machine_code_hash);
   const latestUsageSession = usageSessions[0];
+  const supportCertificateRows = getSupportCertificateRows({ certificates, donations, locale, t });
   const timelineItems: TimelineItem[] = [
     ...supportFeedback.map((item) => ({
       date: item.created_at,
@@ -657,71 +750,94 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
           </AdminCard>
         </div>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-2">
-          <AdminCard>
-            <div className="border-b border-slate-200 px-5 py-4">
-              <h2 className="text-base font-semibold text-slate-950">{t("donations")}</h2>
-            </div>
-            {donations.length > 0 ? (
-              <AdminTableShell label={t("donations")}>
-                <table aria-label={t("donations")} className="min-w-[860px] table-fixed text-left text-sm">
-                  <colgroup>
-                    <col className="w-[160px]" />
-                    <col className="w-[180px]" />
-                    <col className="w-[240px]" />
-                    <col className="w-[280px]" />
-                  </colgroup>
-                  <tbody className="divide-y divide-slate-200">
-                    {donations.map((donation) => (
-                      <tr key={donation.id}>
-                        <td className="px-5 py-4 text-slate-950">{formatAmount(donation.amount, donation.currency, locale)}</td>
-                        <td className="px-5 py-4 text-slate-700">{donation.provider} / {donation.status}</td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(donation.paid_at ?? donation.created_at, locale)}</td>
-                        <td className="px-5 py-4 font-mono text-xs text-slate-700">
-                          <span className="block break-all">{donation.provider_transaction_id}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </AdminTableShell>
-            ) : (
-              <p className="px-5 py-6 text-sm text-slate-600">{t("emptyDonations")}</p>
-            )}
-          </AdminCard>
-
-          <AdminCard>
-            <div className="border-b border-slate-200 px-5 py-4">
-              <h2 className="text-base font-semibold text-slate-950">{t("certificates")}</h2>
-            </div>
-            {certificates.length > 0 ? (
-              <AdminTableShell label={t("certificates")}>
-                <table aria-label={t("certificates")} className="min-w-[760px] table-fixed text-left text-sm">
-                  <colgroup>
-                    <col className="w-[260px]" />
-                    <col className="w-[140px]" />
-                    <col className="w-[140px]" />
-                    <col className="w-[220px]" />
-                  </colgroup>
-                  <tbody className="divide-y divide-slate-200">
-                    {certificates.map((certificate) => (
-                      <tr key={certificate.id}>
-                        <td className="px-5 py-4 font-mono text-xs text-slate-950">
-                          <span className="block break-all">{certificate.certificate_number}</span>
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">{certificate.type}</td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">{certificate.status}</td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(certificate.issued_at, locale)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </AdminTableShell>
-            ) : (
-              <p className="px-5 py-6 text-sm text-slate-600">{t("emptyCertificates")}</p>
-            )}
-          </AdminCard>
-        </div>
+        <AdminCard className="mt-6">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h2 className="text-base font-semibold text-slate-950">{t("supportCertificates")}</h2>
+          </div>
+          {supportCertificateRows.length > 0 ? (
+            <AdminTableShell label={t("supportCertificates")}>
+              <table aria-label={t("supportCertificates")} className="min-w-[1320px] table-fixed text-left text-sm">
+                <colgroup>
+                  <col className="w-[210px]" />
+                  <col className="w-[150px]" />
+                  <col className="w-[140px]" />
+                  <col className="w-[220px]" />
+                  <col className="w-[250px]" />
+                  <col className="w-[150px]" />
+                  <col className="w-[150px]" />
+                  <col className="w-[190px]" />
+                  <col className="w-[260px]" />
+                </colgroup>
+                <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3">{t("supportCertificateRecord")}</th>
+                    <th className="px-5 py-3">{t("supportCertificatePaymentStatus")}</th>
+                    <th className="px-5 py-3">{t("supportCertificateAmount")}</th>
+                    <th className="px-5 py-3">{t("supportCertificateReference")}</th>
+                    <th className="px-5 py-3">{t("supportCertificateNumber")}</th>
+                    <th className="px-5 py-3">{t("supportCertificateType")}</th>
+                    <th className="px-5 py-3">{t("supportCertificateStatus")}</th>
+                    <th className="px-5 py-3">{t("supportCertificateTime")}</th>
+                    <th className="sticky right-0 z-10 border-l border-slate-200 bg-slate-50 px-5 py-3 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">{t("supportCertificateAction")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {supportCertificateRows.map((row) => (
+                    <tr key={row.id}>
+                      <td className="px-5 py-4 align-top text-slate-950">{row.record}</td>
+                      <td className="px-5 py-4 align-top text-slate-700">{row.paymentStatus}</td>
+                      <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{row.amount}</td>
+                      <td className="px-5 py-4 align-top font-mono text-xs text-slate-700">
+                        <span className="block break-all">{row.reference}</span>
+                      </td>
+                      <td className="px-5 py-4 align-top font-mono text-xs text-slate-950">
+                        {row.certificate ? <span className="block break-all">{row.certificate.certificate_number}</span> : <span className="text-slate-500">{t("supportCertificateMissing")}</span>}
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{row.certificate?.type ?? "-"}</td>
+                      <td className="whitespace-nowrap px-5 py-4 align-top">
+                        {row.certificate ? (
+                          <AdminStatusBadge tone={getCertificateStatusTone(row.certificate.status)}>
+                            {row.certificate.status}
+                          </AdminStatusBadge>
+                        ) : (
+                          <AdminStatusBadge tone="warning">{t("supportCertificateMissing")}</AdminStatusBadge>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{formatDateTime(row.time, locale)}</td>
+                      <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
+                        {row.certificate?.status === "active" ? (
+                          <form action={revokeCertificate} className="flex min-w-56 gap-2">
+                            <input name="locale" type="hidden" value={locale} />
+                            <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
+                            <input name="certificate_id" type="hidden" value={row.certificate.id} />
+                            <label className="sr-only" htmlFor={`user-revoke-reason-${row.certificate.id}`}>
+                              {t("supportCertificateAction")}
+                            </label>
+                            <input
+                              className="min-h-10 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                              id={`user-revoke-reason-${row.certificate.id}`}
+                              maxLength={500}
+                              name="reason"
+                              placeholder={t("supportCertificateAction")}
+                              required
+                            />
+                            <ConfirmActionButton className="min-h-10 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-950" confirmLabel={adminT("certificates.revoke")} pendingLabel={adminT("common.processing")}>
+                              {adminT("certificates.revoke")}
+                            </ConfirmActionButton>
+                          </form>
+                        ) : (
+                          <span className="text-sm text-slate-500">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </AdminTableShell>
+          ) : (
+            <p className="px-5 py-6 text-sm text-slate-600">{t("supportCertificateEmpty")}</p>
+          )}
+        </AdminCard>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-3">
           <AdminCard className="p-5">

@@ -523,6 +523,20 @@ const testMessages = {
         trials: "Trials",
         devices: "Devices",
         donations: "Donations",
+        supportCertificates: "Development support and certificates",
+        supportCertificateRecord: "Record",
+        supportCertificatePaymentStatus: "Payment status",
+        supportCertificateAmount: "Amount",
+        supportCertificateReference: "Payment / source",
+        supportCertificateNumber: "Certificate number",
+        supportCertificateType: "Certificate type",
+        supportCertificateStatus: "Certificate status",
+        supportCertificateTime: "Time",
+        supportCertificateAction: "Action",
+        supportCertificateMissing: "Certificate not generated",
+        supportCertificateHonorRecord: "Honor certificate",
+        supportCertificateHonorSource: "Cumulative support",
+        supportCertificateEmpty: "No support or certificate records",
         certificates: "Certificates",
         entitlements: "Entitlements",
         leases: "Leases",
@@ -1231,12 +1245,12 @@ describe("admin pages", () => {
 
     const element = await AdminPage({ params: Promise.resolve({ locale: "en" }) });
 
-    render(element);
+    const { container } = render(element);
 
     expect(requireAdminMock).toHaveBeenCalledWith("en", "/en/admin");
     expect(screen.getByRole("heading", { name: "Admin" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /donations/i }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
-    expect(screen.getAllByRole("link", { name: /certificates/i }).some((link) => link.getAttribute("href") === "/admin/certificates")).toBe(true);
+    expect(container.querySelector('a[href="/admin/certificates"]')).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /releases/i }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
     expect(screen.getAllByRole("link", { name: /news/i }).some((link) => link.getAttribute("href") === "/admin/news")).toBe(true);
     expect(screen.getAllByRole("link", { name: /registration security/i }).some((link) => link.getAttribute("href") === "/admin/registration-security")).toBe(true);
@@ -1829,7 +1843,7 @@ describe("admin pages", () => {
     expect(screen.getAllByText("0 active sync sessions").length).toBeGreaterThan(0);
   });
 
-  it("shows role editing controls on the users page only to owner admins", async () => {
+  it("renders user roles as read-only on the users page for owner admins while keeping bulk role changes", async () => {
     const paginatedRpcResult = [
       {
         users: [
@@ -1885,10 +1899,15 @@ describe("admin pages", () => {
     createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
     requireAdminMock.mockResolvedValue({ id: "admin-owner" });
 
-    render(await AdminUsersPage({ params: Promise.resolve({ locale: "en" }) }));
+    const { container } = render(await AdminUsersPage({ params: Promise.resolve({ locale: "en" }) }));
 
-    expect(screen.getByRole("combobox", { name: "Role" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save role" })).toBeInTheDocument();
+    expect(screen.getAllByText("Standard user").length).toBeGreaterThan(0);
+    expect(container.querySelector('td select[name="admin_role"]')).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save role" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("combobox", { name: "Target role" })).toHaveLength(1);
+    fireEvent.click(screen.getByLabelText("Select ada@example.com"));
+    expect(await screen.findAllByRole("combobox", { name: "Target role" })).toHaveLength(2);
+    expect(await screen.findByRole("button", { name: "Bulk change role" })).toBeInTheDocument();
   });
 
   it("renders user roles as read-only on the users page for operator admins", async () => {
@@ -2067,9 +2086,18 @@ describe("admin pages", () => {
       {
         id: "certificate-1",
         certificate_number: "GBAI-2026-D-000001",
+        donation_id: "donation-1",
         type: "donation",
         status: "active",
         issued_at: "2026-04-30T10:00:01.000Z",
+      },
+      {
+        id: "certificate-2",
+        certificate_number: "GBAI-2026-H-000002",
+        donation_id: null,
+        type: "honor",
+        status: "active",
+        issued_at: "2026-05-01T10:00:01.000Z",
       },
     ]);
     const trialsQuery = createAdminListQuery([
@@ -2189,16 +2217,23 @@ describe("admin pages", () => {
       params: Promise.resolve({ id: "user-1", locale: "en" }),
     });
 
-    render(element);
+    const { container } = render(element);
 
     expect(profileQuery.select).toHaveBeenCalledWith("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,avatar_url,created_at");
+    expect(certificatesQuery.select).toHaveBeenCalledWith("id,certificate_number,donation_id,type,status,issued_at");
     expect(screen.getByRole("heading", { name: "User operations" })).toBeInTheDocument();
     expect(screen.getAllByText("ada@example.com").length).toBeGreaterThan(0);
     expect(screen.getByDisplayValue("Ada Lovelace")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Donations" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Development support and certificates" })).toBeInTheDocument();
+    expect(container.querySelector('table[aria-label="Development support and certificates"]')).toBeInTheDocument();
+    expect(screen.getByText("Record")).toBeInTheDocument();
+    expect(screen.getByText("Payment / source")).toBeInTheDocument();
+    expect(screen.getByText("Certificate number")).toBeInTheDocument();
     expect(screen.getByText("manual_ada")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Certificates" })).toBeInTheDocument();
     expect(screen.getAllByText("GBAI-2026-D-000001").length).toBeGreaterThan(0);
+    expect(screen.getByText("Honor certificate")).toBeInTheDocument();
+    expect(screen.getByText("Cumulative support")).toBeInTheDocument();
+    expect(screen.getAllByText("GBAI-2026-H-000002").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Trials" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Unbind machine" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Desktop sessions" })).toBeInTheDocument();
