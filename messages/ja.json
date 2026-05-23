@@ -128,8 +128,8 @@
     "paymentNote": "Dodo Payments による安全なチェックアウトで、カードと利用可能なローカル決済方法に対応しています。支払い完了後に証明書が発行されます。",
     "redirecting": "安全なチェックアウトを開いています...",
     "cancelled": "チェックアウトはキャンセルされました。支援プランを確認し、準備ができたらもう一度お試しください。",
-    "paymentMaintenanceTitle": "決済を一時停止しています",
-    "paymentMaintenanceMessage": "決済の問題を確認しているため、チェックアウトを一時停止しています。完了済みの支払いは引き続き処理されます。"
+    "paymentMaintenanceTitle": "チェックアウトを一時停止中",
+    "paymentMaintenanceMessage": "決済問題の調査中のため、チェックアウトを一時停止しています。開始済みの支払い処理は継続されます。"
   },
   "news": {
     "eyebrow": "AI 作成の研究最前線",
@@ -646,20 +646,20 @@
       "rowSavedDescription": "このチャネル設定は正常に更新されました。",
       "guidanceTitle": "設定ガイド",
       "guidanceBody": "有効化したチャネルだけがサポートページに公開表示されます。Telegram と Discord は完全な URL、QQ と WeChat は識別子、Email は公開用のサポートアドレスを入力してください。",
-      "paymentMaintenanceTitle": "決済メンテナンス",
-      "paymentMaintenanceDescription": "テストまたは本番の商品 ID を変更せずに、新しいチェックアウトを一時停止できます。",
-      "paymentMaintenanceStatus": "チェックアウト状態",
-      "paymentMaintenanceAvailable": "決済受付中",
-      "paymentMaintenancePaused": "一時停止中",
-      "paymentMaintenanceMessage": "メンテナンスメッセージ",
-      "paymentMaintenanceMessageHelp": "チェックアウト停止中に訪問者へ表示されます。短く具体的にしてください。",
-      "paymentMaintenanceSave": "決済状態を保存",
       "emailHelp": "これはユーザー向けに公開表示するサポート用メールアドレスです。ログイン用メール設定とは別です。",
       "previewTitle": "チャネル設定",
       "previewDescription": "以下で各連絡チャネルを編集できます。有効な項目だけが設定順で公開表示されます。",
       "publicPreviewTitle": "公開プレビュー",
       "publicPreviewDescription": "有効なサポートチャネルが、公開サポートページでどのように見えるかのプレビューです。",
-      "previewEmpty": "有効なサポート連絡先チャネルはまだありません。"
+      "previewEmpty": "有効なサポート連絡先チャネルはまだありません。",
+      "paymentMaintenanceTitle": "決済メンテナンス",
+      "paymentMaintenanceDescription": "live/test の決済認証情報を切り替えずに、新しいチェックアウトだけを一時停止します。既存の Dodo webhook 処理は継続します。",
+      "paymentMaintenanceStatus": "チェックアウト状態",
+      "paymentMaintenanceAvailable": "支払い受付中",
+      "paymentMaintenancePaused": "一時停止中",
+      "paymentMaintenanceMessage": "メンテナンス表示文",
+      "paymentMaintenanceMessageHelp": "チェックアウト停止中に訪問者へ表示します。",
+      "paymentMaintenanceSave": "決済状態を保存"
     },
     "licenses": {
       "eyebrow": "管理者",
@@ -1162,8 +1162,6 @@
       "feedbackUpdateFailed": "Unable to update feedback.",
       "manualDonationAdded": "Manual donation added.",
       "manualDonationFailed": "Unable to add manual donation.",
-      "paymentMaintenanceUpdated": "決済メンテナンス状態を更新しました。",
-      "paymentMaintenanceUpdateFailed": "決済メンテナンス状態を更新できません。",
       "newsCreated": "News article created.",
       "newsCreateFailed": "Unable to create news article.",
       "newsPublished": "News article published.",
@@ -1228,7 +1226,9 @@
       "userTempPasswordSetFailed": "Unable to update the temporary password.",
       "bulkPermanentDeleteFailed": "選択したアーカイブ済みユーザーを完全削除できません。",
       "bulkPermanentDeletePartial": "一部のアーカイブ済みユーザーは完全削除されましたが、失敗した項目があります。",
-      "bulkPermanentDeleteSuccess": "選択したアーカイブ済みユーザーを完全削除しました。"
+      "bulkPermanentDeleteSuccess": "選択したアーカイブ済みユーザーを完全削除しました。",
+      "paymentMaintenanceUpdated": "決済メンテナンス状態を更新しました。",
+      "paymentMaintenanceUpdateFailed": "決済メンテナンス状態を更新できません。"
     }
   },
   "certificate": {

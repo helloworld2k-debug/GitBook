@@ -129,7 +129,7 @@
     "redirecting": "正在開啟安全結帳...",
     "cancelled": "結帳已取消。你可以重新查看支持方案，準備好後再試一次。",
     "paymentMaintenanceTitle": "結帳暫時維護中",
-    "paymentMaintenanceMessage": "我們正在檢查支付問題，結帳功能暫時暫停。已完成的付款會繼續處理。"
+    "paymentMaintenanceMessage": "結帳功能暫時暫停，我們正在排查支付問題。已發起的付款仍會繼續處理。"
   },
   "news": {
     "eyebrow": "AI 生成研究前沿",
@@ -646,20 +646,20 @@
       "rowSavedDescription": "這個渠道的設定已成功更新。",
       "guidanceTitle": "設定說明",
       "guidanceBody": "啟用後的渠道會公開顯示在支援頁。Telegram 與 Discord 請填完整連結，QQ 與 WeChat 可填帳號，Email 請填可公開使用的支援信箱。",
-      "paymentMaintenanceTitle": "支付維護模式",
-      "paymentMaintenanceDescription": "可暫停新的結帳流程，不需要修改測試或真實產品 ID。",
-      "paymentMaintenanceStatus": "結帳狀態",
-      "paymentMaintenanceAvailable": "接受付款",
-      "paymentMaintenancePaused": "已暫停",
-      "paymentMaintenanceMessage": "維護提示訊息",
-      "paymentMaintenanceMessageHelp": "結帳暫停時顯示給訪客，建議簡短明確。",
-      "paymentMaintenanceSave": "儲存支付狀態",
       "emailHelp": "這是公開展示給使用者的支援信箱，和帳號登入信箱設定分開。",
       "previewTitle": "渠道設定",
       "previewDescription": "請在下方編輯各聯絡渠道。啟用後會依照你設定的順序顯示給訪客。",
       "publicPreviewTitle": "公開預覽",
       "publicPreviewDescription": "這是啟用後的支援聯絡渠道在公開支援頁上的顯示方式。",
-      "previewEmpty": "目前尚未啟用任何支援聯絡渠道。"
+      "previewEmpty": "目前尚未啟用任何支援聯絡渠道。",
+      "paymentMaintenanceTitle": "支付維護",
+      "paymentMaintenanceDescription": "暫停新的結帳請求，不切換真實或測試支付憑證。既有 Dodo webhook 仍會繼續處理。",
+      "paymentMaintenanceStatus": "結帳狀態",
+      "paymentMaintenanceAvailable": "接受付款",
+      "paymentMaintenancePaused": "已暫停",
+      "paymentMaintenanceMessage": "維護提示文案",
+      "paymentMaintenanceMessageHelp": "結帳暫停時顯示給訪客。",
+      "paymentMaintenanceSave": "儲存支付狀態"
     },
     "licenses": {
       "eyebrow": "管理後台",
@@ -1162,8 +1162,6 @@
       "feedbackUpdateFailed": "Unable to update feedback.",
       "manualDonationAdded": "Manual donation added.",
       "manualDonationFailed": "Unable to add manual donation.",
-      "paymentMaintenanceUpdated": "支付維護狀態已更新。",
-      "paymentMaintenanceUpdateFailed": "無法更新支付維護狀態。",
       "newsCreated": "News article created.",
       "newsCreateFailed": "Unable to create news article.",
       "newsPublished": "News article published.",
@@ -1228,7 +1226,9 @@
       "userTempPasswordSetFailed": "Unable to update the temporary password.",
       "bulkPermanentDeleteFailed": "無法永久刪除選取的已歸檔使用者。",
       "bulkPermanentDeletePartial": "部分已歸檔使用者已永久刪除，但仍有項目失敗。",
-      "bulkPermanentDeleteSuccess": "已永久刪除選取的已歸檔使用者。"
+      "bulkPermanentDeleteSuccess": "已永久刪除選取的已歸檔使用者。",
+      "paymentMaintenanceUpdated": "支付維護狀態已更新。",
+      "paymentMaintenanceUpdateFailed": "無法更新支付維護狀態。"
     }
   },
   "certificate": {
