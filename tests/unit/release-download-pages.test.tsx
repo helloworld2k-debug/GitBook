@@ -6,6 +6,9 @@ import VersionsPage, { generateStaticParams as generateVersionStaticParams } fro
 const mocks = vi.hoisted(() => ({
   getCachedLatestPublishedRelease: vi.fn(),
   getCachedPublishedReleases: vi.fn(),
+  notFound: vi.fn(() => {
+    throw new Error("notFound");
+  }),
 }));
 
 vi.mock("@/components/site-header", () => ({
@@ -25,6 +28,10 @@ vi.mock("@/lib/releases/public-cache", () => ({
   getCachedPublishedReleases: mocks.getCachedPublishedReleases,
 }));
 
+vi.mock("next/navigation", () => ({
+  notFound: mocks.notFound,
+}));
+
 vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async (namespace: string) => {
     const tables: Record<string, Record<string, string>> = {
@@ -35,6 +42,7 @@ vi.mock("next-intl/server", () => ({
         downloadMacAppleSilicon: "Download for macOS M chip",
         downloadMacIntel: "Download for macOS Intel",
         downloadWindows: "Download for Windows",
+        downloadPending: "Coming soon",
         latestVersion: "Latest version {version} · {date}",
         latestVersionPending: "Latest version is being prepared",
         olderVersions: "Older versions",
@@ -122,6 +130,53 @@ describe("release download pages", () => {
     expect(screen.getByRole("link", { name: "Windows Backup" })).toHaveAttribute("href", "https://mirror.example/win-backup.exe");
   });
 
+  it("keeps missing current-release platforms visible as pending and hides older versions", async () => {
+    mocks.getCachedLatestPublishedRelease.mockResolvedValue({
+      assets: [
+        {
+          id: "asset-arm",
+          platform: "macos_arm64",
+          fileName: "GitBook-arm64.dmg",
+          storagePath: "release-1/macos_arm64/GitBook-arm64.dmg",
+          fileSize: 42,
+          downloadUrl: "https://cdn.example/GitBook-arm64.dmg",
+        },
+        {
+          id: "asset-win",
+          platform: "windows",
+          fileName: "GitBook.exe",
+          storagePath: "release-1/windows/GitBook.exe",
+          fileSize: 42,
+          downloadUrl: "https://cdn.example/GitBook.exe",
+        },
+      ],
+      deliveryMode: "file",
+      id: "release-1",
+      isPublished: true,
+      macosArm64BackupUrl: null,
+      macosArm64PrimaryUrl: null,
+      macosBackupUrl: null,
+      macosPrimaryUrl: null,
+      macosX64BackupUrl: null,
+      macosX64PrimaryUrl: null,
+      notes: null,
+      releasedAt: "2026-05-20",
+      releaseStatus: "ready",
+      version: "v1.5.0",
+      windowsBackupUrl: null,
+      windowsPrimaryUrl: null,
+    });
+
+    render(await HomePage({ params: Promise.resolve({ locale: "en" }) }));
+
+    expect(screen.getByRole("link", { name: "Download for macOS M chip" })).toHaveAttribute("href", "https://cdn.example/GitBook-arm64.dmg");
+    expect(screen.getByRole("link", { name: "Download for Windows" })).toHaveAttribute("href", "https://cdn.example/GitBook.exe");
+    expect(screen.queryByRole("link", { name: "Download for macOS Intel" })).not.toBeInTheDocument();
+    expect(screen.getByText("Download for macOS Intel")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("Coming soon")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Older versions" })).not.toBeInTheDocument();
+  });
+
   it("does not show related content links on the homepage", async () => {
     mocks.getCachedLatestPublishedRelease.mockResolvedValue(null);
 
@@ -131,29 +186,8 @@ describe("release download pages", () => {
     expect(screen.queryByRole("link", { name: /Release archive Download previous versions/ })).not.toBeInTheDocument();
   });
 
-  it("shows paired platform actions for linked releases on the versions page", async () => {
-    mocks.getCachedPublishedReleases.mockResolvedValue([
-      {
-        assets: [],
-        deliveryMode: "link",
-        id: "release-1",
-        isPublished: true,
-        macosBackupUrl: "https://mirror.example/mac-backup.dmg",
-        macosPrimaryUrl: "https://downloads.example/mac-primary.dmg",
-        notes: "Linked build",
-        releasedAt: "2026-05-05",
-        version: "v1.3.0",
-        windowsBackupUrl: null,
-        windowsPrimaryUrl: "https://downloads.example/win-primary.exe",
-      },
-    ]);
-
-    render(await VersionsPage({ params: Promise.resolve({ locale: "en" }) }));
-
-    expect(screen.getByRole("link", { name: "macOS M chip Primary" })).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
-    expect(screen.getByRole("link", { name: "macOS M chip Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
-    expect(screen.getByRole("link", { name: "macOS Intel Primary" })).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
-    expect(screen.getByRole("link", { name: "macOS Intel Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
-    expect(screen.getByRole("link", { name: "Windows Primary" })).toHaveAttribute("href", "https://downloads.example/win-primary.exe");
+  it("hides the public release archive behind not found", async () => {
+    expect(() => VersionsPage()).toThrow("notFound");
+    expect(mocks.getCachedPublishedReleases).not.toHaveBeenCalled();
   });
 });

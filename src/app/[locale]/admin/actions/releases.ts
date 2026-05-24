@@ -14,6 +14,75 @@ type PreparedUploadAsset = {
   storagePath: string;
 };
 
+function isReleasePlatform(value: FormDataEntryValue | null): value is ReleasePlatform {
+  return typeof value === "string" && (RELEASE_PLATFORMS as readonly string[]).includes(value);
+}
+
+function getSelectedUploadPlatforms(formData: FormData) {
+  return RELEASE_PLATFORMS.filter((platform) => {
+    const fileName = String(formData.get(`${platform}_file_name`) ?? "").trim();
+    const storagePath = String(formData.get(`${platform}_storage_path`) ?? "").trim();
+    return fileName.length > 0 || storagePath.length > 0;
+  });
+}
+
+function getSelectedFileUploads(formData: FormData) {
+  return RELEASE_PLATFORMS.map((platform) => ({
+    platform,
+    file: getUploadFile(formData, `${platform}_file`) as File,
+  })).filter((entry): entry is { platform: ReleasePlatform; file: File } => Boolean(entry.file));
+}
+
+function requireAtLeastOnePlatform(platforms: ReleasePlatform[]) {
+  if (platforms.length === 0) {
+    throw new Error("Select at least one installer file");
+  }
+}
+
+function getPreparedUploadAssets(
+  releaseId: string,
+  fileMetadata: Partial<Record<ReleasePlatform, Omit<PreparedUploadAsset, "storagePath">>>,
+) {
+  return Object.fromEntries(
+    RELEASE_PLATFORMS.flatMap((platform) => {
+      const metadata = fileMetadata[platform];
+      if (!metadata) {
+        return [];
+      }
+
+      return [[
+        platform,
+        {
+          ...metadata,
+          storagePath: `${releaseId}/${platform}/${sanitizeFileName(metadata.fileName)}`,
+        },
+      ]];
+    }),
+  ) as Partial<Record<ReleasePlatform, PreparedUploadAsset>>;
+}
+
+async function getReleaseForMissingAsset(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  releaseId: string,
+  platform: ReleasePlatform,
+) {
+  const { data: release, error } = await supabase
+    .from("software_releases")
+    .select("id,delivery_mode,release_status,software_release_assets(platform)")
+    .eq("id", releaseId)
+    .single();
+
+  if (error || !release || release.delivery_mode !== "file") {
+    throw new Error("Release upload is invalid");
+  }
+
+  if ((release.software_release_assets ?? []).some((asset: { platform: string }) => asset.platform === platform)) {
+    throw new Error("Installer already exists for this platform");
+  }
+
+  return release;
+}
+
 function getStorageEndpoint() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
@@ -75,14 +144,8 @@ export async function createSoftwareRelease(formData: FormData) {
   let windowsBackupUrl: string | null = null;
 
   if (deliveryMode === "file") {
-    files = RELEASE_PLATFORMS.map((platform) => ({
-      platform,
-      file: getUploadFile(formData, `${platform}_file`) as File,
-    })).filter((entry): entry is { platform: ReleasePlatform; file: File } => Boolean(entry.file));
-
-    if (files.length !== RELEASE_PLATFORMS.length) {
-      throw new Error("Upload macOS M chip, macOS Intel, and Windows installer files");
-    }
+    files = getSelectedFileUploads(formData);
+    requireAtLeastOnePlatform(files.map(({ platform }) => platform));
   } else {
     macosArm64PrimaryUrl = getRequiredReleaseUrl(formData, "macos_arm64_primary_url");
     macosArm64BackupUrl = getOptionalReleaseUrl(formData, "macos_arm64_backup_url");
@@ -192,7 +255,9 @@ export async function prepareSoftwareReleaseUpload(formData: FormData) {
   const version = getRequiredString(formData, "version", "Version is required");
   const releasedAt = getReleaseDate(formData);
   const notes = getReleaseNotes(formData);
-  const fileMetadata = Object.fromEntries(RELEASE_PLATFORMS.map((platform) => [platform, getReleaseFileMetadata(formData, platform)])) as Record<ReleasePlatform, PreparedUploadAsset>;
+  const platforms = getSelectedUploadPlatforms(formData);
+  requireAtLeastOnePlatform(platforms);
+  const fileMetadata = Object.fromEntries(platforms.map((platform) => [platform, getReleaseFileMetadata(formData, platform)])) as Partial<Record<ReleasePlatform, Omit<PreparedUploadAsset, "storagePath">>>;
   const supabase = createSupabaseAdminClient();
   const { data: release, error: releaseError } = await supabase
     .from("software_releases")
@@ -220,19 +285,12 @@ export async function prepareSoftwareReleaseUpload(formData: FormData) {
     throw new Error("Unable to prepare release upload");
   }
 
-  const assets = Object.fromEntries(
-    RELEASE_PLATFORMS.map((platform) => [
-      platform,
-      {
-        ...fileMetadata[platform],
-        storagePath: `${release.id}/${platform}/${sanitizeFileName(fileMetadata[platform].fileName)}`,
-      },
-    ]),
-  ) as Record<ReleasePlatform, PreparedUploadAsset>;
+  const assets = getPreparedUploadAssets(release.id, fileMetadata);
 
   return {
     assets,
     bucket: SOFTWARE_RELEASES_BUCKET,
+    platforms,
     releaseId: release.id,
     storageEndpoint: getStorageEndpoint(),
   };
@@ -243,7 +301,9 @@ export async function finalizeSoftwareReleaseUpload(formData: FormData) {
   await requireAdmin(locale);
   const releaseId = getRequiredString(formData, "release_id", "Release is required");
   const isPublished = String(formData.get("is_published") ?? "false") === "true";
-  const files = RELEASE_PLATFORMS.map((platform) => ({
+  const platforms = getSelectedUploadPlatforms(formData);
+  requireAtLeastOnePlatform(platforms);
+  const files = platforms.map((platform) => ({
     metadata: getReleaseFileMetadata(formData, platform),
     platform,
     storagePath: getReleaseStoragePath(formData, platform),
@@ -295,6 +355,69 @@ export async function finalizeSoftwareReleaseUpload(formData: FormData) {
     fallbackPath: "/admin/releases",
     formData,
     key: "release-created",
+    locale,
+    tone: "notice",
+  });
+}
+
+export async function prepareMissingReleaseAssetUpload(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const releaseId = getRequiredString(formData, "release_id", "Release is required");
+  const platform = formData.get("platform");
+  if (!isReleasePlatform(platform)) {
+    throw new Error("Release platform is required");
+  }
+
+  const metadata = getReleaseFileMetadata(formData, platform);
+  const supabase = createSupabaseAdminClient();
+  await getReleaseForMissingAsset(supabase, releaseId, platform);
+  const asset: PreparedUploadAsset = {
+    ...metadata,
+    storagePath: `${releaseId}/${platform}/${sanitizeFileName(metadata.fileName)}`,
+  };
+
+  return {
+    asset,
+    bucket: SOFTWARE_RELEASES_BUCKET,
+    platform,
+    releaseId,
+    storageEndpoint: getStorageEndpoint(),
+  };
+}
+
+export async function finalizeMissingReleaseAssetUpload(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const releaseId = getRequiredString(formData, "release_id", "Release is required");
+  const platform = formData.get("platform");
+  if (!isReleasePlatform(platform)) {
+    throw new Error("Release platform is required");
+  }
+
+  const metadata = getReleaseFileMetadata(formData, platform);
+  const storagePath = getReleaseStoragePath(formData, platform);
+  const supabase = createSupabaseAdminClient();
+  await getReleaseForMissingAsset(supabase, releaseId, platform);
+  const verifiedSize = await verifyUploadedObject(supabase.storage, storagePath);
+  const { error: assetError } = await supabase.from("software_release_assets").insert({
+    file_name: metadata.fileName,
+    file_size: verifiedSize,
+    platform,
+    release_id: releaseId,
+    storage_path: storagePath,
+  });
+
+  if (assetError) {
+    throw new Error("Unable to save release asset");
+  }
+
+  revalidatePath(`/${locale}`);
+  revalidatePath(`/${locale}/admin/releases`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/releases",
+    formData,
+    key: "release-updated",
     locale,
     tone: "notice",
   });

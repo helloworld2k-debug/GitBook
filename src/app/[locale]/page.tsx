@@ -63,6 +63,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
       href: macArmDelivery?.primaryUrl ?? getFallbackDownload("macos_arm64"),
       backupHref: macArmDelivery?.backupUrl ?? null,
       backupLabel: "macOS M chip Backup",
+      pendingLabel: t("downloadPending"),
       unavailable: latestRelease ? !macArmDelivery?.primaryUrl : false,
       className: `${downloadLinkClass} neon-button text-white`,
     },
@@ -71,6 +72,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
       href: macIntelDelivery?.primaryUrl ?? getFallbackDownload("macos_x64"),
       backupHref: macIntelDelivery?.backupUrl ?? null,
       backupLabel: "macOS Intel Backup",
+      pendingLabel: t("downloadPending"),
       unavailable: latestRelease ? !macIntelDelivery?.primaryUrl : false,
       className: `${downloadLinkClass} neon-button text-white`,
     },
@@ -79,6 +81,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
       href: windowsDelivery?.primaryUrl ?? getFallbackDownload("windows"),
       backupHref: windowsDelivery?.backupUrl ?? null,
       backupLabel: "Windows Backup",
+      pendingLabel: t("downloadPending"),
       unavailable: latestRelease ? !windowsDelivery?.primaryUrl : false,
       className: `${downloadLinkClass} border border-cyan-300/20 bg-white/[0.08] text-cyan-100 hover:border-cyan-300/50 hover:bg-white/[0.12]`,
     },
@@ -116,13 +119,15 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               {downloads.map((download) =>
                 download.unavailable ? (
-                  <span
-                    aria-disabled="true"
-                    className={`${download.className} cursor-not-allowed opacity-50`}
-                    key={download.label}
-                  >
-                    {download.label}
-                  </span>
+                  <div className="flex flex-col gap-2" key={download.label}>
+                    <span
+                      aria-disabled="true"
+                      className={`${download.className} cursor-not-allowed opacity-50`}
+                    >
+                      {download.label}
+                    </span>
+                    <span className="text-center text-xs font-semibold uppercase text-slate-400">{download.pendingLabel}</span>
+                  </div>
                 ) : (
                   <div className="flex flex-col gap-2" key={download.label}>
                     <a className={download.className} href={download.href}>
@@ -139,12 +144,6 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-400">
               <span>{latestVersionLabel}</span>
-              <Link
-                className="font-semibold text-cyan-100 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
-                href="/versions"
-              >
-                {t("olderVersions")}
-              </Link>
             </div>
             <div className="mt-9 max-w-2xl rounded-md border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-100">
               {t("supportPrompt")}{" "}

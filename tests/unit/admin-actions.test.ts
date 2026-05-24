@@ -8,10 +8,12 @@ import {
   deleteDraftSoftwareRelease,
   finalizeSoftwareReleaseUpload,
   inviteUserAccount,
+  prepareMissingReleaseAssetUpload,
   bulkPermanentlyDeleteArchivedUsers,
   permanentlyDeleteUser,
   permanentlyDeleteArchivedUser,
   prepareSoftwareReleaseUpload,
+  finalizeMissingReleaseAssetUpload,
   replySupportFeedbackAsAdmin,
   revokeCertificate,
   setSoftwareReleasePublished,
@@ -1522,6 +1524,53 @@ describe("admin actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
   });
 
+  it("creates a file release with only the selected platform assets", async () => {
+    const releaseInsertSingle = vi.fn(async () => ({ data: { id: "release-1" }, error: null }));
+    const releaseSelect = vi.fn(() => ({ single: releaseInsertSingle }));
+    const releaseInsert = vi.fn(() => ({ select: releaseSelect }));
+    const assetInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "software_releases") {
+        return { insert: releaseInsert };
+      }
+
+      if (table === "software_release_assets") {
+        return { insert: assetInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    const upload = vi.fn(async () => ({ error: null }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, storage: { from: vi.fn(() => ({ upload })) } });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("version", "v1.5.0");
+    formData.set("released_at", "2026-05-20");
+    formData.set("delivery_mode", "file");
+    formData.set("macos_arm64_file", new File(["mac-arm"], "GitBook AI arm64.dmg"));
+    formData.set("windows_file", new File(["win"], "GitBook AI.exe"));
+
+    await expect(createSoftwareRelease(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-created");
+
+    expect(upload).toHaveBeenCalledTimes(2);
+    expect(assetInsert).toHaveBeenCalledWith([
+      expect.objectContaining({ file_name: "GitBook AI arm64.dmg", platform: "macos_arm64" }),
+      expect.objectContaining({ file_name: "GitBook AI.exe", platform: "windows" }),
+    ]);
+  });
+
+  it("rejects creating a file release without any installer files", async () => {
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("version", "v1.5.0");
+    formData.set("released_at", "2026-05-20");
+    formData.set("delivery_mode", "file");
+
+    await expect(createSoftwareRelease(formData)).rejects.toThrow("Select at least one installer file");
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
+  });
+
   it("prepares a draft software release upload without writing assets", async () => {
     const releaseInsertSingle = vi.fn(async () => ({ data: { id: "release-1" }, error: null }));
     const releaseSelect = vi.fn(() => ({ single: releaseInsertSingle }));
@@ -1596,6 +1645,54 @@ describe("admin actions", () => {
       windows_primary_url: null,
     });
     expect(assetInsert).not.toHaveBeenCalled();
+  });
+
+  it("prepares a draft software release upload for only the selected platforms", async () => {
+    const releaseInsertSingle = vi.fn(async () => ({ data: { id: "release-1" }, error: null }));
+    const releaseSelect = vi.fn(() => ({ single: releaseInsertSingle }));
+    const releaseInsert = vi.fn(() => ({ select: releaseSelect }));
+    const from = vi.fn((table: string) => {
+      if (table === "software_releases") {
+        return { insert: releaseInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("version", "v1.5.0");
+    formData.set("released_at", "2026-05-20");
+    formData.set("notes", "Intel build pending");
+    formData.set("macos_arm64_file_name", "GitBook AI arm64.dmg");
+    formData.set("macos_arm64_file_size", "42");
+    formData.set("windows_file_name", "GitBook AI.exe");
+    formData.set("windows_file_size", "42");
+
+    await expect(prepareSoftwareReleaseUpload(formData)).resolves.toMatchObject({
+      platforms: ["macos_arm64", "windows"],
+      assets: {
+        macos_arm64: {
+          fileName: "GitBook AI arm64.dmg",
+          storagePath: "release-1/macos_arm64/GitBook-AI-arm64.dmg",
+        },
+        windows: {
+          fileName: "GitBook AI.exe",
+          storagePath: "release-1/windows/GitBook-AI.exe",
+        },
+      },
+    });
+  });
+
+  it("rejects preparing a file release upload without any installer metadata", async () => {
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("version", "v1.5.0");
+    formData.set("released_at", "2026-05-20");
+
+    await expect(prepareSoftwareReleaseUpload(formData)).rejects.toThrow("Select at least one installer file");
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
   it("rejects oversized files before preparing a release upload", async () => {
@@ -1675,6 +1772,179 @@ describe("admin actions", () => {
       expect.objectContaining({ file_name: "GitBook AI.exe", file_size: 42, platform: "windows" }),
     ]);
     expect(releaseUpdate).toHaveBeenCalledWith({ is_published: true, release_status: "ready" });
+  });
+
+  it("finalizes a prepared release with only the selected uploaded platforms", async () => {
+    const releaseSingle = vi.fn(async () => ({
+      data: {
+        id: "release-1",
+        delivery_mode: "file",
+        release_status: "uploading",
+      },
+      error: null,
+    }));
+    const releaseEq = vi.fn(() => ({ single: releaseSingle }));
+    const releaseSelect = vi.fn(() => ({ eq: releaseEq }));
+    const releaseUpdateEq = vi.fn(async () => ({ error: null }));
+    const releaseUpdate = vi.fn(() => ({ eq: releaseUpdateEq }));
+    const assetInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "software_releases") {
+        return { select: releaseSelect, update: releaseUpdate };
+      }
+
+      if (table === "software_release_assets") {
+        return { insert: assetInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    const list = vi.fn(async (prefix: string) => ({
+      data: prefix === "release-1/macos_arm64"
+        ? [{ name: "GitBook-AI-arm64.dmg", metadata: { size: 42 } }]
+        : [{ name: "GitBook-AI.exe", metadata: { size: 42 } }],
+      error: null,
+    }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, storage: { from: vi.fn(() => ({ list })) } });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("release_id", "release-1");
+    formData.set("is_published", "true");
+    formData.set("macos_arm64_file_name", "GitBook AI arm64.dmg");
+    formData.set("macos_arm64_file_size", "42");
+    formData.set("macos_arm64_storage_path", "release-1/macos_arm64/GitBook-AI-arm64.dmg");
+    formData.set("windows_file_name", "GitBook AI.exe");
+    formData.set("windows_file_size", "42");
+    formData.set("windows_storage_path", "release-1/windows/GitBook-AI.exe");
+
+    await expect(finalizeSoftwareReleaseUpload(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-created");
+
+    expect(list).toHaveBeenCalledWith("release-1/macos_arm64", { search: "GitBook-AI-arm64.dmg", limit: 1 });
+    expect(list).not.toHaveBeenCalledWith("release-1/macos_x64", expect.anything());
+    expect(list).toHaveBeenCalledWith("release-1/windows", { search: "GitBook-AI.exe", limit: 1 });
+    expect(assetInsert).toHaveBeenCalledWith([
+      expect.objectContaining({ file_name: "GitBook AI arm64.dmg", platform: "macos_arm64" }),
+      expect.objectContaining({ file_name: "GitBook AI.exe", platform: "windows" }),
+    ]);
+  });
+
+  it("prepares a missing platform upload for an existing file release", async () => {
+    const releaseSingle = vi.fn(async () => ({
+      data: {
+        id: "release-1",
+        delivery_mode: "file",
+        release_status: "ready",
+        software_release_assets: [
+          { platform: "macos_arm64" },
+          { platform: "windows" },
+        ],
+      },
+      error: null,
+    }));
+    const releaseEq = vi.fn(() => ({ single: releaseSingle }));
+    const releaseSelect = vi.fn(() => ({ eq: releaseEq }));
+    const from = vi.fn((table: string) => {
+      if (table === "software_releases") {
+        return { select: releaseSelect };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("release_id", "release-1");
+    formData.set("platform", "macos_x64");
+    formData.set("macos_x64_file_name", "GitBook AI intel.dmg");
+    formData.set("macos_x64_file_size", "42");
+
+    await expect(prepareMissingReleaseAssetUpload(formData)).resolves.toMatchObject({
+      asset: {
+        fileName: "GitBook AI intel.dmg",
+        storagePath: "release-1/macos_x64/GitBook-AI-intel.dmg",
+      },
+      platform: "macos_x64",
+      releaseId: "release-1",
+    });
+  });
+
+  it("rejects preparing a missing platform upload when the platform already exists", async () => {
+    const releaseSingle = vi.fn(async () => ({
+      data: {
+        id: "release-1",
+        delivery_mode: "file",
+        release_status: "ready",
+        software_release_assets: [{ platform: "macos_x64" }],
+      },
+      error: null,
+    }));
+    const from = vi.fn(() => ({ select: () => ({ eq: () => ({ single: releaseSingle }) }) }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("release_id", "release-1");
+    formData.set("platform", "macos_x64");
+    formData.set("macos_x64_file_name", "GitBook AI intel.dmg");
+    formData.set("macos_x64_file_size", "42");
+
+    await expect(prepareMissingReleaseAssetUpload(formData)).rejects.toThrow("Installer already exists for this platform");
+  });
+
+  it("finalizes a missing platform upload without creating a new release", async () => {
+    const releaseSingle = vi.fn(async () => ({
+      data: {
+        id: "release-1",
+        delivery_mode: "file",
+        release_status: "ready",
+        software_release_assets: [
+          { platform: "macos_arm64" },
+          { platform: "windows" },
+        ],
+      },
+      error: null,
+    }));
+    const releaseEq = vi.fn(() => ({ single: releaseSingle }));
+    const releaseSelect = vi.fn(() => ({ eq: releaseEq }));
+    const assetInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "software_releases") {
+        return { select: releaseSelect };
+      }
+
+      if (table === "software_release_assets") {
+        return { insert: assetInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    const list = vi.fn(async () => ({
+      data: [{ name: "GitBook-AI-intel.dmg", metadata: { size: 42 } }],
+      error: null,
+    }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, storage: { from: vi.fn(() => ({ list })) } });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("release_id", "release-1");
+    formData.set("platform", "macos_x64");
+    formData.set("macos_x64_file_name", "GitBook AI intel.dmg");
+    formData.set("macos_x64_file_size", "42");
+    formData.set("macos_x64_storage_path", "release-1/macos_x64/GitBook-AI-intel.dmg");
+
+    await expect(finalizeMissingReleaseAssetUpload(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-updated");
+
+    expect(assetInsert).toHaveBeenCalledWith({
+      file_name: "GitBook AI intel.dmg",
+      file_size: 42,
+      platform: "macos_x64",
+      release_id: "release-1",
+      storage_path: "release-1/macos_x64/GitBook-AI-intel.dmg",
+    });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
   });
 
   it("rejects finalize when an uploaded object is larger than the 50 MB release limit", async () => {
