@@ -67,17 +67,45 @@ async function checkPage(path) {
 }
 
 async function checkDownload(link) {
+  const headers = {
+    "user-agent": "GitBookAI-canary/1.0",
+  };
+  const fetchWithTimeout = async ({ method, redirect }) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      return await fetch(link.href, {
+        headers,
+        method,
+        redirect,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+
   try {
-    const response = await fetch(link.href, {
-      method: "HEAD",
-      redirect: "follow",
-    });
+    const linkUrl = new URL(link.href);
+    const isExternal = linkUrl.origin !== new URL(baseUrl).origin;
+    let method = isExternal ? "GET" : "HEAD";
+    let redirect = isExternal ? "manual" : "follow";
+    let response = await fetchWithTimeout({ method, redirect });
+
+    if (!isExternal && !response.ok) {
+      method = "GET";
+      redirect = "follow";
+      response = await fetchWithTimeout({ method, redirect });
+    }
 
     return {
       contentLength: response.headers.get("content-length"),
       contentType: response.headers.get("content-type"),
       label: `download ${link.label}`,
-      ok: response.ok,
+      method,
+      ok: isExternal ? response.status >= 200 && response.status < 400 : response.ok,
+      redirect,
       status: response.status,
       url: response.url,
     };
@@ -89,6 +117,21 @@ async function checkDownload(link) {
       url: link.href,
     };
   }
+}
+
+async function checkDownloadLinks(links) {
+  const checksByHref = new Map();
+
+  for (const link of links) {
+    if (!checksByHref.has(link.href)) {
+      checksByHref.set(link.href, await checkDownload(link));
+    }
+  }
+
+  return links.map((link) => ({
+    ...checksByHref.get(link.href),
+    label: `download ${link.label}`,
+  }));
 }
 
 async function checkWww() {
@@ -178,7 +221,7 @@ async function main() {
     label: "download link discovery",
     ok: downloadLinks.length >= 2,
   });
-  checks.push(...await Promise.all(downloadLinks.map(checkDownload)));
+  checks.push(...await checkDownloadLinks(downloadLinks));
   checks.push(await checkAuthCallback());
   checks.push(await checkDebugWebhookStatus());
   checks.push(await checkWww());
