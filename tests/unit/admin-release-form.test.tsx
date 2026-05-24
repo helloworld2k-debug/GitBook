@@ -13,9 +13,11 @@ const uploadMocks = vi.hoisted(() => ({
 }));
 
 const latestUploadOptions: {
+  fingerprint?: (file: File) => string;
   onError?: (error: Error) => void;
   onProgress?: (bytesUploaded: number, bytesTotal: number) => void;
   onSuccess?: () => void;
+  removeFingerprintOnSuccess?: boolean;
 }[] = [];
 
 vi.mock("@/app/[locale]/admin/actions/releases", () => ({
@@ -84,6 +86,7 @@ describe("AdminReleaseDeliveryModeFields", () => {
       bucket: "software-releases",
       releaseId: "release-1",
       storageEndpoint: "https://project.storage.supabase.co/storage/v1/upload/resumable",
+      platforms: ["macos_arm64", "macos_x64", "windows"],
       assets: {
         macos_arm64: {
           contentType: "application/octet-stream",
@@ -201,5 +204,85 @@ describe("AdminReleaseDeliveryModeFields", () => {
     latestUploadOptions[0]?.onSuccess?.();
 
     await waitFor(() => expect(uploadMocks.finalizeSoftwareReleaseUpload).not.toHaveBeenCalled());
+  });
+
+  it("uploads and finalizes only the selected platforms for a partial release", async () => {
+    uploadMocks.prepareSoftwareReleaseUpload.mockResolvedValue({
+      bucket: "software-releases",
+      releaseId: "release-2",
+      storageEndpoint: "https://project.storage.supabase.co/storage/v1/upload/resumable",
+      platforms: ["macos_arm64", "windows"],
+      assets: {
+        macos_arm64: {
+          contentType: "application/octet-stream",
+          fileName: "GitBook-arm64.dmg",
+          fileSize: 42,
+          storagePath: "release-2/macos_arm64/GitBook-arm64.dmg",
+        },
+        windows: {
+          contentType: "application/octet-stream",
+          fileName: "GitBook.exe",
+          fileSize: 42,
+          storagePath: "release-2/windows/GitBook.exe",
+        },
+      },
+    });
+
+    render(
+      <form>
+        <input name="version" defaultValue="v1.5.0" />
+        <input name="released_at" defaultValue="2026-05-20" />
+        <AdminReleaseDeliveryModeFields labels={labels} locale="en" />
+      </form>,
+    );
+
+    fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
+      target: { files: [new File(["mac-arm"], "GitBook-arm64.dmg")] },
+    });
+    fireEvent.change(screen.getByLabelText("Windows installer"), {
+      target: { files: [new File(["win"], "GitBook.exe")] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create release" }));
+
+    await waitFor(() => expect(uploadMocks.start).toHaveBeenCalledTimes(2));
+    expect(uploadMocks.prepareSoftwareReleaseUpload).toHaveBeenCalledWith(expect.any(FormData));
+
+    const preparedFormData = uploadMocks.prepareSoftwareReleaseUpload.mock.calls[0]?.[0] as FormData;
+    expect(preparedFormData.get("macos_arm64_file_name")).toBe("GitBook-arm64.dmg");
+    expect(preparedFormData.get("macos_x64_file_name")).toBeNull();
+    expect(preparedFormData.get("windows_file_name")).toBe("GitBook.exe");
+
+    act(() => latestUploadOptions[0]?.onSuccess?.());
+    await waitFor(() => expect(uploadMocks.finalizeSoftwareReleaseUpload).not.toHaveBeenCalled());
+
+    act(() => latestUploadOptions[1]?.onSuccess?.());
+    await waitFor(() => expect(uploadMocks.finalizeSoftwareReleaseUpload).toHaveBeenCalled());
+
+    const finalizeFormData = uploadMocks.finalizeSoftwareReleaseUpload.mock.calls[0]?.[0] as FormData;
+    expect(finalizeFormData.get("macos_arm64_storage_path")).toBe("release-2/macos_arm64/GitBook-arm64.dmg");
+    expect(finalizeFormData.get("macos_x64_storage_path")).toBeNull();
+    expect(finalizeFormData.get("windows_storage_path")).toBe("release-2/windows/GitBook.exe");
+  });
+
+  it("uses release-specific resumable upload fingerprints and clears them after success", async () => {
+    render(
+      <form>
+        <input name="version" defaultValue="v1.4.0" />
+        <input name="released_at" defaultValue="2026-05-10" />
+        <AdminReleaseDeliveryModeFields labels={labels} locale="en" />
+      </form>,
+    );
+
+    const file = new File(["mac-arm"], "GitBook-arm64.dmg");
+    Object.defineProperty(file, "lastModified", { value: 1770000000000 });
+
+    fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create release" }));
+
+    await waitFor(() => expect(uploadMocks.start).toHaveBeenCalledTimes(1));
+    expect(latestUploadOptions[0]?.removeFingerprintOnSuccess).toBe(true);
+    await expect(latestUploadOptions[0]?.fingerprint?.(file)).resolves.toContain("release-1/macos_arm64/GitBook-arm64.dmg");
   });
 });

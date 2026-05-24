@@ -18,8 +18,9 @@ type PreparedAsset = {
 };
 
 type PreparedUpload = {
-  assets: Record<Platform, PreparedAsset>;
+  assets: Partial<Record<Platform, PreparedAsset>>;
   bucket: string;
+  platforms: Platform[];
   releaseId: string;
   storageEndpoint: string;
 };
@@ -100,7 +101,8 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
   }
 
   const limitError = labels.uploadLimitError ?? "Installer files must be 50 MB or smaller. Use download links for larger installers.";
-  const allFilesSelected = RELEASE_PLATFORMS.every((platform) => Boolean(uploads[platform].file));
+  const selectedPlatforms = RELEASE_PLATFORMS.filter((platform) => Boolean(uploads[platform].file));
+  const hasAnyFileSelected = selectedPlatforms.length > 0;
   const hasFileError = RELEASE_PLATFORMS.some((platform) => Boolean(uploads[platform].error));
   const createLabel = labels.create ?? "Create release";
   const createLinkLabel = labels.createLink ?? createLabel;
@@ -164,8 +166,20 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
 
   function buildUpload(platform: Platform, file: File, prepared: PreparedUpload, accessToken?: string) {
     const asset = prepared.assets[platform];
+    if (!asset) {
+      throw new Error("Prepared upload asset is missing");
+    }
     const upload = new Upload(file, {
       endpoint: prepared.storageEndpoint,
+      fingerprint: async (fingerprintFile) => [
+        prepared.bucket,
+        prepared.releaseId,
+        platform,
+        asset.storagePath,
+        fingerprintFile.name,
+        fingerprintFile.size,
+        fingerprintFile.lastModified,
+      ].join(":"),
       headers: {
         ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
         "x-upsert": "false",
@@ -195,7 +209,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
         });
         maybeFinalize(prepared);
       },
-      removeFingerprintOnSuccess: false,
+      removeFingerprintOnSuccess: true,
       retryDelays: [0, 1000, 3000, 5000],
       uploadDataDuringCreation: true,
     });
@@ -252,7 +266,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
   function maybeFinalize(prepared: PreparedUpload) {
     queueMicrotask(() => {
       const current = uploadsRef.current;
-      if (!RELEASE_PLATFORMS.every((platform) => current[platform].status === "complete")) {
+      if (!prepared.platforms.every((platform) => current[platform].status === "complete")) {
         return;
       }
 
@@ -262,10 +276,11 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
       formData.set("release_id", prepared.releaseId);
       formData.set("is_published", formData.get("is_published") === "on" ? "true" : "false");
 
-      RELEASE_PLATFORMS.forEach((platform) => {
+      prepared.platforms.forEach((platform) => {
         const file = current[platform].file;
-        if (file) {
-          appendMetadata(formData, platform, file, prepared.assets[platform].storagePath);
+        const asset = prepared.assets[platform];
+        if (file && asset) {
+          appendMetadata(formData, platform, file, asset.storagePath);
         }
       });
 
@@ -298,7 +313,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
       try {
         const prepared = await prepareSoftwareReleaseUpload(formData);
         setPreparedUpload(prepared);
-        RELEASE_PLATFORMS.forEach((platform) => startUpload(platform, prepared));
+        prepared.platforms.forEach((platform) => startUpload(platform, prepared));
       } catch (error) {
         setFormError(error instanceof Error ? error.message : "Unable to prepare release upload");
       }
@@ -394,7 +409,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
           {formError ? <p className="text-sm font-medium text-red-700">{formError}</p> : null}
           <button
             className="inline-flex min-h-11 w-fit items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!allFilesSelected || hasFileError || isPending}
+            disabled={!hasAnyFileSelected || hasFileError || isPending}
             onClick={startPreparedUploads}
             type="button"
           >

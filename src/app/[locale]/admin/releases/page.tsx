@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { AdminReleaseDeliveryModeFields } from "@/components/admin/admin-release-delivery-mode-fields";
+import { AdminReleaseMissingAssetUpload } from "@/components/admin/admin-release-missing-asset-upload";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
@@ -203,7 +204,21 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                                     </>
                                   ) : asset ? (
                                     <a className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700" href={asset.downloadUrl}>{asset.fileName}</a>
-                                  ) : null}
+                                  ) : (
+                                    <AdminReleaseMissingAssetUpload
+                                      labels={{
+                                        addInstaller: t("releases.addInstaller"),
+                                        comingSoon: t("releases.comingSoon"),
+                                        uploadComplete: t("releases.uploadComplete"),
+                                        uploadFailed: t("releases.uploadFailed"),
+                                        uploadLimitError: t("releases.uploadLimitError"),
+                                        uploadUploading: t("releases.uploadUploading"),
+                                      }}
+                                      locale={locale}
+                                      platform={platform}
+                                      releaseId={release.id}
+                                    />
+                                  )}
                                 </div>
                               </div>
                             );
