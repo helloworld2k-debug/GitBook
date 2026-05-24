@@ -7,14 +7,6 @@ import { setupAdminPage } from "@/lib/auth/page-guards";
 import { getPaymentCheckoutStatus, type PaymentCheckoutStatusClient } from "@/lib/payments/maintenance";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-type SupportContactChannelRow = {
-  id: SupportChannelId;
-  is_enabled: boolean;
-  label: string;
-  sort_order: number;
-  value: string;
-};
-
 type AdminSupportSettingsPageProps = {
   params: Promise<{ locale: string }>;
   searchParams?: Promise<{ channel?: string; error?: string; notice?: string }>;

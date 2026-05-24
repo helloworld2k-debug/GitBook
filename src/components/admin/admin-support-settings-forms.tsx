@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { updatePaymentCheckoutMaintenanceInline, updateSupportContactChannelInline } from "@/app/[locale]/admin/actions";
 import type { SupportChannelId } from "@/config/support";
 import type { AdminInlineActionState } from "@/lib/admin/inline-action";
@@ -79,20 +79,14 @@ export function SupportChannelSettingsForm({
   locale,
   t,
 }: SupportChannelSettingsFormProps) {
-  const [localChannel, setLocalChannel] = useState(channel);
-  const [selectedEnabled, setSelectedEnabled] = useState(channel.is_enabled);
   const [state, formAction] = useActionState<AdminInlineActionState<SupportContactChannelInlineData>, FormData>(
     updateSupportContactChannelInline,
     isSaved ? { key: "support-contact-updated", tone: "notice" } : {},
   );
+  const localChannel = state.data?.channel ?? channel;
+  const [selectedEnabled, setSelectedEnabled] = useState(channel.is_enabled);
+  const resolvedSelectedEnabled = state.data?.channel ? state.data.channel.is_enabled : selectedEnabled;
   const showSaved = state.tone === "notice" || isSaved;
-
-  useEffect(() => {
-    if (state.data?.channel) {
-      setLocalChannel(state.data.channel);
-      setSelectedEnabled(state.data.channel.is_enabled);
-    }
-  }, [state.data]);
 
   return (
     <form
@@ -123,11 +117,11 @@ export function SupportChannelSettingsForm({
       <label className="grid min-w-0 gap-1 text-sm font-medium text-slate-700">
         {t("supportSettings.status")}
         <span className="inline-flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-md border border-slate-300 px-3">
-          <span className="min-w-0 truncate text-sm text-slate-700">{selectedEnabled ? t("supportSettings.enabled") : t("supportSettings.disabled")}</span>
-          <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${selectedEnabled ? "bg-slate-950" : "bg-slate-300"}`}>
-            <span className={`absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform ${selectedEnabled ? "translate-x-5" : "translate-x-0"}`} />
+          <span className="min-w-0 truncate text-sm text-slate-700">{resolvedSelectedEnabled ? t("supportSettings.enabled") : t("supportSettings.disabled")}</span>
+          <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${resolvedSelectedEnabled ? "bg-slate-950" : "bg-slate-300"}`}>
+            <span className={`absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform ${resolvedSelectedEnabled ? "translate-x-5" : "translate-x-0"}`} />
             <input
-              checked={selectedEnabled}
+              checked={resolvedSelectedEnabled}
               className="absolute inset-0 cursor-pointer opacity-0"
               name="is_enabled"
               onChange={(event) => setSelectedEnabled(event.target.checked)}
@@ -161,20 +155,14 @@ export function SupportChannelSettingsForm({
 }
 
 export function PaymentMaintenanceForm({ isSaved = false, locale, status, t }: PaymentMaintenanceFormProps) {
-  const [localStatus, setLocalStatus] = useState(status);
-  const [selectedPaused, setSelectedPaused] = useState(status.isPaused);
   const [state, formAction] = useActionState<AdminInlineActionState<PaymentMaintenanceInlineData>, FormData>(
     updatePaymentCheckoutMaintenanceInline,
     isSaved ? { key: "payment-maintenance-updated", tone: "notice" } : {},
   );
-  const message = localStatus.message ?? defaultPaymentMaintenanceMessage;
-
-  useEffect(() => {
-    if (state.data?.status) {
-      setLocalStatus(state.data.status);
-      setSelectedPaused(state.data.status.isPaused);
-    }
-  }, [state.data]);
+  const localStatus = state.data?.status ?? status;
+  const [selectedPaused, setSelectedPaused] = useState(status.isPaused);
+  const resolvedSelectedPaused = state.data?.status ? state.data.status.isPaused : selectedPaused;
+  const message = useMemo(() => localStatus.message ?? defaultPaymentMaintenanceMessage, [localStatus.message]);
 
   return (
     <form
@@ -188,13 +176,13 @@ export function PaymentMaintenanceForm({ isSaved = false, locale, status, t }: P
         {t("supportSettings.paymentMaintenanceStatus")}
         <span className="inline-flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-md border border-slate-300 px-3">
           <span className="min-w-0 truncate text-sm text-slate-700">
-            {selectedPaused ? t("supportSettings.paymentMaintenancePaused") : t("supportSettings.paymentMaintenanceAvailable")}
+            {resolvedSelectedPaused ? t("supportSettings.paymentMaintenancePaused") : t("supportSettings.paymentMaintenanceAvailable")}
           </span>
-          <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${selectedPaused ? "bg-amber-500" : "bg-slate-950"}`}>
-            <span className={`absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform ${selectedPaused ? "translate-x-5" : "translate-x-0"}`} />
+          <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${resolvedSelectedPaused ? "bg-amber-500" : "bg-slate-950"}`}>
+            <span className={`absolute left-1 size-4 rounded-full bg-white shadow-sm transition-transform ${resolvedSelectedPaused ? "translate-x-5" : "translate-x-0"}`} />
             <input
               aria-label={t("supportSettings.paymentMaintenanceStatus")}
-              checked={selectedPaused}
+              checked={resolvedSelectedPaused}
               className="absolute inset-0 cursor-pointer opacity-0"
               name="is_paused"
               onChange={(event) => setSelectedPaused(event.target.checked)}
