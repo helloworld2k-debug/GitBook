@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirectWithAdminFeedback } from "@/lib/admin/feedback";
+import type { AdminInlineActionState } from "@/lib/admin/inline-action";
 import { requireAdmin } from "@/lib/auth/guards";
+import type { PaymentCheckoutStatus } from "@/lib/payments/maintenance";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { insertAdminAuditLog } from "./audit";
 import { feedbackStatuses, getBoundedString, getPositiveInteger, getRequiredString, getSafeLocale, getSupportContactChannelId, MAX_NOTIFICATION_BODY_LENGTH, validateSupportContactValue } from "./validation";
@@ -10,7 +12,21 @@ import { feedbackStatuses, getBoundedString, getPositiveInteger, getRequiredStri
 const paymentMaintenanceTargetId = "22222222-2222-2222-2222-222222222222";
 const maxPaymentMaintenanceMessageLength = 280;
 
-export async function updateSupportContactChannel(formData: FormData) {
+type SupportContactChannelInlineData = {
+  channel: {
+    id: ReturnType<typeof getSupportContactChannelId>;
+    is_enabled: boolean;
+    label: string;
+    sort_order: number;
+    value: string;
+  };
+};
+
+type PaymentMaintenanceInlineData = {
+  status: PaymentCheckoutStatus;
+};
+
+async function saveSupportContactChannel(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);
   const channelId = getSupportContactChannelId(formData);
@@ -41,13 +57,11 @@ export async function updateSupportContactChannel(formData: FormData) {
     }, { onConflict: "id" });
 
   if (error) {
-    redirectWithAdminFeedback({
-      fallbackPath: "/admin/support-settings",
-      formData,
-      key: "support-contact-update-failed",
+    return {
+      errorKey: "support-contact-update-failed" as const,
       locale,
-      tone: "error",
-    });
+      ok: false as const,
+    };
   }
 
   if (existingChannel?.id === channelId) {
@@ -64,16 +78,21 @@ export async function updateSupportContactChannel(formData: FormData) {
   revalidatePath(`/${locale}/support`);
   revalidatePath(`/${locale}/admin/support-settings`);
   revalidatePath(`/${locale}/admin/audit-logs`);
-  redirectWithAdminFeedback({
-    fallbackPath: "/admin/support-settings",
-    formData,
-    key: "support-contact-updated",
+
+  return {
+    channel: {
+      id: channelId,
+      is_enabled: isEnabled,
+      label,
+      sort_order: sortOrder,
+      value,
+    },
     locale,
-    tone: "notice",
-  });
+    ok: true as const,
+  };
 }
 
-export async function updatePaymentCheckoutMaintenance(formData: FormData) {
+async function savePaymentCheckoutMaintenance(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);
   const isPaused = formData.get("is_paused") === "on";
@@ -101,13 +120,11 @@ export async function updatePaymentCheckoutMaintenance(formData: FormData) {
   }, { onConflict: "key" });
 
   if (error) {
-    redirectWithAdminFeedback({
-      fallbackPath: "/admin/support-settings",
-      formData,
-      key: "payment-maintenance-update-failed",
+    return {
+      errorKey: "payment-maintenance-update-failed" as const,
       locale,
-      tone: "error",
-    });
+      ok: false as const,
+    };
   }
 
   await insertAdminAuditLog({
@@ -123,13 +140,119 @@ export async function updatePaymentCheckoutMaintenance(formData: FormData) {
   revalidatePath(`/${locale}/contributions`);
   revalidatePath(`/${locale}/admin/support-settings`);
   revalidatePath(`/${locale}/admin/audit-logs`);
+
+  return {
+    locale,
+    ok: true as const,
+    status: {
+      isPaused,
+      message,
+    },
+  };
+}
+
+export async function updateSupportContactChannel(formData: FormData) {
+  const result = await saveSupportContactChannel(formData);
+
+  if (!result.ok) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/support-settings",
+      formData,
+      key: result.errorKey,
+      locale: result.locale,
+      tone: "error",
+    });
+  }
+
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/support-settings",
+    formData,
+    key: "support-contact-updated",
+    locale: result.locale,
+    tone: "notice",
+  });
+}
+
+export async function updateSupportContactChannelInline(
+  _previousState: AdminInlineActionState<SupportContactChannelInlineData>,
+  formData: FormData,
+): Promise<AdminInlineActionState<SupportContactChannelInlineData>> {
+  try {
+    const result = await saveSupportContactChannel(formData);
+
+    if (!result.ok) {
+      return {
+        key: result.errorKey,
+        tone: "error",
+      };
+    }
+
+    return {
+      data: {
+        channel: result.channel,
+      },
+      key: "support-contact-updated",
+      tone: "notice",
+    };
+  } catch (error) {
+    return {
+      key: "support-contact-update-failed",
+      message: error instanceof Error ? error.message : "Unable to update support contact channel.",
+      tone: "error",
+    };
+  }
+}
+
+export async function updatePaymentCheckoutMaintenance(formData: FormData) {
+  const result = await savePaymentCheckoutMaintenance(formData);
+
+  if (!result.ok) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/support-settings",
+      formData,
+      key: result.errorKey,
+      locale: result.locale,
+      tone: "error",
+    });
+  }
+
   redirectWithAdminFeedback({
     fallbackPath: "/admin/support-settings",
     formData,
     key: "payment-maintenance-updated",
-    locale,
+    locale: result.locale,
     tone: "notice",
   });
+}
+
+export async function updatePaymentCheckoutMaintenanceInline(
+  _previousState: AdminInlineActionState<PaymentMaintenanceInlineData>,
+  formData: FormData,
+): Promise<AdminInlineActionState<PaymentMaintenanceInlineData>> {
+  try {
+    const result = await savePaymentCheckoutMaintenance(formData);
+
+    if (!result.ok) {
+      return {
+        key: result.errorKey,
+        tone: "error",
+      };
+    }
+
+    return {
+      data: {
+        status: result.status,
+      },
+      key: "payment-maintenance-updated",
+      tone: "notice",
+    };
+  } catch (error) {
+    return {
+      key: "payment-maintenance-update-failed",
+      message: error instanceof Error ? error.message : "Unable to update payment maintenance.",
+      tone: "error",
+    };
+  }
 }
 
 export async function updateSupportFeedbackStatus(formData: FormData) {

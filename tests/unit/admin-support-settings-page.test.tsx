@@ -1,9 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import AdminSupportSettingsPage, { SupportChannelSettingsForm } from "@/app/[locale]/admin/support-settings/page";
+import AdminSupportSettingsPage from "@/app/[locale]/admin/support-settings/page";
+import { PaymentMaintenanceForm, SupportChannelSettingsForm } from "@/components/admin/admin-support-settings-forms";
 
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
+  updatePaymentCheckoutMaintenanceInline: vi.fn(),
+  updateSupportContactChannelInline: vi.fn(),
   requireAdmin: vi.fn(),
 }));
 
@@ -82,6 +85,11 @@ vi.mock("@/lib/auth/guards", () => ({
 
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: mocks.createSupabaseServerClient,
+}));
+
+vi.mock("@/app/[locale]/admin/actions", () => ({
+  updatePaymentCheckoutMaintenanceInline: mocks.updatePaymentCheckoutMaintenanceInline,
+  updateSupportContactChannelInline: mocks.updateSupportContactChannelInline,
 }));
 
 describe("AdminSupportSettingsPage", () => {
@@ -180,6 +188,7 @@ describe("SupportChannelSettingsForm", () => {
       "supportSettings.channel": "Channel",
       "supportSettings.emailHelp": "This is the public support mailbox shown on the Support page.",
       "supportSettings.enabled": "Enabled",
+      "supportSettings.disabled": "Disabled",
       "supportSettings.save": "Save",
       "supportSettings.sortOrder": "Sort order",
       "supportSettings.sortOrderHelp": "Smaller numbers appear first in the public channel list.",
@@ -187,6 +196,8 @@ describe("SupportChannelSettingsForm", () => {
       "supportSettings.statusHelp": "Switch this channel on only when the value is ready for public display.",
       "supportSettings.value": "Value",
       "supportSettings.valueHintEmail": "Use the public mailbox users should email for support",
+      "supportSettings.rowSaved": "Saved",
+      "supportSettings.rowSavedDescription": "Only this channel was updated.",
     };
 
     return messages[key] ?? key;
@@ -213,5 +224,133 @@ describe("SupportChannelSettingsForm", () => {
     expect(form).toHaveClass("grid-cols-1", "xl:grid-cols-[minmax(8rem,0.85fr)_minmax(14rem,1.55fr)_minmax(12rem,240px)_minmax(8rem,120px)_minmax(9rem,160px)]");
     expect(form).not.toHaveClass("lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.55fr)_240px_120px_160px]");
     expect(screen.getByRole("button", { name: "Save" }).parentElement?.parentElement).toHaveClass("md:col-span-2", "xl:col-span-1");
+  });
+
+  it("shows inline success for only the submitted support channel", async () => {
+    mocks.updateSupportContactChannelInline.mockResolvedValueOnce({
+      data: {
+        channel: {
+          id: "email",
+          is_enabled: false,
+          label: "Email",
+          sort_order: 40,
+          value: "support@example.com",
+        },
+      },
+      key: "support-contact-updated",
+      tone: "notice",
+    });
+
+    render(
+      <SupportChannelSettingsForm
+        channel={{
+          id: "email",
+          is_enabled: true,
+          label: "Email",
+          sort_order: 40,
+          value: "support@example.com",
+        }}
+        channelHintKey={{ email: "supportSettings.valueHintEmail" }}
+        channelPlaceholders={{ email: "support@example.com" }}
+        locale="en"
+        t={translate}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.submit(screen.getByRole("form", { name: "Email" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Saved");
+    });
+
+    expect(screen.getByText("Disabled")).toBeInTheDocument();
+    expect(window.location.search).toBe("");
+  });
+
+  it("shows inline support channel validation errors without navigating", async () => {
+    mocks.updateSupportContactChannelInline.mockResolvedValueOnce({
+      key: "support-contact-update-failed",
+      message: "Enter a valid URL",
+      tone: "error",
+    });
+
+    render(
+      <SupportChannelSettingsForm
+        channel={{
+          id: "email",
+          is_enabled: true,
+          label: "Email",
+          sort_order: 40,
+          value: "support@example.com",
+        }}
+        channelHintKey={{ email: "supportSettings.valueHintEmail" }}
+        channelPlaceholders={{ email: "support@example.com" }}
+        locale="en"
+        t={translate}
+      />,
+    );
+
+    fireEvent.submit(screen.getByRole("form", { name: "Email" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Enter a valid URL");
+    });
+
+    expect(window.location.search).toBe("");
+  });
+});
+
+describe("PaymentMaintenanceForm", () => {
+  const translate = (key: string) => {
+    const messages: Record<string, string> = {
+      "common.saving": "Saving...",
+      "supportSettings.paymentMaintenanceAvailable": "Accepting payments",
+      "supportSettings.paymentMaintenanceMessage": "Maintenance message",
+      "supportSettings.paymentMaintenanceMessageHelp": "Shown to visitors while checkout is paused.",
+      "supportSettings.paymentMaintenancePaused": "Paused",
+      "supportSettings.paymentMaintenanceSave": "Save payment status",
+      "supportSettings.paymentMaintenanceStatus": "Checkout status",
+      "supportSettings.rowSaved": "Saved",
+    };
+
+    return messages[key] ?? key;
+  };
+
+  it("shows inline success for payment maintenance without adding feedback query params", async () => {
+    mocks.updatePaymentCheckoutMaintenanceInline.mockResolvedValueOnce({
+      data: {
+        status: {
+          isPaused: true,
+          message: "Checkout is paused while we investigate a payment issue.",
+        },
+      },
+      key: "payment-maintenance-updated",
+      tone: "notice",
+    });
+
+    render(
+      <PaymentMaintenanceForm
+        locale="en"
+        status={{
+          isPaused: false,
+          message: "Payments are open.",
+        }}
+        t={translate}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Checkout status" }));
+    fireEvent.change(screen.getByDisplayValue("Payments are open."), {
+      target: { value: "Checkout is paused while we investigate a payment issue." },
+    });
+    fireEvent.submit(screen.getByRole("form", { name: "Payment maintenance" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Saved");
+    });
+
+    expect(screen.getByText("Paused")).toBeInTheDocument();
+    expect(window.location.search).toBe("");
   });
 });
