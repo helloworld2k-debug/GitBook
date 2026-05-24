@@ -232,6 +232,9 @@ describe("AdminReleaseDeliveryModeFields", () => {
       <form>
         <input name="version" defaultValue="v1.5.0" />
         <input name="released_at" defaultValue="2026-05-20" />
+        <input name="macos_arm64_file" defaultValue="raw-mac-file-should-not-be-submitted" />
+        <input name="macos_x64_file" defaultValue="raw-intel-file-should-not-be-submitted" />
+        <input name="windows_file" defaultValue="raw-windows-file-should-not-be-submitted" />
         <AdminReleaseDeliveryModeFields labels={labels} locale="en" />
       </form>,
     );
@@ -248,6 +251,11 @@ describe("AdminReleaseDeliveryModeFields", () => {
     expect(uploadMocks.prepareSoftwareReleaseUpload).toHaveBeenCalledWith(expect.any(FormData));
 
     const preparedFormData = uploadMocks.prepareSoftwareReleaseUpload.mock.calls[0]?.[0] as FormData;
+    expect(preparedFormData.get("version")).toBe("v1.5.0");
+    expect(preparedFormData.get("released_at")).toBe("2026-05-20");
+    expect(preparedFormData.get("macos_arm64_file")).toBeNull();
+    expect(preparedFormData.get("macos_x64_file")).toBeNull();
+    expect(preparedFormData.get("windows_file")).toBeNull();
     expect(preparedFormData.get("macos_arm64_file_name")).toBe("GitBook-arm64.dmg");
     expect(preparedFormData.get("macos_x64_file_name")).toBeNull();
     expect(preparedFormData.get("windows_file_name")).toBe("GitBook.exe");
@@ -259,6 +267,11 @@ describe("AdminReleaseDeliveryModeFields", () => {
     await waitFor(() => expect(uploadMocks.finalizeSoftwareReleaseUpload).toHaveBeenCalled());
 
     const finalizeFormData = uploadMocks.finalizeSoftwareReleaseUpload.mock.calls[0]?.[0] as FormData;
+    expect(finalizeFormData.get("version")).toBe("v1.5.0");
+    expect(finalizeFormData.get("released_at")).toBe("2026-05-20");
+    expect(finalizeFormData.get("macos_arm64_file")).toBeNull();
+    expect(finalizeFormData.get("macos_x64_file")).toBeNull();
+    expect(finalizeFormData.get("windows_file")).toBeNull();
     expect(finalizeFormData.get("macos_arm64_storage_path")).toBe("release-2/macos_arm64/GitBook-arm64.dmg");
     expect(finalizeFormData.get("macos_x64_storage_path")).toBeNull();
     expect(finalizeFormData.get("windows_storage_path")).toBe("release-2/windows/GitBook.exe");

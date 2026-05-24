@@ -168,6 +168,52 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
     }
   }
 
+  function getFormFieldValue(name: string) {
+    const form = getParentForm();
+    const field = form?.elements.namedItem(name);
+    if (!field) {
+      return null;
+    }
+
+    if (field instanceof RadioNodeList) {
+      return field.value || null;
+    }
+
+    if (field instanceof HTMLInputElement) {
+      if (field.type === "checkbox") {
+        return field.checked ? field.value : null;
+      }
+      if (field.type === "file") {
+        return null;
+      }
+      return field.value;
+    }
+
+    if (field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
+      return field.value;
+    }
+
+    return null;
+  }
+
+  function createReleaseActionFormData() {
+    const formData = new FormData();
+    ["version", "released_at", "notes", "return_to"].forEach((name) => {
+      const value = getFormFieldValue(name);
+      if (value !== null) {
+        formData.set(name, value);
+      }
+    });
+
+    const isPublished = getFormFieldValue("is_published");
+    if (isPublished !== null) {
+      formData.set("is_published", isPublished);
+    }
+
+    formData.set("delivery_mode", deliveryMode);
+    return formData;
+  }
+
   function buildUpload(platform: Platform, file: File, prepared: PreparedUpload, accessToken?: string) {
     const asset = prepared.assets[platform];
     if (!asset) {
@@ -274,8 +320,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
         return;
       }
 
-      const form = getParentForm();
-      const formData = new FormData(form ?? undefined);
+      const formData = createReleaseActionFormData();
       formData.set("locale", locale);
       formData.set("release_id", prepared.releaseId);
       formData.set("is_published", formData.get("is_published") === "on" ? "true" : "false");
@@ -302,8 +347,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
 
   function startPreparedUploads() {
     setFormError(null);
-    const form = getParentForm();
-    const formData = new FormData(form ?? undefined);
+    const formData = createReleaseActionFormData();
     formData.set("locale", locale);
 
     RELEASE_PLATFORMS.forEach((platform) => {
