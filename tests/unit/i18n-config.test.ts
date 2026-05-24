@@ -39,4 +39,12 @@ describe("i18n configuration", () => {
     expect(nextConfig).toContain("withNextIntl(nextConfig)");
   });
 
+  it("allows Dodo's live checkout redirect host in the CSP form action", () => {
+    const nextConfig = readFileSync("next.config.ts", "utf8");
+
+    expect(nextConfig).toContain("https://checkout.dodopayments.com");
+    expect(nextConfig).toContain("https://live.checkout.dodopayments.com");
+    expect(nextConfig).toContain("https://test.checkout.dodopayments.com");
+  });
+
 });
