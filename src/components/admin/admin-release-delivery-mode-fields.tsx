@@ -116,13 +116,17 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
   }), [labels]);
 
   function setPlatformState(platform: Platform, next: Partial<PlatformUploadState>) {
-    setUploads((current) => ({
-      ...current,
-      [platform]: {
-        ...current[platform],
-        ...next,
-      },
-    }));
+    setUploads((current) => {
+      const nextUploads = {
+        ...current,
+        [platform]: {
+          ...current[platform],
+          ...next,
+        },
+      };
+      uploadsRef.current = nextUploads;
+      return nextUploads;
+    });
   }
 
   function onFileChange(platform: Platform, file: File | null) {
