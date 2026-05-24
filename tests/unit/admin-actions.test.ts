@@ -19,8 +19,10 @@ import {
   setUserTemporaryPassword,
   softDeleteUser,
   updateDonationTier,
+  updatePaymentCheckoutMaintenanceInline,
   updatePaymentProductSetting,
   updateSupportContactChannel,
+  updateSupportContactChannelInline,
   updatePaymentCheckoutMaintenance,
   updateTrialCode,
   updateUserAccountStatus,
@@ -955,6 +957,74 @@ describe("admin actions", () => {
     }));
   });
 
+  it("updates a support contact channel inline without redirecting", async () => {
+    const upsert = vi.fn(async () => ({ error: null }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const selectSingle = vi.fn(async () => ({ data: { id: "telegram" }, error: null }));
+    const selectEq = vi.fn(() => ({ single: selectSingle }));
+    const select = vi.fn(() => ({ eq: selectEq }));
+    const from = vi.fn((table: string) => {
+      if (table === "support_contact_channels") {
+        return { select, upsert };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("channel_id", "telegram");
+    formData.set("label", "Telegram");
+    formData.set("value", "https://t.me/example");
+    formData.set("sort_order", "10");
+    formData.set("is_enabled", "on");
+
+    const result = await updateSupportContactChannelInline({}, formData);
+
+    expect(result).toEqual({
+      data: {
+        channel: {
+          id: "telegram",
+          is_enabled: true,
+          label: "Telegram",
+          sort_order: 10,
+          value: "https://t.me/example",
+        },
+      },
+      key: "support-contact-updated",
+      tone: "notice",
+    });
+    expect(mocks.redirect).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/support");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/support-settings");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/audit-logs");
+  });
+
+  it("returns inline support contact validation errors without writing", async () => {
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("channel_id", "telegram");
+    formData.set("label", "Telegram");
+    formData.set("value", "telegram-user");
+    formData.set("sort_order", "10");
+    formData.set("is_enabled", "on");
+
+    const result = await updateSupportContactChannelInline({}, formData);
+
+    expect(result).toEqual({
+      key: "support-contact-update-failed",
+      message: "Enter a valid URL",
+      tone: "error",
+    });
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
   it("creates a missing support contact channel row through upsert", async () => {
     const upsertSingle = vi.fn(async () => ({ data: { id: "11111111-1111-1111-1111-111111111111" }, error: null }));
     const upsertSelect = vi.fn(() => ({ single: upsertSingle }));
@@ -1056,6 +1126,56 @@ describe("admin actions", () => {
     }));
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/contributions");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/support-settings");
+  });
+
+  it("updates payment checkout maintenance inline without redirecting", async () => {
+    const upsert = vi.fn(async () => ({ error: null }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const selectSingle = vi.fn(async () => ({
+      data: {
+        value: {
+          is_paused: false,
+          message: null,
+        },
+      },
+      error: null,
+    }));
+    const selectEq = vi.fn(() => ({ maybeSingle: selectSingle }));
+    const select = vi.fn(() => ({ eq: selectEq }));
+    const from = vi.fn((table: string) => {
+      if (table === "operational_settings") {
+        return { select, upsert };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("is_paused", "on");
+    formData.set("message", "Checkout is paused while we investigate a payment issue.");
+
+    const result = await updatePaymentCheckoutMaintenanceInline({}, formData);
+
+    expect(result).toEqual({
+      data: {
+        status: {
+          isPaused: true,
+          message: "Checkout is paused while we investigate a payment issue.",
+        },
+      },
+      key: "payment-maintenance-updated",
+      tone: "notice",
+    });
+    expect(mocks.redirect).not.toHaveBeenCalled();
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/contributions");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/support-settings");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/audit-logs");
   });
 
   it("updates a development support tier and audits the change", async () => {

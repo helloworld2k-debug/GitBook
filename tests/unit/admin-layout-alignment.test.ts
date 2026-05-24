@@ -7,7 +7,7 @@ function source(path: string) {
 
 describe("admin layout alignment", () => {
   it("keeps table-style admin form rows top aligned", () => {
-    const supportSettings = source("src/app/[locale]/admin/support-settings/page.tsx");
+    const supportSettings = source("src/components/admin/admin-support-settings-forms.tsx");
     expect(supportSettings).toContain("xl:items-start");
     expect(supportSettings).toContain("items-start md:col-span-2 xl:col-span-1 xl:pt-7");
     expect(supportSettings).not.toContain("flex items-end md:col-span-2 xl:col-span-1");
