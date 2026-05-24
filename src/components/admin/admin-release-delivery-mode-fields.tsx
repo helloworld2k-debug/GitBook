@@ -116,17 +116,17 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
   }), [labels]);
 
   function setPlatformState(platform: Platform, next: Partial<PlatformUploadState>) {
-    setUploads((current) => {
-      const nextUploads = {
-        ...current,
-        [platform]: {
-          ...current[platform],
-          ...next,
-        },
-      };
-      uploadsRef.current = nextUploads;
-      return nextUploads;
-    });
+    const current = uploadsRef.current;
+    const nextUploads = {
+      ...current,
+      [platform]: {
+        ...current[platform],
+        ...next,
+      },
+    };
+    uploadsRef.current = nextUploads;
+    setUploads(nextUploads);
+    return nextUploads;
   }
 
   function onFileChange(platform: Platform, file: File | null) {
@@ -251,13 +251,13 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
         setPlatformState(platform, { progress, status: "uploading" });
       },
       onSuccess() {
-        setPlatformState(platform, {
+        const nextUploads = setPlatformState(platform, {
           error: null,
           progress: 100,
           status: "complete",
           storagePath: asset.storagePath,
         });
-        maybeFinalize(prepared);
+        maybeFinalize(prepared, nextUploads);
       },
       removeFingerprintOnSuccess: true,
       retryDelays: [0, 1000, 3000, 5000],
@@ -313,9 +313,9 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
     startUpload(platform, prepared);
   }
 
-  function maybeFinalize(prepared: PreparedUpload) {
+  function maybeFinalize(prepared: PreparedUpload, uploadSnapshot = uploadsRef.current) {
     queueMicrotask(() => {
-      const current = uploadsRef.current;
+      const current = uploadSnapshot;
       if (!prepared.platforms.every((platform) => current[platform].status === "complete")) {
         return;
       }

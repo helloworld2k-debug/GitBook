@@ -260,10 +260,10 @@ describe("AdminReleaseDeliveryModeFields", () => {
     expect(preparedFormData.get("macos_x64_file_name")).toBeNull();
     expect(preparedFormData.get("windows_file_name")).toBe("GitBook.exe");
 
-    act(() => latestUploadOptions[0]?.onSuccess?.());
+    latestUploadOptions[0]?.onSuccess?.();
     await waitFor(() => expect(uploadMocks.finalizeSoftwareReleaseUpload).not.toHaveBeenCalled());
 
-    act(() => latestUploadOptions[1]?.onSuccess?.());
+    latestUploadOptions[1]?.onSuccess?.();
     await waitFor(() => expect(uploadMocks.finalizeSoftwareReleaseUpload).toHaveBeenCalled());
 
     const finalizeFormData = uploadMocks.finalizeSoftwareReleaseUpload.mock.calls[0]?.[0] as FormData;
