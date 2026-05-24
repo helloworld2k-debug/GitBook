@@ -118,6 +118,7 @@
     "title": "GitBook AI 개발 지원",
     "subtitle": "제품 릴리스, AI 지식 업데이트, 클라우드 동기화 인프라, 개발 지원 인증서를 위한 일회성 금액을 선택하세요.",
     "tiers": {
+      "one_day": "1일 개발 지원",
       "monthly": "월간 개발 지원",
       "quarterly": "분기 개발 지원",
       "yearly": "연간 개발 지원"
@@ -1099,6 +1100,7 @@
       "paymentProductSaved": "상품 ID가 저장되었습니다",
       "saveProduct": "상품 ID 저장",
       "paymentTier": {
+        "one_day": "1일",
         "monthly": "월간",
         "quarterly": "분기",
         "yearly": "연간"
@@ -1297,6 +1299,7 @@
       "honor": "공로 인증서"
     },
     "tiers": {
+      "one_day": "1일 개발 지원",
       "monthly": "월간 개발 지원",
       "quarterly": "분기 개발 지원",
       "yearly": "연간 개발 지원"

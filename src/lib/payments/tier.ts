@@ -30,12 +30,14 @@ type DonationTierRow = {
 };
 
 const configuredTierLabels: Record<string, string> = {
+  one_day: "1-Day Support",
   monthly: "Monthly Support",
   quarterly: "Quarterly Support",
   yearly: "Yearly Support",
 };
 
 const configuredTierDescriptions: Record<string, string> = {
+  one_day: "1-day live payment test support",
   monthly: "Monthly support",
   quarterly: "Quarterly support",
   yearly: "Yearly support",

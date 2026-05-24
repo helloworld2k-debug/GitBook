@@ -3,6 +3,16 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { DonationTierCard } from "@/components/donation-tier-card";
 import { donationTiers } from "@/config/site";
 
+const getTier = (code: string) => {
+  const tier = donationTiers.find((item) => item.code === code);
+
+  if (!tier) {
+    throw new Error(`Missing donation tier ${code}`);
+  }
+
+  return tier;
+};
+
 describe("DonationTierCard", () => {
   it("uses a service-neutral contribution checkout while Stripe is hidden", () => {
     render(
@@ -15,7 +25,7 @@ describe("DonationTierCard", () => {
         locale="en"
         oneTimeNote="One-time support"
         paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
-        tier={donationTiers[0]}
+        tier={getTier("monthly")}
       />,
     );
 
@@ -38,7 +48,7 @@ describe("DonationTierCard", () => {
         locale="en"
         oneTimeNote="One-time support"
         paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
-        tier={donationTiers[2]}
+        tier={getTier("yearly")}
       />,
     );
 
@@ -58,7 +68,7 @@ describe("DonationTierCard", () => {
         locale="en"
         oneTimeNote="One-time support"
         paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
-        tier={donationTiers[0]}
+        tier={getTier("monthly")}
       />,
     );
 
@@ -83,7 +93,7 @@ describe("DonationTierCard", () => {
         oneTimeNote="One-time support"
         paymentMaintenanceMessage="Checkout is temporarily paused while we investigate a payment issue."
         paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
-        tier={donationTiers[0]}
+        tier={getTier("monthly")}
       />,
     );
 
@@ -104,7 +114,7 @@ describe("DonationTierCard", () => {
         oneTimeNote="One-time support"
         paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
         redirectingLabel="Opening secure checkout..."
-        tier={donationTiers[0]}
+        tier={getTier("monthly")}
       />,
     );
 
@@ -128,7 +138,7 @@ describe("DonationTierCard", () => {
         locale="en"
         oneTimeNote="One-time support"
         paymentNote="Secure checkout with Dodo Payments for cards and supported local payment methods."
-        tier={{ ...donationTiers[1], amount: 2430, compareAtAmount: 2700 }}
+        tier={{ ...getTier("quarterly"), amount: 2430, compareAtAmount: 2700 }}
       />,
     );
 

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/payments/dodo", () => ({
   getDodoProductId: async (tierCode: string) =>
     ({
+      one_day: process.env.DODO_PAYMENTS_ENV === "live" ? process.env.DODO_LIVE_PRODUCT_ONE_DAY : process.env.DODO_PRODUCT_ONE_DAY,
       monthly: process.env.DODO_PRODUCT_MONTHLY,
       quarterly: process.env.DODO_PRODUCT_QUARTERLY,
       yearly: process.env.DODO_PAYMENTS_ENV === "live" ? process.env.DODO_LIVE_PRODUCT_YEARLY : process.env.DODO_PRODUCT_YEARLY,
@@ -34,9 +35,11 @@ vi.mock("@/lib/license/entitlements", () => ({
 
 describe("Dodo webhook route", () => {
   beforeEach(() => {
+    process.env.DODO_PRODUCT_ONE_DAY = "pdt_one_day";
     process.env.DODO_PRODUCT_MONTHLY = "pdt_monthly";
     process.env.DODO_PRODUCT_QUARTERLY = "pdt_quarterly";
     process.env.DODO_PRODUCT_YEARLY = "pdt_yearly";
+    process.env.DODO_LIVE_PRODUCT_ONE_DAY = "pdt_live_one_day";
     process.env.DODO_LIVE_PRODUCT_YEARLY = "pdt_live_yearly";
     process.env.DODO_PAYMENTS_ENV = "test";
     mocks.createSupabaseAdminClient.mockReset();
@@ -134,6 +137,58 @@ describe("Dodo webhook route", () => {
 
     expect(response.status).toBe(400);
     expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it("records one-day live payments and grants one-day cloud sync entitlement", async () => {
+    process.env.DODO_PAYMENTS_ENV = "live";
+    mocks.extendCloudSyncEntitlementForDonation.mockResolvedValueOnce("2026-04-30T00:00:00.000Z");
+    mocks.verifyDodoWebhook.mockReturnValue({
+      type: "payment.succeeded",
+      data: {
+        currency: "USD",
+        created_at: "2026-04-29T00:00:00.000Z",
+        metadata: {
+          amount: "100",
+          tier: "one_day",
+          user_id: "user_123",
+        },
+        payment_id: "pay_one_day",
+        product_cart: [{ product_id: "pdt_live_one_day" }],
+        status: "succeeded",
+        total_amount: 100,
+      },
+    });
+
+    const response = await POST(new Request("https://example.com/api/webhooks/dodo", { body: "{}", method: "POST" }));
+
+    expect(response.status).toBe(200);
+    expect(mocks.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: 100,
+        currency: "usd",
+        metadata: expect.objectContaining({
+          expected_amount: 100,
+          paid_amount: 100,
+          product_id: "pdt_live_one_day",
+          tier: "one_day",
+        }),
+        provider: "dodo",
+        provider_transaction_id: "pay_one_day",
+        status: "paid",
+        user_id: "user_123",
+      }),
+      { onConflict: "provider,provider_transaction_id" },
+    );
+    expect(mocks.generateCertificatesForDonation).toHaveBeenCalledWith("donation_123");
+    expect(mocks.extendCloudSyncEntitlementForDonation).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        userId: "user_123",
+        donationId: "donation_123",
+        tierCode: "one_day",
+        paidAt: new Date("2026-04-29T00:00:00.000Z"),
+      },
+    );
   });
 
   it("rejects mismatched amount even when the product id verifies the selected tier", async () => {

@@ -61,11 +61,13 @@ export function getDodoApiBaseUrl() {
 
 function getDodoProductEnvName(tierCode: string, environment: DodoPaymentEnvironment) {
   const envByTier: Record<string, string> = {
+    one_day: "DODO_PRODUCT_ONE_DAY",
     monthly: "DODO_PRODUCT_MONTHLY",
     quarterly: "DODO_PRODUCT_QUARTERLY",
     yearly: "DODO_PRODUCT_YEARLY",
   };
   const liveEnvByTier: Record<string, string> = {
+    one_day: "DODO_LIVE_PRODUCT_ONE_DAY",
     monthly: "DODO_LIVE_PRODUCT_MONTHLY",
     quarterly: "DODO_LIVE_PRODUCT_QUARTERLY",
     yearly: "DODO_LIVE_PRODUCT_YEARLY",
@@ -129,6 +131,7 @@ export async function getDodoProductId(
 
 export function getRequiredDodoProductId(tierCode: string) {
   const envByTier: Record<string, string> = {
+    one_day: "DODO_PRODUCT_ONE_DAY",
     monthly: "DODO_PRODUCT_MONTHLY",
     quarterly: "DODO_PRODUCT_QUARTERLY",
     yearly: "DODO_PRODUCT_YEARLY",

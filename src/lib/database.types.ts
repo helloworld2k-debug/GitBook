@@ -2216,6 +2216,15 @@ export type Database = {
         }
         Returns: string
       }
+      grant_cloud_sync_day_entitlement_for_donation: {
+        Args: {
+          input_days: number
+          input_donation_id: string
+          input_paid_at: string
+          input_user_id: string
+        }
+        Returns: string
+      }
       has_active_cloud_sync_cooldown_override: {
         Args: { input_now: string; input_user_id: string }
         Returns: string

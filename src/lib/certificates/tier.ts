@@ -19,12 +19,16 @@ function getMetadataTierCode(metadata: unknown) {
 
   const tier = (metadata as Record<string, unknown>).tier;
 
-  return tier === "monthly" || tier === "quarterly" || tier === "yearly" ? tier : null;
+  return tier === "one_day" || tier === "monthly" || tier === "quarterly" || tier === "yearly" ? tier : null;
 }
 
 export function inferDonationTierCodeFromAmount(amount: number, currency: string) {
   if (currency.toLowerCase() !== "usd") {
     return null;
+  }
+
+  if (amount <= 100) {
+    return "one_day";
   }
 
   if (amount >= 8640) {

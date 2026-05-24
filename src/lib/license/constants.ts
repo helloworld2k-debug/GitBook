@@ -9,6 +9,10 @@ const entitlementMonthsByTier: Record<string, number> = {
   yearly: 12,
 };
 
+const entitlementDaysByTier: Record<string, number> = {
+  one_day: 1,
+};
+
 export function getEntitlementMonthsForTier(tierCode: string | null | undefined) {
   if (!tierCode) {
     return null;
@@ -18,6 +22,16 @@ export function getEntitlementMonthsForTier(tierCode: string | null | undefined)
 }
 
 export function getEntitlementDaysForTier(tierCode: string | null | undefined) {
+  if (!tierCode) {
+    return null;
+  }
+
+  const days = entitlementDaysByTier[tierCode];
+
+  if (days) {
+    return days;
+  }
+
   const months = getEntitlementMonthsForTier(tierCode);
 
   if (!months) {

@@ -11,6 +11,7 @@ import { generateDesktopSecret } from "@/lib/license/tokens";
 
 describe("license constants", () => {
   it("maps donation tiers to entitlement days", () => {
+    expect(getEntitlementDaysForTier("one_day")).toBe(1);
     expect(getEntitlementDaysForTier("monthly")).toBe(30);
     expect(getEntitlementDaysForTier("quarterly")).toBe(90);
     expect(getEntitlementDaysForTier("yearly")).toBe(365);

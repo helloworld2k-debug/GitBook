@@ -1,6 +1,6 @@
 export type CertificateKind = "donation" | "honor";
 
-export type DonationCertificateTier = "monthly" | "quarterly" | "yearly";
+export type DonationCertificateTier = "one_day" | "monthly" | "quarterly" | "yearly";
 
 export type CertificateTemplateCode = DonationCertificateTier | "honor";
 
@@ -42,6 +42,16 @@ export type CertificateRecordWithTier = {
 };
 
 const donationTemplates = {
+  one_day: {
+    accent: "#22d3ee",
+    backgroundUrl: "/certificates/monthly-bg.webp",
+    code: "one_day",
+    foil: "#a5f3fc",
+    panelFill: "rgba(8, 20, 34, 0.74)",
+    panelStroke: "rgba(103, 232, 249, 0.34)",
+    text: "#f8fafc",
+    textMuted: "#cbd5e1",
+  },
   monthly: {
     accent: "#22d3ee",
     backgroundUrl: "/certificates/monthly-bg.webp",
@@ -90,7 +100,7 @@ function first<T>(value: T | T[] | null | undefined) {
 }
 
 export function normalizeDonationTierCode(tierCode: string | null | undefined): DonationCertificateTier {
-  if (tierCode === "quarterly" || tierCode === "yearly") {
+  if (tierCode === "one_day" || tierCode === "quarterly" || tierCode === "yearly") {
     return tierCode;
   }
 

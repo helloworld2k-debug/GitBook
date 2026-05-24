@@ -26,9 +26,11 @@ Copy `.env.example` to `.env.local` for local development and set the same names
 | `DODO_PAYMENTS_API_KEY` | Server only | Dodo Payments API key for creating checkout sessions. |
 | `DODO_PAYMENTS_WEBHOOK_KEY` | Server only | Signing key for validating Dodo webhook events. |
 | `DODO_PAYMENTS_ENV` | Server only | Use `test` locally and switch to the production value for live checkout. |
+| `DODO_PRODUCT_ONE_DAY` | Server only | Optional test-mode fallback Dodo product ID for the 1-day support tier. Admin payment settings take precedence. |
 | `DODO_PRODUCT_MONTHLY` | Server only | Test-mode fallback Dodo product ID for the monthly support tier. Admin payment settings take precedence. |
 | `DODO_PRODUCT_QUARTERLY` | Server only | Test-mode fallback Dodo product ID for the quarterly support tier. Admin payment settings take precedence. |
 | `DODO_PRODUCT_YEARLY` | Server only | Test-mode fallback Dodo product ID for the yearly support tier. Admin payment settings take precedence. |
+| `DODO_LIVE_PRODUCT_ONE_DAY` | Server only | Optional live-mode fallback Dodo product ID for the 1-day support tier. |
 | `DODO_LIVE_PRODUCT_MONTHLY` | Server only | Optional live-mode fallback Dodo product ID for the monthly support tier. |
 | `DODO_LIVE_PRODUCT_QUARTERLY` | Server only | Optional live-mode fallback Dodo product ID for the quarterly support tier. |
 | `DODO_LIVE_PRODUCT_YEARLY` | Server only | Optional live-mode fallback Dodo product ID for the yearly support tier. |
@@ -99,10 +101,10 @@ where email = 'admin@example.com';
 Use the Dodo Payments test environment until the full flow has been verified.
 
 1. Create or open a Dodo Payments account.
-2. Create the three support products used by the site.
+2. Create the support products used by the site.
 3. Copy the test API key to `DODO_PAYMENTS_API_KEY`.
 4. Set `DODO_PAYMENTS_ENV=test`.
-5. Copy each test product ID into Admin > Support pricing > Dodo payment product IDs. If the admin table is not populated yet, use `DODO_PRODUCT_MONTHLY`, `DODO_PRODUCT_QUARTERLY`, and `DODO_PRODUCT_YEARLY` as fallback values.
+5. Copy each test product ID into Admin > Support pricing > Dodo payment product IDs. If the admin table is not populated yet, use `DODO_PRODUCT_ONE_DAY`, `DODO_PRODUCT_MONTHLY`, `DODO_PRODUCT_QUARTERLY`, and `DODO_PRODUCT_YEARLY` as fallback values.
 6. Add a webhook endpoint:
    - Local through a tunnel: `https://your-tunnel.example/api/webhooks/dodo`
    - Production: `https://your-domain.com/api/webhooks/dodo`
