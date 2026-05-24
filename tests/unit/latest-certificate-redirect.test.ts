@@ -110,7 +110,7 @@ describe("latest certificate redirect page", () => {
       searchParams: Promise.resolve({ checkout_started_at: "2026-05-04T10:00:00.000Z", payment: "dodo-success" }),
     } as {
       params: Promise<{ locale: string }>;
-      searchParams: Promise<{ checkout_started_at: string; payment: string }>;
+      searchParams: Promise<{ checkout_started_at: string; payment: string; pending_started_at?: string }>;
     });
 
     render(page);
@@ -119,11 +119,42 @@ describe("latest certificate redirect page", () => {
     expect(client.donationQuery.gte).toHaveBeenCalledWith("paid_at", "2026-05-04T10:00:00.000Z");
     expect(mocks.maybeSingle).not.toHaveBeenCalled();
     expect(mocks.redirect).not.toHaveBeenCalled();
-    expect(screen.getByRole("status")).toHaveTextContent("Payment received. Your certificate is being prepared.");
+    expect(screen.getByRole("status")).toHaveTextContent("Confirming payment");
     expect(screen.getByRole("link", { name: "Check again" })).toHaveAttribute(
       "href",
-      "/en/dashboard/certificates/latest?payment=dodo-success&checkout_started_at=2026-05-04T10%3A00%3A00.000Z",
+      expect.stringMatching(
+        /^\/en\/dashboard\/certificates\/latest\?payment=dodo-success&checkout_started_at=2026-05-04T10%3A00%3A00.000Z&pending_started_at=/,
+      ),
     );
+    expect(document.querySelector("meta[http-equiv='refresh']")).toHaveAttribute(
+      "content",
+      expect.stringMatching(
+        /^2;url=\/en\/dashboard\/certificates\/latest\?payment=dodo-success&checkout_started_at=2026-05-04T10%3A00%3A00.000Z&pending_started_at=/,
+      ),
+    );
+    expect(screen.getByRole("link", { name: "Back to support tiers" })).toHaveAttribute("href", "/en/contributions");
+  });
+
+  it("redirects to the contribution page when a returned checkout never produces a paid record", async () => {
+    const client = createCertificateClient();
+    mocks.createSupabaseServerClient.mockResolvedValue(client);
+    mocks.donationMaybeSingle.mockResolvedValue({ data: null, error: null });
+
+    await expect(
+      LatestCertificatePage({
+        params: Promise.resolve({ locale: "en" }),
+        searchParams: Promise.resolve({
+          checkout_started_at: "2026-05-04T10:00:00.000Z",
+          payment: "dodo-success",
+          pending_started_at: "2026-05-04T10:00:00.000Z",
+        }),
+      } as {
+        params: Promise<{ locale: string }>;
+        searchParams: Promise<{ checkout_started_at: string; payment: string; pending_started_at: string }>;
+      }),
+    ).rejects.toThrow("redirect:/en/contributions?payment=cancelled");
+
+    expect(mocks.redirect).toHaveBeenCalledWith("/en/contributions?payment=cancelled");
   });
 
   it("waits for a newly paid donation certificate instead of falling back immediately when the donation exists", async () => {
