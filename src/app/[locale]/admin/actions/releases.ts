@@ -423,7 +423,7 @@ export async function finalizeMissingReleaseAssetUpload(formData: FormData) {
   });
 }
 
-export async function deleteDraftSoftwareRelease(formData: FormData) {
+export async function deleteSoftwareRelease(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   await requireAdmin(locale);
   const releaseId = getRequiredString(formData, "release_id", "Release is required");
@@ -436,10 +436,6 @@ export async function deleteDraftSoftwareRelease(formData: FormData) {
 
   if (releaseError || !release) {
     throw new Error("Release is required");
-  }
-
-  if (release.release_status === "ready") {
-    throw new Error("Published releases cannot be deleted from this action");
   }
 
   const paths = (release.software_release_assets ?? []).map((asset: { storage_path: string }) => asset.storage_path);
@@ -455,6 +451,8 @@ export async function deleteDraftSoftwareRelease(formData: FormData) {
     throw new Error("Unable to delete release");
   }
 
+  revalidatePath(`/${locale}`);
+  revalidatePath(`/${locale}/versions`);
   revalidatePath(`/${locale}/admin/releases`);
   redirectWithAdminFeedback({
     fallbackPath: "/admin/releases",
@@ -463,6 +461,10 @@ export async function deleteDraftSoftwareRelease(formData: FormData) {
     locale,
     tone: "notice",
   });
+}
+
+export async function deleteDraftSoftwareRelease(formData: FormData) {
+  return deleteSoftwareRelease(formData);
 }
 
 export async function setSoftwareReleasePublished(formData: FormData) {
@@ -548,7 +550,7 @@ export async function bulkUpdateSoftwareReleases(formData: FormData) {
     });
   }
 
-  if (action === "delete_drafts") {
+  if (action === "delete" || action === "delete_drafts") {
     const { data: releases, error: loadError } = await supabase
       .from("software_releases")
       .select("id,release_status,software_release_assets(storage_path)")
@@ -564,15 +566,17 @@ export async function bulkUpdateSoftwareReleases(formData: FormData) {
       });
     }
 
-    const draftReleases = (releases ?? []).filter((release: { release_status: string | null }) => (
-      release.release_status === "draft" || release.release_status === "uploading" || release.release_status === "failed"
-    ));
-    const draftIds = draftReleases.map((release: { id: string }) => release.id);
-    const paths = draftReleases.flatMap((release: { software_release_assets?: { storage_path: string }[] }) => (
+    const selectedReleases = action === "delete_drafts"
+      ? (releases ?? []).filter((release: { release_status: string | null }) => (
+        release.release_status === "draft" || release.release_status === "uploading" || release.release_status === "failed"
+      ))
+      : releases ?? [];
+    const selectedIds = selectedReleases.map((release: { id: string }) => release.id);
+    const paths = selectedReleases.flatMap((release: { software_release_assets?: { storage_path: string }[] }) => (
       release.software_release_assets ?? []
     ).map((asset) => asset.storage_path));
 
-    if (draftIds.length === 0) {
+    if (selectedIds.length === 0) {
       redirectWithAdminFeedback({
         fallbackPath: "/admin/releases",
         formData,
@@ -595,7 +599,7 @@ export async function bulkUpdateSoftwareReleases(formData: FormData) {
       }
     }
 
-    const { error: deleteError } = await supabase.from("software_releases").delete().in("id", draftIds);
+    const { error: deleteError } = await supabase.from("software_releases").delete().in("id", selectedIds);
     if (deleteError) {
       redirectWithAdminFeedback({
         fallbackPath: "/admin/releases",
@@ -606,6 +610,8 @@ export async function bulkUpdateSoftwareReleases(formData: FormData) {
       });
     }
 
+    revalidatePath(`/${locale}`);
+    revalidatePath(`/${locale}/versions`);
     revalidatePath(`/${locale}/admin/releases`);
     redirectWithAdminFeedback({
       fallbackPath: "/admin/releases",

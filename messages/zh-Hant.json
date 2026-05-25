@@ -541,7 +541,6 @@
       "uploadSummary": "已選擇 {count} 個平台：{platforms}。缺少的平台會顯示為待發布。",
       "addInstaller": "補上安裝包",
       "comingSoon": "待發布",
-      "deleteDraft": "刪除草稿",
       "maxFileSizeHelp": "單一檔案最大 50 MB。更大的安裝包請使用下載連結。",
       "pauseUpload": "暫停",
       "resumeUpload": "繼續",
@@ -583,7 +582,6 @@
       "bulkAction": "批量操作",
       "bulkPublish": "批量發布",
       "bulkUnpublish": "批量下架",
-      "bulkDeleteDrafts": "刪除選取草稿",
       "applyBulkAction": "執行批量操作",
       "bulkConfirm": "確定執行這個批量操作？",
       "selectAllReleases": "選取所有版本",
@@ -595,7 +593,9 @@
       "platformsColumn": "平台",
       "actionsColumn": "操作",
       "platformReady": "{platform} 已發布",
-      "platformPending": "{platform} 待發布"
+      "platformPending": "{platform} 待發布",
+      "deleteRelease": "刪除版本",
+      "bulkDeleteReleases": "刪除選取版本"
     },
     "notifications": {
       "eyebrow": "管理後台",
@@ -1266,7 +1266,7 @@
       "restoreFailed": "Unable to restore the archived user.",
       "restoreNotFound": "Archived user not found.",
       "releaseCreated": "版本已建立。",
-      "releaseDeleted": "版本草稿已刪除。",
+      "releaseDeleted": "版本已刪除。",
       "releaseUpdated": "版本已更新。",
       "roleUpdated": "User role updated.",
       "roleUpdateFailed": "Unable to update user role.",
@@ -1307,8 +1307,8 @@
       "bulkPermanentDeleteSuccess": "已永久刪除選取的已歸檔使用者。",
       "paymentMaintenanceUpdated": "支付維護狀態已更新。",
       "paymentMaintenanceUpdateFailed": "無法更新支付維護狀態。",
-      "releaseBulkDeleted": "已刪除選取的版本草稿。",
-      "releaseBulkDeleteFailed": "無法刪除選取的版本草稿。",
+      "releaseBulkDeleted": "已刪除選取的版本。",
+      "releaseBulkDeleteFailed": "無法刪除選取的版本。",
       "releaseBulkUpdated": "已更新選取的版本。",
       "releaseBulkUpdateFailed": "無法更新選取的版本。"
     }

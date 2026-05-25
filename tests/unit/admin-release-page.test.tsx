@@ -80,7 +80,7 @@ vi.mock("next-intl/server", () => ({
       "releases.assets": "Assets",
       "releases.backupLink": "Backup",
       "releases.bulkAction": "Bulk action",
-      "releases.bulkDeleteDrafts": "Delete selected drafts",
+      "releases.bulkDeleteReleases": "Delete selected releases",
       "releases.bulkPublish": "Publish selected",
       "releases.bulkUnpublish": "Unpublish selected",
       "releases.comingSoon": "Pending",
@@ -88,7 +88,7 @@ vi.mock("next-intl/server", () => ({
       "releases.createLinkRelease": "Create link release",
       "releases.createTitle": "Create release",
       "releases.dateColumn": "Date",
-      "releases.deleteDraft": "Delete draft",
+      "releases.deleteRelease": "Delete release",
       "releases.deliveryMode": "Delivery mode",
       "releases.deliveryModeFile": "Upload files",
       "releases.deliveryModeFileHelp": "Upload separate installers.",
@@ -176,6 +176,7 @@ vi.mock("@/app/[locale]/admin/actions", () => ({
   bulkUpdateSoftwareReleases: vi.fn(),
   createSoftwareRelease: vi.fn(),
   deleteDraftSoftwareRelease: vi.fn(),
+  deleteSoftwareRelease: vi.fn(),
   setSoftwareReleasePublished: vi.fn(),
 }));
 
@@ -266,6 +267,7 @@ describe("AdminReleasesPage", () => {
     expect(within(row).getByText("Intel pending")).toBeInTheDocument();
     expect(within(row).getByText("Win ready")).toBeInTheDocument();
     expect(within(row).getByRole("button", { name: "Unpublish" })).toBeInTheDocument();
+    expect(within(row).getByRole("button", { name: "Delete release" })).toBeInTheDocument();
     expect(within(row).getByRole("button", { name: "Add installer" })).toBeInTheDocument();
   });
 

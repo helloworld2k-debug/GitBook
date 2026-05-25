@@ -8,7 +8,7 @@ import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import { RELEASE_PLATFORMS, SOFTWARE_RELEASES_BUCKET, getPlatformDelivery, type ReleaseClient, type ReleaseDeliveryMode, type ReleasePlatform, type ReleaseStatus, type SoftwareRelease } from "@/lib/releases/software-releases";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { bulkUpdateSoftwareReleases, createSoftwareRelease, deleteDraftSoftwareRelease, setSoftwareReleasePublished } from "../actions";
+import { bulkUpdateSoftwareReleases, createSoftwareRelease, deleteSoftwareRelease, setSoftwareReleasePublished } from "../actions";
 
 type AdminReleasesPageProps = {
   params: Promise<{
@@ -66,7 +66,7 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
   const shellProps = await getAdminShellProps(locale, "/admin/releases");
   const createRelease = createSoftwareRelease;
   const togglePublished = setSoftwareReleasePublished;
-  const deleteDraft = deleteDraftSoftwareRelease;
+  const deleteRelease = deleteSoftwareRelease;
   const bulkUpdateReleases = bulkUpdateSoftwareReleases;
   let releases: AdminReleaseRow[] = [];
 
@@ -223,7 +223,7 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                     <select className="mt-2 min-h-10 rounded-md border border-slate-300 bg-white px-3 text-sm" name="bulk_action">
                       <option value="publish">{t("releases.bulkPublish")}</option>
                       <option value="unpublish">{t("releases.bulkUnpublish")}</option>
-                      <option value="delete_drafts">{t("releases.bulkDeleteDrafts")}</option>
+                      <option value="delete">{t("releases.bulkDeleteReleases")}</option>
                     </select>
                   </label>
                   <ConfirmActionButton
@@ -387,7 +387,8 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                           </div>
                         </td>
                         <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
-                          {release.releaseStatus === "ready" ? (
+                          <div className="flex flex-wrap gap-2">
+                            {release.releaseStatus === "ready" ? (
                             <form action={togglePublished}>
                               <input name="locale" type="hidden" value={locale} />
                               <input name="return_to" type="hidden" value="/admin/releases" />
@@ -401,20 +402,20 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                                 {release.isPublished ? t("releases.unpublish") : t("releases.publish")}
                               </ConfirmActionButton>
                             </form>
-                          ) : (
-                            <form action={deleteDraft}>
+                            ) : null}
+                            <form action={deleteRelease}>
                               <input name="locale" type="hidden" value={locale} />
                               <input name="return_to" type="hidden" value="/admin/releases" />
                               <input name="release_id" type="hidden" value={release.id} />
                               <ConfirmActionButton
                                 className="inline-flex min-h-10 items-center rounded-md border border-red-200 px-3 text-sm font-medium text-red-700"
-                                confirmLabel={t("releases.deleteDraft")}
+                                confirmLabel={t("releases.deleteRelease")}
                                 pendingLabel={t("common.processing")}
                               >
-                                {t("releases.deleteDraft")}
+                                {t("releases.deleteRelease")}
                               </ConfirmActionButton>
                             </form>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     ))}
