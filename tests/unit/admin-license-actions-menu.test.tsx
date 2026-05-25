@@ -136,6 +136,10 @@ describe("AdminLicenseActionsMenu", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Edit code" }));
 
     const dialog = screen.getByRole("dialog", { name: "Edit code" });
+    const overlay = dialog.parentElement;
+
+    expect(overlay).not.toBeNull();
+    expect(overlay).toHaveClass("fixed", "z-[120]");
     expect(within(dialog).getByDisplayValue("h test01")).toBeInTheDocument();
     expect(within(dialog).getByLabelText("Trial days")).not.toBeDisabled();
     expect(within(dialog).getByText("T2YQ-****-****-9XU6")).toBeInTheDocument();

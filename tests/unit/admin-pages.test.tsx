@@ -2466,9 +2466,10 @@ describe("admin pages", () => {
     expect(screen.queryByRole("link", { name: "Manage user" })).not.toBeInTheDocument();
     expect(document.querySelector('select[name="account_status"]')).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
-    const moreActions = screen.getAllByRole("group", { name: "More actions" })[0];
-    expect(moreActions).not.toHaveAttribute("open");
-    expect(screen.getAllByRole("button", { name: "More actions" }).length).toBeGreaterThan(0);
+    const moreActionsTrigger = screen.getAllByRole("button", { name: "More actions" })[0];
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    fireEvent.click(moreActionsTrigger);
+    const moreActions = screen.getByRole("menu");
     expect(within(moreActions).getByRole("link", { name: "View details" })).toHaveAttribute("href", "/admin/users/user-1");
     expect(moreActions).toContainElement(screen.getAllByRole("button", { name: "Enable account" })[0]);
     expect(moreActions).toContainElement(screen.getAllByRole("button", { name: "Soft delete" })[0]);

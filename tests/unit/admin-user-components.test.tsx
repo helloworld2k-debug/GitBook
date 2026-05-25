@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { AdminUserBulkToolbar, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
+import { AdminUserBulkToolbar, AdminUserRowActionsMenu, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
 import { AdminUserDeleteDangerZone } from "@/components/admin/admin-user-delete-danger-zone";
 import { AdminUserFilters } from "@/components/admin/admin-user-filters";
 import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
@@ -294,6 +294,26 @@ describe("AdminUserBulkToolbar", () => {
 
     const selected = document.querySelectorAll<HTMLInputElement>('input[name="user_ids"]:checked');
     expect(selected).toHaveLength(0);
+  });
+});
+
+describe("AdminUserRowActionsMenu", () => {
+  it("renders the row action menu outside clipping table containers", () => {
+    render(
+      <div data-testid="clipping-table-shell" className="max-w-40 overflow-hidden">
+        <AdminUserRowActionsMenu label="More actions">
+          <button type="button">View details</button>
+        </AdminUserRowActionsMenu>
+      </div>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+
+    const clippingShell = screen.getByTestId("clipping-table-shell");
+    const menu = screen.getByRole("menu");
+
+    expect(clippingShell).not.toContainElement(menu);
+    expect(menu).toHaveClass("fixed", "z-[100]");
   });
 });
 

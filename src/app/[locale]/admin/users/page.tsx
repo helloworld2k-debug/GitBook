@@ -1,7 +1,7 @@
 import { Archive } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { AdminAccountCreateForm } from "@/components/admin/admin-account-create-form";
-import { AdminUserBulkToolbar, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
+import { AdminUserBulkToolbar, AdminUserRowActionsMenu, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
 import { AdminUserFilters } from "@/components/admin/admin-user-filters";
 import { AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminPagination } from "@/components/admin/admin-pagination";
@@ -466,11 +466,8 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           </div>
                         </dl>
                         <div className="mt-4 flex flex-wrap gap-2">
-                          <details aria-label={t("moreActions")} className="relative flex-1">
-                            <summary className="inline-flex min-h-10 w-full cursor-pointer list-none items-center justify-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" role="button">
-                              {t("moreActions")}
-                            </summary>
-                            <div className="mt-2 grid gap-3 rounded-md border border-slate-200 bg-white p-3 text-left shadow-lg">
+                          <div className="flex-1">
+                            <AdminUserRowActionsMenu label={t("moreActions")}>
                               <Link className="text-sm font-semibold text-slate-950" href={`/admin/users/${profile.id}`}>
                                 {t("viewDetails")}
                               </Link>
@@ -503,8 +500,8 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                                   {t("softDelete")}
                                 </ConfirmActionButton>
                               </form>
-                            </div>
-                          </details>
+                            </AdminUserRowActionsMenu>
+                          </div>
                         </div>
                       </article>
                     );
@@ -590,11 +587,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                         <td className="whitespace-nowrap px-5 py-4 align-top text-sm text-slate-700">{formatDate(profile.created_at, locale)}</td>
                           <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                             <div className="flex min-w-[260px] flex-wrap justify-end gap-2">
-                              <details aria-label={t("moreActions")} className="relative">
-                                <summary className="inline-flex min-h-10 cursor-pointer list-none items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950" role="button">
-                                  {t("moreActions")}
-                                </summary>
-                                <div className="absolute right-0 z-20 mt-2 grid w-56 gap-3 rounded-md border border-slate-200 bg-white p-3 text-left shadow-lg">
+                              <AdminUserRowActionsMenu label={t("moreActions")}>
                                   <Link className="text-sm font-semibold text-slate-950" href={`/admin/users/${profile.id}`}>
                                     {t("viewDetails")}
                                   </Link>
@@ -627,8 +620,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                                       {t("softDelete")}
                                     </ConfirmActionButton>
                                   </form>
-                                </div>
-                              </details>
+                              </AdminUserRowActionsMenu>
                           </div>
                         </td>
                       </tr>
