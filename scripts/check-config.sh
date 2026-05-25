@@ -23,6 +23,7 @@ fi
 
 for redirect_url in \
     '"https://gitbookai.ccwu.cc/**"' \
+    '"https://www.gitbookai.ccwu.cc/**"' \
     '"https://*.vercel.app/**"' \
     '"http://localhost:3000/**"' \
     '"http://127.0.0.1:3000/**"'

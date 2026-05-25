@@ -157,6 +157,7 @@ describe("Supabase migrations", () => {
 
     expect(supabaseConfig).toContain('site_url = "https://gitbookai.ccwu.cc"');
     expect(supabaseConfig).toContain('"https://gitbookai.ccwu.cc/**"');
+    expect(supabaseConfig).toContain('"https://www.gitbookai.ccwu.cc/**"');
     expect(supabaseConfig).toContain('"https://*.vercel.app/**"');
   });
 });
