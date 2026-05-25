@@ -41,6 +41,7 @@ type AdminPaginatedUser = {
   display_name: string | null;
   admin_role: string | null;
   account_status: string | null;
+  account_type: string | null;
   is_admin: boolean | null;
   avatar_url: string | null;
   created_at: string;
@@ -150,6 +151,10 @@ function nextAccountStatusActions(accountStatus: string, t: Awaited<ReturnType<t
     { label: t("changeStatusToDisabled"), value: "disabled" },
     { label: t("changeStatusToDeleted"), value: "deleted" },
   ].filter((action) => action.value !== accountStatus);
+}
+
+function getAccountTypeLabel(accountType: string | null | undefined, t: Awaited<ReturnType<typeof getTranslations>>) {
+  return accountType === "ai_test" ? t("aiTestType") : t("standardType");
 }
 
 export default async function AdminUsersPage({ params, searchParams }: AdminUsersPageProps) {
@@ -311,6 +316,8 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             labels={{
               createInvite: t("createInvite"),
               createTempAccount: t("createTempAccount"),
+              accountType: t("accountType"),
+              aiTestType: t("aiTestType"),
               creationMode: t("creationMode"),
               displayName: t("displayName"),
               email: t("email"),
@@ -319,6 +326,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
               operatorRole: t("roles.operator"),
               ownerRole: t("roles.owner"),
               role: t("roleTarget"),
+              standardType: t("standardType"),
               temporaryPassword: t("temporaryPassword"),
               tempPasswordMode: t("tempPasswordMode"),
               userRole: t("roles.user"),
@@ -333,6 +341,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             allRoles: t("allRoles"),
             allStatuses: t("allStatuses"),
             allTypes: t("allTypes"),
+            aiTestType: t("aiTestType"),
             apply: t("applyFilters"),
             createdFrom: t("createdFrom"),
             createdTo: t("createdTo"),
@@ -342,6 +351,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             search: t("search"),
             searchPlaceholder: t("searchPlaceholder"),
             status: t("filterStatus"),
+            standardType: t("standardType"),
             type: t("filterType"),
             sortBy: t("sortBy"),
             sortOrder: t("sortOrder"),
@@ -366,6 +376,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             bulkDisable: t("bulkDisable"),
             bulkEnable: t("bulkEnable"),
             bulkRole: t("bulkChangeRole"),
+            bulkType: t("bulkChangeType"),
             bulkSoftDelete: t("bulkSoftDelete"),
             bulkSoftDeleteSelected: t("bulkSoftDeleteSelected"),
             bulkArchiveDelete: t("bulkArchiveDelete"),
@@ -376,6 +387,9 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             ownerRole: t("roles.owner"),
             roleTarget: t("roleTarget"),
             selectedCount: t("selectedCount", { count: "__COUNT__" }),
+            typeTarget: t("typeTarget"),
+            aiTestType: t("aiTestType"),
+            standardType: t("standardType"),
             userRole: t("roles.user"),
             bulkEnableConfirm: t("bulkEnableConfirm"),
             bulkDisableConfirm: t("bulkDisableConfirm"),
@@ -452,7 +466,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           </div>
                           <div className="flex items-center justify-between gap-3">
                             <dt className="text-slate-500">{t("type")}</dt>
-                            <dd className="text-slate-900">{profile.is_admin ? t("adminType") : t("standardType")}</dd>
+                            <dd className="text-slate-900">{getAccountTypeLabel(profile.account_type, t)}</dd>
                           </div>
                           <div className="flex items-center justify-between gap-3">
                             <dt className="text-slate-500">{t("devicesAndTrials")}</dt>
@@ -570,8 +584,8 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           </AdminStatusBadge>
                         </td>
                         <td className="px-5 py-4 align-top">
-                          <AdminStatusBadge tone={profile.is_admin ? "success" : "neutral"}>
-                            {profile.is_admin ? t("adminType") : t("standardType")}
+                          <AdminStatusBadge tone={profile.account_type === "ai_test" ? "warning" : "neutral"}>
+                            {getAccountTypeLabel(profile.account_type, t)}
                           </AdminStatusBadge>
                         </td>
                         <td className="px-5 py-4 align-top">

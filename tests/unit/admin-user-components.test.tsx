@@ -20,6 +20,7 @@ describe("AdminUserFilters", () => {
           allRoles: "All permissions",
           allStatuses: "All statuses",
           allTypes: "All user types",
+          aiTestType: "AI test",
           apply: "Apply",
           createdFrom: "Registered from",
           createdTo: "Registered to",
@@ -29,14 +30,17 @@ describe("AdminUserFilters", () => {
           search: "Search users",
           searchPlaceholder: "Email, display name, or user ID",
           status: "Status",
+          standardType: "Standard",
           type: "User type",
         }}
-        values={{ createdFrom: "", createdTo: "", query: "alice", role: "operator", status: "disabled", type: "admin" }}
+        values={{ createdFrom: "", createdTo: "", query: "alice", role: "operator", status: "disabled", type: "ai_test" }}
       />,
     );
 
     expect(screen.getByPlaceholderText("Email, display name, or user ID")).toHaveValue("alice");
     expect(screen.getByLabelText("Permission")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "User type" })).toHaveValue("ai_test");
+    expect(screen.getByRole("option", { name: "AI test" })).toHaveValue("ai_test");
     expect(screen.getByText("More filters")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Reset" })).toHaveAttribute("href", "/en/admin/users");
   });
@@ -95,6 +99,7 @@ describe("AdminUserBulkToolbar", () => {
           bulkDisable: "Bulk disable",
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
+          bulkType: "Bulk change type",
           bulkSoftDelete: "Bulk soft delete",
           bulkSoftDeleteSelected: "Bulk soft delete selected users",
           clearSelection: "Clear selection",
@@ -103,6 +108,9 @@ describe("AdminUserBulkToolbar", () => {
           ownerRole: "Owner",
           roleTarget: "Target role",
           selectedCount: "{count} selected",
+          typeTarget: "Target type",
+          aiTestType: "AI test",
+          standardType: "Standard",
           userRole: "User",
         }}
       />,
@@ -139,6 +147,7 @@ describe("AdminUserBulkToolbar", () => {
           bulkDisable: "Bulk disable",
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
+          bulkType: "Bulk change type",
           bulkSoftDelete: "Bulk soft delete",
           bulkSoftDeleteSelected: "Bulk soft delete selected users",
           clearSelection: "Clear selection",
@@ -147,6 +156,9 @@ describe("AdminUserBulkToolbar", () => {
           ownerRole: "Owner",
           roleTarget: "Target role",
           selectedCount: "{count} selected",
+          typeTarget: "Target type",
+          aiTestType: "AI test",
+          standardType: "Standard",
           userRole: "User",
         }}
       />,
@@ -182,6 +194,7 @@ describe("AdminUserBulkToolbar", () => {
           bulkDisable: "Bulk disable",
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
+          bulkType: "Bulk change type",
           bulkSoftDelete: "Bulk soft delete",
           bulkSoftDeleteSelected: "Bulk soft delete selected users",
           clearSelection: "Clear selection",
@@ -190,6 +203,9 @@ describe("AdminUserBulkToolbar", () => {
           ownerRole: "Owner",
           roleTarget: "Target role",
           selectedCount: "{count} selected",
+          typeTarget: "Target type",
+          aiTestType: "AI test",
+          standardType: "Standard",
           userRole: "User",
         }}
       />,
@@ -227,6 +243,7 @@ describe("AdminUserBulkToolbar", () => {
           bulkDisable: "Bulk disable",
           bulkEnable: "Bulk enable",
           bulkRole: "Bulk change role",
+          bulkType: "Bulk change type",
           bulkSoftDelete: "Bulk soft delete",
           bulkSoftDeleteSelected: "Bulk soft delete selected users",
           clearSelection: "Clear selection",
@@ -235,6 +252,9 @@ describe("AdminUserBulkToolbar", () => {
           ownerRole: "Owner",
           roleTarget: "Target role",
           selectedCount: "{count} selected",
+          typeTarget: "Target type",
+          aiTestType: "AI test",
+          standardType: "Standard",
           userRole: "User",
         }}
       />,
@@ -252,11 +272,16 @@ describe("AdminUserBulkToolbar", () => {
     expect(new FormData(form).get("admin_role")).toBe("operator");
     expect(form.querySelector<HTMLInputElement>('input[type="hidden"][name="admin_role"]')?.value).toBe("operator");
 
+    fireEvent.change(screen.getByLabelText("Target type"), { target: { value: "ai_test" } });
+    fireEvent.click(screen.getByRole("button", { name: "Bulk change type" }));
+    expect(new FormData(form).get("intent")).toBe("change-account-type");
+    expect(new FormData(form).get("account_type")).toBe("ai_test");
+
     fireEvent.click(screen.getByRole("button", { name: "Bulk soft delete selected users" }));
     const submittedData = new FormData(form);
     expect(submittedData.get("intent")).toBe("soft-delete");
     expect(Array.from(form.querySelectorAll<HTMLInputElement>('input[data-bulk-generated="true"][name="user_ids"]')).map((input) => input.value)).toEqual(["user-1", "user-2"]);
-    expect(submit).toHaveBeenCalledTimes(4);
+    expect(submit).toHaveBeenCalledTimes(5);
   });
 
   it("clears all selected users through the toolbar", () => {

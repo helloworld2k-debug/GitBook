@@ -22,6 +22,7 @@ import {
   setUserTemporaryPassword,
   unbindTrialMachine,
   updateAdminUserProfile,
+  updateUserAccountType,
   updateUserAccountStatus,
   updateUserAdminRole,
 } from "../../actions";
@@ -131,6 +132,10 @@ function formatDateTime(value: string | null, locale: string) {
     minute: "2-digit",
     second: "2-digit",
   }).format(new Date(value));
+}
+
+function getAccountTypeLabel(accountType: string | null | undefined, t: Awaited<ReturnType<typeof getTranslations>>) {
+  return accountType === "ai_test" ? t("aiTestType") : t("standardType");
 }
 
 function formatAmount(amount: number, currency: string, locale: string) {
@@ -352,7 +357,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,avatar_url,created_at")
+      .select("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,account_type,is_admin,avatar_url,created_at")
       .eq("id", id)
       .single(),
     supabase
@@ -562,6 +567,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
               <DetailRow label={t("email")} value={profile.email} />
               <DetailRow label={t("userId")} value={<span className="font-mono text-xs">{profile.id}</span>} />
               <DetailRow label={t("role")} value={t(`roles.${profile.admin_role ?? (profile.is_admin ? "owner" : "user")}`)} />
+              <DetailRow label={t("accountType")} value={getAccountTypeLabel(profile.account_type, t)} />
               <DetailRow label={t("createdAt")} value={formatDateTime(profile.created_at, locale)} />
             </dl>
 
@@ -728,6 +734,18 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                   <option value="active">{t("statuses.active")}</option>
                   <option value="disabled">{t("statuses.disabled")}</option>
                   <option value="deleted">{t("statuses.deleted")}</option>
+                </select>
+                <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
+                  {t("save")}
+                </AdminSubmitButton>
+              </form>
+              <form action={updateUserAccountType} className="flex flex-wrap gap-2">
+                <input name="locale" type="hidden" value={locale} />
+                <input name="return_to" type="hidden" value={`/admin/users/${profile.id}`} />
+                <input name="user_id" type="hidden" value={profile.id} />
+                <select aria-label={t("accountType")} className="min-h-10 rounded-md border border-slate-300 px-2 text-sm" name="account_type" defaultValue={profile.account_type ?? "standard"}>
+                  <option value="standard">{t("standardType")}</option>
+                  <option value="ai_test">{t("aiTestType")}</option>
                 </select>
                 <AdminSubmitButton className="min-h-10 rounded-md border border-slate-300 px-3 text-sm font-medium" pendingLabel={adminT("common.saving")}>
                   {t("save")}

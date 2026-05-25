@@ -28,6 +28,7 @@ import {
   updateSupportContactChannelInline,
   updatePaymentCheckoutMaintenance,
   updateTrialCode,
+  updateUserAccountType,
   updateUserAccountStatus,
   updateUserAdminRole,
 } from "@/app/[locale]/admin/actions";
@@ -242,6 +243,7 @@ describe("admin actions", () => {
     formData.set("email", "invitee@example.com");
     formData.set("display_name", "Invited User");
     formData.set("admin_role", "user");
+    formData.set("account_type", "standard");
 
     await expect(inviteUserAccount(formData)).rejects.toThrow("redirect:/en/admin/users?notice=user-invited");
 
@@ -252,6 +254,7 @@ describe("admin actions", () => {
     }));
     expect(update).toHaveBeenCalledWith({
       admin_role: "user",
+      account_type: "standard",
       display_name: "Invited User",
       is_admin: false,
       updated_at: expect.any(String),
@@ -308,6 +311,7 @@ describe("admin actions", () => {
     formData.set("email", "temp@example.com");
     formData.set("display_name", "Temp User");
     formData.set("admin_role", "user");
+    formData.set("account_type", "ai_test");
     formData.set("password", "Generated-Temp-Password-123");
 
     await expect(createUserWithTemporaryPassword(formData)).rejects.toThrow("redirect:/en/admin/users?notice=user-created-with-temp-password");
@@ -318,9 +322,13 @@ describe("admin actions", () => {
       password: "Generated-Temp-Password-123",
       user_metadata: expect.objectContaining({ source: "admin_temp_password" }),
     });
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({
+      account_type: "ai_test",
+      admin_role: "user",
+    }));
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
       action: "create_user_with_temp_password",
-      after: expect.not.objectContaining({ password: expect.any(String) }),
+      after: expect.objectContaining({ account_type: "ai_test" }),
     }));
     expect(JSON.stringify(auditInsert.mock.calls)).not.toContain("Generated-Temp-Password-123");
   });
@@ -535,6 +543,51 @@ describe("admin actions", () => {
     }));
   });
 
+  it("allows operators to update a user's account type and audits it", async () => {
+    const profileSingle = vi.fn(async () => ({ data: { account_type: "standard" }, error: null }));
+    const profileEq = vi.fn(() => ({ single: profileSingle }));
+    const profileSelect = vi.fn(() => ({ eq: profileEq }));
+    const updateEq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq: updateEq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return { select: profileSelect, update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("user_id", "user-1");
+    formData.set("account_type", "ai_test");
+    formData.set("return_to", "/admin/users/user-1");
+
+    await expect(updateUserAccountType(formData)).rejects.toThrow("redirect:/en/admin/users/user-1?notice=account-type-updated");
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(mocks.requireOwner).not.toHaveBeenCalled();
+    expect(update).toHaveBeenCalledWith({
+      account_type: "ai_test",
+      updated_at: expect.any(String),
+    });
+    expect(updateEq).toHaveBeenCalledWith("id", "user-1");
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "update_user_account_type",
+      admin_user_id: "admin-1",
+      after: { account_type: "ai_test" },
+      before: { account_type: "standard" },
+      target_id: "user-1",
+      target_type: "profile",
+    }));
+  });
+
   it("soft deletes one user and audits the action", async () => {
     const profileSingle = vi.fn(async () => ({ data: { account_status: "active", email: "user@example.com" }, error: null }));
     const profileEq = vi.fn(() => ({ single: profileSingle }));
@@ -645,6 +698,50 @@ describe("admin actions", () => {
     expect(updateIn).toHaveBeenCalledWith("id", ["user-1", "user-2"]);
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
       after: expect.objectContaining({
+        user_ids: ["user-1", "user-2"],
+      }),
+      target_id: "user-1",
+      target_type: "profile_batch",
+    }));
+  });
+
+  it("bulk updates user account type through admin access", async () => {
+    const updateIn = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ in: updateIn }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return { update };
+      }
+
+      if (table === "admin_audit_logs") {
+        return { insert: auditInsert };
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.append("user_ids", "user-1");
+    formData.append("user_ids", "user-2");
+    formData.set("intent", "change-account-type");
+    formData.set("account_type", "ai_test");
+
+    await expect(bulkProcessUsers(formData)).rejects.toThrow("redirect:/en/admin/users?notice=bulk-user-account-type-updated");
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(mocks.requireOwner).not.toHaveBeenCalled();
+    expect(update).toHaveBeenCalledWith({
+      account_type: "ai_test",
+      updated_at: expect.any(String),
+    });
+    expect(updateIn).toHaveBeenCalledWith("id", ["user-1", "user-2"]);
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "bulk_update_user_account_type",
+      after: expect.objectContaining({
+        account_type: "ai_test",
         user_ids: ["user-1", "user-2"],
       }),
       target_id: "user-1",

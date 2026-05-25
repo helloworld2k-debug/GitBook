@@ -13,6 +13,8 @@ type AdminAccountCreateFormProps = {
   labels: {
     createInvite: string;
     createTempAccount: string;
+    accountType: string;
+    aiTestType: string;
     creationMode: string;
     displayName: string;
     email: string;
@@ -21,6 +23,7 @@ type AdminAccountCreateFormProps = {
     operatorRole: string;
     ownerRole: string;
     role: string;
+    standardType: string;
     temporaryPassword: string;
     tempPasswordMode: string;
     userRole: string;
@@ -65,7 +68,7 @@ export function AdminAccountCreateForm({ canManageRoles, createTempAction, invit
         </div>
       </fieldset>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_13rem]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_13rem_13rem]">
         <label className="grid gap-1 text-sm font-medium text-slate-700">
           {labels.email}
           <input
@@ -99,6 +102,17 @@ export function AdminAccountCreateForm({ canManageRoles, createTempAction, invit
                 <option value="owner">{labels.ownerRole}</option>
               </>
             ) : null}
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm font-medium text-slate-700">
+          {labels.accountType}
+          <select
+            className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal text-slate-950 shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+            name="account_type"
+            defaultValue="standard"
+          >
+            <option value="standard">{labels.standardType}</option>
+            <option value="ai_test">{labels.aiTestType}</option>
           </select>
         </label>
       </div>
