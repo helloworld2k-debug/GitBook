@@ -71,6 +71,18 @@ function formatDate(value: string | null, locale: string) {
   }).format(new Date(value));
 }
 
+function getAuthProviderLabel(provider: string, t: Awaited<ReturnType<typeof getTranslations>>) {
+  if (provider === "google") return t("authGoogleProvider");
+  if (provider === "github") return t("authGithubProvider");
+  if (provider === "email") return t("authEmailProvider");
+
+  return provider;
+}
+
+function getOAuthProviders(status: AdminAuthStatus) {
+  return (status.identity_providers ?? []).filter((provider) => provider !== "email");
+}
+
 async function getAuthStatusesByUser(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   userIds: string[],
@@ -101,15 +113,27 @@ function AdminAuthStatusBadges({
     return null;
   }
 
+  const oauthProviders = getOAuthProviders(status);
+
   return (
     <div className="mt-2 flex flex-wrap gap-1">
       <AdminStatusBadge tone={status.email_confirmed_at || status.confirmed_at ? "success" : "warning"}>
         {status.email_confirmed_at || status.confirmed_at ? t("authConfirmed") : t("authUnconfirmed")}
       </AdminStatusBadge>
       {status.invited_at ? <AdminStatusBadge tone="warning">{t("authInvited")}</AdminStatusBadge> : null}
-      <AdminStatusBadge tone={status.has_password ? "success" : "danger"}>
-        {status.has_password ? t("authHasPassword") : t("authNoPassword")}
-      </AdminStatusBadge>
+      {oauthProviders.length > 0 ? <AdminStatusBadge tone="neutral">{t("authOAuthOnly")}</AdminStatusBadge> : null}
+      {oauthProviders.map((provider) => (
+        <AdminStatusBadge key={provider} tone="neutral">
+          {getAuthProviderLabel(provider, t)}
+        </AdminStatusBadge>
+      ))}
+      {status.has_password ? (
+        <AdminStatusBadge tone="success">{t("authHasPassword")}</AdminStatusBadge>
+      ) : oauthProviders.length > 0 ? (
+        <AdminStatusBadge tone="neutral">{t("authEmailPasswordNotSet")}</AdminStatusBadge>
+      ) : (
+        <AdminStatusBadge tone="danger">{t("authNoPassword")}</AdminStatusBadge>
+      )}
       {status.recovery_sent_at ? <AdminStatusBadge tone="warning">{t("authRecoverySent")}</AdminStatusBadge> : null}
       {status.last_sign_in_at ? (
         <span className="inline-flex min-h-7 items-center rounded-md border border-slate-200 bg-slate-50 px-2 text-xs font-medium text-slate-600">

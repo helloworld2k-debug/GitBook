@@ -24,7 +24,7 @@ const messages: LoginFormMessages = {
   humanVerificationError: "Verify that you are human and try again.",
   humanVerificationLabel: "Human verification",
   oauthError: "Could not start sign in.",
-  accountExistsError: "This email is already registered. Sign in or reset your password.",
+  accountExistsError: "This email already has an account. Sign in below, continue with Google or GitHub if you used them before, or reset your password to add email sign-in.",
   emailInvalidError: "Enter a valid email address.",
   password: "Password",
   passwordHint: "Minimum 8 characters",
@@ -252,9 +252,13 @@ describe("LoginForm", () => {
     fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "new-password" } });
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("This email is already registered. Sign in or reset your password.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("This email already has an account.");
+    expect(screen.getByRole("alert")).toHaveTextContent("continue with Google or GitHub");
+    expect(screen.getByRole("alert")).toHaveTextContent("reset your password to add email sign-in");
     expect(screen.queryByText("Check your email to verify your account")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue with GitHub" })).toBeInTheDocument();
   });
 
   it("shows a specific registration password length error", async () => {
