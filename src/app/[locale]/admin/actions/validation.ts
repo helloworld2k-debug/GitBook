@@ -19,7 +19,7 @@ export const MAX_DONATION_TIER_DESCRIPTION_LENGTH = 500;
 export const MAX_POLICY_TITLE_LENGTH = 120;
 export const MAX_POLICY_SUMMARY_LENGTH = 400;
 export const MAX_POLICY_BODY_LENGTH = 8000;
-export const MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES = 50_000_000;
+export const MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES = 80 * 1024 * 1024;
 export const notificationAudiences = ["all", "authenticated", "admins"] as const;
 export const notificationPriorities = ["info", "success", "warning", "critical"] as const;
 export const feedbackStatuses = ["open", "reviewing", "closed"] as const;
@@ -232,7 +232,7 @@ export function getReleaseFileMetadata(formData: FormData, platform: "macos_arm6
   }
 
   if (fileSize > MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES) {
-    throw new Error("Installer files must be 50 MB or smaller");
+    throw new Error("Installer files must be 80 MB or smaller");
   }
 
   return { contentType, fileName, fileSize };

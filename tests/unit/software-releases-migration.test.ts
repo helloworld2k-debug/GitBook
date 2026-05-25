@@ -14,10 +14,18 @@ describe("software releases migration", () => {
     expect(migration).toContain("storage.objects");
   });
 
-  it("keeps the local storage upload limit compatible with Supabase Free projects", () => {
+  it("keeps the local storage upload limit compatible with 60 MB release installers", () => {
     const supabaseConfig = readFileSync(join(process.cwd(), "supabase/config.toml"), "utf8");
 
-    expect(supabaseConfig).toContain('file_size_limit = "50MiB"');
+    expect(supabaseConfig).toContain('file_size_limit = "80MiB"');
+  });
+
+  it("raises the software release storage bucket limit to 80 MiB", () => {
+    const storageLimitMigration = readFileSync(join(process.cwd(), "supabase/migrations/0062_software_release_storage_limit.sql"), "utf8");
+
+    expect(storageLimitMigration).toContain("update storage.buckets");
+    expect(storageLimitMigration).toContain("file_size_limit = 83886080");
+    expect(storageLimitMigration).toContain("where id = 'software-releases'");
   });
 
   it("adds visible upload lifecycle states to software releases", () => {

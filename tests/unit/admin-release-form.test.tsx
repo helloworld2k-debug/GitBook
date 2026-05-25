@@ -57,14 +57,14 @@ const labels = {
   macIntelBackupUrl: "macOS Intel backup URL",
   macIntelFile: "macOS Intel installer",
   macIntelPrimaryUrl: "macOS Intel primary URL",
-  maxFileSizeHelp: "Max 50 MB per file. Use download links for larger installers.",
+  maxFileSizeHelp: "Max 80 MB per file. Use download links for larger installers.",
   pauseUpload: "Pause",
   retryUpload: "Retry",
   resumeUpload: "Resume",
   uploadComplete: "Complete",
   uploadFailed: "Upload failed",
   uploadIdle: "Ready",
-  uploadLimitError: "Installer files must be 50 MB or smaller. Use download links for larger installers.",
+  uploadLimitError: "Installer files must be 80 MB or smaller. Use download links for larger installers.",
   uploadProgress: "Upload progress",
   uploadUploading: "Uploading",
   windowsBackupUrl: "Windows backup URL",
@@ -117,7 +117,7 @@ describe("AdminReleaseDeliveryModeFields", () => {
     expect(screen.getByLabelText("macOS M chip installer")).toBeInTheDocument();
     expect(screen.getByLabelText("macOS Intel installer")).toBeInTheDocument();
     expect(screen.getByLabelText("Windows installer")).toBeInTheDocument();
-    expect(screen.getByText("Max 50 MB per file. Use download links for larger installers.")).toBeInTheDocument();
+    expect(screen.getByText("Max 80 MB per file. Use download links for larger installers.")).toBeInTheDocument();
     expect(screen.queryByLabelText("macOS M chip primary URL")).not.toBeInTheDocument();
   });
 
@@ -133,17 +133,31 @@ describe("AdminReleaseDeliveryModeFields", () => {
     expect(screen.getByLabelText("Windows backup URL")).toBeInTheDocument();
   });
 
-  it("blocks files larger than 50 MB before starting upload", () => {
+  it("allows 60 MiB files before starting upload", () => {
+    render(<AdminReleaseDeliveryModeFields labels={labels} locale="en" />);
+
+    const releaseFile = new File(["x"], "Release.dmg");
+    Object.defineProperty(releaseFile, "size", { value: 60 * 1024 * 1024 });
+
+    fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
+      target: { files: [releaseFile] },
+    });
+
+    expect(screen.queryByText(/Installer files must be 80 MB or smaller/)).not.toBeInTheDocument();
+    expect(screen.getByText("Release.dmg")).toBeInTheDocument();
+  });
+
+  it("blocks files larger than 80 MiB before starting upload", () => {
     render(<AdminReleaseDeliveryModeFields labels={labels} locale="en" />);
 
     const oversizedFile = new File(["x"], "TooBig.dmg");
-    Object.defineProperty(oversizedFile, "size", { value: 50_000_001 });
+    Object.defineProperty(oversizedFile, "size", { value: 80 * 1024 * 1024 + 1 });
 
     fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
       target: { files: [oversizedFile] },
     });
 
-    expect(screen.getByText(/Installer files must be 50 MB or smaller/)).toBeInTheDocument();
+    expect(screen.getByText(/Installer files must be 80 MB or smaller/)).toBeInTheDocument();
     expect(uploadMocks.prepareSoftwareReleaseUpload).not.toHaveBeenCalled();
   });
 

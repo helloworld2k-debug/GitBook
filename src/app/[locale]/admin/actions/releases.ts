@@ -122,7 +122,7 @@ async function verifyUploadedObject(
   }
 
   if (!Number.isFinite(size) || size <= 0 || size > MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES) {
-    throw new Error("Uploaded installer files must be 50 MB or smaller");
+    throw new Error("Uploaded installer files must be 80 MB or smaller");
   }
 
   return size;
