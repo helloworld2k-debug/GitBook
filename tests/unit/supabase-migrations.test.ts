@@ -138,4 +138,16 @@ describe("Supabase migrations", () => {
     expect(migration).not.toContain("encrypted_password text");
     expect(migration).toContain("grant execute on function public.get_admin_auth_user_status(uuid[]) to service_role");
   });
+
+  it("keeps OAuth profile creation inside public display-name limits", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0064_oauth_profile_display_name_limit.sql"), "utf8");
+    const supabaseConfig = readFileSync(join(process.cwd(), "supabase/config.toml"), "utf8");
+
+    expect(migration).toContain("create or replace function public.handle_new_user_profile()");
+    expect(migration).toContain("normalized_public_display_name text;");
+    expect(migration).toContain("left(nullif(btrim(");
+    expect(migration).toContain("normalized_public_display_name");
+    expect(migration).toContain("new.email_confirmed_at is not null");
+    expect(supabaseConfig).toContain('additional_redirect_urls = ["http://localhost:3000/**", "http://127.0.0.1:3000/**"]');
+  });
 });
