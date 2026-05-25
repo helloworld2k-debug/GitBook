@@ -11,6 +11,13 @@ type AuthSignupError = {
   status?: number;
 };
 
+type ExistingAuthUser = {
+  id: string;
+  email?: string | null;
+  email_confirmed_at?: string | null;
+  raw_user_meta_data?: Record<string, unknown> | null;
+};
+
 function getIpAddress(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for");
   return forwardedFor?.split(",")[0]?.trim() ?? null;
@@ -56,7 +63,7 @@ async function registerConfirmedUserWithEmailPassword(input: {
   // Paginate through users to find the unconfirmed one with this email.
   let page = 1;
   const perPage = 50;
-  let existingUser: { id: string; email_confirmed_at?: string | null } | null = null;
+  let existingUser: ExistingAuthUser | null = null;
 
   while (!existingUser) {
     const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers({
@@ -82,8 +89,17 @@ async function registerConfirmedUserWithEmailPassword(input: {
     page++;
   }
 
-  if (!existingUser || existingUser.email_confirmed_at) {
-    return { data: { user: null }, error: null };
+  if (!existingUser) {
+    return result;
+  }
+
+  if (existingUser.email_confirmed_at) {
+    await ensureProfileForAuthUser(supabase, existingUser);
+
+    return {
+      data: { user: null },
+      error: { code: "email_exists", message: "User already registered", status: 422 },
+    };
   }
 
   return supabase.auth.admin.updateUserById(existingUser.id, {
@@ -93,6 +109,33 @@ async function registerConfirmedUserWithEmailPassword(input: {
       source: "register_form",
     },
   });
+}
+
+async function ensureProfileForAuthUser(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  user: ExistingAuthUser,
+) {
+  const metadata = user.raw_user_meta_data ?? {};
+  const preferredLocale = metadata.preferred_locale;
+  const displayName = metadata.display_name ?? metadata.full_name ?? metadata.name ?? metadata.user_name;
+  const publicDisplayName = metadata.public_display_name ?? displayName;
+
+  await supabase.from("profiles").upsert(
+    {
+      avatar_url: typeof metadata.avatar_url === "string" ? metadata.avatar_url : null,
+      display_name: typeof displayName === "string" ? displayName : null,
+      email: user.email ?? "",
+      email_verified: Boolean(user.email_confirmed_at),
+      id: user.id,
+      is_admin: false,
+      preferred_locale:
+        preferredLocale === "en" || preferredLocale === "zh-Hant" || preferredLocale === "ja" || preferredLocale === "ko"
+          ? preferredLocale
+          : "en",
+      public_display_name: typeof publicDisplayName === "string" ? publicDisplayName : null,
+    },
+    { ignoreDuplicates: true, onConflict: "id" },
+  );
 }
 
 const registerSchema = z.object({
@@ -156,6 +199,10 @@ export async function POST(request: Request) {
 
   // Register user with email confirmed immediately
   const result = await registerConfirmedUserWithEmailPassword({ email, password });
+
+  if (isAlreadyRegisteredError(result.error)) {
+    return jsonError("account_exists", 409);
+  }
 
   if (result.error) {
     return jsonError("register_failed");
