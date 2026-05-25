@@ -244,8 +244,9 @@ describe("register route", () => {
     expect(adminClient.auth.admin.createUser).not.toHaveBeenCalled();
   });
 
-  it("treats an existing email from temporary confirmed registration as a safe success", async () => {
+  it("returns an account-exists error for an existing confirmed email in temporary registration mode", async () => {
     process.env.TEMP_DISABLE_EMAIL_CONFIRMATION = "true";
+    const upsert = vi.fn().mockResolvedValue({ error: null });
     const adminClient = {
       admin: true,
       auth: {
@@ -261,6 +262,11 @@ describe("register route", () => {
                   id: "existing-user-id",
                   email: "existing@example.com",
                   email_confirmed_at: "2026-05-18T12:00:00.000Z",
+                  raw_user_meta_data: {
+                    avatar_url: "https://example.com/avatar.png",
+                    preferred_locale: "ja",
+                    user_name: "Existing User",
+                  },
                 },
               ],
             },
@@ -269,6 +275,10 @@ describe("register route", () => {
           updateUserById: vi.fn(),
         },
       },
+      from: vi.fn((table: string) => {
+        if (table === "profiles") return { upsert };
+        throw new Error(`Unexpected table: ${table}`);
+      }),
     };
     mocks.createSupabaseAdminClient.mockReturnValue(adminClient);
 
@@ -285,8 +295,17 @@ describe("register route", () => {
       }),
     );
 
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: "register_failed" });
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({ error: "account_exists" });
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      avatar_url: "https://example.com/avatar.png",
+      display_name: "Existing User",
+      email: "existing@example.com",
+      email_verified: true,
+      id: "existing-user-id",
+      preferred_locale: "ja",
+      public_display_name: "Existing User",
+    }), { ignoreDuplicates: true, onConflict: "id" });
   });
 
   it("confirms and updates the password for an existing unverified user in temporary registration mode", async () => {
@@ -376,7 +395,8 @@ describe("register route", () => {
     await expect(response.json()).resolves.toEqual({ error: "password_too_short" });
   });
 
-  it("returns a registration failure when the admin API reports an already registered confirmed email", async () => {
+  it("returns an account-exists error when the admin API reports an already registered confirmed email", async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
     const adminClient = {
       admin: true,
       auth: {
@@ -399,6 +419,10 @@ describe("register route", () => {
           }),
         },
       },
+      from: vi.fn((table: string) => {
+        if (table === "profiles") return { upsert };
+        throw new Error(`Unexpected table: ${table}`);
+      }),
     };
     mocks.createSupabaseAdminClient.mockReturnValue(adminClient);
 
@@ -415,8 +439,13 @@ describe("register route", () => {
       }),
     );
 
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: "register_failed" });
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({ error: "account_exists" });
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      email: "existing@example.com",
+      email_verified: true,
+      id: "existing-user-id",
+    }), { ignoreDuplicates: true, onConflict: "id" });
   });
 
   it("still rejects non-duplicate admin registration failures", async () => {
