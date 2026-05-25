@@ -62,6 +62,10 @@ export type AdminFeedbackKey =
   | "registration-block-revoked"
   | "registration-block-revoke-failed"
   | "release-created"
+  | "release-bulk-deleted"
+  | "release-bulk-delete-failed"
+  | "release-bulk-updated"
+  | "release-bulk-update-failed"
   | "release-deleted"
   | "release-updated"
   | "restore-auth-missing"
@@ -165,6 +169,10 @@ const adminFeedbackKeys = new Set<string>([
   "restore-failed",
   "restore-not-found",
   "release-created",
+  "release-bulk-deleted",
+  "release-bulk-delete-failed",
+  "release-bulk-updated",
+  "release-bulk-update-failed",
   "release-deleted",
   "release-updated",
   "role-updated",

@@ -122,7 +122,7 @@ async function verifyUploadedObject(
   }
 
   if (!Number.isFinite(size) || size <= 0 || size > MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES) {
-    throw new Error("Uploaded installer files must be 80 MB or smaller");
+    throw new Error("Uploaded installer files must be 50 MB or smaller");
   }
 
   return size;
@@ -492,5 +492,135 @@ export async function setSoftwareReleasePublished(formData: FormData) {
     key: "release-updated",
     locale,
     tone: "notice",
+  });
+}
+
+function getSelectedReleaseIds(formData: FormData) {
+  return Array.from(new Set(formData.getAll("release_ids")
+    .map((value) => String(value).trim())
+    .filter(Boolean)));
+}
+
+export async function bulkUpdateSoftwareReleases(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  await requireAdmin(locale);
+  const releaseIds = getSelectedReleaseIds(formData);
+  const action = String(formData.get("bulk_action") ?? "").trim();
+
+  if (releaseIds.length === 0) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/releases",
+      formData,
+      key: "release-bulk-update-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  if (action === "publish" || action === "unpublish") {
+    const { error } = await supabase
+      .from("software_releases")
+      .update({ is_published: action === "publish" })
+      .in("id", releaseIds)
+      .eq("release_status", "ready");
+
+    if (error) {
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/releases",
+        formData,
+        key: "release-bulk-update-failed",
+        locale,
+        tone: "error",
+      });
+    }
+
+    revalidatePath(`/${locale}`);
+    revalidatePath(`/${locale}/versions`);
+    revalidatePath(`/${locale}/admin/releases`);
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/releases",
+      formData,
+      key: "release-bulk-updated",
+      locale,
+      tone: "notice",
+    });
+  }
+
+  if (action === "delete_drafts") {
+    const { data: releases, error: loadError } = await supabase
+      .from("software_releases")
+      .select("id,release_status,software_release_assets(storage_path)")
+      .in("id", releaseIds);
+
+    if (loadError) {
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/releases",
+        formData,
+        key: "release-bulk-delete-failed",
+        locale,
+        tone: "error",
+      });
+    }
+
+    const draftReleases = (releases ?? []).filter((release: { release_status: string | null }) => (
+      release.release_status === "draft" || release.release_status === "uploading" || release.release_status === "failed"
+    ));
+    const draftIds = draftReleases.map((release: { id: string }) => release.id);
+    const paths = draftReleases.flatMap((release: { software_release_assets?: { storage_path: string }[] }) => (
+      release.software_release_assets ?? []
+    ).map((asset) => asset.storage_path));
+
+    if (draftIds.length === 0) {
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/releases",
+        formData,
+        key: "release-bulk-delete-failed",
+        locale,
+        tone: "error",
+      });
+    }
+
+    if (paths.length > 0) {
+      const { error: removeError } = await supabase.storage.from(SOFTWARE_RELEASES_BUCKET).remove(paths);
+      if (removeError) {
+        redirectWithAdminFeedback({
+          fallbackPath: "/admin/releases",
+          formData,
+          key: "release-bulk-delete-failed",
+          locale,
+          tone: "error",
+        });
+      }
+    }
+
+    const { error: deleteError } = await supabase.from("software_releases").delete().in("id", draftIds);
+    if (deleteError) {
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/releases",
+        formData,
+        key: "release-bulk-delete-failed",
+        locale,
+        tone: "error",
+      });
+    }
+
+    revalidatePath(`/${locale}/admin/releases`);
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/releases",
+      formData,
+      key: "release-bulk-deleted",
+      locale,
+      tone: "notice",
+    });
+  }
+
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/releases",
+    formData,
+    key: "release-bulk-update-failed",
+    locale,
+    tone: "error",
   });
 }

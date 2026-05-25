@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   addManualDonation,
   bulkProcessUsers,
+  bulkUpdateSoftwareReleases,
   createSoftwareRelease,
   createUserWithTemporaryPassword,
   createTrialCode,
@@ -129,7 +130,7 @@ describe("admin action validation helpers", () => {
     expect(() => getOptionalReleaseUrl(formData, "macos_arm64_primary_url")).toThrow("Enter a valid URL");
   });
 
-  it("limits software release uploads to 80 MiB per file", () => {
+  it("limits software release uploads to 50 MB per file", () => {
     const formData = new FormData();
     formData.set("macos_arm64_file_name", "GitBook.dmg");
     formData.set("macos_arm64_file_size", String(MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES));
@@ -137,19 +138,15 @@ describe("admin action validation helpers", () => {
 
     expect(getReleaseFileMetadata(formData, "macos_arm64")).toEqual({
       fileName: "GitBook.dmg",
-      fileSize: 80 * 1024 * 1024,
+      fileSize: 50_000_000,
       contentType: "application/x-apple-diskimage",
     });
 
-    formData.set("macos_arm64_file_size", String(60 * 1024 * 1024));
-    expect(getReleaseFileMetadata(formData, "macos_arm64")).toEqual({
-      fileName: "GitBook.dmg",
-      fileSize: 60 * 1024 * 1024,
-      contentType: "application/x-apple-diskimage",
-    });
+    formData.set("macos_arm64_file_size", String(60_000_000));
+    expect(() => getReleaseFileMetadata(formData, "macos_arm64")).toThrow("Installer files must be 50 MB or smaller");
 
     formData.set("macos_arm64_file_size", String(MAX_SOFTWARE_RELEASE_FILE_SIZE_BYTES + 1));
-    expect(() => getReleaseFileMetadata(formData, "macos_arm64")).toThrow("Installer files must be 80 MB or smaller");
+    expect(() => getReleaseFileMetadata(formData, "macos_arm64")).toThrow("Installer files must be 50 MB or smaller");
   });
 
   it("validates support contact values for URL and email channels", () => {
@@ -1702,54 +1699,35 @@ describe("admin actions", () => {
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
-  it("accepts 60 MiB files before preparing a release upload", async () => {
-    const releaseInsertSingle = vi.fn(async () => ({ data: { id: "release-1" }, error: null }));
-    const releaseSelect = vi.fn(() => ({ single: releaseInsertSingle }));
-    const releaseInsert = vi.fn(() => ({ select: releaseSelect }));
-    const from = vi.fn((table: string) => {
-      if (table === "software_releases") {
-        return { insert: releaseInsert };
-      }
-      throw new Error(`Unexpected table: ${table}`);
-    });
-    mocks.createSupabaseAdminClient.mockReturnValue({ from });
-
+  it("rejects 60 MB files before preparing a release upload", async () => {
     const formData = new FormData();
     formData.set("locale", "en");
     formData.set("version", "v1.4.0");
     formData.set("released_at", "2026-05-10");
     formData.set("macos_arm64_file_name", "GitBook.dmg");
-    formData.set("macos_arm64_file_size", String(60 * 1024 * 1024));
+    formData.set("macos_arm64_file_size", String(60_000_000));
 
-    await expect(prepareSoftwareReleaseUpload(formData)).resolves.toMatchObject({
-      assets: {
-        macos_arm64: {
-          fileName: "GitBook.dmg",
-          fileSize: 60 * 1024 * 1024,
-        },
-      },
-      platforms: ["macos_arm64"],
-    });
-    expect(mocks.createSupabaseAdminClient).toHaveBeenCalled();
+    await expect(prepareSoftwareReleaseUpload(formData)).rejects.toThrow("Installer files must be 50 MB or smaller");
+    expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
-  it("rejects files over 80 MiB before preparing a release upload", async () => {
+  it("rejects files over 50 MB before preparing a release upload", async () => {
     const formData = new FormData();
     formData.set("locale", "en");
     formData.set("version", "v1.4.0");
     formData.set("released_at", "2026-05-10");
     formData.set("macos_arm64_file_name", "TooBig.dmg");
-    formData.set("macos_arm64_file_size", String(80 * 1024 * 1024 + 1));
+    formData.set("macos_arm64_file_size", String(50_000_000 + 1));
     formData.set("macos_x64_file_name", "GitBook-intel.dmg");
     formData.set("macos_x64_file_size", "42");
     formData.set("windows_file_name", "GitBook.exe");
     formData.set("windows_file_size", "42");
 
-    await expect(prepareSoftwareReleaseUpload(formData)).rejects.toThrow("Installer files must be 80 MB or smaller");
+    await expect(prepareSoftwareReleaseUpload(formData)).rejects.toThrow("Installer files must be 50 MB or smaller");
     expect(mocks.createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
-  it("finalizes a prepared release only after both uploaded objects are present and within the 80 MiB limit", async () => {
+  it("finalizes a prepared release only after both uploaded objects are present and within the 50 MB limit", async () => {
     const releaseSingle = vi.fn(async () => ({
       data: {
         id: "release-1",
@@ -1776,7 +1754,7 @@ describe("admin actions", () => {
     });
     const list = vi.fn(async (prefix: string) => ({
       data: prefix === "release-1/macos_arm64"
-        ? [{ name: "GitBook-AI-arm64.dmg", metadata: { size: 80 * 1024 * 1024 } }]
+        ? [{ name: "GitBook-AI-arm64.dmg", metadata: { size: 50_000_000 } }]
         : prefix === "release-1/macos_x64"
           ? [{ name: "GitBook-AI-intel.dmg", metadata: { size: 42 } }]
           : [{ name: "GitBook-AI.exe", metadata: { size: 42 } }],
@@ -1790,7 +1768,7 @@ describe("admin actions", () => {
     formData.set("release_id", "release-1");
     formData.set("is_published", "true");
     formData.set("macos_arm64_file_name", "GitBook AI arm64.dmg");
-    formData.set("macos_arm64_file_size", String(80 * 1024 * 1024));
+    formData.set("macos_arm64_file_size", String(50_000_000));
     formData.set("macos_arm64_storage_path", "release-1/macos_arm64/GitBook-AI-arm64.dmg");
     formData.set("macos_x64_file_name", "GitBook AI intel.dmg");
     formData.set("macos_x64_file_size", "42");
@@ -1805,7 +1783,7 @@ describe("admin actions", () => {
     expect(list).toHaveBeenCalledWith("release-1/macos_x64", { search: "GitBook-AI-intel.dmg", limit: 1 });
     expect(list).toHaveBeenCalledWith("release-1/windows", { search: "GitBook-AI.exe", limit: 1 });
     expect(assetInsert).toHaveBeenCalledWith([
-      expect.objectContaining({ file_name: "GitBook AI arm64.dmg", file_size: 80 * 1024 * 1024, platform: "macos_arm64" }),
+      expect.objectContaining({ file_name: "GitBook AI arm64.dmg", file_size: 50_000_000, platform: "macos_arm64" }),
       expect.objectContaining({ file_name: "GitBook AI intel.dmg", file_size: 42, platform: "macos_x64" }),
       expect.objectContaining({ file_name: "GitBook AI.exe", file_size: 42, platform: "windows" }),
     ]);
@@ -1985,7 +1963,7 @@ describe("admin actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
   });
 
-  it("rejects finalize when an uploaded object is larger than the 80 MiB release limit", async () => {
+  it("rejects finalize when an uploaded object is larger than the 50 MB release limit", async () => {
     const releaseSingle = vi.fn(async () => ({
       data: { id: "release-1", delivery_mode: "file", release_status: "uploading" },
       error: null,
@@ -2001,7 +1979,7 @@ describe("admin actions", () => {
     });
     const list = vi.fn(async (prefix: string) => ({
       data: prefix === "release-1/macos_arm64"
-        ? [{ name: "TooBig.dmg", metadata: { size: 80 * 1024 * 1024 + 1 } }]
+        ? [{ name: "TooBig.dmg", metadata: { size: 50_000_000 + 1 } }]
         : [{ name: "GitBook.exe", metadata: { size: 42 } }],
       error: null,
     }));
@@ -2011,7 +1989,7 @@ describe("admin actions", () => {
     formData.set("locale", "en");
     formData.set("release_id", "release-1");
     formData.set("macos_arm64_file_name", "TooBig.dmg");
-    formData.set("macos_arm64_file_size", String(80 * 1024 * 1024));
+    formData.set("macos_arm64_file_size", String(50_000_000));
     formData.set("macos_arm64_storage_path", "release-1/macos_arm64/TooBig.dmg");
     formData.set("macos_x64_file_name", "GitBook-intel.dmg");
     formData.set("macos_x64_file_size", "42");
@@ -2020,7 +1998,7 @@ describe("admin actions", () => {
     formData.set("windows_file_size", "42");
     formData.set("windows_storage_path", "release-1/windows/GitBook.exe");
 
-    await expect(finalizeSoftwareReleaseUpload(formData)).rejects.toThrow("Uploaded installer files must be 80 MB or smaller");
+    await expect(finalizeSoftwareReleaseUpload(formData)).rejects.toThrow("Uploaded installer files must be 50 MB or smaller");
   });
 
   it("deletes draft release storage objects before removing the draft record", async () => {
@@ -2137,6 +2115,71 @@ describe("admin actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/versions");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/releases");
+  });
+
+  it("bulk publishes only ready software releases", async () => {
+    const releaseStatusEq = vi.fn(async () => ({ error: null }));
+    const inFilter = vi.fn(() => ({ eq: releaseStatusEq }));
+    const update = vi.fn(() => ({ in: inFilter }));
+    const from = vi.fn(() => ({ update }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.append("release_ids", "release-1");
+    formData.append("release_ids", "release-2");
+    formData.set("bulk_action", "publish");
+
+    await expect(bulkUpdateSoftwareReleases(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-bulk-updated");
+
+    expect(update).toHaveBeenCalledWith({ is_published: true });
+    expect(inFilter).toHaveBeenCalledWith("id", ["release-1", "release-2"]);
+    expect(releaseStatusEq).toHaveBeenCalledWith("release_status", "ready");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/versions");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
+  });
+
+  it("bulk deletes only non-ready release drafts and removes their storage objects", async () => {
+    const releaseSelectIn = vi.fn(async () => ({
+      data: [
+        {
+          id: "draft-1",
+          release_status: "failed",
+          software_release_assets: [{ storage_path: "draft-1/windows/GitBook.exe" }],
+        },
+        {
+          id: "ready-1",
+          release_status: "ready",
+          software_release_assets: [{ storage_path: "ready-1/windows/GitBook.exe" }],
+        },
+        {
+          id: "legacy-ready-1",
+          release_status: null,
+          software_release_assets: [{ storage_path: "legacy-ready-1/windows/GitBook.exe" }],
+        },
+      ],
+      error: null,
+    }));
+    const select = vi.fn(() => ({ in: releaseSelectIn }));
+    const deleteIn = vi.fn(async () => ({ error: null }));
+    const deleteFrom = vi.fn(() => ({ in: deleteIn }));
+    const from = vi.fn(() => ({ delete: deleteFrom, select }));
+    const remove = vi.fn(async () => ({ error: null }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, storage: { from: vi.fn(() => ({ remove })) } });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.append("release_ids", "draft-1");
+    formData.append("release_ids", "ready-1");
+    formData.append("release_ids", "legacy-ready-1");
+    formData.set("bulk_action", "delete_drafts");
+
+    await expect(bulkUpdateSoftwareReleases(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-bulk-deleted");
+
+    expect(remove).toHaveBeenCalledWith(["draft-1/windows/GitBook.exe"]);
+    expect(deleteIn).toHaveBeenCalledWith("id", ["draft-1"]);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
   });
 
   it("audits trial code creation and redirects back to licenses", async () => {

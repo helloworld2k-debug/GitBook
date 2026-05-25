@@ -57,19 +57,29 @@ const labels = {
   macIntelBackupUrl: "macOS Intel backup URL",
   macIntelFile: "macOS Intel installer",
   macIntelPrimaryUrl: "macOS Intel primary URL",
-  maxFileSizeHelp: "Max 80 MB per file. Use download links for larger installers.",
+  maxFileSizeHelp: "Max 50 MB per file. Use download links for larger installers.",
   pauseUpload: "Pause",
   retryUpload: "Retry",
   resumeUpload: "Resume",
   uploadComplete: "Complete",
   uploadFailed: "Upload failed",
   uploadIdle: "Ready",
-  uploadLimitError: "Installer files must be 80 MB or smaller. Use download links for larger installers.",
+  uploadLimitError: "Installer files must be 50 MB or smaller. Use download links for larger installers.",
   uploadProgress: "Upload progress",
   uploadUploading: "Uploading",
   windowsBackupUrl: "Windows backup URL",
   windowsFile: "Windows installer",
   windowsPrimaryUrl: "Windows primary URL",
+  publishMode: "Publish status",
+  publishModeDraft: "Save as draft",
+  publishModePublish: "Publish after upload",
+  uploadSummary: "Selected {count} platforms: {platforms}. Missing platforms will show as pending.",
+  uploadStepPreparing: "Preparing release",
+  uploadStepUploading: "Uploading installers",
+  uploadStepFinalizing: "Creating release",
+  uploadStepComplete: "Release created",
+  uploadAndSaveDraft: "Upload and save draft",
+  uploadAndPublish: "Upload and publish release",
 };
 
 describe("AdminReleaseDeliveryModeFields", () => {
@@ -117,8 +127,25 @@ describe("AdminReleaseDeliveryModeFields", () => {
     expect(screen.getByLabelText("macOS M chip installer")).toBeInTheDocument();
     expect(screen.getByLabelText("macOS Intel installer")).toBeInTheDocument();
     expect(screen.getByLabelText("Windows installer")).toBeInTheDocument();
-    expect(screen.getByText("Max 80 MB per file. Use download links for larger installers.")).toBeInTheDocument();
+    expect(screen.getByText("Max 50 MB per file. Use download links for larger installers.")).toBeInTheDocument();
     expect(screen.queryByLabelText("macOS M chip primary URL")).not.toBeInTheDocument();
+  });
+
+  it("uses explicit publish mode choices and updates the upload action label", () => {
+    render(<AdminReleaseDeliveryModeFields labels={labels} locale="en" />);
+
+    expect(screen.getByText("Publish status")).toBeInTheDocument();
+    expect(screen.getByLabelText("Save as draft")).toBeChecked();
+    expect(screen.getByRole("button", { name: "Upload and save draft" })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
+      target: { files: [new File(["mac-arm"], "GitBook-arm64.dmg")] },
+    });
+    expect(screen.getByText("Selected 1 platforms: macOS M chip installer. Missing platforms will show as pending.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Upload and save draft" })).toBeEnabled();
+
+    fireEvent.click(screen.getByLabelText("Publish after upload"));
+    expect(screen.getByRole("button", { name: "Upload and publish release" })).toBeEnabled();
   });
 
   it("shows only link fields when link mode is selected", () => {
@@ -133,31 +160,31 @@ describe("AdminReleaseDeliveryModeFields", () => {
     expect(screen.getByLabelText("Windows backup URL")).toBeInTheDocument();
   });
 
-  it("allows 60 MiB files before starting upload", () => {
+  it("blocks 60 MB files before starting upload", () => {
     render(<AdminReleaseDeliveryModeFields labels={labels} locale="en" />);
 
     const releaseFile = new File(["x"], "Release.dmg");
-    Object.defineProperty(releaseFile, "size", { value: 60 * 1024 * 1024 });
+    Object.defineProperty(releaseFile, "size", { value: 60_000_000 });
 
     fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
       target: { files: [releaseFile] },
     });
 
-    expect(screen.queryByText(/Installer files must be 80 MB or smaller/)).not.toBeInTheDocument();
-    expect(screen.getByText("Release.dmg")).toBeInTheDocument();
+    expect(screen.getByText(/Installer files must be 50 MB or smaller/)).toBeInTheDocument();
+    expect(uploadMocks.prepareSoftwareReleaseUpload).not.toHaveBeenCalled();
   });
 
-  it("blocks files larger than 80 MiB before starting upload", () => {
+  it("blocks files larger than 50 MB before starting upload", () => {
     render(<AdminReleaseDeliveryModeFields labels={labels} locale="en" />);
 
     const oversizedFile = new File(["x"], "TooBig.dmg");
-    Object.defineProperty(oversizedFile, "size", { value: 80 * 1024 * 1024 + 1 });
+    Object.defineProperty(oversizedFile, "size", { value: 50_000_000 + 1 });
 
     fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
       target: { files: [oversizedFile] },
     });
 
-    expect(screen.getByText(/Installer files must be 80 MB or smaller/)).toBeInTheDocument();
+    expect(screen.getByText(/Installer files must be 50 MB or smaller/)).toBeInTheDocument();
     expect(uploadMocks.prepareSoftwareReleaseUpload).not.toHaveBeenCalled();
   });
 
@@ -179,7 +206,7 @@ describe("AdminReleaseDeliveryModeFields", () => {
     fireEvent.change(screen.getByLabelText("Windows installer"), {
       target: { files: [new File(["win"], "GitBook.exe")] },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Create release" }));
+    fireEvent.click(screen.getByRole("button", { name: "Upload and save draft" }));
 
     await waitFor(() => expect(uploadMocks.prepareSoftwareReleaseUpload).toHaveBeenCalled());
     expect(uploadMocks.start).toHaveBeenCalledTimes(3);
@@ -212,7 +239,7 @@ describe("AdminReleaseDeliveryModeFields", () => {
     fireEvent.change(screen.getByLabelText("Windows installer"), {
       target: { files: [new File(["win"], "GitBook.exe")] },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Create release" }));
+    fireEvent.click(screen.getByRole("button", { name: "Upload and save draft" }));
 
     await waitFor(() => expect(uploadMocks.start).toHaveBeenCalledTimes(3));
     latestUploadOptions[0]?.onSuccess?.();
@@ -259,12 +286,14 @@ describe("AdminReleaseDeliveryModeFields", () => {
     fireEvent.change(screen.getByLabelText("Windows installer"), {
       target: { files: [new File(["win"], "GitBook.exe")] },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Create release" }));
+    fireEvent.click(screen.getByLabelText("Publish after upload"));
+    fireEvent.click(screen.getByRole("button", { name: "Upload and publish release" }));
 
     await waitFor(() => expect(uploadMocks.start).toHaveBeenCalledTimes(2));
     expect(uploadMocks.prepareSoftwareReleaseUpload).toHaveBeenCalledWith(expect.any(FormData));
 
     const preparedFormData = uploadMocks.prepareSoftwareReleaseUpload.mock.calls[0]?.[0] as FormData;
+    expect(preparedFormData.get("is_published")).toBe("on");
     expect(preparedFormData.get("version")).toBe("v1.5.0");
     expect(preparedFormData.get("released_at")).toBe("2026-05-20");
     expect(preparedFormData.get("macos_arm64_file")).toBeNull();
@@ -281,6 +310,7 @@ describe("AdminReleaseDeliveryModeFields", () => {
     await waitFor(() => expect(uploadMocks.finalizeSoftwareReleaseUpload).toHaveBeenCalled());
 
     const finalizeFormData = uploadMocks.finalizeSoftwareReleaseUpload.mock.calls[0]?.[0] as FormData;
+    expect(finalizeFormData.get("is_published")).toBe("true");
     expect(finalizeFormData.get("version")).toBe("v1.5.0");
     expect(finalizeFormData.get("released_at")).toBe("2026-05-20");
     expect(finalizeFormData.get("macos_arm64_file")).toBeNull();
@@ -306,7 +336,7 @@ describe("AdminReleaseDeliveryModeFields", () => {
     fireEvent.change(screen.getByLabelText("macOS M chip installer"), {
       target: { files: [file] },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Create release" }));
+    fireEvent.click(screen.getByRole("button", { name: "Upload and save draft" }));
 
     await waitFor(() => expect(uploadMocks.start).toHaveBeenCalledTimes(1));
     expect(latestUploadOptions[0]?.removeFingerprintOnSuccess).toBe(true);

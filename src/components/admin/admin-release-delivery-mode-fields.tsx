@@ -51,13 +51,23 @@ type AdminReleaseDeliveryModeFieldsProps = {
     macIntelPrimaryUrl: string;
     maxFileSizeHelp?: string;
     pauseUpload?: string;
+    publishMode?: string;
+    publishModeDraft?: string;
+    publishModePublish?: string;
     retryUpload?: string;
     resumeUpload?: string;
+    uploadAndPublish?: string;
+    uploadAndSaveDraft?: string;
     uploadComplete?: string;
     uploadFailed?: string;
     uploadIdle?: string;
     uploadLimitError?: string;
     uploadProgress?: string;
+    uploadStepComplete?: string;
+    uploadStepFinalizing?: string;
+    uploadStepPreparing?: string;
+    uploadStepUploading?: string;
+    uploadSummary?: string;
     uploadUploading?: string;
     windowsBackupUrl: string;
     windowsFile: string;
@@ -81,6 +91,8 @@ function formatBytes(value: number) {
 
 export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminReleaseDeliveryModeFieldsProps) {
   const [deliveryMode, setDeliveryMode] = useState<"file" | "link">("file");
+  const [publishMode, setPublishMode] = useState<"draft" | "publish">("draft");
+  const [workflowStep, setWorkflowStep] = useState<"idle" | "preparing" | "uploading" | "finalizing" | "complete">("idle");
   const [preparedUpload, setPreparedUpload] = useState<PreparedUpload | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -100,12 +112,34 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
     return fieldsetRef.current?.closest("form") ?? null;
   }
 
-  const limitError = labels.uploadLimitError ?? "Installer files must be 80 MB or smaller. Use download links for larger installers.";
+  const limitError = labels.uploadLimitError ?? "Installer files must be 50 MB or smaller. Use download links for larger installers.";
   const selectedPlatforms = RELEASE_PLATFORMS.filter((platform) => Boolean(uploads[platform].file));
   const hasAnyFileSelected = selectedPlatforms.length > 0;
   const hasFileError = RELEASE_PLATFORMS.some((platform) => Boolean(uploads[platform].error));
   const createLabel = labels.create ?? "Create release";
   const createLinkLabel = labels.createLink ?? createLabel;
+  const publishModeDraftLabel = labels.publishModeDraft ?? "Save as draft";
+  const publishModePublishLabel = labels.publishModePublish ?? "Publish after upload";
+  const uploadAndSaveDraftLabel = labels.uploadAndSaveDraft ?? createLabel;
+  const uploadAndPublishLabel = labels.uploadAndPublish ?? createLabel;
+  const uploadActionLabel = publishMode === "publish" ? uploadAndPublishLabel : uploadAndSaveDraftLabel;
+  const platformLabels: Record<Platform, string> = {
+    macos_arm64: labels.macAppleSiliconFile,
+    macos_x64: labels.macIntelFile,
+    windows: labels.windowsFile,
+  };
+  const selectedPlatformNames = selectedPlatforms.map((platform) => platformLabels[platform]);
+  const uploadSummary = hasAnyFileSelected
+    ? (labels.uploadSummary ?? "Selected {count} platforms: {platforms}. Missing platforms will show as pending.")
+      .replace("{count}", String(selectedPlatformNames.length))
+      .replace("{platforms}", selectedPlatformNames.join(", "))
+    : null;
+  const workflowLabels = {
+    complete: labels.uploadStepComplete ?? "Release created",
+    finalizing: labels.uploadStepFinalizing ?? "Creating release",
+    preparing: labels.uploadStepPreparing ?? "Preparing release",
+    uploading: labels.uploadStepUploading ?? "Uploading installers",
+  };
 
   const statusLabels = useMemo(() => ({
     complete: labels.uploadComplete ?? "Complete",
@@ -335,7 +369,9 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
 
       startTransition(async () => {
         try {
+          setWorkflowStep("finalizing");
           await finalizeSoftwareReleaseUpload(formData);
+          setWorkflowStep("complete");
         } catch (error) {
           if (error instanceof Error && !error.message.startsWith("NEXT_REDIRECT") && !error.message.startsWith("redirect:")) {
             setFormError(error.message);
@@ -347,6 +383,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
 
   function startPreparedUploads() {
     setFormError(null);
+    setWorkflowStep("preparing");
     const formData = createReleaseActionFormData();
     formData.set("locale", locale);
 
@@ -361,8 +398,10 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
       try {
         const prepared = await prepareSoftwareReleaseUpload(formData);
         setPreparedUpload(prepared);
+        setWorkflowStep("uploading");
         prepared.platforms.forEach((platform) => startUpload(platform, prepared));
       } catch (error) {
+        setWorkflowStep("idle");
         setFormError(error instanceof Error ? error.message : "Unable to prepare release upload");
       }
     });
@@ -448,21 +487,44 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
 
       {deliveryMode === "file" ? (
         <div className="grid gap-4">
-          <p className="text-sm text-slate-600">{labels.maxFileSizeHelp ?? "Max 80 MB per file. Use download links for larger installers."}</p>
+          <p className="text-sm text-slate-600">{labels.maxFileSizeHelp ?? "Max 50 MB per file. Use download links for larger installers."}</p>
           <div className="grid gap-4 md:grid-cols-3">
             {renderUploadRow("macos_arm64", labels.macAppleSiliconFile)}
             {renderUploadRow("macos_x64", labels.macIntelFile)}
             {renderUploadRow("windows", labels.windowsFile)}
           </div>
           {formError ? <p className="text-sm font-medium text-red-700">{formError}</p> : null}
-          <button
-            className="inline-flex min-h-11 w-fit items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!hasAnyFileSelected || hasFileError || isPending}
-            onClick={startPreparedUploads}
-            type="button"
-          >
-            {isPending ? labels.uploadUploading ?? "Uploading" : createLabel}
-          </button>
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-medium text-slate-950">{labels.publishMode ?? "Publish status"}</legend>
+            <div className="flex flex-wrap gap-3">
+              <label className="inline-flex min-h-10 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700">
+                <input checked={publishMode === "draft"} className="size-4" name="is_published" onChange={() => setPublishMode("draft")} type="radio" value="" />
+                {publishModeDraftLabel}
+              </label>
+              <label className="inline-flex min-h-10 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700">
+                <input checked={publishMode === "publish"} className="size-4" name="is_published" onChange={() => setPublishMode("publish")} type="radio" value="on" />
+                {publishModePublishLabel}
+              </label>
+            </div>
+          </fieldset>
+          <div className="flex flex-col gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              {uploadSummary ? <p className="text-sm font-medium text-slate-800">{uploadSummary}</p> : null}
+              {workflowStep !== "idle" ? (
+                <p aria-live="polite" className="text-sm text-slate-600">
+                  {workflowStep === "preparing" ? workflowLabels.preparing : workflowStep === "uploading" ? workflowLabels.uploading : workflowStep === "finalizing" ? workflowLabels.finalizing : workflowLabels.complete}
+                </p>
+              ) : null}
+            </div>
+            <button
+              className="inline-flex min-h-11 w-fit items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!hasAnyFileSelected || hasFileError || isPending}
+              onClick={startPreparedUploads}
+              type="button"
+            >
+              {isPending ? labels.uploadUploading ?? "Uploading" : uploadActionLabel}
+            </button>
+          </div>
           <div hidden>
             {RELEASE_PLATFORMS.flatMap((platform) => {
               const state = uploads[platform];
