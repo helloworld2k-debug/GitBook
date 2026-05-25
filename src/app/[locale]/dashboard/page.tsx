@@ -288,26 +288,28 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                   <p className="mt-1 text-sm leading-6 text-slate-400">{t("trial.description")}</p>
                 </div>
                 <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(280px,0.55fr)]">
-                  <form action={redeemLicense} className="space-y-4">
+                  <form action={redeemLicense} aria-label={t("trial.title")} className="space-y-4">
                     {trialMessage && trialStatus === "saved" ? <FormStatusBanner message={trialMessage} /> : null}
                     {trialMessage && trialStatus !== "saved" ? <FormStatusBanner message={trialMessage} tone="error" /> : null}
                     <p className="rounded-md border border-cyan-300/15 bg-cyan-300/10 px-3 py-3 text-sm leading-6 text-cyan-50">
                       {t("trial.bindingHelp")}
                     </p>
-                    <label className="block text-sm font-medium text-slate-100">
-                      {t("trial.code")}
-                      <input
-                        className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-sm text-white shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
-                        name="license_code"
-                        required
-                      />
-                    </label>
-                    <FormSubmitButton
-                      className="neon-button inline-flex min-h-11 items-center justify-center rounded-md px-4 text-sm font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300"
-                      pendingLabel={t("trial.submit")}
-                    >
-                      {t("trial.submit")}
-                    </FormSubmitButton>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                      <label className="block flex-1 text-sm font-medium text-slate-100">
+                        {t("trial.code")}
+                        <input
+                          className="mt-2 min-h-11 w-full rounded-md border border-cyan-300/20 bg-slate-950/70 px-3 text-sm text-white shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20"
+                          name="license_code"
+                          required
+                        />
+                      </label>
+                      <FormSubmitButton
+                        className="neon-button inline-flex min-h-11 shrink-0 items-center justify-center rounded-md px-4 text-sm font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300 sm:min-w-32"
+                        pendingLabel={t("trial.submit")}
+                      >
+                        {t("trial.submit")}
+                      </FormSubmitButton>
+                    </div>
                   </form>
                   <div className="rounded-md border border-cyan-300/15 bg-slate-950/70 p-4">
                     <p className="flex items-center gap-2 text-sm font-semibold text-white">
@@ -318,11 +320,6 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                     <p className="mt-2 text-lg font-semibold text-white">
                       {cloudSyncValidUntil ? formatDashboardDateTime(cloudSyncValidUntil, locale) : t("notAvailable")}
                     </p>
-                    {trialRedemption?.redeemed_at ? (
-                      <p className="mt-4 text-xs leading-5 text-slate-400">
-                        {t("trialRedeemedAt")} {formatDashboardDateTime(trialRedemption.redeemed_at, locale)}
-                      </p>
-                    ) : null}
                   </div>
                 </div>
               </DashboardCard>
@@ -331,11 +328,12 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                 <div className="border-b border-cyan-300/10 px-5 py-4">
                   <h2 className="text-lg font-semibold tracking-normal text-white">{t("recentDonations")}</h2>
                 </div>
-              {donations && donations.length > 0 ? (
+              {(donations && donations.length > 0) || trialRedemption?.redeemed_at ? (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left text-sm">
                     <thead className="bg-cyan-300/5 text-xs font-semibold uppercase text-slate-400">
                       <tr>
+                        <th className="px-5 py-3">{t("recordType")}</th>
                         <th className="px-5 py-3">{t("amount")}</th>
                         <th className="px-5 py-3">{t("status")}</th>
                         <th className="px-5 py-3">{t("date")}</th>
@@ -348,6 +346,11 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
 
                         return (
                           <tr key={donation.id}>
+                            <td className="whitespace-nowrap px-5 py-4">
+                              <span className="inline-flex min-h-7 items-center rounded-md border border-cyan-300/20 bg-cyan-300/10 px-2 text-xs font-semibold text-cyan-100">
+                                {t("recordTypes.donation")}
+                              </span>
+                            </td>
                             <td className="whitespace-nowrap px-5 py-4 font-medium text-white">
                               {formatDonationAmount(donation.amount, donation.currency, locale)}
                             </td>
@@ -379,6 +382,36 @@ export default async function DashboardPage({ params, searchParams }: DashboardP
                           </tr>
                         );
                       })}
+                      {trialRedemption?.redeemed_at ? (
+                        <tr>
+                          <td className="whitespace-nowrap px-5 py-4">
+                            <span className="inline-flex min-h-7 items-center rounded-md border border-violet-300/25 bg-violet-300/10 px-2 text-xs font-semibold text-violet-100">
+                              {t("recordTypes.redemption")}
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap px-5 py-4 font-medium text-white">-</td>
+                          <td className="whitespace-nowrap px-5 py-4">
+                            <span className={`inline-flex min-h-7 items-center rounded-md border px-2 text-xs font-semibold ${
+                              hasCloudSyncAccess
+                                ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-100"
+                                : "border-slate-400/20 bg-slate-400/10 text-slate-200"
+                            }`}>
+                              {hasCloudSyncAccess ? t("cloudSyncActive") : t("cloudSyncInactive")}
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap px-5 py-4 text-slate-300">
+                            {formatDateTimeWithSeconds(trialRedemption.redeemed_at, locale)}
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex min-w-44 flex-col gap-1 sm:min-w-52">
+                              <span className="text-xs font-semibold uppercase text-slate-500">{t("redemptionValidUntil")}</span>
+                              <span className="text-sm text-slate-300">
+                                {trialRedemption.trial_valid_until ? formatDashboardDateTime(trialRedemption.trial_valid_until, locale) : t("notAvailable")}
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
                     </tbody>
                   </table>
                 </div>

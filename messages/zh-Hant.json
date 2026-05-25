@@ -275,7 +275,13 @@
     "title": "個人中心",
     "donations": "開發支持記錄",
     "certificates": "有效證書",
-    "recentDonations": "開發支持記錄",
+    "recentDonations": "記錄",
+    "recordType": "類型",
+    "recordTypes": {
+      "donation": "開發支持",
+      "redemption": "兌換碼"
+    },
+    "redemptionValidUntil": "權限至",
     "recentCertificates": "證書",
     "amount": "金額",
     "status": "狀態",

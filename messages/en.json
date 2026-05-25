@@ -303,7 +303,13 @@
     "passwordSaved": "Password updated.",
     "passwordMismatch": "Passwords do not match.",
     "passwordError": "Could not update password.",
-    "recentDonations": "Support history",
+    "recentDonations": "Records",
+    "recordType": "Type",
+    "recordTypes": {
+      "donation": "Development support",
+      "redemption": "License code"
+    },
+    "redemptionValidUntil": "Access until",
     "recentCertificates": "Certificates",
     "amount": "Amount",
     "status": "Status",

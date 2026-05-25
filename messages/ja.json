@@ -275,7 +275,13 @@
     "title": "個人センター",
     "donations": "開発支援",
     "certificates": "有効な証明書",
-    "recentDonations": "開発支援履歴",
+    "recentDonations": "記録",
+    "recordType": "種類",
+    "recordTypes": {
+      "donation": "開発支援",
+      "redemption": "ライセンスコード"
+    },
+    "redemptionValidUntil": "アクセス期限",
     "recentCertificates": "証明書",
     "amount": "金額",
     "status": "ステータス",

@@ -275,7 +275,13 @@
     "title": "개인 센터",
     "donations": "개발 지원",
     "certificates": "활성 인증서",
-    "recentDonations": "개발 지원 내역",
+    "recentDonations": "기록",
+    "recordType": "유형",
+    "recordTypes": {
+      "donation": "개발 지원",
+      "redemption": "라이선스 코드"
+    },
+    "redemptionValidUntil": "권한 기한",
     "recentCertificates": "인증서",
     "amount": "금액",
     "status": "상태",
