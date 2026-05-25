@@ -148,6 +148,15 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("left(nullif(btrim(");
     expect(migration).toContain("normalized_public_display_name");
     expect(migration).toContain("new.email_confirmed_at is not null");
-    expect(supabaseConfig).toContain('additional_redirect_urls = ["http://localhost:3000/**", "http://127.0.0.1:3000/**"]');
+    expect(supabaseConfig).toContain('"http://localhost:3000/**"');
+    expect(supabaseConfig).toContain('"http://127.0.0.1:3000/**"');
+  });
+
+  it("keeps hosted OAuth callbacks on the production domain", () => {
+    const supabaseConfig = readFileSync(join(process.cwd(), "supabase/config.toml"), "utf8");
+
+    expect(supabaseConfig).toContain('site_url = "https://gitbookai.ccwu.cc"');
+    expect(supabaseConfig).toContain('"https://gitbookai.ccwu.cc/**"');
+    expect(supabaseConfig).toContain('"https://*.vercel.app/**"');
   });
 });
