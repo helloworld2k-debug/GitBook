@@ -139,7 +139,7 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
             eyebrow={t("releases.eyebrow")}
             title={t("releases.title")}
           />
-          <AdminFeedbackBanner error={feedback?.error} notice={feedback?.notice} />
+          <AdminFeedbackBanner error={feedback?.error} getMessage={(key) => t(key)} notice={feedback?.notice} />
           <AdminCard className="p-5">
             <h2 className="text-lg font-semibold tracking-normal text-slate-950">{t("releases.createTitle")}</h2>
             <form action={createRelease} className="mt-5 grid gap-4">

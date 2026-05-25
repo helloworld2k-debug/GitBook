@@ -26,7 +26,23 @@ vi.mock("@/components/admin/admin-shell", () => ({
   AdminCard: ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
     <section className={className}>{children}</section>
   ),
-  AdminFeedbackBanner: () => null,
+  AdminFeedbackBanner: ({
+    getMessage,
+    notice,
+  }: {
+    getMessage?: (key: string) => string;
+    notice?: string | string[] | null;
+  }) => {
+    const rawNotice = Array.isArray(notice) ? notice[0] : notice;
+
+    if (!rawNotice || !getMessage) {
+      return null;
+    }
+
+    const translationKey = rawNotice === "release-created" ? "releaseCreated" : rawNotice;
+
+    return <div role="status">{getMessage(`admin.feedback.${translationKey}`)}</div>;
+  },
   AdminPageHeader: ({ description, title }: { description?: string; title: string }) => (
     <header>
       <h1>{title}</h1>
@@ -58,6 +74,7 @@ vi.mock("next-intl/server", () => ({
   getTranslations: vi.fn(async () => (key: string) => {
     const messages: Record<string, string> = {
       "common.processing": "Processing...",
+      "admin.feedback.releaseCreated": "Version created.",
       "releases.addInstaller": "Add installer",
       "releases.applyFilters": "Apply filters",
       "releases.assets": "Assets",
@@ -250,5 +267,30 @@ describe("AdminReleasesPage", () => {
     expect(within(row).getByText("Win ready")).toBeInTheDocument();
     expect(within(row).getByRole("button", { name: "Unpublish" })).toBeInTheDocument();
     expect(within(row).getByRole("button", { name: "Add installer" })).toBeInTheDocument();
+  });
+
+  it("uses localized feedback messages on release redirects", async () => {
+    mocks.setupAdminPage.mockResolvedValue({ locale: "en", user: { id: "admin-1" } });
+    mocks.getAdminShellProps.mockResolvedValue({
+      adminLabel: "Operator",
+      currentPath: "/admin/releases",
+      labels: {},
+      locale: "en",
+    });
+    mocks.createSupabaseServerClient.mockResolvedValue({
+      from: () => createReleaseQuery([]),
+      storage: {
+        from: () => ({
+          getPublicUrl: (path: string) => ({ data: { publicUrl: `https://cdn.example/${path}` } }),
+        }),
+      },
+    });
+
+    render(await AdminReleasesPage({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ notice: "release-created" }),
+    }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Version created.");
   });
 });

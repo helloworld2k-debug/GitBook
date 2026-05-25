@@ -112,7 +112,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
     return fieldsetRef.current?.closest("form") ?? null;
   }
 
-  const limitError = labels.uploadLimitError ?? "Installer files must be 80 MB or smaller. Use download links for larger installers.";
+  const limitError = labels.uploadLimitError ?? "Installer files must be 50 MB or smaller. Use download links for larger installers.";
   const selectedPlatforms = RELEASE_PLATFORMS.filter((platform) => Boolean(uploads[platform].file));
   const hasAnyFileSelected = selectedPlatforms.length > 0;
   const hasFileError = RELEASE_PLATFORMS.some((platform) => Boolean(uploads[platform].error));
@@ -487,7 +487,7 @@ export function AdminReleaseDeliveryModeFields({ labels, locale = "en" }: AdminR
 
       {deliveryMode === "file" ? (
         <div className="grid gap-4">
-          <p className="text-sm text-slate-600">{labels.maxFileSizeHelp ?? "Max 80 MB per file. Use download links for larger installers."}</p>
+          <p className="text-sm text-slate-600">{labels.maxFileSizeHelp ?? "Max 50 MB per file. Use download links for larger installers."}</p>
           <div className="grid gap-4 md:grid-cols-3">
             {renderUploadRow("macos_arm64", labels.macAppleSiliconFile)}
             {renderUploadRow("macos_x64", labels.macIntelFile)}

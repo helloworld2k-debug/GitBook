@@ -14,18 +14,22 @@ describe("software releases migration", () => {
     expect(migration).toContain("storage.objects");
   });
 
-  it("keeps the local storage upload limit compatible with 60 MB release installers", () => {
+  it("keeps the local storage upload limit compatible with Supabase Free release installers", () => {
     const supabaseConfig = readFileSync(join(process.cwd(), "supabase/config.toml"), "utf8");
 
-    expect(supabaseConfig).toContain('file_size_limit = "80MiB"');
+    expect(supabaseConfig).toContain('file_size_limit = "50MiB"');
   });
 
-  it("raises the software release storage bucket limit to 80 MiB", () => {
+  it("keeps the historical 80 MiB storage migration and adds a Supabase Free rollback to 50 MB", () => {
     const storageLimitMigration = readFileSync(join(process.cwd(), "supabase/migrations/0062_software_release_storage_limit.sql"), "utf8");
+    const freeLimitMigration = readFileSync(join(process.cwd(), "supabase/migrations/0063_software_release_storage_free_limit.sql"), "utf8");
 
     expect(storageLimitMigration).toContain("update storage.buckets");
     expect(storageLimitMigration).toContain("file_size_limit = 83886080");
     expect(storageLimitMigration).toContain("where id = 'software-releases'");
+    expect(freeLimitMigration).toContain("update storage.buckets");
+    expect(freeLimitMigration).toContain("file_size_limit = 50000000");
+    expect(freeLimitMigration).toContain("where id = 'software-releases'");
   });
 
   it("adds visible upload lifecycle states to software releases", () => {
