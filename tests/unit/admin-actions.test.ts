@@ -2001,11 +2001,11 @@ describe("admin actions", () => {
     await expect(finalizeSoftwareReleaseUpload(formData)).rejects.toThrow("Uploaded installer files must be 50 MB or smaller");
   });
 
-  it("deletes draft release storage objects before removing the draft record", async () => {
+  it("deletes release storage objects before removing the release record", async () => {
     const releaseSingle = vi.fn(async () => ({
       data: {
         id: "release-1",
-        release_status: "failed",
+        release_status: "ready",
         software_release_assets: [
           { storage_path: "release-1/macos_arm64/GitBook.dmg" },
           { storage_path: "release-1/macos_x64/GitBook-intel.dmg" },
@@ -2034,6 +2034,9 @@ describe("admin actions", () => {
       "release-1/windows/GitBook.exe",
     ]);
     expect(deleteEq).toHaveBeenCalledWith("id", "release-1");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/versions");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
   });
 
   it("creates a software release in link mode without writing release assets", async () => {
@@ -2140,7 +2143,7 @@ describe("admin actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
   });
 
-  it("bulk deletes only non-ready release drafts and removes their storage objects", async () => {
+  it("bulk deletes selected releases and removes their storage objects", async () => {
     const releaseSelectIn = vi.fn(async () => ({
       data: [
         {
@@ -2173,12 +2176,18 @@ describe("admin actions", () => {
     formData.append("release_ids", "draft-1");
     formData.append("release_ids", "ready-1");
     formData.append("release_ids", "legacy-ready-1");
-    formData.set("bulk_action", "delete_drafts");
+    formData.set("bulk_action", "delete");
 
     await expect(bulkUpdateSoftwareReleases(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-bulk-deleted");
 
-    expect(remove).toHaveBeenCalledWith(["draft-1/windows/GitBook.exe"]);
-    expect(deleteIn).toHaveBeenCalledWith("id", ["draft-1"]);
+    expect(remove).toHaveBeenCalledWith([
+      "draft-1/windows/GitBook.exe",
+      "ready-1/windows/GitBook.exe",
+      "legacy-ready-1/windows/GitBook.exe",
+    ]);
+    expect(deleteIn).toHaveBeenCalledWith("id", ["draft-1", "ready-1", "legacy-ready-1"]);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/versions");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
   });
 

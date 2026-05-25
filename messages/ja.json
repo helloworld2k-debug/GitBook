@@ -535,7 +535,6 @@
       "createLinkRelease": "リンクリリースを作成",
       "addInstaller": "インストーラーを追加",
       "comingSoon": "近日公開",
-      "deleteDraft": "下書きを削除",
       "maxFileSizeHelp": "1 ファイル最大 50 MB です。より大きいインストーラーはダウンロードリンクを使用してください。",
       "pauseUpload": "一時停止",
       "resumeUpload": "再開",
@@ -583,7 +582,6 @@
       "bulkAction": "一括操作",
       "bulkPublish": "選択項目を公開",
       "bulkUnpublish": "選択項目を非公開",
-      "bulkDeleteDrafts": "選択した下書きを削除",
       "applyBulkAction": "一括操作を実行",
       "bulkConfirm": "この一括操作を実行しますか？",
       "selectAllReleases": "すべてのリリースを選択",
@@ -595,7 +593,9 @@
       "platformsColumn": "プラットフォーム",
       "actionsColumn": "操作",
       "platformReady": "{platform} 準備完了",
-      "platformPending": "{platform} 未公開"
+      "platformPending": "{platform} 未公開",
+      "deleteRelease": "リリースを削除",
+      "bulkDeleteReleases": "選択したリリースを削除"
     },
     "notifications": {
       "eyebrow": "管理画面",
@@ -1266,7 +1266,7 @@
       "restoreFailed": "Unable to restore the archived user.",
       "restoreNotFound": "Archived user not found.",
       "releaseCreated": "リリースを作成しました。",
-      "releaseDeleted": "リリース下書きを削除しました。",
+      "releaseDeleted": "リリースを削除しました。",
       "releaseUpdated": "リリースを更新しました。",
       "roleUpdated": "User role updated.",
       "roleUpdateFailed": "Unable to update user role.",
@@ -1307,8 +1307,8 @@
       "bulkPermanentDeleteSuccess": "選択したアーカイブ済みユーザーを完全削除しました。",
       "paymentMaintenanceUpdated": "決済メンテナンス状態を更新しました。",
       "paymentMaintenanceUpdateFailed": "決済メンテナンス状態を更新できません。",
-      "releaseBulkDeleted": "選択したリリース下書きを削除しました。",
-      "releaseBulkDeleteFailed": "選択したリリース下書きを削除できません。",
+      "releaseBulkDeleted": "選択したリリースを削除しました。",
+      "releaseBulkDeleteFailed": "選択したリリースを削除できません。",
       "releaseBulkUpdated": "選択したリリースを更新しました。",
       "releaseBulkUpdateFailed": "選択したリリースを更新できません。"
     }

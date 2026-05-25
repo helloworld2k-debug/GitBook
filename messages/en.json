@@ -427,7 +427,7 @@
       "restoreFailed": "Unable to restore the archived user.",
       "restoreNotFound": "Archived user not found.",
       "releaseCreated": "Release created.",
-      "releaseDeleted": "Release draft deleted.",
+      "releaseDeleted": "Release deleted.",
       "releaseUpdated": "Release updated.",
       "roleUpdated": "User role updated.",
       "roleUpdateFailed": "Unable to update user role.",
@@ -468,8 +468,8 @@
       "bulkPermanentDeleteSuccess": "Selected archived users permanently deleted.",
       "paymentMaintenanceUpdated": "Payment maintenance status updated.",
       "paymentMaintenanceUpdateFailed": "Unable to update payment maintenance status.",
-      "releaseBulkDeleted": "Selected release drafts deleted.",
-      "releaseBulkDeleteFailed": "Unable to delete the selected release drafts.",
+      "releaseBulkDeleted": "Selected releases deleted.",
+      "releaseBulkDeleteFailed": "Unable to delete the selected releases.",
       "releaseBulkUpdated": "Selected releases updated.",
       "releaseBulkUpdateFailed": "Unable to update the selected releases."
     },
@@ -543,7 +543,6 @@
       "uploadSummary": "Selected {count} platforms: {platforms}. Missing platforms will show as pending.",
       "addInstaller": "Add installer",
       "comingSoon": "Coming soon",
-      "deleteDraft": "Delete draft",
       "maxFileSizeHelp": "Max 50 MB per file. Use download links for larger installers.",
       "pauseUpload": "Pause",
       "resumeUpload": "Resume",
@@ -585,7 +584,6 @@
       "bulkAction": "Bulk action",
       "bulkPublish": "Publish selected",
       "bulkUnpublish": "Unpublish selected",
-      "bulkDeleteDrafts": "Delete selected drafts",
       "applyBulkAction": "Apply bulk action",
       "bulkConfirm": "Apply this bulk action?",
       "selectAllReleases": "Select all releases",
@@ -597,7 +595,9 @@
       "platformsColumn": "Platforms",
       "actionsColumn": "Actions",
       "platformReady": "{platform} ready",
-      "platformPending": "{platform} pending"
+      "platformPending": "{platform} pending",
+      "deleteRelease": "Delete release",
+      "bulkDeleteReleases": "Delete selected releases"
     },
     "donations": {
       "eyebrow": "Admin",

@@ -535,7 +535,6 @@
       "createLinkRelease": "링크 릴리스 만들기",
       "addInstaller": "설치 파일 추가",
       "comingSoon": "출시 예정",
-      "deleteDraft": "초안 삭제",
       "maxFileSizeHelp": "파일당 최대 50 MB입니다. 더 큰 설치 파일은 다운로드 링크를 사용하세요.",
       "pauseUpload": "일시 중지",
       "resumeUpload": "계속",
@@ -583,7 +582,6 @@
       "bulkAction": "일괄 작업",
       "bulkPublish": "선택 항목 게시",
       "bulkUnpublish": "선택 항목 게시 해제",
-      "bulkDeleteDrafts": "선택한 초안 삭제",
       "applyBulkAction": "일괄 작업 실행",
       "bulkConfirm": "이 일괄 작업을 실행할까요?",
       "selectAllReleases": "모든 릴리스 선택",
@@ -595,7 +593,9 @@
       "platformsColumn": "플랫폼",
       "actionsColumn": "작업",
       "platformReady": "{platform} 준비됨",
-      "platformPending": "{platform} 출시 예정"
+      "platformPending": "{platform} 출시 예정",
+      "deleteRelease": "릴리스 삭제",
+      "bulkDeleteReleases": "선택한 릴리스 삭제"
     },
     "notifications": {
       "eyebrow": "관리",
@@ -1266,7 +1266,7 @@
       "restoreFailed": "Unable to restore the archived user.",
       "restoreNotFound": "Archived user not found.",
       "releaseCreated": "릴리스가 생성되었습니다.",
-      "releaseDeleted": "릴리스 초안이 삭제되었습니다.",
+      "releaseDeleted": "릴리스가 삭제되었습니다.",
       "releaseUpdated": "릴리스가 업데이트되었습니다.",
       "roleUpdated": "User role updated.",
       "roleUpdateFailed": "Unable to update user role.",
@@ -1307,8 +1307,8 @@
       "bulkPermanentDeleteSuccess": "선택한 보관 사용자를 영구 삭제했습니다.",
       "paymentMaintenanceUpdated": "결제 유지보수 상태가 업데이트되었습니다.",
       "paymentMaintenanceUpdateFailed": "결제 유지보수 상태를 업데이트할 수 없습니다.",
-      "releaseBulkDeleted": "선택한 릴리스 초안을 삭제했습니다.",
-      "releaseBulkDeleteFailed": "선택한 릴리스 초안을 삭제할 수 없습니다.",
+      "releaseBulkDeleted": "선택한 릴리스가 삭제되었습니다.",
+      "releaseBulkDeleteFailed": "선택한 릴리스를 삭제할 수 없습니다.",
       "releaseBulkUpdated": "선택한 릴리스를 업데이트했습니다.",
       "releaseBulkUpdateFailed": "선택한 릴리스를 업데이트할 수 없습니다."
     }
