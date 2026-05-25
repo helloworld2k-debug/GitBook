@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   addManualDonation,
   bulkProcessUsers,
+  bulkUpdateSoftwareReleases,
   createSoftwareRelease,
   createUserWithTemporaryPassword,
   createTrialCode,
@@ -2137,6 +2138,71 @@ describe("admin actions", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/versions");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/ja/admin/releases");
+  });
+
+  it("bulk publishes only ready software releases", async () => {
+    const releaseStatusEq = vi.fn(async () => ({ error: null }));
+    const inFilter = vi.fn(() => ({ eq: releaseStatusEq }));
+    const update = vi.fn(() => ({ in: inFilter }));
+    const from = vi.fn(() => ({ update }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.append("release_ids", "release-1");
+    formData.append("release_ids", "release-2");
+    formData.set("bulk_action", "publish");
+
+    await expect(bulkUpdateSoftwareReleases(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-bulk-updated");
+
+    expect(update).toHaveBeenCalledWith({ is_published: true });
+    expect(inFilter).toHaveBeenCalledWith("id", ["release-1", "release-2"]);
+    expect(releaseStatusEq).toHaveBeenCalledWith("release_status", "ready");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/versions");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
+  });
+
+  it("bulk deletes only non-ready release drafts and removes their storage objects", async () => {
+    const releaseSelectIn = vi.fn(async () => ({
+      data: [
+        {
+          id: "draft-1",
+          release_status: "failed",
+          software_release_assets: [{ storage_path: "draft-1/windows/GitBook.exe" }],
+        },
+        {
+          id: "ready-1",
+          release_status: "ready",
+          software_release_assets: [{ storage_path: "ready-1/windows/GitBook.exe" }],
+        },
+        {
+          id: "legacy-ready-1",
+          release_status: null,
+          software_release_assets: [{ storage_path: "legacy-ready-1/windows/GitBook.exe" }],
+        },
+      ],
+      error: null,
+    }));
+    const select = vi.fn(() => ({ in: releaseSelectIn }));
+    const deleteIn = vi.fn(async () => ({ error: null }));
+    const deleteFrom = vi.fn(() => ({ in: deleteIn }));
+    const from = vi.fn(() => ({ delete: deleteFrom, select }));
+    const remove = vi.fn(async () => ({ error: null }));
+    mocks.createSupabaseAdminClient.mockReturnValue({ from, storage: { from: vi.fn(() => ({ remove })) } });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.append("release_ids", "draft-1");
+    formData.append("release_ids", "ready-1");
+    formData.append("release_ids", "legacy-ready-1");
+    formData.set("bulk_action", "delete_drafts");
+
+    await expect(bulkUpdateSoftwareReleases(formData)).rejects.toThrow("redirect:/en/admin/releases?notice=release-bulk-deleted");
+
+    expect(remove).toHaveBeenCalledWith(["draft-1/windows/GitBook.exe"]);
+    expect(deleteIn).toHaveBeenCalledWith("id", ["draft-1"]);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/releases");
   });
 
   it("audits trial code creation and redirects back to licenses", async () => {
