@@ -53,6 +53,17 @@ describe("Supabase migrations", () => {
     expect(migration).toContain("registration_attempts_ip_idx");
   });
 
+  it("keeps admin license code maintenance policy usable for soft-deleted codes", () => {
+    const migration = readFileSync(join(process.cwd(), "supabase/migrations/0065_fix_trial_codes_admin_policy.sql"), "utf8");
+
+    expect(migration).toContain('drop policy if exists "trial_codes_admin_all" on public.trial_codes');
+    expect(migration).toContain('create policy "trial_codes_admin_all"');
+    expect(migration).toContain("on public.trial_codes for all");
+    expect(migration).toContain("using (public.is_admin())");
+    expect(migration).toContain("with check (public.is_admin())");
+    expect(migration).not.toContain("deleted_at is null");
+  });
+
   it("qualifies entitlement valid_until inside the unified redemption RPC", () => {
     const migration = readFileSync(join(process.cwd(), "supabase/migrations/0033_redeem_license_code_valid_until_ambiguity.sql"), "utf8");
 
