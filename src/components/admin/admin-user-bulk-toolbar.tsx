@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+
+const ROW_ACTION_MENU_GAP = 8;
+const ROW_ACTION_MENU_MARGIN = 12;
+const ROW_ACTION_MENU_MIN_HEIGHT = 180;
+const ROW_ACTION_MENU_WIDTH = 224;
 
 function getSelectedUserInputs(formId: string) {
   if (typeof document === "undefined") {
@@ -221,6 +227,113 @@ export function AdminUserBulkToolbar({
           {labels.clearSelection}
         </button>
       </div>
+    </div>
+  );
+}
+
+export function AdminUserRowActionsMenu({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  label: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<{ left: number; maxHeight: number; top: number; width: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+
+  const updatePosition = useCallback(() => {
+    if (typeof window === "undefined" || !buttonRef.current) {
+      return;
+    }
+
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const menuWidth = Math.min(ROW_ACTION_MENU_WIDTH, Math.max(160, viewportWidth - ROW_ACTION_MENU_MARGIN * 2));
+    const maxLeft = Math.max(ROW_ACTION_MENU_MARGIN, viewportWidth - menuWidth - ROW_ACTION_MENU_MARGIN);
+    const left = Math.min(Math.max(ROW_ACTION_MENU_MARGIN, buttonRect.right - menuWidth), maxLeft);
+    const availableBelow = viewportHeight - buttonRect.bottom - ROW_ACTION_MENU_GAP - ROW_ACTION_MENU_MARGIN;
+    const availableAbove = buttonRect.top - ROW_ACTION_MENU_GAP - ROW_ACTION_MENU_MARGIN;
+    const shouldOpenAbove = availableBelow < ROW_ACTION_MENU_MIN_HEIGHT && availableAbove > availableBelow;
+    const maxHeight = Math.max(140, shouldOpenAbove ? availableAbove : availableBelow);
+    const top = shouldOpenAbove
+      ? Math.max(ROW_ACTION_MENU_MARGIN, buttonRect.top - ROW_ACTION_MENU_GAP - maxHeight)
+      : Math.min(buttonRect.bottom + ROW_ACTION_MENU_GAP, viewportHeight - ROW_ACTION_MENU_MARGIN - maxHeight);
+
+    setPosition({
+      left,
+      maxHeight,
+      top,
+      width: menuWidth,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    updatePosition();
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+
+      if (!menuRef.current?.contains(target) && !triggerRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open, updatePosition]);
+
+  return (
+    <div className="relative" ref={triggerRef}>
+      <button
+        aria-controls={menuId}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-slate-300 px-3 text-sm font-medium text-slate-700 transition-colors hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+        onClick={() => {
+          if (open) {
+            setOpen(false);
+          } else {
+            updatePosition();
+            setOpen(true);
+          }
+        }}
+        ref={buttonRef}
+        type="button"
+      >
+        {label}
+      </button>
+      {open && position && typeof document !== "undefined" ? createPortal(
+        <div
+          className="fixed z-[100] grid gap-3 overflow-y-auto rounded-md border border-slate-200 bg-white p-3 text-left shadow-xl"
+          id={menuId}
+          ref={menuRef}
+          role="menu"
+          style={{ left: position.left, maxHeight: position.maxHeight, top: position.top, width: position.width }}
+        >
+          {children}
+        </div>,
+        document.body,
+      ) : null}
     </div>
   );
 }

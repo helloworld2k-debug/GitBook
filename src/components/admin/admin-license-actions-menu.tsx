@@ -257,7 +257,7 @@ function AdminLicenseEditDrawer({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[80] bg-slate-950/30" role="presentation">
+    <div className="fixed inset-0 z-[120] bg-slate-950/30" role="presentation">
       <div
         aria-label={labels.editCode}
         aria-modal="true"
