@@ -8,9 +8,14 @@ type ExportUser = {
   display_name: string | null;
   admin_role: string | null;
   account_status: string | null;
+  account_type: string | null;
   is_admin: boolean | null;
   created_at: string;
 };
+
+function getAccountTypeExportLabel(accountType: string | null | undefined) {
+  return accountType === "ai_test" ? "AI Test" : "Standard";
+}
 
 type PaginatedUsersResult = {
   users: ExportUser[];
@@ -74,7 +79,7 @@ export async function GET(request: NextRequest) {
       user.display_name || "",
       user.admin_role || (user.is_admin ? "owner" : "user"),
       user.account_status || "active",
-      user.is_admin ? "Admin" : "Standard",
+      getAccountTypeExportLabel(user.account_type),
       new Date(user.created_at).toISOString(),
     ]);
 

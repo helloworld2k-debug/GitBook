@@ -589,6 +589,7 @@ const testMessages = {
         bulkEnable: "Bulk enable",
         bulkDisable: "Bulk disable",
         bulkChangeRole: "Bulk change role",
+        bulkChangeType: "Bulk change type",
         bulkSoftDelete: "Bulk soft delete",
         bulkSoftDeleteSelected: "Bulk soft delete selected users",
         bulkArchiveDelete: "Bulk archive delete",
@@ -601,6 +602,7 @@ const testMessages = {
         bulkDisableConfirm: "Confirm disabling {n} users?",
         bulkRoleConfirm: "Confirm changing role for {n} users?",
         roleTarget: "Target role",
+        typeTarget: "Target type",
         summaryTotal: "Total users",
         summaryActive: "Active users",
         summaryDisabled: "Disabled users",
@@ -609,8 +611,15 @@ const testMessages = {
         type: "Type",
         devicesAndTrials: "Devices / trials",
         createdAt: "Created",
+        accountType: "Account type",
         standardType: "Standard",
+        aiTestType: "AI test",
+        accountTypeUpdated: "Account type updated.",
+        accountTypeUpdateFailed: "Unable to update account type.",
+        bulkUserAccountTypeUpdated: "Updated account type for the selected users.",
+        bulkUserAccountTypeUpdateFailed: "Unable to update account type for the selected users.",
         adminType: "Admin",
+        empty: "No users yet.",
         emptyFiltered: "No users match the current filters.",
         softDelete: "Soft delete",
         ownerPill: "Owner access",
@@ -2305,7 +2314,7 @@ describe("admin pages", () => {
 
     const { container } = render(element);
 
-    expect(profileQuery.select).toHaveBeenCalledWith("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,avatar_url,created_at");
+    expect(profileQuery.select).toHaveBeenCalledWith("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,account_type,is_admin,avatar_url,created_at");
     expect(certificatesQuery.select).toHaveBeenCalledWith("id,certificate_number,donation_id,type,status,issued_at");
     expect(screen.getByRole("heading", { name: "User operations" })).toBeInTheDocument();
     expect(screen.getAllByText("ada@example.com").length).toBeGreaterThan(0);
@@ -2404,6 +2413,7 @@ describe("admin pages", () => {
             display_name: "Alice",
             admin_role: "operator",
             account_status: "deleted",
+            account_type: "ai_test",
             is_admin: false,
             avatar_url: null,
             created_at: "2026-05-01T00:00:00.000Z",
@@ -2458,8 +2468,11 @@ describe("admin pages", () => {
 
     expect(screen.getByText("Total users")).toBeInTheDocument();
     expect(screen.getByText("Deleted")).toBeInTheDocument();
+    expect(screen.getAllByText("AI test").length).toBeGreaterThan(0);
     expect(screen.getByDisplayValue("alice")).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Select alice@example.com"));
+    expect(screen.getByRole("combobox", { name: "Target type" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bulk change type" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Bulk soft delete" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Bulk soft delete selected users" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "alice@example.com" })).toHaveAttribute("href", "/admin/users/user-1");
@@ -2475,6 +2488,54 @@ describe("admin pages", () => {
     expect(moreActions).toContainElement(screen.getAllByRole("button", { name: "Soft delete" })[0]);
     expect(screen.queryByText("Detailed account, contributions, certificates, and devices")).not.toBeInTheDocument();
     expect(screen.getByTestId("admin-mobile-cards")).toHaveTextContent("alice@example.com");
+  });
+
+  it("passes the AI test account type filter to the admin users RPC", async () => {
+    const rpc = vi.fn((fnName: string) => {
+      if (fnName === "get_admin_users_paginated") {
+        return Promise.resolve({
+          data: [
+            {
+              users: [],
+              total_count: 0,
+              filtered_count: 0,
+            },
+          ],
+          error: null,
+        });
+      }
+      if (fnName === "get_admin_auth_user_status") {
+        return Promise.resolve({ data: [], error: null });
+      }
+      return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fnName}` } });
+    });
+    const emptyQuery = createAdminListQuery([]);
+    const ownerQuery = createAdminListQuery({
+      admin_role: "owner",
+      is_admin: true,
+      account_status: "active",
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return ownerQuery;
+      }
+
+      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
+    requireAdminMock.mockResolvedValue({ id: "admin-owner" });
+
+    render(await AdminUsersPage({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ type: "ai_test" }),
+    }));
+
+    expect(rpc).toHaveBeenCalledWith("get_admin_users_paginated", expect.objectContaining({
+      input_type_filter: "ai_test",
+    }));
+    expect(screen.getByRole("combobox", { name: "User type" })).toHaveValue("ai_test");
   });
 
   it("shows an empty filtered state with reset action", async () => {

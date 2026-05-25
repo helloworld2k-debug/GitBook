@@ -10,6 +10,7 @@ import { insertAdminAuditLog } from "./audit";
 import { getRequiredString, getSafeLocale, getUserIds } from "./validation";
 
 type CloudSyncCooldownOverrideInsert = Database["public"]["Tables"]["cloud_sync_cooldown_overrides"]["Insert"];
+type AccountType = Database["public"]["Tables"]["profiles"]["Row"]["account_type"];
 type AdminRole = Database["public"]["Tables"]["profiles"]["Row"]["admin_role"];
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -41,11 +42,22 @@ function getAdminRole(formData: FormData) {
   return role as AdminRole;
 }
 
+function getAccountType(formData: FormData) {
+  const accountType = String(formData.get("account_type") ?? "standard").trim() || "standard";
+
+  if (accountType !== "standard" && accountType !== "ai_test") {
+    throw new Error("Invalid account type");
+  }
+
+  return accountType as AccountType;
+}
+
 async function requireAdminForRole(locale: string, role: AdminRole) {
   return role === "user" ? requireAdmin(locale) : requireOwner(locale);
 }
 
 async function updateCreatedUserProfile(input: {
+  accountType: AccountType;
   displayName: string | null;
   role: AdminRole;
   userId: string;
@@ -53,6 +65,7 @@ async function updateCreatedUserProfile(input: {
   const { error } = await createSupabaseAdminClient()
     .from("profiles")
     .update({
+      account_type: input.accountType,
       admin_role: input.role,
       display_name: input.displayName,
       is_admin: input.role === "owner",
@@ -74,6 +87,7 @@ async function getProfileEmail(userId: string) {
 export async function inviteUserAccount(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const role = getAdminRole(formData);
+  const accountType = getAccountType(formData);
   const admin = await requireAdminForRole(locale, role);
   const email = getRequiredString(formData, "email", "Email is required").toLowerCase();
   const displayName = String(formData.get("display_name") ?? "").trim() || null;
@@ -97,7 +111,7 @@ export async function inviteUserAccount(formData: FormData) {
     });
   }
 
-  const profileError = await updateCreatedUserProfile({ displayName, role, userId });
+  const profileError = await updateCreatedUserProfile({ accountType, displayName, role, userId });
 
   if (profileError) {
     redirectWithAdminFeedback({
@@ -112,7 +126,7 @@ export async function inviteUserAccount(formData: FormData) {
   await insertAdminAuditLog({
     action: "invite_user",
     adminUserId: admin.id,
-    after: { admin_role: role, email },
+    after: { account_type: accountType, admin_role: role, email },
     reason: "Invited user from admin console",
     targetId: userId,
     targetType: "profile",
@@ -132,6 +146,7 @@ export async function inviteUserAccount(formData: FormData) {
 export async function createUserWithTemporaryPassword(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const role = getAdminRole(formData);
+  const accountType = getAccountType(formData);
   const admin = await requireAdminForRole(locale, role);
   const email = getRequiredString(formData, "email", "Email is required").toLowerCase();
   const displayName = String(formData.get("display_name") ?? "").trim() || null;
@@ -158,7 +173,7 @@ export async function createUserWithTemporaryPassword(formData: FormData) {
     });
   }
 
-  const profileError = await updateCreatedUserProfile({ displayName, role, userId });
+  const profileError = await updateCreatedUserProfile({ accountType, displayName, role, userId });
 
   if (profileError) {
     redirectWithAdminFeedback({
@@ -173,7 +188,7 @@ export async function createUserWithTemporaryPassword(formData: FormData) {
   await insertAdminAuditLog({
     action: "create_user_with_temp_password",
     adminUserId: admin.id,
-    after: { admin_role: role, email, email_confirm: true },
+    after: { account_type: accountType, admin_role: role, email, email_confirm: true },
     reason: "Created user with temporary password from admin console",
     targetId: userId,
     targetType: "profile",
@@ -574,6 +589,54 @@ export async function updateUserAccountStatus(formData: FormData) {
   });
 }
 
+export async function updateUserAccountType(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const userId = getRequiredString(formData, "user_id", "User is required");
+  const accountType = getAccountType(formData);
+  const supabase = createSupabaseAdminClient();
+  const { data: before } = await supabase
+    .from("profiles")
+    .select("account_type")
+    .eq("id", userId)
+    .single();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ account_type: accountType, updated_at: new Date().toISOString() })
+    .eq("id", userId);
+
+  if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "account-type-update-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  await insertAdminAuditLog({
+    action: "update_user_account_type",
+    adminUserId: admin.id,
+    after: { account_type: accountType },
+    before: before ?? null,
+    reason: `Updated user account type to ${accountType}`,
+    targetId: userId,
+    targetType: "profile",
+  });
+
+  revalidatePath(`/${locale}/admin/users`);
+  revalidatePath(`/${locale}/admin/users/${userId}`);
+  revalidatePath(`/${locale}/admin/audit-logs`);
+  redirectWithAdminFeedback({
+    fallbackPath: "/admin/users",
+    formData,
+    key: "account-type-updated",
+    locale,
+    tone: "notice",
+  });
+}
+
 export async function softDeleteUser(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   const admin = await requireAdmin(locale);
@@ -819,6 +882,48 @@ export async function bulkProcessUsers(formData: FormData) {
       fallbackPath: "/admin/users",
       formData,
       key: "bulk-user-role-updated",
+      locale,
+      tone: "notice",
+    });
+  }
+
+  if (intent === "change-account-type") {
+    const admin = await requireAdmin(locale);
+    const accountType = getAccountType(formData);
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        account_type: accountType,
+        updated_at: new Date().toISOString(),
+      })
+      .in("id", userIds);
+
+    if (error) {
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/users",
+        formData,
+        key: "bulk-user-account-type-update-failed",
+        locale,
+        tone: "error",
+      });
+    }
+
+    await insertAdminAuditLog({
+      action: "bulk_update_user_account_type",
+      adminUserId: admin.id,
+      after: { account_type: accountType, count: userIds.length, user_ids: userIds },
+      reason: `Bulk updated user account type to ${accountType}`,
+      targetId: userIds[0],
+      targetType: "profile_batch",
+    });
+
+    revalidatePath(`/${locale}/admin/users`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "bulk-user-account-type-updated",
       locale,
       tone: "notice",
     });

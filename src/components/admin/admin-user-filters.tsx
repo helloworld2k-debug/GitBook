@@ -4,6 +4,7 @@ type AdminUserFiltersProps = {
     allRoles: string;
     allStatuses: string;
     allTypes: string;
+    aiTestType: string;
     apply: string;
     createdFrom: string;
     createdTo: string;
@@ -13,6 +14,7 @@ type AdminUserFiltersProps = {
     search: string;
     searchPlaceholder: string;
     status: string;
+    standardType: string;
     type: string;
     sortBy?: string;
     sortOrder?: string;
@@ -54,8 +56,8 @@ export function AdminUserFilters({ actionPath, labels, values }: AdminUserFilter
         {labels.type}
         <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={values.type ?? ""} name="type">
           <option value="">{labels.allTypes}</option>
-          <option value="admin">Admin</option>
-          <option value="standard">Standard</option>
+          <option value="standard">{labels.standardType}</option>
+          <option value="ai_test">{labels.aiTestType}</option>
         </select>
       </label>
       <label className="grid gap-1 text-sm font-medium text-slate-700">

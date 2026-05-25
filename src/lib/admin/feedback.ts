@@ -6,6 +6,8 @@ export type AdminFeedbackTone = "error" | "notice";
 
 export type AdminFeedbackKey =
   | "account-profile-updated"
+  | "account-type-updated"
+  | "account-type-update-failed"
   | "archive-delete-email-exists"
   | "archive-delete-failed"
   | "archived-user-permanently-deleted"
@@ -17,6 +19,8 @@ export type AdminFeedbackKey =
   | "bulk-restore-success"
   | "bulk-user-role-updated"
   | "bulk-user-role-update-failed"
+  | "bulk-user-account-type-updated"
+  | "bulk-user-account-type-update-failed"
   | "bulk-user-status-updated"
   | "bulk-user-status-update-failed"
   | "certificate-revoked"
@@ -109,6 +113,8 @@ export type AdminFeedbackKey =
 
 const adminFeedbackKeys = new Set<string>([
   "account-profile-updated",
+  "account-type-updated",
+  "account-type-update-failed",
   "archive-delete-email-exists",
   "archive-delete-failed",
   "archived-user-permanently-deleted",
@@ -117,6 +123,8 @@ const adminFeedbackKeys = new Set<string>([
   "bulk-permanent-delete-success",
   "bulk-user-role-updated",
   "bulk-user-role-update-failed",
+  "bulk-user-account-type-updated",
+  "bulk-user-account-type-update-failed",
   "bulk-user-status-updated",
   "bulk-user-status-update-failed",
   "bulk-restore-failed",

@@ -242,6 +242,8 @@ export function AdminPageHeader({ backHref, backLabel, description, eyebrow, tit
 
 const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "account-profile-updated": "accountProfileUpdated",
+  "account-type-updated": "accountTypeUpdated",
+  "account-type-update-failed": "accountTypeUpdateFailed",
   "archive-delete-email-exists": "archiveDeleteEmailExists",
   "archive-delete-failed": "archiveDeleteFailed",
   "archived-user-permanently-deleted": "archivedUserPermanentlyDeleted",
@@ -253,6 +255,8 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
   "bulk-restore-success": "bulkRestoreSuccess",
   "bulk-user-role-updated": "bulkUserRoleUpdated",
   "bulk-user-role-update-failed": "bulkUserRoleUpdateFailed",
+  "bulk-user-account-type-updated": "bulkUserAccountTypeUpdated",
+  "bulk-user-account-type-update-failed": "bulkUserAccountTypeUpdateFailed",
   "bulk-user-status-updated": "bulkUserStatusUpdated",
   "bulk-user-status-update-failed": "bulkUserStatusUpdateFailed",
   "certificate-revoked": "certificateRevoked",
@@ -346,6 +350,8 @@ const adminFeedbackMessages: Record<AdminFeedbackKey, string> = {
 
 const adminFeedbackDefaultMessages: Record<AdminFeedbackKey, string> = {
   "account-profile-updated": "User profile updated.",
+  "account-type-updated": "Account type updated.",
+  "account-type-update-failed": "Unable to update account type.",
   "archive-delete-email-exists": "Unable to archive delete: one or more users already exist in archive.",
   "archive-delete-failed": "Unable to archive delete the selected users.",
   "archived-user-permanently-deleted": "Archived user permanently deleted.",
@@ -357,6 +363,8 @@ const adminFeedbackDefaultMessages: Record<AdminFeedbackKey, string> = {
   "bulk-restore-success": "Successfully restored the selected archived users.",
   "bulk-user-role-updated": "Updated user role for the selected users.",
   "bulk-user-role-update-failed": "Unable to update user role for the selected users.",
+  "bulk-user-account-type-updated": "Updated account type for the selected users.",
+  "bulk-user-account-type-update-failed": "Unable to update account type for the selected users.",
   "bulk-user-status-updated": "Updated account status for the selected users.",
   "bulk-user-status-update-failed": "Unable to update account status for the selected users.",
   "certificate-revoked": "Certificate revoked.",

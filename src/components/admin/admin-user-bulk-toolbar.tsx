@@ -68,6 +68,14 @@ function syncBulkRoleToForm(form: HTMLFormElement, formId: string) {
   }
 }
 
+function syncBulkAccountTypeToForm(form: HTMLFormElement, formId: string) {
+  const typeSelect = document.getElementById(`${formId}-account-type`);
+
+  if (typeSelect instanceof HTMLSelectElement) {
+    setHiddenFormValue(form, "account_type", typeSelect.value);
+  }
+}
+
 function submitBulkIntent(formId: string, intent: string, confirmMessage?: string) {
   const form = document.getElementById(formId);
 
@@ -83,6 +91,7 @@ function submitBulkIntent(formId: string, intent: string, confirmMessage?: strin
   setHiddenFormValue(form, "intent", intent);
   syncSelectedUsersToForm(form, formId);
   syncBulkRoleToForm(form, formId);
+  syncBulkAccountTypeToForm(form, formId);
   form.requestSubmit();
 }
 
@@ -126,6 +135,7 @@ export function AdminUserBulkToolbar({
   canManageRoles: boolean;
   formId: string;
   labels: {
+    aiTestType: string;
     bulkArchiveDelete: string;
     bulkArchiveDeleteSelected: string;
     bulkDisable: string;
@@ -133,12 +143,15 @@ export function AdminUserBulkToolbar({
     bulkRole: string;
     bulkSoftDelete: string;
     bulkSoftDeleteSelected: string;
+    bulkType: string;
     clearSelection: string;
     dangerZone: string;
     operatorRole: string;
     ownerRole: string;
     roleTarget: string;
     selectedCount: string;
+    standardType: string;
+    typeTarget: string;
     userRole: string;
     bulkEnableConfirm?: string;
     bulkDisableConfirm?: string;
@@ -187,6 +200,18 @@ export function AdminUserBulkToolbar({
             </button>
           </div>
         ) : null}
+        <div className="flex flex-wrap items-center gap-2 rounded-md bg-white/10 px-2 py-2">
+          <label className="text-xs font-medium text-white/80" htmlFor={`${formId}-account-type`}>
+            {labels.typeTarget}
+          </label>
+          <select className="min-h-9 rounded-md border border-white/20 bg-slate-900 px-2 text-sm text-white" form={formId} id={`${formId}-account-type`} name="account_type">
+            <option value="standard">{labels.standardType}</option>
+            <option value="ai_test">{labels.aiTestType}</option>
+          </select>
+          <button className="inline-flex min-h-9 items-center rounded-md border border-white/20 px-3 text-sm font-medium transition-colors hover:bg-white/10 active:bg-white/15" onClick={() => submitBulkIntent(formId, "change-account-type")} type="button">
+            {labels.bulkType}
+          </button>
+        </div>
         <details
           aria-label={labels.dangerZone}
           className="rounded-md border border-red-300/30 bg-red-500/10 px-2 py-2"
