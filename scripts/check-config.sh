@@ -14,9 +14,28 @@ if grep -q "^\s*enable_confirmations\s*=\s*true" "$CONFIG_FILE" 2>/dev/null; the
     ERRORS=$((ERRORS + 1))
 fi
 
-# 检查 site_url 是否为线上环境（本地开发应该是 localhost）
-if grep -q "^site_url\s*=\s*\"https://gitbookai" "$CONFIG_FILE" 2>/dev/null; then
-    echo "⚠️  警告: site_url 指向线上环境，本地开发应该是 http://127.0.0.1:3000"
+# 检查 OAuth 回调域名。此配置会推送到线上 Supabase，site_url 必须是线上域名。
+if ! grep -q "^site_url\s*=\s*\"https://gitbookai.ccwu.cc\"" "$CONFIG_FILE" 2>/dev/null; then
+    echo "❌ 错误: site_url 必须指向线上域名，避免 OAuth 回调回到本地地址"
+    echo "   应该设置为: site_url = \"https://gitbookai.ccwu.cc\""
+    ERRORS=$((ERRORS + 1))
+fi
+
+for redirect_url in \
+    '"https://gitbookai.ccwu.cc/**"' \
+    '"https://*.vercel.app/**"' \
+    '"http://localhost:3000/**"' \
+    '"http://127.0.0.1:3000/**"'
+do
+    if ! grep -Fq "$redirect_url" "$CONFIG_FILE" 2>/dev/null; then
+        echo "❌ 错误: additional_redirect_urls 缺少 $redirect_url"
+        ERRORS=$((ERRORS + 1))
+    fi
+done
+
+if grep -q "127.0.0.1:3000\"$" "$CONFIG_FILE" 2>/dev/null; then
+    echo "❌ 错误: site_url 不能指向 127.0.0.1，否则 Google/GitHub OAuth 会回跳本地"
+    ERRORS=$((ERRORS + 1))
 fi
 
 if [ $ERRORS -eq 0 ]; then
