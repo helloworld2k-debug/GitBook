@@ -90,7 +90,13 @@ vi.mock("next-intl/server", () => ({
         profileError: "Could not save profile.",
         profileSaved: "Profile saved.",
         recentCertificates: "Certificates",
-        recentDonations: "Donation history",
+        recentDonations: "Records",
+        recordType: "Type",
+        recordTypes: {
+          donation: "Development support",
+          redemption: "License code",
+        },
+        redemptionValidUntil: "Access until",
         savePassword: "Update password",
         saveProfile: "Save profile",
         status: "Status",
@@ -170,7 +176,7 @@ describe("dashboard page", () => {
     });
   });
 
-  it("moves donation certificates into the matching donation history row", async () => {
+  it("combines support and license code activity in the records module", async () => {
 
     const donationCountQuery = createThenableQuery({ count: 1, error: null });
     const certificateCountQuery = createThenableQuery({ count: 1, error: null });
@@ -227,9 +233,10 @@ describe("dashboard page", () => {
     );
 
     expect(screen.queryByRole("heading", { name: "Certificates" })).not.toBeInTheDocument();
-    const donationHistory = screen.getByRole("heading", { name: "Donation history" }).closest("section");
+    const donationHistory = screen.getByRole("heading", { name: "Records" }).closest("section");
 
     expect(donationHistory).not.toBeNull();
+    expect(within(donationHistory as HTMLElement).getByText("Development support")).toBeInTheDocument();
     expect(within(donationHistory as HTMLElement).getByRole("link", { name: "View certificate" })).toHaveAttribute(
       "href",
       "/dashboard/certificates/certificate-1",
@@ -284,8 +291,15 @@ describe("dashboard page", () => {
     expect(screen.getByRole("heading", { name: "License code" })).toBeInTheDocument();
     expect(screen.getByText("Redeem a team-provided license code for trial, monthly, quarterly, or yearly cloud sync access.")).toBeInTheDocument();
     expect(screen.getAllByRole("status").some((status) => status.textContent?.includes("License code redeemed."))).toBe(true);
-    expect(screen.getByRole("button", { name: "Redeem code" })).toBeInTheDocument();
-    expect(screen.getByText(/Last code redeemed at/)).toBeInTheDocument();
+    const redemptionForm = screen.getByRole("form", { name: "License code" });
+    expect(within(redemptionForm).getByLabelText("Code").parentElement?.parentElement).toHaveClass("sm:flex-row", "sm:items-end");
+    expect(within(redemptionForm).getByRole("button", { name: "Redeem code" })).toBeInTheDocument();
+    expect(screen.queryByText(/Last code redeemed at/)).not.toBeInTheDocument();
+
+    const records = screen.getByRole("heading", { name: "Records" }).closest("section");
+    expect(records).not.toBeNull();
+    expect(within(records as HTMLElement).getByText("License code")).toBeInTheDocument();
+    expect(within(records as HTMLElement).getByText("Access until")).toBeInTheDocument();
   });
 
   it("shows a contribution success banner after Dodo returns", async () => {
