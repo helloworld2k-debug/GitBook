@@ -140,6 +140,18 @@ function formatAmount(amount: number, currency: string, locale: string) {
   }).format(amount / 100);
 }
 
+function getAuthProviderLabel(provider: string, t: Awaited<ReturnType<typeof getTranslations>>) {
+  if (provider === "google") return t("authGoogleProvider");
+  if (provider === "github") return t("authGithubProvider");
+  if (provider === "email") return t("authEmailProvider");
+
+  return provider;
+}
+
+function getOAuthProviders(authStatus: AdminAuthStatus) {
+  return (authStatus.identity_providers ?? []).filter((provider) => provider !== "email");
+}
+
 function shortId(value: string | null | undefined) {
   return value ? value.slice(0, 8) : "-";
 }
@@ -282,15 +294,27 @@ function AuthStatusBadges({
     return null;
   }
 
+  const oauthProviders = getOAuthProviders(authStatus);
+
   return (
     <div className="mt-3 flex flex-wrap gap-1">
       <AdminStatusBadge tone={authStatus.email_confirmed_at || authStatus.confirmed_at ? "success" : "warning"}>
         {authStatus.email_confirmed_at || authStatus.confirmed_at ? t("authConfirmed") : t("authUnconfirmed")}
       </AdminStatusBadge>
       {authStatus.invited_at ? <AdminStatusBadge tone="warning">{t("authInvited")}</AdminStatusBadge> : null}
-      <AdminStatusBadge tone={authStatus.has_password ? "success" : "danger"}>
-        {authStatus.has_password ? t("authHasPassword") : t("authNoPassword")}
-      </AdminStatusBadge>
+      {oauthProviders.length > 0 ? <AdminStatusBadge tone="neutral">{t("authOAuthOnly")}</AdminStatusBadge> : null}
+      {oauthProviders.map((provider) => (
+        <AdminStatusBadge key={provider} tone="neutral">
+          {getAuthProviderLabel(provider, t)}
+        </AdminStatusBadge>
+      ))}
+      {authStatus.has_password ? (
+        <AdminStatusBadge tone="success">{t("authHasPassword")}</AdminStatusBadge>
+      ) : oauthProviders.length > 0 ? (
+        <AdminStatusBadge tone="neutral">{t("authEmailPasswordNotSet")}</AdminStatusBadge>
+      ) : (
+        <AdminStatusBadge tone="danger">{t("authNoPassword")}</AdminStatusBadge>
+      )}
       {authStatus.recovery_sent_at ? <AdminStatusBadge tone="warning">{t("authRecoverySent")}</AdminStatusBadge> : null}
       {authStatus.last_sign_in_at ? (
         <span className="inline-flex min-h-7 items-center rounded-md border border-slate-200 bg-slate-50 px-2 text-xs font-medium text-slate-600">
@@ -585,7 +609,9 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
             <AuthStatusBadges authStatus={authStatus} locale={locale} t={t} />
             {authStatus?.has_password === false ? (
               <>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{t("passwordRecoveryDescription")}</p>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  {getOAuthProviders(authStatus).length > 0 ? t("passwordRecoveryOAuthDescription") : t("passwordRecoveryDescription")}
+                </p>
                 <div className="mt-4 grid gap-4">
                   <form action={sendUserPasswordSetupEmail}>
                     <input name="locale" type="hidden" value={locale} />

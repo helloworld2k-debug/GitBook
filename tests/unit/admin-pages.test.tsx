@@ -526,10 +526,16 @@ const testMessages = {
         authInvited: "Invited",
         authHasPassword: "Password set",
         authNoPassword: "No password",
+        authOAuthOnly: "OAuth sign-in",
+        authEmailPasswordNotSet: "Email password not set",
+        authGoogleProvider: "Google",
+        authGithubProvider: "GitHub",
+        authEmailProvider: "Email",
         authRecoverySent: "Password email sent",
         authLastSignIn: "Last sign-in",
         passwordRecoveryTitle: "Password and invitation recovery",
         passwordRecoveryDescription: "This account needs a password before it can use email sign-in.",
+        passwordRecoveryOAuthDescription: "This account can sign in with OAuth. Send a setup email only if the user also wants email and password sign-in.",
         sendPasswordSetup: "Send password setup email",
         setTemporaryPassword: "Set temporary password",
         manageUser: "Manage user",
@@ -2072,6 +2078,72 @@ describe("admin pages", () => {
     expect(rpc).toHaveBeenCalledWith("get_admin_auth_user_status", { input_user_ids: ["user-1"] });
   });
 
+  it("labels OAuth users without a password as OAuth sign-in instead of a broken password account", async () => {
+    const users = [
+      {
+        id: "user-1",
+        email: "oauth@example.com",
+        display_name: "OAuth User",
+        admin_role: "user",
+        account_status: "active",
+        is_admin: false,
+        created_at: "2026-05-01T00:00:00.000Z",
+      },
+    ];
+    const emptyQuery = createAdminListQuery([]);
+    const operatorQuery = createAdminListQuery({
+      admin_role: "operator",
+      is_admin: false,
+      account_status: "active",
+    });
+    const rpc = vi.fn((fnName: string) => {
+      if (fnName === "get_admin_users_paginated") {
+        return Promise.resolve({
+          data: [{ users, total_count: 1, filtered_count: 1 }],
+          error: null,
+        });
+      }
+
+      if (fnName === "get_admin_auth_user_status") {
+        return Promise.resolve({
+          data: [
+            {
+              user_id: "user-1",
+              email: "oauth@example.com",
+              has_password: false,
+              invited_at: null,
+              email_confirmed_at: "2026-05-01T00:00:00.000Z",
+              confirmed_at: "2026-05-01T00:00:00.000Z",
+              recovery_sent_at: null,
+              last_sign_in_at: "2026-05-01T01:00:00.000Z",
+              banned_until: null,
+              deleted_at: null,
+              identity_providers: ["google", "github"],
+            },
+          ],
+          error: null,
+        });
+      }
+
+      return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fnName}` } });
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return operatorQuery;
+      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
+    requireAdminMock.mockResolvedValue({ id: "admin-operator" });
+
+    render(await AdminUsersPage({ params: Promise.resolve({ locale: "en" }) }));
+
+    expect(screen.getAllByText("OAuth sign-in").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Email password not set").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Google").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0);
+    expect(screen.queryByText("No password")).not.toBeInTheDocument();
+  });
+
   it("renders a user operations detail page with profile, donations, certificates, trials, devices, and entitlements", async () => {
     const profileQuery = createAdminListQuery({
       id: "user-1",
@@ -2549,6 +2621,68 @@ describe("admin pages", () => {
     expect(screen.getByRole("button", { name: "Send password setup email" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Set temporary password" })).toBeInTheDocument();
     expect(rpc).toHaveBeenCalledWith("get_admin_auth_user_status", { input_user_ids: ["user-1"] });
+  });
+
+  it("explains password setup as optional for OAuth-only user details", async () => {
+    const profileQuery = createAdminListQuery({
+      id: "user-1",
+      email: "oauth@example.com",
+      display_name: "OAuth User",
+      public_display_name: "OAuth User",
+      public_supporter_enabled: false,
+      admin_role: "user",
+      account_status: "active",
+      is_admin: false,
+      created_at: "2026-05-01T00:00:00.000Z",
+    });
+    const emptyQuery = createAdminListQuery([]);
+    const operatorQuery = createAdminListQuery({
+      admin_role: "operator",
+      is_admin: false,
+      account_status: "active",
+    });
+    const rpc = vi.fn(async () => ({
+      data: [
+        {
+          user_id: "user-1",
+          email: "oauth@example.com",
+          has_password: false,
+          invited_at: null,
+          email_confirmed_at: "2026-05-01T00:00:00.000Z",
+          confirmed_at: "2026-05-01T00:00:00.000Z",
+          recovery_sent_at: null,
+          last_sign_in_at: "2026-05-01T01:00:00.000Z",
+          banned_until: null,
+          deleted_at: null,
+          identity_providers: ["google"],
+        },
+      ],
+      error: null,
+    }));
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profileQuery : operatorQuery;
+      }
+
+      if (["donations", "certificates", "trial_code_redemptions", "desktop_sessions", "license_entitlements", "cloud_sync_leases", "cloud_sync_usage_sessions", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback", "user_login_history"].includes(table)) {
+        return emptyQuery;
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
+    requireAdminMock.mockResolvedValue({ id: "admin-operator" });
+
+    render(await AdminUserDetailPage({
+      params: Promise.resolve({ id: "user-1", locale: "en" }),
+      searchParams: Promise.resolve({}),
+    }));
+
+    expect(screen.getByText("OAuth sign-in")).toBeInTheDocument();
+    expect(screen.getByText("Google")).toBeInTheDocument();
+    expect(screen.getByText("Email password not set")).toBeInTheDocument();
+    expect(screen.queryByText("No password")).not.toBeInTheDocument();
+    expect(screen.getByText("This account can sign in with OAuth. Send a setup email only if the user also wants email and password sign-in.")).toBeInTheDocument();
   });
 
   it("hides the permanent delete danger zone from operators when viewing an owner account", async () => {
