@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { AdminAccountCreateForm } from "@/components/admin/admin-account-create-form";
 import { AdminUserBulkToolbar, AdminUserRowActionsMenu, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
 import { AdminUserFilters } from "@/components/admin/admin-user-filters";
-import { AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminDataWorkbench, AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
@@ -264,7 +264,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
 
   return (
     <AdminShell {...shellProps}>
-      <section className="mx-auto max-w-7xl">
+      <AdminDataWorkbench>
         <AdminPageHeader
           backHref="/admin"
           backLabel={adminT("shell.backToAdmin")}
@@ -425,6 +425,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
           ) : (
             <>
               <AdminTableShell
+              cardsUntil="lg"
               label={t("title")}
               mobileCards={
                 <div className="grid gap-3">
@@ -657,7 +658,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
             </>
           )}
         </AdminCard>
-      </section>
+      </AdminDataWorkbench>
     </AdminShell>
   );
 }

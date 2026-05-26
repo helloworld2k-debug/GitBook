@@ -1123,7 +1123,13 @@
       "supportFeedbackUnread": "읽지 않은 피드백 {count}건이 있습니다",
       "policies": "Policy pages",
       "news": "뉴스",
-      "registrationSecurity": "등록 보안"
+      "registrationSecurity": "등록 보안",
+      "navGroups": {
+        "content": "콘텐츠",
+        "operations": "운영",
+        "overview": "개요",
+        "trust": "신뢰 및 지원"
+      }
     },
     "contributionPricing": {
       "eyebrow": "Admin",

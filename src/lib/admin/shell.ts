@@ -71,6 +71,12 @@ export async function getAdminShellProps(locale: Locale, currentPath: string) {
       supportFeedbackUnread: (count: number) => shellT("supportFeedbackUnread", { count }),
       supportSettings: shellT("supportSettings"),
       users: shellT("users"),
+      navGroups: {
+        content: shellT("navGroups.content"),
+        operations: shellT("navGroups.operations"),
+        overview: shellT("navGroups.overview"),
+        trust: shellT("navGroups.trust"),
+      },
     },
     locale: currentLocale,
     unreadFeedbackCount,
