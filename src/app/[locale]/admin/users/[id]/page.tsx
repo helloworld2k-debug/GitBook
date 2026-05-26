@@ -118,6 +118,11 @@ type SupportCertificateRow =
       time: string | null;
     };
 
+const profileDetailSelect =
+  "id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,account_type,is_admin,avatar_url,created_at";
+const profileDetailSelectWithoutAccountType =
+  "id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,avatar_url,created_at";
+
 function formatDateTime(value: string | null, locale: string) {
   if (!value) {
     return "-";
@@ -299,6 +304,28 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
+function isMissingProfileAccountTypeSchemaError(error: { code?: string; message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return error?.code === "PGRST204" && message.includes("account_type");
+}
+
+async function getProfileResultWithoutAccountType(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  id: string,
+) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(profileDetailSelectWithoutAccountType)
+    .eq("id", id)
+    .single();
+
+  return {
+    data: data ? { ...data, account_type: "standard" } : data,
+    error,
+  };
+}
+
 async function getAuthStatus(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   userId: string,
@@ -387,7 +414,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,account_type,is_admin,avatar_url,created_at")
+      .select(profileDetailSelect)
       .eq("id", id)
       .single(),
     supabase
@@ -463,15 +490,19 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .single(),
   ]);
 
-  if (profileResult.error) {
-    if (isNoRowsError(profileResult.error)) {
+  const resolvedProfileResult = profileResult.error && isMissingProfileAccountTypeSchemaError(profileResult.error)
+    ? await getProfileResultWithoutAccountType(supabase, id)
+    : profileResult;
+
+  if (resolvedProfileResult.error) {
+    if (isNoRowsError(resolvedProfileResult.error)) {
       return <AdminMissingUserState id={id} shellProps={shellProps} t={t} />;
     }
 
-    throw profileResult.error;
+    throw resolvedProfileResult.error;
   }
 
-  if (!profileResult.data) {
+  if (!resolvedProfileResult.data) {
     return <AdminMissingUserState id={id} shellProps={shellProps} t={t} />;
   }
 
@@ -488,7 +519,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   if (loginHistoryResult.error && !isOptionalCloudSyncDetailSchemaError(loginHistoryResult.error)) throw loginHistoryResult.error;
   if (adminProfileResult.error) throw adminProfileResult.error;
 
-  const profile = profileResult.data;
+  const profile = resolvedProfileResult.data;
   const authStatus = await getAuthStatus(supabase, profile.id);
   const donations = (donationsResult.data ?? []) as DonationRow[];
   const certificates = (certificatesResult.data ?? []) as CertificateRow[];
