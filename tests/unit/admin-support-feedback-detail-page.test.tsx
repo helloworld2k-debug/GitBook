@@ -21,7 +21,7 @@ vi.mock("@/i18n/routing", () => ({
 }));
 
 vi.mock("next-intl/server", () => ({
-  getTranslations: vi.fn(async () => (key: string) => {
+  getTranslations: vi.fn(async () => (key: string, values?: Record<string, string>) => {
     const messages: Record<string, string> = {
       "common.processing": "Processing...",
       "common.saving": "Saving...",
@@ -31,6 +31,9 @@ vi.mock("next-intl/server", () => ({
       "supportFeedback.description": "Review feedback",
       "supportFeedback.emptyConversation": "No replies yet.",
       "supportFeedback.eyebrow": "Admin",
+      "supportFeedback.missingTitle": "Feedback thread unavailable",
+      "supportFeedback.missingDescription": "The feedback thread {id} is no longer available.",
+      "supportFeedback.missingHelp": "The thread may have been deleted or changed after the feedback list was loaded.",
       "supportFeedback.originalMessage": "Original message",
       "supportFeedback.reply": "Reply to user",
       "supportFeedback.replyPlaceholder": "Write a reply...",
@@ -43,7 +46,10 @@ vi.mock("next-intl/server", () => ({
       "supportFeedback.userMessage": "User",
     };
 
-    return messages[key] ?? key;
+    return Object.entries(values ?? {}).reduce(
+      (message, [name, replacement]) => message.replaceAll(`{${name}}`, replacement),
+      messages[key] ?? key,
+    );
   }),
   setRequestLocale: vi.fn(),
 }));
@@ -180,5 +186,55 @@ describe("AdminSupportFeedbackDetailPage", () => {
     })).rejects.toMatchObject({
       code: "PGRST204",
     });
+  });
+
+  it("shows an admin feedback unavailable state instead of a global 404 when the thread is gone", async () => {
+    mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
+    mocks.getAdminShellProps.mockResolvedValue({
+      adminLabel: "admin@example.com",
+      currentPath: "/admin/support-feedback/feedback-missing",
+      labels: {
+        auditLogs: "Audit Logs",
+        backToAdmin: "Back to admin",
+        certificates: "Certificates",
+        contributionPricing: "Contribution pricing",
+        dashboard: "Overview",
+        donations: "Donations",
+        language: "Language",
+        licenses: "Licenses",
+        menu: "Menu",
+        notifications: "Notifications",
+        policies: "Policy pages",
+        releases: "Releases",
+        returnToSite: "Return to site",
+        signOut: "Sign out",
+        supportFeedback: "Feedback",
+        supportFeedbackUnread: (count: number) => `${count} unread feedback threads`,
+        supportSettings: "Support settings",
+        users: "Users",
+      },
+      locale: "en",
+      unreadFeedbackCount: 0,
+    });
+    const feedbackSingle = vi.fn(async () => ({
+      data: null,
+      error: { code: "PGRST116", message: "JSON object requested, multiple (or no) rows returned" },
+    }));
+    const feedbackEq = vi.fn(() => ({ single: feedbackSingle }));
+    const feedbackSelect = vi.fn(() => ({ eq: feedbackEq }));
+    const from = vi.fn((table: string) => {
+      if (table === "support_feedback") return { select: feedbackSelect };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    render(await AdminSupportFeedbackDetailPage({
+      params: Promise.resolve({ id: "feedback-missing", locale: "en" }),
+      searchParams: Promise.resolve({}),
+    }));
+
+    expect(screen.getByRole("heading", { name: "Feedback thread unavailable" })).toBeInTheDocument();
+    expect(screen.getByText("The feedback thread feedback-missing is no longer available.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to feedback" })).toHaveAttribute("href", "/admin/support-feedback");
   });
 });

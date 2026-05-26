@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { AdminTemporaryPasswordField } from "@/components/admin/admin-temporary-password-field";
@@ -250,6 +249,33 @@ function getSupportCertificateRows({
   return [...donationRows, ...honorRows].sort((a, b) => new Date(b.time ?? "").getTime() - new Date(a.time ?? "").getTime());
 }
 
+function AdminMissingUserState({
+  id,
+  shellProps,
+  t,
+}: {
+  id: string;
+  shellProps: Awaited<ReturnType<typeof getAdminShellProps>>;
+  t: Awaited<ReturnType<typeof getTranslations>>;
+}) {
+  return (
+    <AdminShell {...shellProps}>
+      <section className="mx-auto max-w-3xl">
+        <AdminPageHeader
+          backHref="/admin/users"
+          backLabel={t("title")}
+          description={t("missingDescription", { id })}
+          eyebrow={t("eyebrow")}
+          title={t("missingTitle")}
+        />
+        <AdminCard className="p-5">
+          <p className="text-sm leading-6 text-slate-700">{t("missingHelp")}</p>
+        </AdminCard>
+      </section>
+    </AdminShell>
+  );
+}
+
 function isOptionalCloudSyncDetailSchemaError(error: { code?: string; message?: string } | null) {
   const code = error?.code;
   const message = error?.message?.toLowerCase() ?? "";
@@ -439,14 +465,14 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
 
   if (profileResult.error) {
     if (isNoRowsError(profileResult.error)) {
-      notFound();
+      return <AdminMissingUserState id={id} shellProps={shellProps} t={t} />;
     }
 
     throw profileResult.error;
   }
 
   if (!profileResult.data) {
-    notFound();
+    return <AdminMissingUserState id={id} shellProps={shellProps} t={t} />;
   }
 
   if (donationsResult.error) throw donationsResult.error;

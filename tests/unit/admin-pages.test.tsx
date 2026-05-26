@@ -616,6 +616,9 @@ const testMessages = {
         title: "User management",
         detailTitle: "User operations",
         detailDescription: "Review and maintain one user's profile, donations, certificates, trials, devices, and entitlements.",
+        missingTitle: "User record unavailable",
+        missingDescription: "The user record {id} is no longer available in the active account table.",
+        missingHelp: "The account may have been deleted, archived, or removed after the users list was loaded.",
         accountCreationTitle: "Create account",
         accountCreationDescription: "Invite a user or create a confirmed account with a temporary password.",
         creationMode: "Creation mode",
@@ -2570,6 +2573,40 @@ describe("admin pages", () => {
     })).rejects.toMatchObject({
       code: "PGRST204",
     });
+  });
+
+  it("shows an admin user unavailable state instead of a global 404 when the profile is gone", async () => {
+    const profileQuery = createAdminListQuery(null, { code: "PGRST116", message: "JSON object requested, multiple (or no) rows returned" } as Error);
+    const emptyQuery = createAdminListQuery([]);
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return profileQuery;
+      if (
+        table === "donations" ||
+        table === "certificates" ||
+        table === "trial_code_redemptions" ||
+        table === "desktop_sessions" ||
+        table === "license_entitlements" ||
+        table === "cloud_sync_leases" ||
+        table === "cloud_sync_usage_sessions" ||
+        table === "cloud_sync_usage_events" ||
+        table === "cloud_sync_cooldown_overrides" ||
+        table === "support_feedback" ||
+        table === "user_login_history"
+      ) {
+        return emptyQuery;
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+
+    render(await AdminUserDetailPage({
+      params: Promise.resolve({ id: "user-missing", locale: "en" }),
+    }));
+
+    expect(screen.getByRole("heading", { name: "User record unavailable" })).toBeInTheDocument();
+    expect(screen.getByText("The user record user-missing is no longer available in the active account table.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "User management" })).toHaveAttribute("href", "/admin/users");
   });
 
   it("keeps user operations available when optional cloud sync detail tables are unavailable", async () => {

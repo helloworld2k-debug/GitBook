@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge } from "@/components/admin/admin-shell";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
@@ -25,6 +24,33 @@ function isNoRowsError(error: { code?: string } | null | undefined) {
   return error?.code === "PGRST116";
 }
 
+function AdminMissingFeedbackState({
+  id,
+  shellProps,
+  t,
+}: {
+  id: string;
+  shellProps: Awaited<ReturnType<typeof getAdminShellProps>>;
+  t: Awaited<ReturnType<typeof getTranslations>>;
+}) {
+  return (
+    <AdminShell {...shellProps}>
+      <section className="mx-auto max-w-3xl">
+        <AdminPageHeader
+          backHref="/admin/support-feedback"
+          backLabel={t("supportFeedback.backToFeedback")}
+          description={t("supportFeedback.missingDescription", { id })}
+          eyebrow={t("supportFeedback.eyebrow")}
+          title={t("supportFeedback.missingTitle")}
+        />
+        <AdminCard className="p-5">
+          <p className="text-sm leading-6 text-slate-700">{t("supportFeedback.missingHelp")}</p>
+        </AdminCard>
+      </section>
+    </AdminShell>
+  );
+}
+
 export default async function AdminSupportFeedbackDetailPage({ params, searchParams }: AdminSupportFeedbackDetailPageProps) {
   const { id, locale: localeParam } = await params;
   const feedbackState = await searchParams;
@@ -41,14 +67,14 @@ export default async function AdminSupportFeedbackDetailPage({ params, searchPar
 
   if (error) {
     if (isNoRowsError(error)) {
-      notFound();
+      return <AdminMissingFeedbackState id={id} shellProps={shellProps} t={t} />;
     }
 
     throw error;
   }
 
   if (!feedback) {
-    notFound();
+    return <AdminMissingFeedbackState id={id} shellProps={shellProps} t={t} />;
   }
 
   const { data: messages, error: messagesError } = await supabase
