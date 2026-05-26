@@ -8,6 +8,7 @@ import {
   Gift,
   Home,
   KeyRound,
+  LifeBuoy,
   LogOut,
   MessageSquareText,
   Menu,
@@ -45,6 +46,12 @@ type AdminShellLabels = {
   supportFeedbackUnread: (count: number) => string;
   supportSettings: string;
   users: string;
+  navGroups?: {
+    content: string;
+    operations: string;
+    overview: string;
+    trust: string;
+  };
 };
 
 type AdminShellProps = {
@@ -58,21 +65,46 @@ type AdminShellProps = {
 
 const navIconClass = "size-4 shrink-0";
 
-function getAdminItems(labels: AdminShellLabels) {
+function getAdminGroups(labels: AdminShellLabels) {
+  const groupLabels = labels.navGroups ?? {
+    content: "Content",
+    operations: "Operations",
+    overview: "Overview",
+    trust: "Trust & Support",
+  };
+
   return [
-    { href: "/admin", label: labels.dashboard, icon: Gauge },
-    { href: "/admin/donations", label: labels.donations, icon: Gift },
-    { href: "/admin/contribution-pricing", label: labels.contributionPricing, icon: CircleDollarSign },
-    { href: "/admin/releases", label: labels.releases, icon: Package },
-    { href: "/admin/news", label: labels.news, icon: Newspaper },
-    { href: "/admin/notifications", label: labels.notifications, icon: Bell },
-    { href: "/admin/policies", label: labels.policies, icon: ScrollText },
-    { href: "/admin/support-feedback", label: labels.supportFeedback, icon: MessageSquareText },
-    { href: "/admin/support-settings", label: labels.supportSettings, icon: MessageSquareText },
-    { href: "/admin/licenses", label: labels.licenses, icon: KeyRound },
-    { href: "/admin/users", label: labels.users, icon: Users },
-    { href: "/admin/registration-security", label: labels.registrationSecurity, icon: ShieldAlert },
-    { href: "/admin/audit-logs", label: labels.auditLogs, icon: ClipboardList },
+    {
+      label: groupLabels.overview,
+      items: [{ href: "/admin", label: labels.dashboard, icon: Gauge }],
+    },
+    {
+      label: groupLabels.operations,
+      items: [
+        { href: "/admin/donations", label: labels.donations, icon: Gift },
+        { href: "/admin/contribution-pricing", label: labels.contributionPricing, icon: CircleDollarSign },
+        { href: "/admin/releases", label: labels.releases, icon: Package },
+        { href: "/admin/licenses", label: labels.licenses, icon: KeyRound },
+        { href: "/admin/users", label: labels.users, icon: Users },
+      ],
+    },
+    {
+      label: groupLabels.content,
+      items: [
+        { href: "/admin/news", label: labels.news, icon: Newspaper },
+        { href: "/admin/notifications", label: labels.notifications, icon: Bell },
+        { href: "/admin/policies", label: labels.policies, icon: ScrollText },
+      ],
+    },
+    {
+      label: groupLabels.trust,
+      items: [
+        { href: "/admin/support-feedback", label: labels.supportFeedback, icon: MessageSquareText },
+        { href: "/admin/support-settings", label: labels.supportSettings, icon: LifeBuoy },
+        { href: "/admin/registration-security", label: labels.registrationSecurity, icon: ShieldAlert },
+        { href: "/admin/audit-logs", label: labels.auditLogs, icon: ClipboardList },
+      ],
+    },
   ];
 }
 
@@ -82,50 +114,55 @@ function isActive(currentPath: string, href: string) {
 
 function AdminNavList({
   currentPath,
-  items,
+  groups,
   supportFeedbackUnread,
   unreadFeedbackCount = 0,
 }: {
   currentPath: string;
-  items: ReturnType<typeof getAdminItems>;
+  groups: ReturnType<typeof getAdminGroups>;
   supportFeedbackUnread: (count: number) => string;
   unreadFeedbackCount?: number;
 }) {
   return (
     <>
-      {items.map((item) => {
-        const Icon = item.icon;
-        const active = isActive(currentPath, item.href);
-        const showUnreadBadge = item.href === "/admin/support-feedback" && unreadFeedbackCount > 0;
-        return (
-          <Link
-            className={`flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 ${
-              active ? "bg-slate-950 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-            }`}
-            href={item.href}
-            key={item.href}
-          >
-            <Icon aria-hidden="true" className={navIconClass} />
-            <span className="min-w-0 flex-1 truncate">{item.label}</span>
-            {showUnreadBadge ? (
-              <span
-                aria-label={supportFeedbackUnread(unreadFeedbackCount)}
-                className={`ml-auto inline-flex min-h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold ${
-                  active ? "bg-white text-slate-950" : "bg-rose-100 text-rose-700"
+      {groups.map((group, index) => (
+        <div aria-label={group.label} className={`space-y-1 ${index === 0 ? "" : "pt-3"}`} key={group.label}>
+          <p className="px-3 text-[0.68rem] font-semibold uppercase tracking-wide text-slate-400">{group.label}</p>
+          {group.items.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(currentPath, item.href);
+            const showUnreadBadge = item.href === "/admin/support-feedback" && unreadFeedbackCount > 0;
+            return (
+              <Link
+                className={`flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 ${
+                  active ? "bg-slate-950 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
                 }`}
+                href={item.href}
+                key={item.href}
               >
-                {unreadFeedbackCount}
-              </span>
-            ) : null}
-          </Link>
-        );
-      })}
+                <Icon aria-hidden="true" className={navIconClass} />
+                <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                {showUnreadBadge ? (
+                  <span
+                    aria-label={supportFeedbackUnread(unreadFeedbackCount)}
+                    className={`ml-auto inline-flex min-h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold ${
+                      active ? "bg-white text-slate-950" : "bg-rose-100 text-rose-700"
+                    }`}
+                  >
+                    {unreadFeedbackCount}
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </>
   );
 }
 
 export function AdminShell({ adminLabel, children, currentPath, labels, locale, unreadFeedbackCount = 0 }: AdminShellProps) {
-  const items = getAdminItems(labels);
+  const groups = getAdminGroups(labels);
 
   return (
     <div className="h-dvh overflow-hidden bg-slate-100 text-slate-950" data-testid="admin-shell">
@@ -144,7 +181,7 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
           <nav aria-label="Admin" className="space-y-1 px-3 py-4">
             <AdminNavList
               currentPath={currentPath}
-              items={items}
+              groups={groups}
               supportFeedbackUnread={labels.supportFeedbackUnread}
               unreadFeedbackCount={unreadFeedbackCount}
             />
@@ -157,7 +194,7 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
                 <details className="group relative lg:hidden">
                   <summary
                     aria-label={labels.menu}
-                    className="inline-flex size-11 cursor-pointer list-none items-center justify-center rounded-md border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 [&::-webkit-details-marker]:hidden"
+                    className="inline-flex size-11 cursor-pointer list-none items-center justify-center rounded-md border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
                   >
                     <Menu aria-hidden="true" className="size-5" />
                   </summary>
@@ -167,7 +204,7 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
                   >
                     <AdminNavList
                       currentPath={currentPath}
-                      items={items}
+                      groups={groups}
                       supportFeedbackUnread={labels.supportFeedbackUnread}
                       unreadFeedbackCount={unreadFeedbackCount}
                     />
@@ -209,6 +246,14 @@ export function AdminShell({ adminLabel, children, currentPath, labels, locale, 
       </div>
     </div>
   );
+}
+
+export function AdminStandardPage({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <section className={`mx-auto max-w-7xl ${className}`}>{children}</section>;
+}
+
+export function AdminDataWorkbench({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <section className={`mx-auto w-full max-w-[1600px] ${className}`}>{children}</section>;
 }
 
 type AdminPageHeaderProps = {
@@ -477,27 +522,32 @@ export function AdminCard({ children, className = "" }: { children: React.ReactN
 }
 
 export function AdminTableShell({
+  cardsUntil = "md",
   children,
   empty,
   label = "Scrollable admin table",
   mobileCards,
 }: {
+  cardsUntil?: "lg" | "md";
   children: React.ReactNode;
   empty?: React.ReactNode;
   label?: string;
   mobileCards?: React.ReactNode;
 }) {
+  const cardVisibilityClass = cardsUntil === "lg" ? "lg:hidden" : "md:hidden";
+  const tableVisibilityClass = cardsUntil === "lg" ? "hidden lg:block" : "hidden md:block";
+
   return (
     <>
       {mobileCards ? (
-        <div className="grid gap-3 p-3 md:hidden" data-testid="admin-mobile-cards">
+        <div className={`grid gap-3 p-3 ${cardVisibilityClass}`} data-testid="admin-mobile-cards">
           {empty ?? null}
           {mobileCards}
         </div>
       ) : null}
       <div
         aria-label={label}
-        className={`${mobileCards ? "hidden md:block" : ""} max-w-full overflow-x-auto overscroll-x-contain rounded-b-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950`}
+        className={`${mobileCards ? tableVisibilityClass : ""} max-w-full overflow-x-auto overscroll-x-contain rounded-b-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950`}
         data-testid="admin-table-shell"
         role="region"
         tabIndex={0}

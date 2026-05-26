@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { AdminLicenseActionsMenu } from "@/components/admin/admin-license-actions-menu";
 import { AdminLicenseBulkToolbar, AdminLicenseSelectAllCheckbox } from "@/components/admin/admin-license-bulk-toolbar";
 import { AdminLicenseTabs } from "@/components/admin/admin-license-tabs";
-import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminCard, AdminDataWorkbench, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { LicenseDurationFields } from "@/components/admin/license-duration-fields";
@@ -374,7 +374,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
 
   return (
     <AdminShell {...shellProps}>
-      <section className="mx-auto max-w-7xl">
+      <AdminDataWorkbench>
         <AdminPageHeader
           backHref="/admin"
           backLabel={t("shell.backToAdmin")}
@@ -813,7 +813,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           </div>
           {filteredCodes.length > 0 ? (
             <>
-              <AdminTableShell label={t("licenses.licenseCodesTitle")}>
+              <AdminTableShell cardsUntil="lg" label={t("licenses.licenseCodesTitle")}>
               <table aria-label={t("licenses.licenseCodesTitle")} className="min-w-[1560px] table-fixed text-left text-sm">
                 <colgroup>
                   <col className="w-[56px]" />
@@ -941,7 +941,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.trialRedemptionsTitle")}</h2>
           </div>
           {trialRedemptions.length > 0 ? (
-            <AdminTableShell label={t("licenses.trialRedemptionsTitle")}>
+            <AdminTableShell cardsUntil="lg" label={t("licenses.trialRedemptionsTitle")}>
               <table aria-label={t("licenses.trialRedemptionsTitle")} className="min-w-[1120px] table-fixed text-left text-sm">
                 <colgroup>
                   <col className="w-[140px]" />
@@ -988,7 +988,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.entitlementsTitle")}</h2>
           </div>
           {entitlements.length > 0 ? (
-            <AdminTableShell label={t("licenses.entitlementsTitle")}>
+            <AdminTableShell cardsUntil="lg" label={t("licenses.entitlementsTitle")}>
               <table aria-label={t("licenses.entitlementsTitle")} className="min-w-[980px] table-fixed text-left text-sm">
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                   <tr>
@@ -1022,7 +1022,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.desktopSessionsTitle")}</h2>
           </div>
           {sessions.length > 0 ? (
-            <AdminTableShell label={t("licenses.desktopSessionsTitle")}>
+            <AdminTableShell cardsUntil="lg" label={t("licenses.desktopSessionsTitle")}>
               <table aria-label={t("licenses.desktopSessionsTitle")} className="min-w-[1480px] table-fixed text-left text-sm">
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                   <tr>
@@ -1071,7 +1071,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.cloudSyncLeasesTitle")}</h2>
           </div>
           {leases.length > 0 ? (
-            <AdminTableShell label={t("licenses.cloudSyncLeasesTitle")}>
+            <AdminTableShell cardsUntil="lg" label={t("licenses.cloudSyncLeasesTitle")}>
               <table aria-label={t("licenses.cloudSyncLeasesTitle")} className="min-w-[1460px] table-fixed text-left text-sm">
                 <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
                   <tr>
@@ -1113,7 +1113,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
           )}
         </AdminCard>
         </section>
-      </section>
+      </AdminDataWorkbench>
     </AdminShell>
   );
 }

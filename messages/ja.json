@@ -1119,7 +1119,13 @@
       "supportFeedbackUnread": "{count} 件の未読フィードバックがあります",
       "policies": "Policy pages",
       "news": "ニュース",
-      "registrationSecurity": "登録セキュリティ"
+      "registrationSecurity": "登録セキュリティ",
+      "navGroups": {
+        "content": "コンテンツ",
+        "operations": "運用",
+        "overview": "概要",
+        "trust": "信頼とサポート"
+      }
     },
     "contributionPricing": {
       "eyebrow": "Admin",

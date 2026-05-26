@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminCard, AdminDataWorkbench, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
@@ -142,7 +142,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
 
   return (
     <AdminShell {...shellProps}>
-      <section className="mx-auto max-w-7xl">
+      <AdminDataWorkbench>
         <AdminPageHeader
           backHref="/admin"
           backLabel={t("shell.backToAdmin")}
@@ -182,6 +182,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
           {visibleFeedback.length > 0 ? (
             <>
               <AdminTableShell
+                cardsUntil="lg"
                 label={t("supportFeedback.title")}
                 mobileCards={
                 <div className="grid gap-3">
@@ -274,7 +275,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
             <p className="px-5 py-6 text-sm text-slate-600">{t("supportFeedback.empty")}</p>
           )}
         </AdminCard>
-      </section>
+      </AdminDataWorkbench>
     </AdminShell>
   );
 }

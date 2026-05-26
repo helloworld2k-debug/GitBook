@@ -1119,7 +1119,13 @@
       "supportFeedbackUnread": "有 {count} 則未讀回饋",
       "policies": "Policy pages",
       "news": "新聞",
-      "registrationSecurity": "註冊安全"
+      "registrationSecurity": "註冊安全",
+      "navGroups": {
+        "content": "內容",
+        "operations": "營運",
+        "overview": "總覽",
+        "trust": "信任與支援"
+      }
     },
     "contributionPricing": {
       "eyebrow": "Admin",

@@ -1273,7 +1273,13 @@
       "users": "Users",
       "contributionPricing": "Support pricing",
       "supportFeedbackUnread": "You have {count} unread feedback threads",
-      "registrationSecurity": "Registration security"
+      "registrationSecurity": "Registration security",
+      "navGroups": {
+        "content": "Content",
+        "operations": "Operations",
+        "overview": "Overview",
+        "trust": "Trust & Support"
+      }
     },
     "contributionPricing": {
       "eyebrow": "Admin",

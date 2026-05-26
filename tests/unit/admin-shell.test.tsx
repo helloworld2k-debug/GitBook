@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { AdminPageHeader, AdminShell, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminDataWorkbench, AdminPageHeader, AdminShell, AdminStandardPage, AdminTableShell } from "@/components/admin/admin-shell";
 
 vi.mock("@/components/language-switcher", () => ({
   LanguageSwitcher: ({ currentLocale }: { currentLocale: string }) => <div>Language {currentLocale}</div>,
@@ -65,6 +65,29 @@ describe("AdminShell", () => {
     expect(screen.getByRole("button", { name: /Sign out/ })).toBeInTheDocument();
     expect(screen.getByText("admin@example.com")).toBeInTheDocument();
     expect(screen.getByText("Admin content")).toBeInTheDocument();
+  });
+
+  it("groups admin navigation by operator task area", () => {
+    render(
+      <AdminShell adminLabel="admin@example.com" currentPath="/admin/licenses" labels={adminLabels} locale="en">
+        <p>Admin content</p>
+      </AdminShell>,
+    );
+
+    const sidebar = screen.getByRole("navigation", { name: "Admin" });
+    for (const group of ["Overview", "Operations", "Content", "Trust & Support"]) {
+      expect(within(sidebar).getByLabelText(group)).toBeInTheDocument();
+    }
+
+    const operations = within(sidebar).getByLabelText("Operations");
+    expect(within(operations).getByRole("link", { name: /Donations/ })).toHaveAttribute("href", "/admin/donations");
+    expect(within(operations).getByRole("link", { name: /Releases/ })).toHaveAttribute("href", "/admin/releases");
+    expect(within(operations).getByRole("link", { name: /Licenses/ })).toHaveAttribute("href", "/admin/licenses");
+    expect(within(operations).getByRole("link", { name: /Users/ })).toHaveAttribute("href", "/admin/users");
+
+    const trust = within(sidebar).getByLabelText("Trust & Support");
+    expect(within(trust).getByRole("link", { name: /Feedback/ })).toHaveAttribute("href", "/admin/support-feedback");
+    expect(within(trust).getByRole("link", { name: /Support settings/ })).toHaveAttribute("href", "/admin/support-settings");
   });
 
   it("shows a follow-up marker on feedback when there are unread threads", () => {
@@ -154,5 +177,47 @@ describe("AdminTableShell", () => {
     const mobileShell = screen.getByTestId("admin-mobile-cards");
     expect(mobileShell).toHaveClass("grid", "md:hidden");
     expect(screen.getByRole("heading", { name: "Mobile record" })).toBeInTheDocument();
+  });
+
+  it("can keep dense table cards visible until the large-screen breakpoint", () => {
+    render(
+      <AdminTableShell
+        cardsUntil="lg"
+        mobileCards={
+          <article>
+            <h2>Tablet card</h2>
+          </article>
+        }
+      >
+        <table>
+          <tbody>
+            <tr>
+              <td>Dense content</td>
+            </tr>
+          </tbody>
+        </table>
+      </AdminTableShell>,
+    );
+
+    expect(screen.getByTestId("admin-mobile-cards")).toHaveClass("lg:hidden");
+    expect(screen.getByTestId("admin-table-shell")).toHaveClass("hidden", "lg:block");
+  });
+});
+
+describe("admin page width primitives", () => {
+  it("separates standard pages from data workbench pages", () => {
+    render(
+      <>
+        <AdminStandardPage>
+          <p>Readable settings</p>
+        </AdminStandardPage>
+        <AdminDataWorkbench>
+          <p>Wide table</p>
+        </AdminDataWorkbench>
+      </>,
+    );
+
+    expect(screen.getByText("Readable settings").parentElement).toHaveClass("mx-auto", "max-w-7xl");
+    expect(screen.getByText("Wide table").parentElement).toHaveClass("mx-auto", "max-w-[1600px]");
   });
 });

@@ -34,4 +34,21 @@ describe("admin layout alignment", () => {
     expect(licenses).toContain("lg:mt-6");
     expect(licenses).not.toContain("lg:items-end");
   });
+
+  it("uses the wide data workbench and tablet-card table mode on dense admin pages", () => {
+    const users = source("src/app/[locale]/admin/users/page.tsx");
+    expect(users).toContain("<AdminDataWorkbench>");
+    expect(users).toContain('cardsUntil="lg"');
+    expect(users).not.toContain('<section className="mx-auto max-w-7xl">');
+
+    const supportFeedback = source("src/app/[locale]/admin/support-feedback/page.tsx");
+    expect(supportFeedback).toContain("<AdminDataWorkbench>");
+    expect(supportFeedback).toContain('cardsUntil="lg"');
+    expect(supportFeedback).not.toContain('<section className="mx-auto max-w-7xl">');
+
+    const licenses = source("src/app/[locale]/admin/licenses/page.tsx");
+    expect(licenses).toContain("<AdminDataWorkbench>");
+    expect(licenses).toContain('cardsUntil="lg"');
+    expect(licenses).not.toContain('<section className="mx-auto max-w-7xl">');
+  });
 });
