@@ -21,6 +21,10 @@ function statusTone(status: FeedbackStatus) {
   return "neutral";
 }
 
+function isNoRowsError(error: { code?: string } | null | undefined) {
+  return error?.code === "PGRST116";
+}
+
 export default async function AdminSupportFeedbackDetailPage({ params, searchParams }: AdminSupportFeedbackDetailPageProps) {
   const { id, locale: localeParam } = await params;
   const feedbackState = await searchParams;
@@ -35,7 +39,15 @@ export default async function AdminSupportFeedbackDetailPage({ params, searchPar
     .eq("id", id)
     .single();
 
-  if (error || !feedback) {
+  if (error) {
+    if (isNoRowsError(error)) {
+      notFound();
+    }
+
+    throw error;
+  }
+
+  if (!feedback) {
     notFound();
   }
 

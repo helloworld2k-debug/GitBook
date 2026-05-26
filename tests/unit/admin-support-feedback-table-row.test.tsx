@@ -8,7 +8,7 @@ vi.mock("@/app/[locale]/admin/actions", () => ({
 
 vi.mock("@/i18n/routing", () => ({
   Link: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
-    <a href={href} {...props}>
+    <a href={`/en${href}`} {...props}>
       {children}
     </a>
   ),
@@ -68,6 +68,6 @@ describe("SupportFeedbackTableRow", () => {
     expect(screen.getByText("Need help")).toBeInTheDocument();
     expect(screen.getByText("Unread")).toBeInTheDocument();
     expect(screen.getByText("Open")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open thread" })).toHaveAttribute("href", "/admin/support-feedback/feedback-1");
+    expect(screen.getByRole("link", { name: "Open thread" })).toHaveAttribute("href", "/en/admin/support-feedback/feedback-1");
   });
 });

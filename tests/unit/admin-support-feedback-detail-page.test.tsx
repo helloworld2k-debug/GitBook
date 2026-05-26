@@ -132,4 +132,53 @@ describe("AdminSupportFeedbackDetailPage", () => {
       { onConflict: "feedback_id,admin_user_id" },
     );
   });
+
+  it("surfaces feedback detail query errors instead of masking them as a missing thread", async () => {
+    mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
+    mocks.getAdminShellProps.mockResolvedValue({
+      adminLabel: "admin@example.com",
+      currentPath: "/admin/support-feedback/feedback-1",
+      labels: {
+        auditLogs: "Audit Logs",
+        backToAdmin: "Back to admin",
+        certificates: "Certificates",
+        contributionPricing: "Contribution pricing",
+        dashboard: "Overview",
+        donations: "Donations",
+        language: "Language",
+        licenses: "Licenses",
+        menu: "Menu",
+        notifications: "Notifications",
+        policies: "Policy pages",
+        releases: "Releases",
+        returnToSite: "Return to site",
+        signOut: "Sign out",
+        supportFeedback: "Feedback",
+        supportFeedbackUnread: (count: number) => `${count} unread feedback threads`,
+        supportSettings: "Support settings",
+        users: "Users",
+      },
+      locale: "en",
+      unreadFeedbackCount: 0,
+    });
+    const queryError = { code: "PGRST204", message: "Could not find the user_id column" };
+    const feedbackSingle = vi.fn(async () => ({
+      data: null,
+      error: queryError,
+    }));
+    const feedbackEq = vi.fn(() => ({ single: feedbackSingle }));
+    const feedbackSelect = vi.fn(() => ({ eq: feedbackEq }));
+    const from = vi.fn((table: string) => {
+      if (table === "support_feedback") return { select: feedbackSelect };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    await expect(AdminSupportFeedbackDetailPage({
+      params: Promise.resolve({ id: "feedback-1", locale: "en" }),
+      searchParams: Promise.resolve({}),
+    })).rejects.toMatchObject({
+      code: "PGRST204",
+    });
+  });
 });

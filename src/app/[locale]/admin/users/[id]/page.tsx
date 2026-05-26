@@ -197,6 +197,10 @@ function isOwnerUserProfile(profile: { admin_role?: string | null; is_admin?: bo
   return profile.is_admin === true || profile.admin_role === "owner";
 }
 
+function isNoRowsError(error: { code?: string } | null | undefined) {
+  return error?.code === "PGRST116";
+}
+
 function getCertificateStatusTone(status: string | null | undefined) {
   if (status === "active") return "success";
   if (status === "revoked") return "danger";
@@ -433,7 +437,15 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .single(),
   ]);
 
-  if (profileResult.error || !profileResult.data) {
+  if (profileResult.error) {
+    if (isNoRowsError(profileResult.error)) {
+      notFound();
+    }
+
+    throw profileResult.error;
+  }
+
+  if (!profileResult.data) {
     notFound();
   }
 
@@ -481,7 +493,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
     ...supportFeedback.map((item) => ({
       date: item.created_at,
       detail: item.status,
-      href: `/admin/support-feedback/${item.id}`,
+      href: `/${locale}/admin/support-feedback/${item.id}`,
       label: t("timelineFeedback"),
       title: item.subject,
     })),

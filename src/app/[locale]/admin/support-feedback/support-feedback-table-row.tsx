@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { AdminStatusBadge } from "@/components/admin/admin-shell";
 import { SupportFeedbackStatusForm } from "@/components/admin/support-feedback-status-form";
+import { Link } from "@/i18n/routing";
 import { updateSupportFeedbackStatus } from "../actions";
 
 type FeedbackStatus = "open" | "reviewing" | "closed";

@@ -2369,6 +2369,39 @@ describe("admin pages", () => {
     expect(screen.getByDisplayValue("othermachine123456")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Account timeline" })).toBeInTheDocument();
     expect(screen.getByText("Need help with trial")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Need help with trial" })).toHaveAttribute("href", "/en/admin/support-feedback/feedback-1");
+  });
+
+  it("surfaces user detail profile query errors instead of masking them as a missing user", async () => {
+    const profileQuery = createAdminListQuery(null, { code: "PGRST204", message: "Could not find the account_type column" } as Error);
+    const emptyQuery = createAdminListQuery([]);
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") return profileQuery;
+      if (
+        table === "donations" ||
+        table === "certificates" ||
+        table === "trial_code_redemptions" ||
+        table === "desktop_sessions" ||
+        table === "license_entitlements" ||
+        table === "cloud_sync_leases" ||
+        table === "cloud_sync_usage_sessions" ||
+        table === "cloud_sync_usage_events" ||
+        table === "cloud_sync_cooldown_overrides" ||
+        table === "support_feedback" ||
+        table === "user_login_history"
+      ) {
+        return emptyQuery;
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+
+    await expect(AdminUserDetailPage({
+      params: Promise.resolve({ id: "user-1", locale: "en" }),
+    })).rejects.toMatchObject({
+      code: "PGRST204",
+    });
   });
 
   it("keeps user operations available when optional cloud sync detail tables are unavailable", async () => {
