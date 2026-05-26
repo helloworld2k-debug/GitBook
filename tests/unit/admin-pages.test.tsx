@@ -142,6 +142,53 @@ function createAdminListQuery(data: unknown, error: Error | null = null) {
   return query;
 }
 
+function createDashboardQuery(data: unknown, error: Error | null = null) {
+  const query = {
+    gte: vi.fn(() => query),
+    select: vi.fn(() => query),
+    then: (resolve: (value: { data: unknown; error: Error | null }) => unknown, reject: (reason: unknown) => unknown) =>
+      Promise.resolve({ data, error }).then(resolve, reject),
+  };
+
+  return query;
+}
+
+function createDashboardAdminClient() {
+  const rows: Record<string, unknown[]> = {
+    certificates: [{ issued_at: "2026-05-25T08:00:00.000Z", status: "active" }],
+    cloud_sync_usage_events: [{ event_type: "activate_conflict", occurred_at: "2026-05-25T08:00:00.000Z" }],
+    cloud_sync_usage_sessions: [{ started_at: "2026-05-25T08:00:00.000Z" }],
+    donations: [
+      { amount: 12000, created_at: "2026-05-25T08:00:00.000Z", paid_at: "2026-05-25T08:30:00.000Z", status: "paid" },
+      { amount: 24000, created_at: "2026-04-25T08:00:00.000Z", paid_at: "2026-04-25T08:30:00.000Z", status: "paid" },
+    ],
+    license_entitlements: [{ status: "active", valid_until: "2026-07-01T00:00:00.000Z" }],
+    operational_settings: [{ key: "payment_checkout", value: { is_paused: true } }],
+    profiles: [
+      { account_status: "active", created_at: "2026-05-25T08:00:00.000Z" },
+      { account_status: "active", created_at: "2026-04-01T08:00:00.000Z" },
+    ],
+    software_releases: [
+      {
+        is_published: true,
+        macos_arm64_primary_url: "https://example.com/m.dmg",
+        macos_x64_primary_url: null,
+        release_status: "ready",
+        windows_primary_url: "https://example.com/w.exe",
+      },
+    ],
+    support_feedback: [{ created_at: "2026-05-25T08:00:00.000Z", status: "open", updated_at: "2026-05-25T09:00:00.000Z" }],
+    trial_code_redemptions: [{ redeemed_at: "2026-05-25T08:00:00.000Z", trial_valid_until: "2026-06-25T00:00:00.000Z" }],
+    trial_codes: [{ deleted_at: null, ends_at: null, is_active: true, starts_at: null }],
+    user_login_history: [{ logged_in_at: "2026-05-25T08:00:00.000Z", success: false }],
+    webhook_logs: [{ created_at: "2026-05-25T08:00:00.000Z", status: "error" }],
+  };
+
+  return {
+    from: vi.fn((table: string) => createDashboardQuery(rows[table] ?? [])),
+  };
+}
+
 const testMessages = {
   en: {
     admin: {
@@ -157,8 +204,22 @@ const testMessages = {
       },
       overview: {
         eyebrow: "Admin tools",
-        title: "Admin",
-        description: "Manage contributions, certificates, releases, licenses, users, and audit activity.",
+        title: "Operations dashboard",
+        description: "Track support revenue, user growth, release health, and support workload from one admin view.",
+        period7: "7 days",
+        period30: "30 days",
+        period90: "90 days",
+        selectedPeriod: "{days}-day view",
+        chartsTitle: "Trends",
+        revenueTrendTitle: "Support revenue trend",
+        userTrendTitle: "User growth trend",
+        chartEmpty: "No activity in this period.",
+        attentionTitle: "Needs attention",
+        attentionEmptyTitle: "No urgent work",
+        attentionEmptyDescription: "Core operating signals are clear for the selected period.",
+        healthTitle: "Operating health",
+        insightsTitle: "Recommended actions",
+        quickLinksTitle: "Admin shortcuts",
         donationsTitle: "Contributions",
         donationsDescription: "Review contribution records, statuses, and transaction IDs.",
         certificatesTitle: "Certificates",
@@ -187,9 +248,55 @@ const testMessages = {
         auditLogsDescription: "Review admin corrections, revocations, and reasons.",
         metricsTitle: "Operations overview",
         totalUsersMetric: "Total users",
+        newUsersMetric: "New users",
+        revenueMetric: "Support revenue",
+        paidSupportMetric: "Paid support",
+        certificatesIssuedMetric: "Certificates issued",
+        activeEntitlementsMetric: "Active entitlements",
         activeTrialsMetric: "Active trials",
         pendingFeedbackMetric: "Open feedback",
         recentContributionsMetric: "Recent contributions",
+        comparisonNew: "new activity",
+        comparisonFlat: "no change",
+        comparisonUp: "+{value} vs previous period",
+        comparisonDown: "{value} vs previous period",
+        health: {
+          paymentCheckout: "Checkout",
+          releaseHealth: "Release health",
+          webhookErrors: "Webhook errors",
+          loginFailures: "Login failures",
+          cloudSyncConflicts: "Cloud sync conflicts",
+          healthy: "Healthy",
+          needsReview: "Review",
+        },
+        attention: {
+          openFeedbackTitle: "Open feedback",
+          openFeedbackDescription: "Support threads are waiting for review.",
+          webhookErrorsTitle: "Webhook errors",
+          webhookErrorsDescription: "Payment webhook logs include errors in this period.",
+          releaseIssuesTitle: "Release issues",
+          releaseIssuesDescription: "A published release is missing assets or has failed.",
+          paymentPausedTitle: "Checkout paused",
+          paymentPausedDescription: "Payment checkout is currently paused.",
+        },
+        insights: {
+          paymentPausedTitle: "Resume checkout when the incident is clear",
+          paymentPausedDescription: "Marketing campaigns should wait until checkout is available again.",
+          revenueDropTitle: "Investigate support revenue drop",
+          revenueDropDescription: "Compare traffic, release cadence, and support tier messaging before the next campaign.",
+          feedbackBacklogTitle: "Reduce support backlog",
+          feedbackBacklogDescription: "Open feedback is high enough to affect trust and conversion.",
+          webhookErrorsTitle: "Review payment webhook errors",
+          webhookErrorsDescription: "Payment reliability issues can hide successful support transactions.",
+          loginFailuresTitle: "Review authentication friction",
+          loginFailuresDescription: "Login failures may indicate account confusion or abuse.",
+          releaseHealthTitle: "Complete release delivery",
+          releaseHealthDescription: "Marketing should link only to releases with complete assets.",
+          cloudSyncConflictsTitle: "Watch cloud sync conflicts",
+          cloudSyncConflictsDescription: "Frequent conflicts can create support load for paid users.",
+          steadyTitle: "Operating signals look steady",
+          steadyDescription: "Use the quiet window to prepare the next content or support campaign.",
+        },
       },
       donations: {
         eyebrow: "Admin",
@@ -753,8 +860,22 @@ const testMessages = {
       },
       overview: {
         eyebrow: "管理工具",
-        title: "管理後台",
-        description: "管理支持記錄、證書、版本、兌換、使用者與稽核活動。",
+        title: "營運數據看板",
+        description: "集中追蹤支持收入、使用者成長、版本健康與支援負載。",
+        period7: "7 天",
+        period30: "30 天",
+        period90: "90 天",
+        selectedPeriod: "{days} 天視圖",
+        chartsTitle: "趨勢",
+        revenueTrendTitle: "支持收入趨勢",
+        userTrendTitle: "使用者成長趨勢",
+        chartEmpty: "此週期尚無活動。",
+        attentionTitle: "需要關注",
+        attentionEmptyTitle: "暫無緊急事項",
+        attentionEmptyDescription: "所選週期內核心營運訊號穩定。",
+        healthTitle: "運行健康",
+        insightsTitle: "建議行動",
+        quickLinksTitle: "管理捷徑",
         donationsTitle: "支持",
         donationsDescription: "檢視支持記錄、狀態與交易 ID。",
         certificatesTitle: "證書",
@@ -783,9 +904,55 @@ const testMessages = {
         auditLogsDescription: "檢視管理員修正、撤銷與原因。",
         metricsTitle: "營運概覽",
         totalUsersMetric: "使用者總數",
+        newUsersMetric: "新增使用者",
+        revenueMetric: "支持收入",
+        paidSupportMetric: "已付款支持",
+        certificatesIssuedMetric: "已簽發證書",
+        activeEntitlementsMetric: "有效權益",
         activeTrialsMetric: "啟用中的試用碼",
         pendingFeedbackMetric: "待處理回饋",
         recentContributionsMetric: "近期支持",
+        comparisonNew: "新增活動",
+        comparisonFlat: "無變化",
+        comparisonUp: "較上一週期 +{value}",
+        comparisonDown: "較上一週期 {value}",
+        health: {
+          paymentCheckout: "付款結帳",
+          releaseHealth: "版本健康",
+          webhookErrors: "Webhook 錯誤",
+          loginFailures: "登入失敗",
+          cloudSyncConflicts: "雲端同步衝突",
+          healthy: "正常",
+          needsReview: "需檢查",
+        },
+        attention: {
+          openFeedbackTitle: "待處理回饋",
+          openFeedbackDescription: "支援對話正在等待處理。",
+          webhookErrorsTitle: "Webhook 錯誤",
+          webhookErrorsDescription: "此週期付款 webhook 紀錄出現錯誤。",
+          releaseIssuesTitle: "版本問題",
+          releaseIssuesDescription: "已發布版本缺少檔案或狀態失敗。",
+          paymentPausedTitle: "結帳已暫停",
+          paymentPausedDescription: "付款結帳目前處於暫停狀態。",
+        },
+        insights: {
+          paymentPausedTitle: "排除事件後恢復結帳",
+          paymentPausedDescription: "行銷活動應等結帳恢復後再推進。",
+          revenueDropTitle: "檢查支持收入下滑",
+          revenueDropDescription: "下次活動前對照流量、版本節奏與支持方案文案。",
+          feedbackBacklogTitle: "降低支援積壓",
+          feedbackBacklogDescription: "待處理回饋偏高，可能影響信任與轉化。",
+          webhookErrorsTitle: "檢查付款 webhook 錯誤",
+          webhookErrorsDescription: "付款可靠性問題可能掩蓋成功支持交易。",
+          loginFailuresTitle: "檢查登入摩擦",
+          loginFailuresDescription: "登入失敗可能代表帳號困惑或濫用。",
+          releaseHealthTitle: "補齊版本交付",
+          releaseHealthDescription: "行銷連結應只指向檔案完整的版本。",
+          cloudSyncConflictsTitle: "關注雲端同步衝突",
+          cloudSyncConflictsDescription: "高頻衝突會增加付費使用者的支援負載。",
+          steadyTitle: "營運訊號穩定",
+          steadyDescription: "可利用空檔準備下一輪內容或支持活動。",
+        },
       },
       donations: {
         eyebrow: "管理後台",
@@ -1281,34 +1448,22 @@ describe("admin pages", () => {
   });
 
   it("renders the guarded admin overview with admin tool links", async () => {
-    const countQuery = (count: number) => {
-      const query = {
-        eq: vi.fn(() => query),
-        gte: vi.fn(() => query),
-        is: vi.fn(() => query),
-        limit: vi.fn(() => Promise.resolve({ count, data: [], error: null })),
-        select: vi.fn(() => query),
-      };
+    createSupabaseAdminClientMock.mockReturnValue(createDashboardAdminClient());
 
-      return query;
-    };
-    const from = vi.fn((table: string) => {
-      if (table === "profiles") return countQuery(12);
-      if (table === "trial_codes") return countQuery(4);
-      if (table === "support_feedback") return countQuery(3);
-      if (table === "donations") return countQuery(7);
-      throw new Error(`Unexpected table: ${table}`);
+    const element = await AdminPage({
+      params: Promise.resolve({ locale: "en" }),
+      searchParams: Promise.resolve({ period: "7d" }),
     });
-    createSupabaseAdminClientMock.mockReturnValue({ from });
-
-    const element = await AdminPage({ params: Promise.resolve({ locale: "en" }) });
 
     const { container } = render(element);
 
     expect(requireAdminMock).toHaveBeenCalledWith("en", "/en/admin");
-    expect(screen.getByRole("heading", { name: "Admin" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Operations dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "7 days" })).toHaveAttribute("href", "/admin?period=7d");
+    expect(screen.getByRole("link", { name: "30 days" })).toHaveAttribute("href", "/admin?period=30d");
+    expect(screen.getByRole("link", { name: "90 days" })).toHaveAttribute("href", "/admin?period=90d");
     expect(screen.getAllByRole("link", { name: /donations/i }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
-    expect(container.querySelector('a[href="/admin/certificates"]')).not.toBeInTheDocument();
+    expect(container.querySelector('a[href="/admin/certificates"]')).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /releases/i }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
     expect(screen.getAllByRole("link", { name: /news/i }).some((link) => link.getAttribute("href") === "/admin/news")).toBe(true);
     expect(screen.getAllByRole("link", { name: /registration security/i }).some((link) => link.getAttribute("href") === "/admin/registration-security")).toBe(true);
@@ -1317,19 +1472,32 @@ describe("admin pages", () => {
     expect(createSupabaseAdminClientMock).toHaveBeenCalled();
     expect(screen.getByRole("heading", { name: "Operations overview" })).toBeInTheDocument();
     expect(screen.getByText("Total users")).toBeInTheDocument();
-    expect(screen.getByText("12")).toBeInTheDocument();
-    expect(screen.getByText("Open feedback")).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getAllByText("2").length).toBeGreaterThan(0);
+    expect(screen.getByText("Support revenue")).toBeInTheDocument();
+    expect(screen.getByText("$120.00")).toBeInTheDocument();
+    expect(screen.getAllByText("Open feedback").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Trends" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Support revenue trend")).toBeInTheDocument();
+    expect(screen.getByLabelText("User growth trend")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Needs attention" })).toBeInTheDocument();
+    expect(screen.getByText("Checkout paused")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Operating health" })).toBeInTheDocument();
+    expect(screen.getAllByText("Webhook errors").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Recommended actions" })).toBeInTheDocument();
+    expect(screen.getByText("Resume checkout when the incident is clear")).toBeInTheDocument();
   });
 
   it("renders localized admin overview copy beyond English", async () => {
+    createSupabaseAdminClientMock.mockReturnValue(createDashboardAdminClient());
     const element = await AdminPage({ params: Promise.resolve({ locale: "zh-Hant" }) });
 
     render(element);
 
     expect(requireAdminMock).toHaveBeenCalledWith("zh-Hant", "/zh-Hant/admin");
     expect(screen.getByText("管理工具")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "管理後台" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "營運數據看板" })).toBeInTheDocument();
+    expect(screen.getByText("支持收入")).toBeInTheDocument();
+    expect(screen.getByText("建議行動")).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /支持/ }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
     expect(screen.getAllByRole("link", { name: /版本發布/ }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
     expect(screen.getAllByRole("link", { name: /稽核紀錄/ }).some((link) => link.getAttribute("href") === "/admin/audit-logs")).toBe(true);
