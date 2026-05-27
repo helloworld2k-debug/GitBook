@@ -12,7 +12,7 @@ describe("AdminWorkbenchHeader", () => {
             <input aria-label="Search users" />
           </form>
         }
-        primaryAction={<a href="/admin/users/new">Create user</a>}
+        primaryAction={<button type="button">Create user</button>}
         resultSummary="24 of 120 users"
         secondaryActions={<button type="button">Export</button>}
         selectionToolbar={<div aria-label="Bulk user actions" role="toolbar">Bulk actions</div>}
@@ -25,7 +25,7 @@ describe("AdminWorkbenchHeader", () => {
     expect(screen.getByText("24 of 120 users")).toBeInTheDocument();
 
     const actions = screen.getByRole("group", { name: "Workbench actions" });
-    expect(within(actions).getByRole("link", { name: "Create user" })).toHaveAttribute("href", "/admin/users/new");
+    expect(within(actions).getByRole("button", { name: "Create user" })).toBeInTheDocument();
     expect(within(actions).getByRole("button", { name: "Export" })).toBeInTheDocument();
 
     expect(screen.getByRole("form", { name: "User filters" })).toBeInTheDocument();
