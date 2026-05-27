@@ -1144,7 +1144,8 @@
         "deleted": "削除済み",
         "archived_deleted": "アーカイブ済み"
       },
-      "description": "アカウント権限、状態、トライアル紐付け、デスクトップ端末を確認します。"
+      "description": "アカウント権限、状態、トライアル紐付け、デスクトップ端末を確認します。",
+      "managementSummary": "{total} 件中 {shown} 件のユーザーを表示"
     },
     "archivedUsers": {
       "eyebrow": "Admin",

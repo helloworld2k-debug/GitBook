@@ -687,6 +687,7 @@ const testMessages = {
         sortBy: "Sort by",
         sortOrder: "Sort order",
         export: "Export CSV",
+        managementSummary: "{shown} of {total} users shown",
         archiveEntry: "Archive",
         archiveEntryDescription: "Restore archived users or permanently delete records from the user archive.",
         allRoles: "All permissions",

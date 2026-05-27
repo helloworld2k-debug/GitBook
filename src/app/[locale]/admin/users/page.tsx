@@ -4,6 +4,7 @@ import { AdminAccountCreateForm } from "@/components/admin/admin-account-create-
 import { AdminUserBulkToolbar, AdminUserRowActionsMenu, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
 import { AdminUserFilters } from "@/components/admin/admin-user-filters";
 import { AdminDataWorkbench, AdminFeedbackBanner, AdminCard, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminWorkbenchHeader } from "@/components/admin/admin-workbench-header";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
@@ -335,82 +336,89 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
           />
         </AdminCard>
 
-        <AdminUserFilters
-          actionPath={`/${locale}/admin/users`}
-          labels={{
-            allRoles: t("allRoles"),
-            allStatuses: t("allStatuses"),
-            allTypes: t("allTypes"),
-            aiTestType: t("aiTestType"),
-            apply: t("applyFilters"),
-            createdFrom: t("createdFrom"),
-            createdTo: t("createdTo"),
-            moreFilters: t("moreFilters"),
-            reset: t("reset"),
-            role: t("filterRole"),
-            search: t("search"),
-            searchPlaceholder: t("searchPlaceholder"),
-            status: t("filterStatus"),
-            standardType: t("standardType"),
-            type: t("filterType"),
-            sortBy: t("sortBy"),
-            sortOrder: t("sortOrder"),
-          }}
-          values={{
-            createdFrom: feedback?.createdFrom,
-            createdTo: feedback?.createdTo,
-            query: feedback?.query,
-            role: feedback?.role,
-            status: feedback?.status,
-            type: feedback?.type,
-            sort: feedback?.sort,
-            order: feedback?.order,
-          }}
+        <AdminWorkbenchHeader
+          description={t("description")}
+          filters={
+            <AdminUserFilters
+              actionPath={`/${locale}/admin/users`}
+              className=""
+              labels={{
+                allRoles: t("allRoles"),
+                allStatuses: t("allStatuses"),
+                allTypes: t("allTypes"),
+                aiTestType: t("aiTestType"),
+                apply: t("applyFilters"),
+                createdFrom: t("createdFrom"),
+                createdTo: t("createdTo"),
+                moreFilters: t("moreFilters"),
+                reset: t("reset"),
+                role: t("filterRole"),
+                search: t("search"),
+                searchPlaceholder: t("searchPlaceholder"),
+                status: t("filterStatus"),
+                standardType: t("standardType"),
+                type: t("filterType"),
+                sortBy: t("sortBy"),
+                sortOrder: t("sortOrder"),
+              }}
+              values={{
+                createdFrom: feedback?.createdFrom,
+                createdTo: feedback?.createdTo,
+                query: feedback?.query,
+                role: feedback?.role,
+                status: feedback?.status,
+                type: feedback?.type,
+                sort: feedback?.sort,
+                order: feedback?.order,
+              }}
+            />
+          }
+          resultSummary={t("managementSummary", { shown: String(users.length), total: String(filteredCount) })}
+          secondaryActions={
+            <a
+              className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              href={`/api/admin/users/export?locale=${locale}&query=${feedback?.query ?? ""}&role=${feedback?.role ?? ""}&status=${feedback?.status ?? ""}&type=${feedback?.type ?? ""}&sort=${feedback?.sort ?? "created_at"}&order=${feedback?.order ?? "desc"}`}
+            >
+              {t("export")}
+            </a>
+          }
+          selectionToolbar={
+            <>
+              <AdminUserBulkToolbar
+                canManageRoles={canManageRoles}
+                formId="bulk-users-bulk-action-form"
+                labels={{
+                  bulkDisable: t("bulkDisable"),
+                  bulkEnable: t("bulkEnable"),
+                  bulkRole: t("bulkChangeRole"),
+                  bulkType: t("bulkChangeType"),
+                  bulkSoftDelete: t("bulkSoftDelete"),
+                  bulkSoftDeleteSelected: t("bulkSoftDeleteSelected"),
+                  bulkArchiveDelete: t("bulkArchiveDelete"),
+                  bulkArchiveDeleteSelected: t("bulkArchiveDeleteSelected"),
+                  clearSelection: t("clearSelection"),
+                  dangerZone: t("dangerZone"),
+                  operatorRole: t("roles.operator"),
+                  ownerRole: t("roles.owner"),
+                  roleTarget: t("roleTarget"),
+                  selectedCount: t("selectedCount", { count: "__COUNT__" }),
+                  typeTarget: t("typeTarget"),
+                  aiTestType: t("aiTestType"),
+                  standardType: t("standardType"),
+                  userRole: t("roles.user"),
+                  bulkEnableConfirm: t("bulkEnableConfirm"),
+                  bulkDisableConfirm: t("bulkDisableConfirm"),
+                  bulkRoleConfirm: t("bulkRoleConfirm"),
+                }}
+              />
+              <form action={bulkProcessUsers} className="hidden" id="bulk-users-bulk-action-form">
+                <input name="locale" type="hidden" value={locale} />
+                <input name="return_to" type="hidden" value="/admin/users" />
+              </form>
+            </>
+          }
+          title={t("title")}
         />
-
-        <div className="flex items-center justify-between">
-          <AdminUserBulkToolbar
-          canManageRoles={canManageRoles}
-          formId="bulk-users-bulk-action-form"
-          labels={{
-            bulkDisable: t("bulkDisable"),
-            bulkEnable: t("bulkEnable"),
-            bulkRole: t("bulkChangeRole"),
-            bulkType: t("bulkChangeType"),
-            bulkSoftDelete: t("bulkSoftDelete"),
-            bulkSoftDeleteSelected: t("bulkSoftDeleteSelected"),
-            bulkArchiveDelete: t("bulkArchiveDelete"),
-            bulkArchiveDeleteSelected: t("bulkArchiveDeleteSelected"),
-            clearSelection: t("clearSelection"),
-            dangerZone: t("dangerZone"),
-            operatorRole: t("roles.operator"),
-            ownerRole: t("roles.owner"),
-            roleTarget: t("roleTarget"),
-            selectedCount: t("selectedCount", { count: "__COUNT__" }),
-            typeTarget: t("typeTarget"),
-            aiTestType: t("aiTestType"),
-            standardType: t("standardType"),
-            userRole: t("roles.user"),
-            bulkEnableConfirm: t("bulkEnableConfirm"),
-            bulkDisableConfirm: t("bulkDisableConfirm"),
-            bulkRoleConfirm: t("bulkRoleConfirm"),
-          }}
-        />
-
-        <form action={bulkProcessUsers} className="hidden" id="bulk-users-bulk-action-form">
-          <input name="locale" type="hidden" value={locale} />
-          <input name="return_to" type="hidden" value="/admin/users" />
-        </form>
-
-        <div className="ml-4">
-          <a
-            href={`/api/admin/users/export?locale=${locale}&query=${feedback?.query ?? ""}&role=${feedback?.role ?? ""}&status=${feedback?.status ?? ""}&type=${feedback?.type ?? ""}&sort=${feedback?.sort ?? "created_at"}&order=${feedback?.order ?? "desc"}`}
-            className="inline-flex min-h-10 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-          >
-            {t("export")}
-          </a>
-        </div>
-      </div>
 
       <AdminCard className="mt-6">
           {users.length === 0 ? (

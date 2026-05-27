@@ -1,5 +1,6 @@
 type AdminUserFiltersProps = {
   actionPath: string;
+  className?: string;
   labels: {
     allRoles: string;
     allStatuses: string;
@@ -31,9 +32,9 @@ type AdminUserFiltersProps = {
   };
 };
 
-export function AdminUserFilters({ actionPath, labels, values }: AdminUserFiltersProps) {
+export function AdminUserFilters({ actionPath, className = "mt-6", labels, values }: AdminUserFiltersProps) {
   return (
-    <form action={actionPath} className="mt-6 grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
+    <form action={actionPath} className={`${className} grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]`}>
       <label className="grid gap-1 text-sm font-medium text-slate-700">
         {labels.search}
         <input

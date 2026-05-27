@@ -1302,7 +1302,8 @@
         "deleted": "Deleted",
         "archived_deleted": "Archived"
       },
-      "description": "Review account roles, statuses, trial bindings, and desktop devices."
+      "description": "Review account roles, statuses, trial bindings, and desktop devices.",
+      "managementSummary": "{shown} of {total} users shown"
     },
     "archivedUsers": {
       "eyebrow": "Admin",

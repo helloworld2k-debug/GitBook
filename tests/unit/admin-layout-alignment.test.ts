@@ -51,4 +51,12 @@ describe("admin layout alignment", () => {
     expect(licenses).toContain('cardsUntil="lg"');
     expect(licenses).not.toContain('<section className="mx-auto max-w-7xl">');
   });
+
+  it("uses the shared workbench header on the users page", () => {
+    const users = source("src/app/[locale]/admin/users/page.tsx");
+    expect(users).toContain("AdminWorkbenchHeader");
+    expect(users).toContain("selectionToolbar=");
+    expect(users).toContain("filters=");
+    expect(users).toContain("resultSummary=");
+  });
 });

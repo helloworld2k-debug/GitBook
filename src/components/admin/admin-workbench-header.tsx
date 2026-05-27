@@ -34,11 +34,7 @@ export function AdminWorkbenchHeader({
           </div>
         ) : null}
       </div>
-      {filters ? (
-        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm" data-testid="admin-workbench-filters">
-          {filters}
-        </div>
-      ) : null}
+      {filters ? <div data-testid="admin-workbench-filters">{filters}</div> : null}
       {selectionToolbar ? <div data-testid="admin-workbench-selection-toolbar">{selectionToolbar}</div> : null}
     </section>
   );

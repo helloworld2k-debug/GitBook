@@ -1144,7 +1144,8 @@
         "deleted": "已刪除",
         "archived_deleted": "已歸檔"
       },
-      "description": "檢視帳號角色、狀態、試用綁定與桌面裝置。"
+      "description": "檢視帳號角色、狀態、試用綁定與桌面裝置。",
+      "managementSummary": "顯示 {shown} / {total} 位使用者"
     },
     "archivedUsers": {
       "eyebrow": "Admin",
