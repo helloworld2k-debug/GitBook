@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { describe, expect, it, vi } from "vitest";
-import { AdminDataWorkbench, AdminPageHeader, AdminShell, AdminStandardPage, AdminTableShell } from "@/components/admin/admin-shell";
+import { AdminDataWorkbench, AdminPageHeader, AdminShell, AdminStandardPage, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 
 vi.mock("@/components/language-switcher", () => ({
   LanguageSwitcher: ({ currentLocale }: { currentLocale: string }) => <div>Language {currentLocale}</div>,
@@ -219,5 +220,28 @@ describe("admin page width primitives", () => {
 
     expect(screen.getByText("Readable settings").parentElement).toHaveClass("mx-auto", "max-w-7xl");
     expect(screen.getByText("Wide table").parentElement).toHaveClass("mx-auto", "max-w-[1600px]");
+  });
+});
+
+describe("AdminStatusBadge", () => {
+  it("can render non-color semantic icons", () => {
+    render(
+      <>
+        <AdminStatusBadge icon={CheckCircle2} tone="success">
+          Active
+        </AdminStatusBadge>
+        <AdminStatusBadge icon={AlertTriangle} tone="danger">
+          Blocked
+        </AdminStatusBadge>
+      </>,
+    );
+
+    const activeBadge = screen.getByText("Active").closest("span");
+    const blockedBadge = screen.getByText("Blocked").closest("span");
+
+    expect(activeBadge).toHaveClass("bg-emerald-50");
+    expect(blockedBadge).toHaveClass("bg-red-50");
+    expect(activeBadge?.querySelector("svg")).toBeInTheDocument();
+    expect(blockedBadge?.querySelector("svg")).toBeInTheDocument();
   });
 });

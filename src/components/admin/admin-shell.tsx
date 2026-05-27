@@ -567,7 +567,13 @@ export function AdminTableShell({
   );
 }
 
-export function AdminStatusBadge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "danger" | "neutral" | "success" | "warning" }) {
+type AdminStatusBadgeProps = {
+  children: React.ReactNode;
+  icon?: React.ComponentType<{ "aria-hidden"?: "true"; className?: string }>;
+  tone?: "danger" | "neutral" | "success" | "warning";
+};
+
+export function AdminStatusBadge({ children, icon: Icon, tone = "neutral" }: AdminStatusBadgeProps) {
   const toneClass = {
     danger: "border-red-200 bg-red-50 text-red-700",
     neutral: "border-slate-200 bg-slate-50 text-slate-700",
@@ -575,7 +581,12 @@ export function AdminStatusBadge({ children, tone = "neutral" }: { children: Rea
     warning: "border-amber-200 bg-amber-50 text-amber-700",
   }[tone];
 
-  return <span className={`inline-flex min-h-7 items-center rounded-md border px-2 text-xs font-semibold ${toneClass}`}>{children}</span>;
+  return (
+    <span className={`inline-flex min-h-7 items-center gap-1.5 rounded-md border px-2 text-xs font-semibold ${toneClass}`}>
+      {Icon ? <Icon aria-hidden="true" className="size-3.5 shrink-0" /> : null}
+      {children}
+    </span>
+  );
 }
 
 export { AdminTableSkeleton } from "./admin-table-skeleton";
