@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { AdminCard, AdminDataWorkbench, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminPagination } from "@/components/admin/admin-pagination";
+import { AdminWorkbenchHeader } from "@/components/admin/admin-workbench-header";
 import { Link } from "@/i18n/routing";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { enrichFeedbackUnreadState, type FeedbackUnreadSource } from "@/lib/admin/support-feedback-unread";
@@ -151,33 +152,42 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
           title={t("supportFeedback.title")}
         />
         <AdminFeedbackBanner error={feedbackState?.error} notice={feedbackState?.notice} />
-        <form action="/admin/support-feedback" className="mb-4">
-          <input
-            className="min-h-11 w-full max-w-md rounded-md border border-slate-300 px-3 text-sm shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
-            defaultValue={queryParam ?? ""}
-            name="query"
-            placeholder={t("supportFeedback.searchPlaceholder")}
-          />
-          {feedbackState?.filter ? <input name="filter" type="hidden" value={feedbackState.filter} /> : null}
-        </form>
-        <div className="mb-4 flex flex-wrap gap-2">
-          <Link
-            className={`inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium ${
-              filter === "all" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-white text-slate-700"
-            }`}
-            href={buildFilterUrl(null)}
-          >
-            {t("supportFeedback.allFeedback")}
-          </Link>
-          <Link
-            className={`inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium ${
-              filter === "unread" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-white text-slate-700"
-            }`}
-            href={buildFilterUrl("unread")}
-          >
-            {t("supportFeedback.unreadFeedback")}
-          </Link>
-        </div>
+        <AdminWorkbenchHeader
+          description={t("supportFeedback.description")}
+          filters={
+            <div className="grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+              <form action="/admin/support-feedback">
+                <input
+                  className="min-h-11 w-full max-w-md rounded-md border border-slate-300 px-3 text-sm shadow-sm focus:border-slate-950 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950"
+                  defaultValue={queryParam ?? ""}
+                  name="query"
+                  placeholder={t("supportFeedback.searchPlaceholder")}
+                />
+                {feedbackState?.filter ? <input name="filter" type="hidden" value={feedbackState.filter} /> : null}
+              </form>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  className={`inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium ${
+                    filter === "all" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-white text-slate-700"
+                  }`}
+                  href={buildFilterUrl(null)}
+                >
+                  {t("supportFeedback.allFeedback")}
+                </Link>
+                <Link
+                  className={`inline-flex min-h-10 items-center rounded-md border px-3 text-sm font-medium ${
+                    filter === "unread" ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-white text-slate-700"
+                  }`}
+                  href={buildFilterUrl("unread")}
+                >
+                  {t("supportFeedback.unreadFeedback")}
+                </Link>
+              </div>
+            </div>
+          }
+          resultSummary={t("supportFeedback.managementSummary", { shown: String(visibleFeedback.length), total: String(feedbackWithUnreadState.length) })}
+          title={t("supportFeedback.title")}
+        />
         <AdminCard>
           {visibleFeedback.length > 0 ? (
             <>

@@ -732,7 +732,8 @@
       "next": "次へ",
       "page": "ページ",
       "of": "/ 全",
-      "confirmChange": "ステータスを {old} から {new} に変更しますか？"
+      "confirmChange": "ステータスを {old} から {new} に変更しますか？",
+      "managementSummary": "{total} 件中 {shown} 件のフィードバックを表示"
     },
     "supportSettings": {
       "eyebrow": "管理画面",

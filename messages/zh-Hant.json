@@ -732,7 +732,8 @@
       "next": "下一頁",
       "page": "第",
       "of": "頁，共",
-      "confirmChange": "確定要將狀態從 {old} 改為 {new}？"
+      "confirmChange": "確定要將狀態從 {old} 改為 {new}？",
+      "managementSummary": "顯示 {shown} / {total} 則回饋"
     },
     "supportSettings": {
       "eyebrow": "管理後台",

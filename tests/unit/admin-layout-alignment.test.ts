@@ -59,4 +59,11 @@ describe("admin layout alignment", () => {
     expect(users).toContain("filters=");
     expect(users).toContain("resultSummary=");
   });
+
+  it("uses the shared workbench header on the support feedback page", () => {
+    const supportFeedback = source("src/app/[locale]/admin/support-feedback/page.tsx");
+    expect(supportFeedback).toContain("AdminWorkbenchHeader");
+    expect(supportFeedback).toContain("filters=");
+    expect(supportFeedback).toContain("resultSummary=");
+  });
 });

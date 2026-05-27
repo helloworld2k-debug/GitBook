@@ -451,6 +451,7 @@ const testMessages = {
         save: "Save",
         empty: "No feedback found.",
         searchPlaceholder: "Search by subject, message, or email",
+        managementSummary: "{shown} of {total} feedback threads shown",
         view: "Open thread",
         allFeedback: "All feedback",
         unread: "Unread",

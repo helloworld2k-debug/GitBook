@@ -732,7 +732,8 @@
       "next": "다음",
       "page": "페이지",
       "of": "/ 전체",
-      "confirmChange": "상태를 {old}에서 {new}(으)로 변경하시겠습니까?"
+      "confirmChange": "상태를 {old}에서 {new}(으)로 변경하시겠습니까?",
+      "managementSummary": "피드백 {total}개 중 {shown}개 표시"
     },
     "supportSettings": {
       "eyebrow": "관리",

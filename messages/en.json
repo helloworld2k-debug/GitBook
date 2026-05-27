@@ -812,7 +812,8 @@
       "next": "Next",
       "page": "Page",
       "of": "of",
-      "confirmChange": "Change status from {old} to {new}?"
+      "confirmChange": "Change status from {old} to {new}?",
+      "managementSummary": "{shown} of {total} feedback threads shown"
     },
     "supportSettings": {
       "eyebrow": "Admin",
