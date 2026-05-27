@@ -307,7 +307,10 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
 function isMissingProfileAccountTypeSchemaError(error: { code?: string; message?: string } | null) {
   const message = error?.message?.toLowerCase() ?? "";
 
-  return error?.code === "PGRST204" && message.includes("account_type");
+  return (
+    (error?.code === "PGRST204" || error?.code === "42703") &&
+    message.includes("account_type")
+  );
 }
 
 async function getProfileResultWithoutAccountType(

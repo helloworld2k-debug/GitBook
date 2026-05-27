@@ -2639,6 +2639,68 @@ describe("admin pages", () => {
     expect(legacyProfileQuery.select).toHaveBeenCalledWith("id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,avatar_url,created_at");
   });
 
+  it("opens user detail when Supabase returns a postgres missing column error for legacy account type schema", async () => {
+    const missingAccountTypeQuery = createAdminListQuery(null, {
+      code: "42703",
+      message: "column profiles.account_type does not exist",
+    } as Error);
+    const legacyProfileQuery = createAdminListQuery({
+      id: "user-1",
+      email: "postgres-error@example.com",
+      display_name: "Postgres Error User",
+      public_display_name: "Postgres Error",
+      public_supporter_enabled: false,
+      admin_role: "user",
+      account_status: "active",
+      is_admin: false,
+      created_at: "2026-05-01T00:00:00.000Z",
+    });
+    const emptyQuery = createAdminListQuery([]);
+    const operatorQuery = createAdminListQuery({
+      admin_role: "operator",
+      is_admin: false,
+      account_status: "active",
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        const profilesCallCount = from.mock.calls.filter(([name]) => name === "profiles").length;
+
+        if (profilesCallCount === 1) return missingAccountTypeQuery;
+        if (profilesCallCount === 2) return operatorQuery;
+        return legacyProfileQuery;
+      }
+
+      if (
+        table === "donations" ||
+        table === "certificates" ||
+        table === "trial_code_redemptions" ||
+        table === "desktop_sessions" ||
+        table === "license_entitlements" ||
+        table === "cloud_sync_leases" ||
+        table === "cloud_sync_usage_sessions" ||
+        table === "cloud_sync_usage_events" ||
+        table === "cloud_sync_cooldown_overrides" ||
+        table === "support_feedback" ||
+        table === "user_login_history"
+      ) {
+        return emptyQuery;
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+    requireAdminMock.mockResolvedValue({ id: "admin-operator" });
+
+    render(await AdminUserDetailPage({
+      params: Promise.resolve({ id: "user-1", locale: "en" }),
+      searchParams: Promise.resolve({}),
+    }));
+
+    expect(screen.getByRole("heading", { name: "User operations" })).toBeInTheDocument();
+    expect(screen.getAllByText("postgres-error@example.com").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Standard").length).toBeGreaterThan(0);
+  });
+
   it("shows an admin user unavailable state instead of a global 404 when the profile is gone", async () => {
     const profileQuery = createAdminListQuery(null, { code: "PGRST116", message: "JSON object requested, multiple (or no) rows returned" } as Error);
     const emptyQuery = createAdminListQuery([]);
