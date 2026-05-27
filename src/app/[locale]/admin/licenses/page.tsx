@@ -494,6 +494,8 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
 
         <section className={`mt-6 ${parsedSearch.tab === "codes" ? "" : "hidden"}`} id="license-issue-codes">
           <h2 className="mb-3 text-base font-semibold text-slate-950">{t("licenses.issueCodes")}</h2>
+        {/* Keep license management migration incremental: this page has multiple diagnostics tables,
+        so move filters and bulk actions into AdminWorkbenchHeader only after users/support feedback settle. */}
         <AdminCard className="mt-6">
           <div>
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.batchGenerateTitle")}</h2>

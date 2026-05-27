@@ -66,4 +66,12 @@ describe("admin layout alignment", () => {
     expect(supportFeedback).toContain("filters=");
     expect(supportFeedback).toContain("resultSummary=");
   });
+
+  it("keeps license management in wide workbench mode without forcing a full header migration yet", () => {
+    const licenses = source("src/app/[locale]/admin/licenses/page.tsx");
+    expect(licenses).toContain("<AdminDataWorkbench>");
+    expect(licenses).toContain('<AdminTableShell cardsUntil="lg"');
+    expect(licenses).toContain("AdminLicenseBulkToolbar");
+    expect(licenses).toContain("Keep license management migration incremental");
+  });
 });
