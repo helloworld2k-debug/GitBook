@@ -1,12 +1,46 @@
 # Admin Layout UX Next Steps Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox syntax for tracking.
 
 **Goal:** 把后台布局 UX 审计转成可执行的后续工作：先确认已经落地的 P1 改造，再推进剩余的 workbench 统一、状态语义和总览运营信号。
 
 **Architecture:** 当前源码已经包含分组侧边栏、`AdminDataWorkbench`、`AdminTableShell cardsUntil="lg"` 等核心布局原语。本计划不重复改这些已完成项，而是把它们纳入验收基线，然后在相同组件体系上增加更统一的 workbench header、状态 badge 语义和 overview attention 区块。
 
 **Tech Stack:** Next.js 16, React 19, TypeScript, Tailwind CSS classes, lucide-react, Vitest, Testing Library.
+
+---
+
+## Execution Status
+
+Completed on 2026-05-28 and pushed to `origin/main`.
+
+Implemented commits:
+
+- `88a0e80` docs: plan admin layout ux next steps
+- `2d1195e` feat: add admin workbench header primitive
+- `f3722ab` refactor: use workbench header on users admin page
+- `a03eb7f` refactor: use workbench header on support feedback
+- `475a38c` docs: mark incremental license workbench migration boundary
+- `cc7f8a7` feat: support icons in admin status badges
+- `267d5ab` test: avoid page links in workbench header test
+- `8cdd4e1` refactor: use workbench header for license codes
+- `6877fa2` fix: avoid server formatting support feedback confirmation
+
+Verification completed:
+
+- `npm test -- tests/unit/admin-shell.test.tsx tests/unit/admin-layout-alignment.test.ts tests/unit/admin-workbench-header.test.tsx tests/unit/admin-pages.test.tsx` passed.
+- `npm run lint` passed.
+- `npm test` passed with 125 test files and 688 tests.
+- Local logged-in admin visual QA passed at 375, 768, 1024, and 1440 px for `/en/admin`, `/en/admin/users`, `/en/admin/licenses`, and `/en/admin/support-feedback`.
+- Production canary passed for `https://gitbookai.ccwu.cc`.
+- Production logged-in admin visual QA passed at 375, 768, 1024, and 1440 px for the same admin pages.
+
+Notes:
+
+- The overview Attention section already existed in a richer dashboard form, so Task 6 was verified rather than replaced with the simplified sample implementation below.
+- During logged-in visual QA, `/en/admin/support-feedback` exposed a runtime ICU formatting error for `supportFeedback.confirmChange`; this was fixed in `6877fa2`.
+- Test account login was performed with the dedicated operator test account and its password was rotated after each QA run.
+- A future small dev-experience improvement is to broaden local CSRF origin handling beyond ports 3000 and 3001, because Next may auto-select another local port.
 
 ---
 
@@ -78,7 +112,7 @@ graphify 结果显示 `AdminSubmitButton()` 是后台表单的核心复用点，
 - Test: `tests/unit/admin-shell.test.tsx`
 - Test: `tests/unit/admin-layout-alignment.test.ts`
 
-- [ ] **Step 1: 运行 shell 与布局基线测试**
+- [x] **Step 1: 运行 shell 与布局基线测试**
 
 ```bash
 npm test -- tests/unit/admin-shell.test.tsx tests/unit/admin-layout-alignment.test.ts
@@ -86,7 +120,7 @@ npm test -- tests/unit/admin-shell.test.tsx tests/unit/admin-layout-alignment.te
 
 Expected: 两个测试文件全部通过。
 
-- [ ] **Step 2: 确认侧边栏分组仍存在**
+- [x] **Step 2: 确认侧边栏分组仍存在**
 
 Check `src/components/admin/admin-shell.tsx` contains:
 
@@ -102,7 +136,7 @@ function getAdminGroups(labels: AdminShellLabels) {
 
 Expected: `Overview`、`Operations`、`Content`、`Trust & Support` 四组都存在。
 
-- [ ] **Step 3: 确认宽页面原语仍存在**
+- [x] **Step 3: 确认宽页面原语仍存在**
 
 Check `src/components/admin/admin-shell.tsx` contains:
 
@@ -118,7 +152,7 @@ export function AdminDataWorkbench({ children, className = "" }: { children: Rea
 
 Expected: 标准页面和数据页面有清晰分离。
 
-- [ ] **Step 4: 确认宽表格保持 lg 前卡片模式**
+- [x] **Step 4: 确认宽表格保持 lg 前卡片模式**
 
 Check `src/components/admin/admin-shell.tsx` contains:
 
@@ -129,7 +163,7 @@ const tableVisibilityClass = cardsUntil === "lg" ? "hidden lg:block" : "hidden m
 
 Expected: 用户、许可证、支持反馈这类宽表格可以在 768-1023px 继续显示卡片。
 
-- [ ] **Step 5: Commit 验收记录**
+- [x] **Step 5: Commit 验收记录**
 
 如果本任务没有代码变更，不需要 commit。若为了修正测试或小问题产生修改：
 
@@ -146,7 +180,7 @@ git commit -m "test: verify admin layout p1 baseline"
 - Create: `src/components/admin/admin-workbench-header.tsx`
 - Test: `tests/unit/admin-workbench-header.test.tsx`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 Create `tests/unit/admin-workbench-header.test.tsx`:
 
@@ -193,7 +227,7 @@ describe("AdminWorkbenchHeader", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 ```bash
 npm test -- tests/unit/admin-workbench-header.test.tsx
@@ -201,7 +235,7 @@ npm test -- tests/unit/admin-workbench-header.test.tsx
 
 Expected: FAIL because `@/components/admin/admin-workbench-header` does not exist.
 
-- [ ] **Step 3: 新建最小实现**
+- [x] **Step 3: 新建最小实现**
 
 Create `src/components/admin/admin-workbench-header.tsx`:
 
@@ -257,7 +291,7 @@ export function AdminWorkbenchHeader({
 }
 ```
 
-- [ ] **Step 4: 运行测试并确认通过**
+- [x] **Step 4: 运行测试并确认通过**
 
 ```bash
 npm test -- tests/unit/admin-workbench-header.test.tsx
@@ -265,7 +299,7 @@ npm test -- tests/unit/admin-workbench-header.test.tsx
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/admin/admin-workbench-header.tsx tests/unit/admin-workbench-header.test.tsx
@@ -280,7 +314,7 @@ git commit -m "feat: add admin workbench header primitive"
 - Modify: `src/app/[locale]/admin/users/page.tsx`
 - Test: `tests/unit/admin-layout-alignment.test.ts`
 
-- [ ] **Step 1: 写结构保护测试**
+- [x] **Step 1: 写结构保护测试**
 
 Append to `tests/unit/admin-layout-alignment.test.ts`:
 
@@ -294,7 +328,7 @@ Append to `tests/unit/admin-layout-alignment.test.ts`:
   });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 ```bash
 npm test -- tests/unit/admin-layout-alignment.test.ts
@@ -302,7 +336,7 @@ npm test -- tests/unit/admin-layout-alignment.test.ts
 
 Expected: FAIL because users page has not imported or rendered `AdminWorkbenchHeader`.
 
-- [ ] **Step 3: 迁移用户页局部布局**
+- [x] **Step 3: 迁移用户页局部布局**
 
 In `src/app/[locale]/admin/users/page.tsx`, add import:
 
@@ -355,7 +389,7 @@ Then wrap the existing user filters and bulk toolbar into:
 
 Keep the existing hidden bulk form and table markup unchanged. If exact translation keys differ in the file, reuse the existing keys already present on the page rather than inventing new messages.
 
-- [ ] **Step 4: 运行相关测试**
+- [x] **Step 4: 运行相关测试**
 
 ```bash
 npm test -- tests/unit/admin-layout-alignment.test.ts tests/unit/admin-shell.test.tsx
@@ -363,7 +397,7 @@ npm test -- tests/unit/admin-layout-alignment.test.ts tests/unit/admin-shell.tes
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/app/[locale]/admin/users/page.tsx tests/unit/admin-layout-alignment.test.ts
@@ -378,7 +412,7 @@ git commit -m "refactor: use workbench header on users admin page"
 - Modify: `src/app/[locale]/admin/support-feedback/page.tsx`
 - Test: `tests/unit/admin-layout-alignment.test.ts`
 
-- [ ] **Step 1: 写结构保护测试**
+- [x] **Step 1: 写结构保护测试**
 
 Extend the workbench header test in `tests/unit/admin-layout-alignment.test.ts`:
 
@@ -389,7 +423,7 @@ Extend the workbench header test in `tests/unit/admin-layout-alignment.test.ts`:
     expect(supportFeedback).toContain("resultSummary=");
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 ```bash
 npm test -- tests/unit/admin-layout-alignment.test.ts
@@ -397,7 +431,7 @@ npm test -- tests/unit/admin-layout-alignment.test.ts
 
 Expected: FAIL because support feedback page has not been migrated.
 
-- [ ] **Step 3: 迁移支持反馈页**
+- [x] **Step 3: 迁移支持反馈页**
 
 In `src/app/[locale]/admin/support-feedback/page.tsx`, add import:
 
@@ -437,7 +471,7 @@ Move the all/unread filter links into the `filters` slot:
 
 If exact translation keys differ, reuse the current keys in the file.
 
-- [ ] **Step 4: 运行测试**
+- [x] **Step 4: 运行测试**
 
 ```bash
 npm test -- tests/unit/admin-layout-alignment.test.ts
@@ -445,7 +479,7 @@ npm test -- tests/unit/admin-layout-alignment.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/app/[locale]/admin/support-feedback/page.tsx tests/unit/admin-layout-alignment.test.ts
@@ -460,7 +494,7 @@ git commit -m "refactor: use workbench header on support feedback"
 - Modify: `src/app/[locale]/admin/licenses/page.tsx`
 - Test: `tests/unit/admin-layout-alignment.test.ts`
 
-- [ ] **Step 1: 写轻量结构测试**
+- [x] **Step 1: 写轻量结构测试**
 
 Add to `tests/unit/admin-layout-alignment.test.ts`:
 
@@ -473,7 +507,7 @@ Add to `tests/unit/admin-layout-alignment.test.ts`:
   });
 ```
 
-- [ ] **Step 2: 运行测试**
+- [x] **Step 2: 运行测试**
 
 ```bash
 npm test -- tests/unit/admin-layout-alignment.test.ts
@@ -481,7 +515,7 @@ npm test -- tests/unit/admin-layout-alignment.test.ts
 
 Expected: PASS. If this fails, fix only the missing baseline, not a full license layout rewrite.
 
-- [ ] **Step 3: 记录许可证页后续迁移边界**
+- [x] **Step 3: 记录许可证页后续迁移边界**
 
 Add a short comment near the management section in `src/app/[locale]/admin/licenses/page.tsx`:
 
@@ -490,7 +524,7 @@ Add a short comment near the management section in `src/app/[locale]/admin/licen
 // so move filters and bulk actions into AdminWorkbenchHeader only after users/support feedback settle.
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/app/[locale]/admin/licenses/page.tsx tests/unit/admin-layout-alignment.test.ts
@@ -509,7 +543,7 @@ git commit -m "docs: mark incremental license workbench migration boundary"
 - Modify: `messages/ko.json`
 - Test: `tests/unit/admin-pages.test.tsx`
 
-- [ ] **Step 1: 写页面测试**
+- [x] **Step 1: 写页面测试**
 
 In `tests/unit/admin-pages.test.tsx`, add assertions to the admin overview test:
 
@@ -518,7 +552,7 @@ expect(screen.getByRole("heading", { name: /Needs attention|需要處理|対応�
 expect(screen.getByText(/Unread feedback|未讀回饋|未読フィードバック|읽지 않은 피드백/i)).toBeInTheDocument();
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 ```bash
 npm test -- tests/unit/admin-pages.test.tsx
@@ -526,7 +560,7 @@ npm test -- tests/unit/admin-pages.test.tsx
 
 Expected: FAIL because attention section does not exist or messages are missing.
 
-- [ ] **Step 3: 增加 messages**
+- [x] **Step 3: 增加 messages**
 
 Add keys under the existing admin overview message group in every locale:
 
@@ -543,7 +577,7 @@ Add keys under the existing admin overview message group in every locale:
 
 Use localized values for zh-Hant, ja, and ko following nearby admin copy style.
 
-- [ ] **Step 4: 实现 Attention 区块**
+- [x] **Step 4: 实现 Attention 区块**
 
 In `src/app/[locale]/admin/page.tsx`, render this before the directory/card grid:
 
@@ -574,7 +608,7 @@ In `src/app/[locale]/admin/page.tsx`, render this before the directory/card grid
 
 Use existing variables if the page already computes these counts. If a count is not available yet, start with `0` and add a code comment naming the future data source.
 
-- [ ] **Step 5: 运行测试**
+- [x] **Step 5: 运行测试**
 
 ```bash
 npm test -- tests/unit/admin-pages.test.tsx
@@ -582,7 +616,7 @@ npm test -- tests/unit/admin-pages.test.tsx
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/app/[locale]/admin/page.tsx messages/en.json messages/zh-Hant.json messages/ja.json messages/ko.json tests/unit/admin-pages.test.tsx
@@ -598,7 +632,7 @@ git commit -m "feat: add admin overview attention signals"
 - Modify: `src/components/admin/admin-shell.tsx`
 - Test: `tests/unit/admin-shell.test.tsx`
 
-- [ ] **Step 1: 写测试**
+- [x] **Step 1: 写测试**
 
 Add to `tests/unit/admin-shell.test.tsx`:
 
@@ -624,7 +658,7 @@ it("can render admin status badges with non-color semantic icons", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 ```bash
 npm test -- tests/unit/admin-shell.test.tsx
@@ -632,7 +666,7 @@ npm test -- tests/unit/admin-shell.test.tsx
 
 Expected: FAIL because `AdminStatusBadge` does not accept `icon`.
 
-- [ ] **Step 3: 扩展 AdminStatusBadge props**
+- [x] **Step 3: 扩展 AdminStatusBadge props**
 
 In `src/components/admin/admin-shell.tsx`, update `AdminStatusBadge`:
 
@@ -660,7 +694,7 @@ export function AdminStatusBadge({ children, icon: Icon, tone = "neutral" }: Adm
 }
 ```
 
-- [ ] **Step 4: 运行测试**
+- [x] **Step 4: 运行测试**
 
 ```bash
 npm test -- tests/unit/admin-shell.test.tsx
@@ -668,7 +702,7 @@ npm test -- tests/unit/admin-shell.test.tsx
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/admin/admin-shell.tsx tests/unit/admin-shell.test.tsx
@@ -682,7 +716,7 @@ git commit -m "feat: support semantic icons in admin status badges"
 **Files:**
 - Verify only.
 
-- [ ] **Step 1: 运行相关单元测试**
+- [x] **Step 1: 运行相关单元测试**
 
 ```bash
 npm test -- tests/unit/admin-shell.test.tsx tests/unit/admin-layout-alignment.test.ts tests/unit/admin-workbench-header.test.tsx tests/unit/admin-pages.test.tsx
@@ -690,7 +724,7 @@ npm test -- tests/unit/admin-shell.test.tsx tests/unit/admin-layout-alignment.te
 
 Expected: PASS.
 
-- [ ] **Step 2: 运行 lint**
+- [x] **Step 2: 运行 lint**
 
 ```bash
 npm run lint
@@ -698,7 +732,7 @@ npm run lint
 
 Expected: PASS.
 
-- [ ] **Step 3: 运行完整测试套件**
+- [x] **Step 3: 运行完整测试套件**
 
 ```bash
 npm test
@@ -706,7 +740,7 @@ npm test
 
 Expected: PASS.
 
-- [ ] **Step 4: 手动视觉验收**
+- [x] **Step 4: 手动视觉验收**
 
 Run:
 
@@ -728,7 +762,7 @@ Expected:
 - 1024px: dense tables can appear, horizontal scroll is contained inside table region.
 - 1440px: data pages use wide content area instead of feeling squeezed into standard content width.
 
-- [ ] **Step 5: Commit final verification notes if docs changed**
+- [x] **Step 5: Commit final verification notes if docs changed**
 
 If this plan or the audit doc is updated with completion notes:
 
