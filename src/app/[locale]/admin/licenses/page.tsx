@@ -5,6 +5,7 @@ import { AdminLicenseTabs } from "@/components/admin/admin-license-tabs";
 import { AdminCard, AdminDataWorkbench, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatusBadge, AdminTableShell } from "@/components/admin/admin-shell";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { AdminWorkbenchHeader } from "@/components/admin/admin-workbench-header";
 import { LicenseDurationFields } from "@/components/admin/license-duration-fields";
 import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
@@ -494,8 +495,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
 
         <section className={`mt-6 ${parsedSearch.tab === "codes" ? "" : "hidden"}`} id="license-issue-codes">
           <h2 className="mb-3 text-base font-semibold text-slate-950">{t("licenses.issueCodes")}</h2>
-        {/* Keep license management migration incremental: this page has multiple diagnostics tables,
-        so move filters and bulk actions into AdminWorkbenchHeader only after users/support feedback settle. */}
+        {/* Keep license management migration incremental: only license-code finding and maintenance use AdminWorkbenchHeader for now. */}
         <AdminCard className="mt-6">
           <div>
             <h2 className="text-base font-semibold text-slate-950">{t("licenses.batchGenerateTitle")}</h2>
@@ -544,103 +544,135 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
         </section>
 
         <section className={`mt-6 ${parsedSearch.tab === "codes" ? "" : "hidden"}`} id="license-code-workbench">
-          <h2 className="mb-3 text-base font-semibold text-slate-950">{t("licenses.findMaintainCodes")}</h2>
-        <form action={`/${locale}/admin/licenses`} className="mt-6 grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
-            {t("licenses.search")}
-            <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.query ?? ""} name="query" placeholder={t("licenses.searchPlaceholder")} />
-          </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
-            {t("licenses.channel")}
-            <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.channel ?? ""} name="channel">
-              <option value="">{t("licenses.allChannels")}</option>
-              <option value="internal">{t("licenses.channels.internal")}</option>
-              <option value="taobao">{t("licenses.channels.taobao")}</option>
-              <option value="xianyu">{t("licenses.channels.xianyu")}</option>
-              <option value="partner">{t("licenses.channels.partner")}</option>
-              <option value="other">{t("licenses.channels.other")}</option>
-            </select>
-          </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
-            {t("licenses.duration")}
-            <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.duration ?? ""} name="duration">
-              <option value="">{t("licenses.allDurations")}</option>
-              <option value="trial_3_day">{t("licenses.durationTrial")}</option>
-              <option value="month_1">{t("licenses.durationMonth1")}</option>
-              <option value="month_3">{t("licenses.durationMonth3")}</option>
-              <option value="year_1">{t("licenses.durationYear1")}</option>
-            </select>
-          </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
-            {t("licenses.status")}
-            <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.status ?? ""} name="status">
-              <option value="">{t("licenses.allStatuses")}</option>
-              <option value="active">{t("licenses.active")}</option>
-              <option value="inactive">{t("licenses.inactive")}</option>
-            </select>
-          </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
-            {t("licenses.redemptions")}
-            <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.redeemed ?? ""} name="redeemed">
-              <option value="">{t("licenses.allRedemptions")}</option>
-              <option value="redeemed">{t("licenses.redeemed")}</option>
-              <option value="unredeemed">{t("licenses.unredeemed")}</option>
-            </select>
-          </label>
-          <details className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 lg:col-span-5">
-            <summary className="cursor-pointer list-none text-sm font-medium text-slate-700">{t("licenses.moreFilters")}</summary>
-            <div className="mt-3 grid gap-3 md:grid-cols-3">
-              <label className="grid gap-1 text-sm font-medium text-slate-700">
-                {t("licenses.deleted")}
-                <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.deleted ?? "current"} name="deleted">
-                  <option value="current">{t("licenses.currentOnly")}</option>
-                  <option value="deleted">{t("licenses.deletedOnly")}</option>
-                  <option value="">{t("licenses.currentAndDeleted")}</option>
-                </select>
-              </label>
-              <label className="grid gap-1 text-sm font-medium text-slate-700">
-                {t("licenses.createdFrom")}
-                <input className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.createdFrom ?? ""} name="createdFrom" type="date" />
-              </label>
-              <label className="grid gap-1 text-sm font-medium text-slate-700">
-                {t("licenses.createdTo")}
-                <input className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.createdTo ?? ""} name="createdTo" type="date" />
-              </label>
-            </div>
-          </details>
-          <div className="grid gap-3 md:grid-cols-3 lg:col-span-5">
-            <label className="grid gap-1 text-sm font-medium text-slate-700">
-              {t("licenses.sortBy")}
-              <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={parsedSearch.sort} name="sort">
-                <option value="created_at">{t("licenses.generatedAt")}</option>
-                <option value="label">{t("licenses.label")}</option>
-                <option value="duration_kind">{t("licenses.duration")}</option>
-                <option value="channel_type">{t("licenses.channel")}</option>
-                <option value="is_active">{t("licenses.status")}</option>
-                <option value="redemption_count">{t("licenses.redemptions")}</option>
-              </select>
-            </label>
-            <label className="grid gap-1 text-sm font-medium text-slate-700">
-              {t("licenses.sortOrder")}
-              <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={parsedSearch.order} name="order">
-                <option value="desc">{t("licenses.descending")}</option>
-                <option value="asc">{t("licenses.ascending")}</option>
-              </select>
-            </label>
-            <label className="grid gap-1 text-sm font-medium text-slate-700">
-              {t("licenses.pageSize")}
-              <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={String(parsedSearch.pageSize)} name="pageSize">
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-            </label>
-          </div>
-          <div className="flex flex-wrap gap-3 lg:col-span-5">
-            <button className="inline-flex min-h-11 items-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" type="submit">{t("licenses.applyFilters")}</button>
-            <a className="inline-flex min-h-11 items-center rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700" href={`/${locale}/admin/licenses`}>{t("licenses.resetFilters")}</a>
-          </div>
-        </form>
+          <AdminWorkbenchHeader
+            description={t("licenses.findMaintainCodes")}
+            filters={(
+              <form action={`/${locale}/admin/licenses`} className="grid gap-3 rounded-md border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
+                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                  {t("licenses.search")}
+                  <input className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.query ?? ""} name="query" placeholder={t("licenses.searchPlaceholder")} />
+                </label>
+                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                  {t("licenses.channel")}
+                  <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.channel ?? ""} name="channel">
+                    <option value="">{t("licenses.allChannels")}</option>
+                    <option value="internal">{t("licenses.channels.internal")}</option>
+                    <option value="taobao">{t("licenses.channels.taobao")}</option>
+                    <option value="xianyu">{t("licenses.channels.xianyu")}</option>
+                    <option value="partner">{t("licenses.channels.partner")}</option>
+                    <option value="other">{t("licenses.channels.other")}</option>
+                  </select>
+                </label>
+                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                  {t("licenses.duration")}
+                  <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.duration ?? ""} name="duration">
+                    <option value="">{t("licenses.allDurations")}</option>
+                    <option value="trial_3_day">{t("licenses.durationTrial")}</option>
+                    <option value="month_1">{t("licenses.durationMonth1")}</option>
+                    <option value="month_3">{t("licenses.durationMonth3")}</option>
+                    <option value="year_1">{t("licenses.durationYear1")}</option>
+                  </select>
+                </label>
+                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                  {t("licenses.status")}
+                  <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.status ?? ""} name="status">
+                    <option value="">{t("licenses.allStatuses")}</option>
+                    <option value="active">{t("licenses.active")}</option>
+                    <option value="inactive">{t("licenses.inactive")}</option>
+                  </select>
+                </label>
+                <label className="grid gap-1 text-sm font-medium text-slate-700">
+                  {t("licenses.redemptions")}
+                  <select className="min-h-11 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.redeemed ?? ""} name="redeemed">
+                    <option value="">{t("licenses.allRedemptions")}</option>
+                    <option value="redeemed">{t("licenses.redeemed")}</option>
+                    <option value="unredeemed">{t("licenses.unredeemed")}</option>
+                  </select>
+                </label>
+                <details className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 lg:col-span-5">
+                  <summary className="cursor-pointer list-none text-sm font-medium text-slate-700">{t("licenses.moreFilters")}</summary>
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                    <label className="grid gap-1 text-sm font-medium text-slate-700">
+                      {t("licenses.deleted")}
+                      <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.deleted ?? "current"} name="deleted">
+                        <option value="current">{t("licenses.currentOnly")}</option>
+                        <option value="deleted">{t("licenses.deletedOnly")}</option>
+                        <option value="">{t("licenses.currentAndDeleted")}</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-sm font-medium text-slate-700">
+                      {t("licenses.createdFrom")}
+                      <input className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.createdFrom ?? ""} name="createdFrom" type="date" />
+                    </label>
+                    <label className="grid gap-1 text-sm font-medium text-slate-700">
+                      {t("licenses.createdTo")}
+                      <input className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={feedback?.createdTo ?? ""} name="createdTo" type="date" />
+                    </label>
+                  </div>
+                </details>
+                <div className="grid gap-3 md:grid-cols-3 lg:col-span-5">
+                  <label className="grid gap-1 text-sm font-medium text-slate-700">
+                    {t("licenses.sortBy")}
+                    <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={parsedSearch.sort} name="sort">
+                      <option value="created_at">{t("licenses.generatedAt")}</option>
+                      <option value="label">{t("licenses.label")}</option>
+                      <option value="duration_kind">{t("licenses.duration")}</option>
+                      <option value="channel_type">{t("licenses.channel")}</option>
+                      <option value="is_active">{t("licenses.status")}</option>
+                      <option value="redemption_count">{t("licenses.redemptions")}</option>
+                    </select>
+                  </label>
+                  <label className="grid gap-1 text-sm font-medium text-slate-700">
+                    {t("licenses.sortOrder")}
+                    <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={parsedSearch.order} name="order">
+                      <option value="desc">{t("licenses.descending")}</option>
+                      <option value="asc">{t("licenses.ascending")}</option>
+                    </select>
+                  </label>
+                  <label className="grid gap-1 text-sm font-medium text-slate-700">
+                    {t("licenses.pageSize")}
+                    <select className="min-h-10 rounded-md border border-slate-300 px-3 text-sm" defaultValue={String(parsedSearch.pageSize)} name="pageSize">
+                      <option value="25">25</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="flex flex-wrap gap-3 lg:col-span-5">
+                  <button className="inline-flex min-h-11 items-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white" type="submit">{t("licenses.applyFilters")}</button>
+                  <a className="inline-flex min-h-11 items-center rounded-md border border-slate-300 px-4 text-sm font-medium text-slate-700" href={`/${locale}/admin/licenses`}>{t("licenses.resetFilters")}</a>
+                </div>
+              </form>
+            )}
+            resultSummary={t("licenses.managementSummary", { shown: String(filteredCodes.length), total: String(codesPage.totalCount) })}
+            selectionToolbar={(
+              <>
+                <AdminLicenseBulkToolbar
+                  formId={bulkFormId}
+                  labels={{
+                    activate: t("licenses.activate"),
+                    applyMetadata: t("licenses.applyMetadata"),
+                    channel: t("licenses.channel"),
+                    clearSelection: t("licenses.clearSelection"),
+                    deactivate: t("licenses.deactivate"),
+                    delete: t("licenses.delete"),
+                    deleteConfirm: t("licenses.bulkDeleteConfirm"),
+                    internal: t("licenses.channels.internal"),
+                    other: t("licenses.channels.other"),
+                    partner: t("licenses.channels.partner"),
+                    selectedCount: t("licenses.selectedCount", { count: "__COUNT__" }),
+                    taobao: t("licenses.channels.taobao"),
+                    xianyu: t("licenses.channels.xianyu"),
+                  }}
+                />
+                <form action={bulkUpdateLicenseCodes} className="hidden" id={bulkFormId}>
+                  <input name="locale" type="hidden" value={locale} />
+                  <input name="return_to" type="hidden" value="/admin/licenses" />
+                </form>
+              </>
+            )}
+            title={t("licenses.licenseCodesTitle")}
+          />
 
         <div className={parsedSearch.tab === "diagnostics" ? "" : "hidden"} id="license-redemption-health">
         <AdminCard className="mt-6">
@@ -782,37 +814,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
         </AdminCard>
         </section>
 
-        <div className={parsedSearch.tab === "codes" ? "" : "hidden"}>
-        <AdminLicenseBulkToolbar
-          formId={bulkFormId}
-          labels={{
-            activate: t("licenses.activate"),
-            applyMetadata: t("licenses.applyMetadata"),
-            channel: t("licenses.channel"),
-            clearSelection: t("licenses.clearSelection"),
-            deactivate: t("licenses.deactivate"),
-            delete: t("licenses.delete"),
-            deleteConfirm: t("licenses.bulkDeleteConfirm"),
-            internal: t("licenses.channels.internal"),
-            other: t("licenses.channels.other"),
-            partner: t("licenses.channels.partner"),
-            selectedCount: t("licenses.selectedCount", { count: "__COUNT__" }),
-            taobao: t("licenses.channels.taobao"),
-            xianyu: t("licenses.channels.xianyu"),
-          }}
-        />
-        </div>
-
-        <form action={bulkUpdateLicenseCodes} className="hidden" id={bulkFormId}>
-          <input name="locale" type="hidden" value={locale} />
-          <input name="return_to" type="hidden" value="/admin/licenses" />
-        </form>
-
         <AdminCard className="mt-6">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h2 className="text-base font-semibold text-slate-950">{t("licenses.licenseCodesTitle")}</h2>
-            <p className="mt-1 text-sm text-slate-600">{t("licenses.managementSummary", { shown: String(filteredCodes.length), total: String(codesPage.totalCount) })}</p>
-          </div>
           {filteredCodes.length > 0 ? (
             <>
               <AdminTableShell cardsUntil="lg" label={t("licenses.licenseCodesTitle")}>

@@ -74,4 +74,14 @@ describe("admin layout alignment", () => {
     expect(licenses).toContain("AdminLicenseBulkToolbar");
     expect(licenses).toContain("Keep license management migration incremental");
   });
+
+  it("uses the shared workbench header for license code management only", () => {
+    const licenses = source("src/app/[locale]/admin/licenses/page.tsx");
+    expect(licenses).toContain("AdminWorkbenchHeader");
+    expect(licenses).toContain('title={t("licenses.licenseCodesTitle")}');
+    expect(licenses).toContain('resultSummary={t("licenses.managementSummary"');
+    expect(licenses).toContain("selectionToolbar=");
+    expect(licenses).toContain("filters=");
+    expect(licenses).toContain("AdminLicenseBulkToolbar");
+  });
 });
