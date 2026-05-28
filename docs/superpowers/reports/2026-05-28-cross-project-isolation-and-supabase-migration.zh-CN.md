@@ -106,6 +106,7 @@ supabase/migrations/0066_admin_user_account_type.sql
 
 ```bash
 npm run check:isolation
+npm run check:production-schema
 npm test -- tests/unit/admin-users-paginated-migration.test.ts tests/unit/admin-pages.test.tsx tests/unit/admin-actions.test.ts
 ```
 
@@ -113,6 +114,19 @@ npm test -- tests/unit/admin-users-paginated-migration.test.ts tests/unit/admin-
 
 ```text
 profiles.account_type select 应返回成功，不再是 42703
+```
+
+本次已新增 `npm run check:production-schema`，当前生产返回：
+
+```json
+{
+  "accountType": {
+    "code": "42703",
+    "migration": "supabase/migrations/0066_admin_user_account_type.sql",
+    "status": "fail"
+  },
+  "status": "fail"
+}
 ```
 
 ## 建议下一步

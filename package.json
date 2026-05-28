@@ -19,6 +19,7 @@
     "check-config": "bash scripts/check-config.sh",
     "check-env": "bash scripts/check-env.sh",
     "check:isolation": "node scripts/check-project-isolation.mjs",
+    "check:production-schema": "node scripts/production-schema-check.mjs",
     "verify:rpc": "npx tsx scripts/verify-rpc-functions.ts"
   },
   "dependencies": {
