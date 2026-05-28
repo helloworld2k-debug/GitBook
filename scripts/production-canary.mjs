@@ -7,7 +7,6 @@ const requiredPaths = [
   "/zh-Hant",
   "/ja",
   "/ko",
-  "/en/versions",
   "/en/contributions",
   "/en/support",
   "/en/news",
@@ -39,6 +38,10 @@ function getDownloadLinks(html) {
   return links;
 }
 
+function isUnexpectedPageBody(html) {
+  return /NEXT_HTTP_ERROR_FALLBACK;404|Application error|Internal Server Error|This page couldn't load|This page you&apos;re looking for doesn&apos;t exist|This page you're looking for doesn't exist/i.test(html);
+}
+
 async function fetchText(path) {
   const response = await fetch(`${baseUrl}${path}`, {
     redirect: "follow",
@@ -59,7 +62,7 @@ async function checkPage(path) {
 
   return {
     label: `page ${path}`,
-    ok: response.ok && title === "GitBook AI",
+    ok: response.ok && title === "GitBook AI" && !isUnexpectedPageBody(response.text),
     status: response.status,
     title,
     url: response.url,
