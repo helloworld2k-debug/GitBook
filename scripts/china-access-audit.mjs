@@ -245,6 +245,52 @@ async function checkHttpFromChina(label, url, required = true) {
   }
 }
 
+function parseCurlWriteOut(stdout) {
+  const statusCode = Number.parseInt(stdout.match(/range_status:(\d+)/)?.[1] ?? "", 10);
+  const sizeDownloaded = Number.parseInt(stdout.match(/size:(\d+)/)?.[1] ?? "", 10);
+  const contentType = stdout.match(/type:([^\s]+)/)?.[1] ?? null;
+  const timeSeconds = Number.parseFloat(stdout.match(/time:([0-9.]+)/)?.[1] ?? "");
+
+  return {
+    contentType,
+    sizeDownloaded: Number.isNaN(sizeDownloaded) ? null : sizeDownloaded,
+    statusCode: Number.isNaN(statusCode) ? null : statusCode,
+    timeSeconds: Number.isNaN(timeSeconds) ? null : timeSeconds,
+  };
+}
+
+export async function probeDownloadUrl(label, url, required = true, runner = run) {
+  const result = await runner("curl", [
+    "-L",
+    "--max-time",
+    "25",
+    "-r",
+    "0-1023",
+    "-o",
+    "/dev/null",
+    "-sS",
+    "-w",
+    "range_status:%{http_code} size:%{size_download} type:%{content_type} time:%{time_total}",
+    url,
+  ], { timeout: 30000 });
+  const details = {
+    ...parseCurlWriteOut(result.stdout),
+    probe: "range",
+    url,
+  };
+  const ok = result.ok &&
+    (details.statusCode === 200 || details.statusCode === 206) &&
+    typeof details.sizeDownloaded === "number" &&
+    details.sizeDownloaded > 0;
+
+  return {
+    details: result.ok ? details : { ...details, error: result.stderr },
+    label,
+    required,
+    status: ok ? "pass" : required ? "fail" : "risk",
+  };
+}
+
 function extractExternalUrls(html, baseUrl) {
   const urls = new Set();
 
@@ -371,7 +417,7 @@ async function runAudit() {
         required: true,
         status: risk.level === "high" ? "fail" : risk.level === "medium" ? "risk" : "pass",
       });
-      checks.push(await checkHttpFromChina(`mainland download ${link.label}`, link.href, true));
+      checks.push(await probeDownloadUrl(`mainland download ${link.label}`, link.href, true));
     }
   }
 

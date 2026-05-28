@@ -5,6 +5,7 @@ import {
   createSummary,
   extractDownloadLinks,
   normalizeCheckHostNodeResult,
+  probeDownloadUrl,
 } from "../../scripts/china-access-audit.mjs";
 
 describe("China access audit helpers", () => {
@@ -71,6 +72,39 @@ describe("China access audit helpers", () => {
       skippedOptional: ["email login"],
       status: "fail",
       total: 3,
+    });
+  });
+
+  it("uses a range probe for large download URLs instead of fetching the full body", async () => {
+    const calls: Array<{ args: string[]; command: string }> = [];
+    const check = await probeDownloadUrl(
+      "mainland download Download for Windows",
+      "https://dzsnhbszojdaghvolcnq.supabase.co/storage/v1/object/public/software-releases/windows/GitBookAI.zip",
+      true,
+      async (command, args) => {
+        calls.push({ args, command });
+        return {
+          ok: true,
+          stderr: "",
+          stdout: "range_status:206 size:1024 type:application/zip time:0.349035",
+        };
+      },
+    );
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.command).toBe("curl");
+    expect(calls[0]?.args).toEqual(expect.arrayContaining(["-r", "0-1023"]));
+    expect(calls[0]?.args).toContain("-o");
+    expect(calls[0]?.args).toContain("/dev/null");
+    expect(check).toMatchObject({
+      label: "mainland download Download for Windows",
+      required: true,
+      status: "pass",
+    });
+    expect(check.details).toMatchObject({
+      probe: "range",
+      statusCode: 206,
+      sizeDownloaded: 1024,
     });
   });
 });
