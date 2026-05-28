@@ -1,5 +1,3 @@
-const ALLOWED_LOCALHOSTS = new Set(["localhost:3000", "127.0.0.1:3000", "localhost:3001", "127.0.0.1:3001"]);
-
 function getExpectedOrigins(): string[] {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   const origins = siteUrl ? [new URL(siteUrl).origin] : [];
@@ -18,7 +16,7 @@ function isAllowedLocalhost(origin: string) {
 
   try {
     const url = new URL(origin);
-    return url.protocol === "http:" && ALLOWED_LOCALHOSTS.has(url.host);
+    return url.protocol === "http:" && (url.hostname === "localhost" || url.hostname === "127.0.0.1");
   } catch {
     return false;
   }
