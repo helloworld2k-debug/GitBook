@@ -16,4 +16,18 @@ describe("production canary script", () => {
     expect(source).toContain("NEXT_HTTP_ERROR_FALLBACK;404");
     expect(source).toContain("This page you're looking for doesn't exist");
   });
+
+  it("includes production schema and admin entry checks", () => {
+    expect(source).toContain("checkProductionSchema");
+    expect(source).toContain("schema profiles.account_type");
+    expect(source).toContain("checkAdminEntry");
+    expect(source).toContain("/en/admin/users");
+  });
+
+  it("keeps reporting JSON when an individual page fetch fails", () => {
+    const checkPageSource = source.match(/async function checkPage[\s\S]*?\n}\n/)?.[0] ?? "";
+
+    expect(checkPageSource).toContain("catch (error)");
+    expect(checkPageSource).toContain("ok: false");
+  });
 });

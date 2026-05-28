@@ -1,4 +1,6 @@
 import dns from "node:dns/promises";
+import { createClient } from "@supabase/supabase-js";
+import { loadEnvFile, runAccountTypeCheck } from "./production-schema-check.mjs";
 
 const DEFAULT_BASE_URL = "https://gitbookai.ccwu.cc";
 const baseUrl = (process.env.CANARY_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, "");
@@ -57,16 +59,25 @@ async function fetchText(path) {
 }
 
 async function checkPage(path) {
-  const response = await fetchText(path);
-  const title = getTitle(response.text);
+  try {
+    const response = await fetchText(path);
+    const title = getTitle(response.text);
 
-  return {
-    label: `page ${path}`,
-    ok: response.ok && title === "GitBook AI" && !isUnexpectedPageBody(response.text),
-    status: response.status,
-    title,
-    url: response.url,
-  };
+    return {
+      label: `page ${path}`,
+      ok: response.ok && title === "GitBook AI" && !isUnexpectedPageBody(response.text),
+      status: response.status,
+      title,
+      url: response.url,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : String(error),
+      label: `page ${path}`,
+      ok: false,
+      path,
+    };
+  }
 }
 
 async function checkDownload(link) {
@@ -196,6 +207,70 @@ async function checkDebugWebhookStatus() {
   };
 }
 
+async function checkProductionSchema() {
+  const response = await fetch(`${baseUrl}/api/debug/webhook-status`);
+  const data = response.headers.get("content-type")?.includes("application/json")
+    ? await response.json()
+    : null;
+  const accountTypeStatus = data?.schemaStatus?.profiles_account_type ?? {};
+
+  if (accountTypeStatus.status) {
+    return {
+      code: accountTypeStatus.code ?? null,
+      label: "schema profiles.account_type",
+      ok: response.ok && accountTypeStatus.status === "pass",
+      source: "debug webhook status",
+      status: response.status,
+    };
+  }
+
+  const env = { ...process.env, ...loadEnvFile(".env.local") };
+
+  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+    return {
+      label: "schema profiles.account_type",
+      ok: false,
+      source: "debug webhook status",
+      status: response.status,
+    };
+  }
+
+  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+  const summary = await runAccountTypeCheck(supabase);
+
+  return {
+    code: summary.accountType.code,
+    label: "schema profiles.account_type",
+    ok: summary.status === "pass",
+    source: "supabase direct",
+    status: summary.accountType.status,
+  };
+}
+
+async function checkAdminEntry() {
+  const response = await fetchText("/en/admin/users");
+  const hasLoginProtection = response.text.includes("login-email") ||
+    response.text.includes("/auth/callback") ||
+    response.text.includes("/en/login?next=%2Fen%2Fadmin%2Fusers") ||
+    response.url.includes("/en/login");
+  const exposesAdminContent = response.text.includes("User management") ||
+    response.text.includes("Account type");
+
+  return {
+    label: "admin users anonymous protection",
+    ok: response.ok && hasLoginProtection && !exposesAdminContent && !isUnexpectedPageBody(response.text),
+    path: "/en/admin/users",
+    protected: hasLoginProtection,
+    status: response.status,
+    url: response.url,
+  };
+}
+
 async function main() {
   const checks = [];
   const hostname = new URL(baseUrl).hostname;
@@ -227,6 +302,8 @@ async function main() {
   checks.push(...await checkDownloadLinks(downloadLinks));
   checks.push(await checkAuthCallback());
   checks.push(await checkDebugWebhookStatus());
+  checks.push(await checkProductionSchema());
+  checks.push(await checkAdminEntry());
   checks.push(await checkWww());
 
   const failed = checks.filter((check) => !check.ok);

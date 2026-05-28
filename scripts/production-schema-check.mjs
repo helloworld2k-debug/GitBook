@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const accountTypeMigration = "supabase/migrations/0066_admin_user_account_type.sql";
 
-function loadEnvFile(path) {
+export function loadEnvFile(path) {
   if (!existsSync(path)) {
     return {};
   }
@@ -66,7 +66,7 @@ export function createSchemaCheckSummary({ accountTypeError }) {
   };
 }
 
-async function runAccountTypeCheck(supabase) {
+export async function runAccountTypeCheck(supabase) {
   const { error } = await supabase.from("profiles").select("account_type").limit(1);
 
   return createSchemaCheckSummary({ accountTypeError: error });

@@ -57,5 +57,18 @@ export async function GET() {
   debugInfo.recentWebhookLogs = recentWebhookLogs ?? [];
   debugInfo.webhookLogsError = webhookLogsError?.message;
 
+  const { error: accountTypeSchemaError } = await supabase
+    .from("profiles")
+    .select("account_type")
+    .limit(1);
+
+  debugInfo.schemaStatus = {
+    profiles_account_type: {
+      code: accountTypeSchemaError?.code ?? null,
+      message: accountTypeSchemaError?.message ? "schema check failed" : null,
+      status: accountTypeSchemaError ? "fail" : "pass",
+    },
+  };
+
   return NextResponse.json(debugInfo);
 }
