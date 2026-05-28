@@ -78,7 +78,7 @@
 - QA 账号类型：普通用户
 - 登录后到达 `/en/contributions`
 - 结账按钮数量：4
-- 点击 1-Day 支持按钮后跳转到 `checkout.dodopayments.com/session`
+- 点击 1-Day 支持按钮后跳转到 `checkout.dodopayments.com/session`。
 - 未填写付款信息
 - 未提交付款
 - QA 账号密码已轮换
