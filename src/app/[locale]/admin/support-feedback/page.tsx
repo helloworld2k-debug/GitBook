@@ -9,6 +9,10 @@ import { setupAdminPage } from "@/lib/auth/page-guards";
 import { formatDateTimeWithSeconds } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SupportFeedbackTableRow } from "./support-feedback-table-row";
+import enMessages from "../../../../../messages/en.json";
+import jaMessages from "../../../../../messages/ja.json";
+import koMessages from "../../../../../messages/ko.json";
+import zhHantMessages from "../../../../../messages/zh-Hant.json";
 
 type AdminSupportFeedbackPageProps = {
   params: Promise<{ locale: string }>;
@@ -51,6 +55,17 @@ function isUnreadTrackingSchemaError(error: { code?: string; message?: string } 
   );
 }
 
+const supportFeedbackConfirmChangeTemplates: Record<string, string> = {
+  en: enMessages.admin.supportFeedback.confirmChange,
+  ja: jaMessages.admin.supportFeedback.confirmChange,
+  ko: koMessages.admin.supportFeedback.confirmChange,
+  "zh-Hant": zhHantMessages.admin.supportFeedback.confirmChange,
+};
+
+function getSupportFeedbackConfirmChangeTemplate(locale: string) {
+  return supportFeedbackConfirmChangeTemplates[locale] ?? supportFeedbackConfirmChangeTemplates.en;
+}
+
 export default async function AdminSupportFeedbackPage({ params, searchParams }: AdminSupportFeedbackPageProps) {
   const { locale: localeParam } = await params;
   const feedbackState = await searchParams;
@@ -65,7 +80,7 @@ export default async function AdminSupportFeedbackPage({ params, searchParams }:
     closed: t("supportFeedback.statuses.closed"),
     save: t("supportFeedback.save"),
     saving: t("common.saving"),
-    confirmChange: t("supportFeedback.confirmChange"),
+    confirmChange: getSupportFeedbackConfirmChangeTemplate(locale),
     unread: t("supportFeedback.unread"),
     view: t("supportFeedback.view"),
   };

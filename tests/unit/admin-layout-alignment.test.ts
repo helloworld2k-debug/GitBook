@@ -67,6 +67,12 @@ describe("admin layout alignment", () => {
     expect(supportFeedback).toContain("resultSummary=");
   });
 
+  it("passes the support feedback status confirmation template without server-side ICU formatting", () => {
+    const supportFeedback = source("src/app/[locale]/admin/support-feedback/page.tsx");
+    expect(supportFeedback).toContain("getSupportFeedbackConfirmChangeTemplate");
+    expect(supportFeedback).not.toContain('confirmChange: t("supportFeedback.confirmChange")');
+  });
+
   it("keeps license management in wide workbench mode without forcing a full header migration yet", () => {
     const licenses = source("src/app/[locale]/admin/licenses/page.tsx");
     expect(licenses).toContain("<AdminDataWorkbench>");
