@@ -66,26 +66,31 @@
 - `PASS supabase-local-config`
 - `PASS supabase-sibling-port-conflicts`
 
-生产 Supabase schema drift 仍存在：
+生产 Supabase schema drift 已修复：
 
-- `profiles(id,email)` 基础读取正常。
-- `profiles(account_type)` 读取失败。
-- 错误码：`42703`
-- 错误信息：`column profiles.account_type does not exist`
+- 已在 Supabase SQL Editor 执行 `supabase/migrations/0066_admin_user_account_type.sql`。
+- `profiles(id,email,account_type)` 只读查询正常。
+- `npm run check:production-schema` 返回 `pass`。
+- `get_admin_users_paginated` RPC 可按 `input_type_filter: "standard"` 查询，并返回 `account_type` 字段。
 
-## 迁移阻塞
+## 迁移阻塞解除
 
-本地仍没有可执行远端数据库迁移所需的数据库密码：
+此前本地没有可执行远端数据库迁移所需的数据库密码：
 
 - `.env.local` 没有 `SUPABASE_DB_PASSWORD`、`DATABASE_URL`、`POSTGRES_URL` 等数据库连接变量。
 - `supabase/.temp/pooler-url` 存在，但不包含密码。
 - 之前运行 `supabase migration list` 返回 403，并提示需要 `SUPABASE_DB_PASSWORD`。
 
-因此当前无法由 CLI 安全执行：
+因此未通过 CLI 执行：
 
 ```bash
 supabase db push
 ```
+
+实际处理方式：
+
+- 在 Supabase Dashboard SQL Editor 中执行迁移 SQL。
+- 执行结果：Success，无返回行。
 
 ## 需要执行的迁移
 
@@ -100,9 +105,9 @@ supabase/migrations/0066_admin_user_account_type.sql
 1. 提供生产 Supabase 数据库密码，设置 `SUPABASE_DB_PASSWORD` 后由 CLI 执行。
 2. 在 Supabase Dashboard 的 SQL Editor 中手动执行 `0066_admin_user_account_type.sql` 全文。
 
-## 迁移后验收命令
+## 迁移后验收结果
 
-迁移完成后运行：
+已运行：
 
 ```bash
 npm run check:isolation
@@ -110,25 +115,32 @@ npm run check:production-schema
 npm test -- tests/unit/admin-users-paginated-migration.test.ts tests/unit/admin-pages.test.tsx tests/unit/admin-actions.test.ts
 ```
 
-再用 service role 只读确认：
+结果：
 
-```text
-profiles.account_type select 应返回成功，不再是 42703
-```
+- `npm run check:isolation` 通过。
+- `npm run check:production-schema` 通过。
+- 3 个后台用户管理相关测试文件通过，合计 110 个测试通过。
+- service role 只读确认 `profiles.account_type` 可读。
+- service role 只读确认 `get_admin_users_paginated` 返回 `account_type`。
 
-本次已新增 `npm run check:production-schema`，当前生产返回：
+`npm run check:production-schema` 当前生产返回：
 
 ```json
 {
   "accountType": {
-    "code": "42703",
-    "migration": "supabase/migrations/0066_admin_user_account_type.sql",
-    "status": "fail"
+    "code": null,
+    "message": null,
+    "status": "pass"
   },
-  "status": "fail"
+  "status": "pass"
 }
 ```
 
 ## 建议下一步
 
-先完成 `0066_admin_user_account_type.sql` 的生产迁移，再继续做后台用户管理 smoke check。这个问题不影响刚完成的 Dodo 支付入口跳转，但会影响后台用户管理的账号类型相关能力。
+生产 schema drift 已修复。下一步可以继续做后台用户管理 smoke check，优先覆盖：
+
+- 用户列表账号类型筛选。
+- 用户详情账号类型显示。
+- 用户导出是否包含账号类型列。
+- 账号类型更新动作是否写入审计日志。
