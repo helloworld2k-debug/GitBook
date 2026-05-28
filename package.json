@@ -18,6 +18,7 @@
     "audit:china-access": "node scripts/china-access-audit.mjs",
     "check-config": "bash scripts/check-config.sh",
     "check-env": "bash scripts/check-env.sh",
+    "check:isolation": "node scripts/check-project-isolation.mjs",
     "verify:rpc": "npx tsx scripts/verify-rpc-functions.ts"
   },
   "dependencies": {
