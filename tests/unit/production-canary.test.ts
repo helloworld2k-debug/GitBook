@@ -30,4 +30,15 @@ describe("production canary script", () => {
     expect(checkPageSource).toContain("catch (error)");
     expect(checkPageSource).toContain("ok: false");
   });
+
+  it("includes read-only payment entry checks without creating checkout sessions", () => {
+    expect(source).toContain("checkDodoLiveProducts");
+    expect(source).toContain("DODO_LIVE_PRODUCT_ONE_DAY");
+    expect(source).toContain("DODO_LIVE_PRODUCT_MONTHLY");
+    expect(source).toContain("DODO_LIVE_PRODUCT_QUARTERLY");
+    expect(source).toContain("DODO_LIVE_PRODUCT_YEARLY");
+    expect(source).toContain("checkContributionsAnonymousEntry");
+    expect(source).not.toContain("fetch(`${baseUrl}/api/checkout/dodo");
+    expect(source).not.toContain('method: "POST"');
+  });
 });

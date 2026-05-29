@@ -207,6 +207,35 @@ async function checkDebugWebhookStatus() {
   };
 }
 
+async function fetchDebugWebhookStatus() {
+  const response = await fetch(`${baseUrl}/api/debug/webhook-status`);
+  const data = response.headers.get("content-type")?.includes("application/json")
+    ? await response.json()
+    : null;
+
+  return { data, response };
+}
+
+async function checkDodoLiveProducts() {
+  const { data, response } = await fetchDebugWebhookStatus();
+  const env = data?.env ?? {};
+  const requiredProductKeys = [
+    "DODO_LIVE_PRODUCT_ONE_DAY",
+    "DODO_LIVE_PRODUCT_MONTHLY",
+    "DODO_LIVE_PRODUCT_QUARTERLY",
+    "DODO_LIVE_PRODUCT_YEARLY",
+  ];
+  const missing = requiredProductKeys.filter((key) => env[key] !== "已设置");
+
+  return {
+    environment: env.DODO_PAYMENTS_ENV,
+    label: "Dodo live product config",
+    missing,
+    ok: response.ok && env.DODO_PAYMENTS_ENV === "live" && missing.length === 0,
+    status: response.status,
+  };
+}
+
 async function checkProductionSchema() {
   const response = await fetch(`${baseUrl}/api/debug/webhook-status`);
   const data = response.headers.get("content-type")?.includes("application/json")
@@ -249,6 +278,21 @@ async function checkProductionSchema() {
     ok: summary.status === "pass",
     source: "supabase direct",
     status: summary.accountType.status,
+  };
+}
+
+async function checkContributionsAnonymousEntry() {
+  const response = await fetchText("/en/contributions");
+  const hasLoginEntry = response.text.includes("/en/login?next=%2Fen%2Fcontributions");
+  const exposesCheckoutForm = response.text.includes('action="/api/checkout/dodo"');
+
+  return {
+    label: "contributions anonymous entry",
+    ok: response.ok && hasLoginEntry && !exposesCheckoutForm && !isUnexpectedPageBody(response.text),
+    path: "/en/contributions",
+    protected: hasLoginEntry,
+    status: response.status,
+    url: response.url,
   };
 }
 
@@ -302,6 +346,8 @@ async function main() {
   checks.push(...await checkDownloadLinks(downloadLinks));
   checks.push(await checkAuthCallback());
   checks.push(await checkDebugWebhookStatus());
+  checks.push(await checkDodoLiveProducts());
+  checks.push(await checkContributionsAnonymousEntry());
   checks.push(await checkProductionSchema());
   checks.push(await checkAdminEntry());
   checks.push(await checkWww());
