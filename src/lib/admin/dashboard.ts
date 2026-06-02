@@ -438,24 +438,28 @@ function isRealUserProfile(profile: DashboardRows["profiles"][number]) {
   return profile.account_status === "active" && !profile.is_admin && (profile.admin_role ?? "user") === "user" && !isTestUserEmail(profile.email);
 }
 
+function isCloudSyncMonitoredProfile(profile: DashboardRows["profiles"][number]) {
+  return profile.account_status === "active" && !profile.is_admin && (profile.admin_role ?? "user") !== "owner" && !isTestUserEmail(profile.email);
+}
+
 function buildCloudSyncMonitoring({
   now,
-  realProfiles,
+  monitoredProfiles,
   rows,
   window,
 }: {
   now: Date;
-  realProfiles: DashboardRows["profiles"];
+  monitoredProfiles: DashboardRows["profiles"];
   rows: DashboardRows;
   window: AdminDashboardCloudSyncWindow;
 }) {
-  const realUsersById = new Map(realProfiles.map((profile) => [profile.id, profile]));
-  const realUserIds = new Set(realUsersById.keys());
+  const monitoredUsersById = new Map(monitoredProfiles.map((profile) => [profile.id, profile]));
+  const monitoredUserIds = new Set(monitoredUsersById.keys());
   const windowStart = getCloudSyncWindowStart(now, window);
   const windowEnd = now;
 
   const activeLeases = rows.cloudSyncLeases.filter((lease) =>
-    realUserIds.has(lease.user_id) &&
+    monitoredUserIds.has(lease.user_id) &&
     !lease.revoked_at &&
     !lease.released_at &&
     timestamp(lease.expires_at) > now.getTime()
@@ -469,7 +473,7 @@ function buildCloudSyncMonitoring({
   }
 
   const activeCloudSyncEntitlements = rows.licenseEntitlements.filter((entitlement) =>
-    realUserIds.has(entitlement.user_id ?? "") &&
+    monitoredUserIds.has(entitlement.user_id ?? "") &&
     (entitlement.feature_code ?? "cloud_sync") === "cloud_sync" &&
     entitlement.status === "active" &&
     timestamp(entitlement.valid_until) >= now.getTime()
@@ -477,16 +481,16 @@ function buildCloudSyncMonitoring({
   const entitledUserIds = new Set(activeCloudSyncEntitlements.map((entitlement) => entitlement.user_id).filter(Boolean));
 
   const sessionsInWindow = rows.cloudSyncUsageSessions.filter((session) =>
-    realUserIds.has(session.user_id) &&
+    monitoredUserIds.has(session.user_id) &&
     (!windowStart || inRange(session.started_at, windowStart, windowEnd))
   );
   const eventsInWindow = rows.cloudSyncUsageEvents.filter((event) =>
-    realUserIds.has(event.user_id) &&
+    monitoredUserIds.has(event.user_id) &&
     (!windowStart || inRange(event.occurred_at, windowStart, windowEnd))
   );
 
   const desktopSessionsByUser = new Map<string, DashboardRows["desktopSessions"]>();
-  for (const session of rows.desktopSessions.filter((session) => realUserIds.has(session.user_id))) {
+  for (const session of rows.desktopSessions.filter((session) => monitoredUserIds.has(session.user_id))) {
     const entries = desktopSessionsByUser.get(session.user_id) ?? [];
     entries.push(session);
     desktopSessionsByUser.set(session.user_id, entries);
@@ -515,7 +519,7 @@ function buildCloudSyncMonitoring({
 
   const users: AdminDashboardCloudSyncUserRow[] = Array.from(relevantUserIds)
     .reduce<AdminDashboardCloudSyncUserRow[]>((items, userId) => {
-      const profile = realUsersById.get(userId);
+      const profile = monitoredUsersById.get(userId);
       if (!profile) return items;
 
       const userSessions = (sessionsByUser.get(userId) ?? []).sort((left, right) => timestamp(right.started_at) - timestamp(left.started_at));
@@ -609,6 +613,7 @@ export function buildAdminDashboardOverview({
   const previousRevenue = 0;
 
   const realProfiles = rows.profiles.filter(isRealUserProfile);
+  const cloudSyncProfiles = rows.profiles.filter(isCloudSyncMonitoredProfile);
   const realUserIds = new Set(realProfiles.map((profile) => profile.id));
   const currentProfiles: Array<Record<string, string | number | null>> = [];
   const realCertificates = rows.certificates.filter((certificate) => realUserIds.has(certificate.user_id));
@@ -626,7 +631,7 @@ export function buildAdminDashboardOverview({
   const failedReleases = rows.releases.filter((release) => release.release_status === "failed");
   const missingReleaseAssets = rows.releases.filter((release) => release.is_published && hasMissingReleaseAsset(release));
   const paymentPaused = isPaymentPaused(rows.operationalSettings);
-  const cloudSync = buildCloudSyncMonitoring({ now, realProfiles, rows, window: cloudSyncWindow });
+  const cloudSync = buildCloudSyncMonitoring({ now, monitoredProfiles: cloudSyncProfiles, rows, window: cloudSyncWindow });
 
   const attentionItems: AdminDashboardAttentionItem[] = [
     ...(openFeedback.length > 0

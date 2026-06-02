@@ -251,4 +251,56 @@ describe("admin dashboard helpers", () => {
     expect(overview.cloudSync.metrics.sessionCount).toBe(1);
     expect(overview.cloudSync.metrics.totalDurationSeconds).toBe(3600);
   });
+
+  it("includes operator accounts in cloud sync monitoring while excluding them from user totals", () => {
+    const overview = buildAdminDashboardOverview({
+      now,
+      periodDays: 7,
+      rows: {
+        certificates: [],
+        cloudSyncLeases: [
+          {
+            desktop_session_id: "operator-desktop",
+            device_id: "operator-pc",
+            expires_at: "2026-05-26T13:00:00.000Z",
+            id: "operator-active-lease",
+            lease_started_at: "2026-05-26T11:30:00.000Z",
+            released_at: null,
+            revoked_at: null,
+            user_id: "operator-user",
+          },
+        ],
+        cloudSyncUsageEvents: [],
+        cloudSyncUsageSessions: [],
+        desktopSessions: [
+          { id: "operator-desktop", last_seen_at: "2026-05-26T11:45:00.000Z", platform: "windows", user_id: "operator-user" },
+        ],
+        donations: [],
+        licenseEntitlements: [
+          { feature_code: "cloud_sync", status: "active", user_id: "operator-user", valid_until: "2026-06-30T00:00:00.000Z" },
+        ],
+        loginHistory: [],
+        operationalSettings: [],
+        profiles: [
+          { account_status: "active", admin_role: "operator", created_at: "2026-05-01T08:00:00.000Z", email: "operator@example.com", id: "operator-user", is_admin: false },
+        ],
+        releases: [],
+        supportFeedback: [],
+        trialCodeRedemptions: [],
+        userLoginHistory: [],
+        webhookLogs: [],
+      },
+    });
+
+    expect(overview.metrics.totalUsers.value).toBe(0);
+    expect(overview.cloudSync.metrics.activeUsers).toBe(1);
+    expect(overview.cloudSync.metrics.entitledUsers).toBe(1);
+    expect(overview.cloudSync.users[0]).toMatchObject({
+      active: true,
+      currentDeviceId: "operator-pc",
+      currentPlatform: "windows",
+      email: "operator@example.com",
+      userId: "operator-user",
+    });
+  });
 });
