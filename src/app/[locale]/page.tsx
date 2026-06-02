@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { siteConfig, supportedLocales } from "@/config/site";
 import { Link } from "@/i18n/routing";
@@ -59,6 +60,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
     : t("latestVersionPending");
   const windowsDownload = {
     label: t("downloadWindows"),
+    icon: "/download-icons/windows.png",
     href: windowsDelivery?.primaryUrl ?? getFallbackDownload("windows"),
     backupHref: windowsDelivery?.backupUrl ?? null,
     backupLabel: "Windows Backup",
@@ -68,6 +70,8 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
   const macDownloads = [
     {
       label: t("downloadMacAppleSilicon"),
+      icon: "/download-icons/macos-arm64.png",
+      iconClass: "download-system-icon-macos-arm64",
       href: macArmDelivery?.primaryUrl ?? getFallbackDownload("macos_arm64"),
       backupHref: macArmDelivery?.backupUrl ?? null,
       backupLabel: "macOS M chip Backup",
@@ -76,6 +80,8 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
     },
     {
       label: t("downloadMacIntel"),
+      icon: "/download-icons/macos-intel.png",
+      iconClass: "download-system-icon-macos-intel",
       href: macIntelDelivery?.primaryUrl ?? getFallbackDownload("macos_x64"),
       backupHref: macIntelDelivery?.backupUrl ?? null,
       backupLabel: "macOS Intel Backup",
@@ -121,6 +127,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
                       aria-disabled="true"
                       className={`${downloadLinkClass} download-primary-link cursor-not-allowed opacity-55`}
                     >
+                      <Image alt="" aria-hidden="true" className="download-system-icon download-system-icon-primary" height={96} src={windowsDownload.icon} width={96} />
                       <span className="download-primary-copy">
                         <span className="download-badge">{t("downloadWindowsBadge")}</span>
                         <span>{windowsDownload.label}</span>
@@ -132,6 +139,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
                 ) : (
                   <>
                     <a className={`${downloadLinkClass} download-primary-link`} href={windowsDownload.href}>
+                      <Image alt="" aria-hidden="true" className="download-system-icon download-system-icon-primary" height={96} src={windowsDownload.icon} width={96} />
                       <span className="download-primary-copy">
                         <span className="download-badge">{t("downloadWindowsBadge")}</span>
                         <span>{windowsDownload.label}</span>
@@ -155,6 +163,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
                         aria-disabled="true"
                         className={`${downloadLinkClass} download-secondary-link cursor-not-allowed opacity-55`}
                       >
+                        <Image alt="" aria-hidden="true" className={`download-system-icon download-system-icon-secondary ${download.iconClass}`} height={64} src={download.icon} width={64} />
                         <span>{download.label}</span>
                         <span aria-hidden="true" className="download-dot" />
                       </span>
@@ -163,6 +172,7 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
                   ) : (
                     <div className="flex flex-col gap-2" key={download.label}>
                       <a className={`${downloadLinkClass} download-secondary-link`} href={download.href}>
+                        <Image alt="" aria-hidden="true" className={`download-system-icon download-system-icon-secondary ${download.iconClass}`} height={64} src={download.icon} width={64} />
                         <span>{download.label}</span>
                         <span aria-hidden="true" className="download-dot" />
                       </a>

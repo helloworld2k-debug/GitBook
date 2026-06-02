@@ -145,7 +145,8 @@ body {
     linear-gradient(135deg, #06b6d4 0%, #2563eb 46%, #7c3aed 100%);
   box-shadow: 0 18px 46px rgba(37, 99, 235, 0.32), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   color: #fff;
-  justify-content: space-between;
+  gap: 0.9rem;
+  justify-content: flex-start;
   min-height: 4.25rem;
   padding-inline: 1.1rem;
 }
@@ -177,8 +178,40 @@ body {
 
 .download-primary-copy {
   display: grid;
+  flex: 1;
   gap: 0.32rem;
+  min-width: 0;
   text-align: left;
+}
+
+.download-system-icon {
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
+  pointer-events: none;
+  transition: filter 220ms ease, transform 220ms ease;
+}
+
+.download-system-icon-primary {
+  filter: drop-shadow(0 0 16px rgba(34, 211, 238, 0.36));
+  height: 3.05rem;
+  margin-block: -0.28rem;
+  width: 3.05rem;
+}
+
+.download-system-icon-secondary {
+  filter: drop-shadow(0 0 10px rgba(103, 232, 249, 0.2));
+  height: 2rem;
+  margin-block: -0.2rem;
+  width: 2rem;
+}
+
+.download-system-icon-macos-arm64 {
+  filter: drop-shadow(0 0 12px rgba(103, 232, 249, 0.28)) saturate(1.14);
+}
+
+.download-system-icon-macos-intel {
+  filter: drop-shadow(0 0 12px rgba(167, 139, 250, 0.3)) hue-rotate(18deg) saturate(1.18);
 }
 
 .download-badge {
@@ -207,6 +240,12 @@ body {
   transform: translateX(0.18rem);
 }
 
+.download-primary-card:hover .download-system-icon-primary,
+.download-primary-link:focus-visible .download-system-icon-primary {
+  filter: drop-shadow(0 0 22px rgba(34, 211, 238, 0.5));
+  transform: translateY(-1px) scale(1.04);
+}
+
 .download-mac-group {
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 0.75rem;
@@ -226,7 +265,14 @@ body {
   border: 1px solid rgba(103, 232, 249, 0.2);
   background: rgba(255, 255, 255, 0.075);
   color: #cffafe;
+  gap: 0.65rem;
   justify-content: space-between;
+}
+
+.download-secondary-link > span:first-of-type {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
 }
 
 .download-secondary-link:hover,
@@ -249,6 +295,12 @@ body {
 .download-secondary-link:hover .download-dot,
 .download-secondary-link:focus-visible .download-dot {
   transform: translateX(0.16rem) scale(1.16);
+}
+
+.download-secondary-link:hover .download-system-icon-secondary,
+.download-secondary-link:focus-visible .download-system-icon-secondary {
+  filter: drop-shadow(0 0 15px rgba(103, 232, 249, 0.36));
+  transform: translateY(-1px) scale(1.05);
 }
 
 .download-backup-link {
@@ -287,7 +339,8 @@ body {
   .download-primary-link,
   .download-secondary-link,
   .download-arrow,
-  .download-dot {
+  .download-dot,
+  .download-system-icon {
     transition: none;
   }
 
@@ -297,8 +350,12 @@ body {
   .download-secondary-link:focus-visible,
   .download-primary-card:hover .download-arrow,
   .download-primary-link:focus-visible .download-arrow,
+  .download-primary-card:hover .download-system-icon-primary,
+  .download-primary-link:focus-visible .download-system-icon-primary,
   .download-secondary-link:hover .download-dot,
-  .download-secondary-link:focus-visible .download-dot {
+  .download-secondary-link:focus-visible .download-dot,
+  .download-secondary-link:hover .download-system-icon-secondary,
+  .download-secondary-link:focus-visible .download-system-icon-secondary {
     transform: none;
   }
 
