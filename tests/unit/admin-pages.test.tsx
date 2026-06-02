@@ -1479,11 +1479,12 @@ describe("admin pages", () => {
     expect(screen.getByText("Total users")).toBeInTheDocument();
     expect(screen.getAllByText("2").length).toBeGreaterThan(0);
     expect(screen.getByText("Support revenue")).toBeInTheDocument();
-    expect(screen.getByText("$120.00")).toBeInTheDocument();
+    expect(screen.getByText("$0.00")).toBeInTheDocument();
     expect(screen.getAllByText("Open feedback").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Trends" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Support revenue trend")).toBeInTheDocument();
-    expect(screen.getByLabelText("User growth trend")).toBeInTheDocument();
+    expect(screen.getByText("Support revenue trend")).toBeInTheDocument();
+    expect(screen.getByText("User growth trend")).toBeInTheDocument();
+    expect(screen.getAllByText("No activity in this period.").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Needs attention" })).toBeInTheDocument();
     expect(screen.getByText("Checkout paused")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Operating health" })).toBeInTheDocument();

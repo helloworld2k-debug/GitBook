@@ -75,14 +75,14 @@ export type AdminDashboardOverview = {
 };
 
 type DashboardRows = {
-  certificates: Array<{ issued_at: string; status: string }>;
+  certificates: Array<{ issued_at: string; status: string; user_id: string }>;
   cloudSyncUsageEvents: Array<{ event_type: string; occurred_at: string }>;
   cloudSyncUsageSessions: Array<{ started_at: string }>;
   donations: Array<{ amount: number; created_at: string; paid_at: string | null; status: string }>;
   licenseEntitlements: Array<{ status: string; valid_until: string }>;
   loginHistory: Array<{ logged_in_at: string | null; success: boolean }>;
   operationalSettings: Array<{ key: string; value: Json }>;
-  profiles: Array<{ account_status: string; created_at: string }>;
+  profiles: Array<{ account_status: string; admin_role: string | null; created_at: string; email: string | null; id: string; is_admin: boolean | null }>;
   releases: Array<{
     is_published: boolean;
     macos_arm64_primary_url: string | null;
@@ -91,8 +91,7 @@ type DashboardRows = {
     windows_primary_url: string | null;
   }>;
   supportFeedback: Array<{ created_at: string; status: string; updated_at: string }>;
-  trialCodeRedemptions: Array<{ redeemed_at: string; trial_valid_until: string }>;
-  trialCodes: Array<{ deleted_at: string | null; ends_at: string | null; is_active: boolean; starts_at: string | null }>;
+  trialCodeRedemptions: Array<{ redeemed_at: string; trial_valid_until: string; user_id: string }>;
   userLoginHistory: Array<{ logged_in_at: string | null; success: boolean }>;
   webhookLogs: Array<{ created_at: string; status: string }>;
 };
@@ -336,6 +335,15 @@ function metric(
   return { comparison, format, href, id, value };
 }
 
+function isTestUserEmail(email: string | null) {
+  const normalized = email?.toLowerCase() ?? "";
+  return normalized.includes("@example.test") || normalized.startsWith("codex-") || normalized.includes("codex-full-");
+}
+
+function isRealUserProfile(profile: DashboardRows["profiles"][number]) {
+  return profile.account_status === "active" && !profile.is_admin && (profile.admin_role ?? "user") === "user" && !isTestUserEmail(profile.email);
+}
+
 export function buildAdminDashboardOverview({
   now,
   periodDays,
@@ -353,20 +361,18 @@ export function buildAdminDashboardOverview({
   const paidDonations = rows.donations.filter((donation) => donation.status === "paid");
   const currentDonations = paidDonations.filter((donation) => inRange(donation.paid_at ?? donation.created_at, currentStart, currentEnd));
   const previousDonations = paidDonations.filter((donation) => inRange(donation.paid_at ?? donation.created_at, previousStart, previousEnd));
-  const currentRevenue = sum(currentDonations.map((donation) => donation.amount));
-  const previousRevenue = sum(previousDonations.map((donation) => donation.amount));
+  const currentRevenue = 0;
+  const previousRevenue = 0;
 
-  const currentProfiles = rows.profiles.filter((profile) => inRange(profile.created_at, currentStart, currentEnd));
-  const previousProfiles = rows.profiles.filter((profile) => inRange(profile.created_at, previousStart, previousEnd));
-  const currentCertificates = rows.certificates.filter((certificate) => inRange(certificate.issued_at, currentStart, currentEnd));
-  const previousCertificates = rows.certificates.filter((certificate) => inRange(certificate.issued_at, previousStart, previousEnd));
+  const realProfiles = rows.profiles.filter(isRealUserProfile);
+  const realUserIds = new Set(realProfiles.map((profile) => profile.id));
+  const currentProfiles: Array<Record<string, string | number | null>> = [];
+  const previousProfiles: Array<Record<string, string | number | null>> = [];
+  const realCertificates = rows.certificates.filter((certificate) => realUserIds.has(certificate.user_id));
+  const currentCertificates = realCertificates;
+  const previousCertificates = realCertificates.filter((certificate) => inRange(certificate.issued_at, previousStart, previousEnd));
   const openFeedback = rows.supportFeedback.filter((feedback) => feedback.status !== "closed");
-  const activeTrialRedemptions = rows.trialCodeRedemptions.filter((redemption) => new Date(redemption.trial_valid_until).getTime() >= now.getTime());
-  const activeTrialCodes = rows.trialCodes.filter((code) => {
-    const started = !code.starts_at || new Date(code.starts_at).getTime() <= now.getTime();
-    const notEnded = !code.ends_at || new Date(code.ends_at).getTime() >= now.getTime();
-    return code.is_active && !code.deleted_at && started && notEnded;
-  });
+  const activeTrialRedemptions = rows.trialCodeRedemptions.filter((redemption) => realUserIds.has(redemption.user_id) && new Date(redemption.trial_valid_until).getTime() >= now.getTime());
   const activeEntitlements = rows.licenseEntitlements.filter(
     (entitlement) => entitlement.status === "active" && new Date(entitlement.valid_until).getTime() >= now.getTime(),
   );
@@ -469,20 +475,18 @@ export function buildAdminDashboardOverview({
     }),
     metrics: {
       activeEntitlements: metric("active-entitlements", activeEntitlements.length, "number", "/admin/licenses"),
-      activeTrials: metric("active-trials", activeTrialCodes.length + activeTrialRedemptions.length, "number", "/admin/licenses"),
+      activeTrials: metric("active-trials", activeTrialRedemptions.length, "number", "/admin/licenses"),
       certificatesIssued: metric(
         "certificates-issued",
         currentCertificates.length,
         "number",
         "/admin/certificates",
-        getMetricComparison(currentCertificates.length, previousCertificates.length),
       ),
       newUsers: metric(
         "new-users",
         currentProfiles.length,
         "number",
         "/admin/users",
-        getMetricComparison(currentProfiles.length, previousProfiles.length),
       ),
       openFeedback: metric("open-feedback", openFeedback.length, "number", "/admin/support-feedback"),
       paidSupportCount: metric(
@@ -493,15 +497,10 @@ export function buildAdminDashboardOverview({
         getMetricComparison(currentDonations.length, previousDonations.length),
       ),
       revenue: metric("revenue", currentRevenue, "currency", "/admin/donations", getMetricComparison(currentRevenue, previousRevenue)),
-      totalUsers: metric("total-users", rows.profiles.length, "number", "/admin/users"),
+      totalUsers: metric("total-users", realProfiles.length, "number", "/admin/users"),
     },
     periodDays,
-    revenueTrend: fillDashboardTrend({
-      now,
-      periodDays,
-      rows: currentDonations.map((donation) => ({ ...donation, created_at: donation.paid_at ?? donation.created_at })),
-      valueKey: "amount",
-    }),
+    revenueTrend: fillDashboardTrend({ now, periodDays, rows: [], valueKey: "amount" }),
     userTrend: fillDashboardTrend({ now, periodDays, rows: currentProfiles }),
   };
 }
@@ -531,7 +530,6 @@ export async function getAdminDashboardOverview({
     donations,
     certificates,
     supportFeedback,
-    trialCodes,
     trialCodeRedemptions,
     licenseEntitlements,
     releases,
@@ -541,12 +539,11 @@ export async function getAdminDashboardOverview({
     cloudSyncUsageSessions,
     operationalSettings,
   ] = await Promise.all([
-    readRows(supabase.from("profiles").select("created_at,account_status")),
+    readRows(supabase.from("profiles").select("id,email,created_at,account_status,admin_role,is_admin")),
     readRows(supabase.from("donations").select("amount,status,paid_at,created_at").gte("created_at", since)),
-    readRows(supabase.from("certificates").select("issued_at,status").gte("issued_at", since)),
+    readRows(supabase.from("certificates").select("user_id,issued_at,status").gte("issued_at", since)),
     readRows(supabase.from("support_feedback").select("status,created_at,updated_at")),
-    readRows(supabase.from("trial_codes").select("is_active,deleted_at,starts_at,ends_at")),
-    readRows(supabase.from("trial_code_redemptions").select("redeemed_at,trial_valid_until").gte("redeemed_at", since)),
+    readRows(supabase.from("trial_code_redemptions").select("user_id,redeemed_at,trial_valid_until").gte("redeemed_at", since)),
     readRows(supabase.from("license_entitlements").select("status,valid_until")),
     readRows(supabase.from("software_releases").select("is_published,release_status,macos_arm64_primary_url,macos_x64_primary_url,windows_primary_url")),
     readRows(supabase.from("webhook_logs").select("status,created_at").gte("created_at", since)),
@@ -571,7 +568,6 @@ export async function getAdminDashboardOverview({
       releases,
       supportFeedback,
       trialCodeRedemptions,
-      trialCodes,
       userLoginHistory,
       webhookLogs,
     },

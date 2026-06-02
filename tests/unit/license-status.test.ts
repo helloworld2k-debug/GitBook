@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/license/status/route";
 import { hashDesktopSecret } from "@/lib/license/hash";
 import { readBearerToken, validateDesktopSession } from "@/lib/license/desktop-session";
@@ -430,6 +430,8 @@ describe("desktop session helpers", () => {
 
 describe("license status route", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-01T00:00:00.000Z"));
     routeMocks.createSupabaseAdminClient.mockReset().mockReturnValue(
       createMaybeSingleClient({
         desktop_sessions: {
@@ -448,6 +450,10 @@ describe("license status route", () => {
         },
       }),
     );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("returns unsupported_feature for non-cloud-sync feature queries", async () => {

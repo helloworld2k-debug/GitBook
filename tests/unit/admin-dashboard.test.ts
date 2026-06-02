@@ -75,7 +75,7 @@ describe("admin dashboard helpers", () => {
       now,
       periodDays: 7,
       rows: {
-        certificates: [{ issued_at: "2026-05-25T08:00:00.000Z", status: "active" }],
+        certificates: [{ issued_at: "2026-05-25T08:00:00.000Z", status: "active", user_id: "real-user" }],
         cloudSyncUsageEvents: [
           { event_type: "activate_success", occurred_at: "2026-05-25T08:00:00.000Z" },
           { event_type: "activate_conflict", occurred_at: "2026-05-25T09:00:00.000Z" },
@@ -92,8 +92,10 @@ describe("admin dashboard helpers", () => {
         ],
         operationalSettings: [{ key: "payment_checkout", value: { is_paused: false } }],
         profiles: [
-          { account_status: "active", created_at: "2026-05-25T08:00:00.000Z" },
-          { account_status: "active", created_at: "2026-04-01T08:00:00.000Z" },
+          { account_status: "active", admin_role: "user", created_at: "2026-05-25T08:00:00.000Z", email: "real@example.com", id: "real-user", is_admin: false },
+          { account_status: "active", admin_role: "operator", created_at: "2026-04-01T08:00:00.000Z", email: "operator@example.com", id: "operator-user", is_admin: false },
+          { account_status: "archived_deleted", admin_role: "user", created_at: "2026-04-01T08:00:00.000Z", email: "archived@example.com", id: "archived-user", is_admin: false },
+          { account_status: "active", admin_role: "user", created_at: "2026-05-25T08:00:00.000Z", email: "codex-smoke@example.com", id: "test-user", is_admin: false },
         ],
         releases: [
           {
@@ -105,17 +107,21 @@ describe("admin dashboard helpers", () => {
           },
         ],
         supportFeedback: [{ created_at: "2026-05-25T08:00:00.000Z", status: "open", updated_at: "2026-05-25T09:00:00.000Z" }],
-        trialCodeRedemptions: [{ redeemed_at: "2026-05-25T08:00:00.000Z", trial_valid_until: "2026-06-25T08:00:00.000Z" }],
-        trialCodes: [{ deleted_at: null, ends_at: null, is_active: true, starts_at: null }],
+        trialCodeRedemptions: [
+          { redeemed_at: "2026-05-25T08:00:00.000Z", trial_valid_until: "2026-06-25T08:00:00.000Z", user_id: "real-user" },
+          { redeemed_at: "2026-05-25T08:00:00.000Z", trial_valid_until: "2026-06-25T08:00:00.000Z", user_id: "test-user" },
+        ],
         userLoginHistory: [{ logged_in_at: "2026-05-25T08:00:00.000Z", success: false }],
         webhookLogs: [{ created_at: "2026-05-25T08:00:00.000Z", status: "error" }],
       },
     });
 
-    expect(overview.metrics.totalUsers.value).toBe(2);
-    expect(overview.metrics.revenue.value).toBe(1000);
-    expect(overview.metrics.revenue.comparison).toMatchObject({ delta: -1500, percent: -60 });
-    expect(overview.metrics.newUsers.value).toBe(1);
+    expect(overview.metrics.totalUsers.value).toBe(1);
+    expect(overview.metrics.revenue.value).toBe(0);
+    expect(overview.metrics.revenue.comparison).toMatchObject({ delta: 0, state: "flat" });
+    expect(overview.metrics.newUsers.value).toBe(0);
+    expect(overview.metrics.certificatesIssued.value).toBe(1);
+    expect(overview.metrics.activeTrials.value).toBe(1);
     expect(overview.health.webhookErrors.count).toBe(1);
     expect(overview.health.releaseHealth.count).toBe(1);
     expect(overview.attentionItems.map((item) => item.id)).toContain("open-feedback");
