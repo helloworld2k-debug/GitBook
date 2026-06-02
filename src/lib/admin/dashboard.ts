@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/database.types";
 
 export type AdminDashboardPeriod = 7 | 30 | 90;
+export type AdminDashboardCloudSyncWindow = AdminDashboardPeriod | "all";
 export type AdminDashboardMetricFormat = "currency" | "number" | "percent";
 export type AdminDashboardSeverity = "critical" | "info" | "success" | "warning";
 
@@ -49,8 +50,49 @@ export type AdminDashboardHealthItem = {
   severity: AdminDashboardSeverity;
 };
 
+export type AdminDashboardCloudSyncSessionRow = {
+  deviceId: string;
+  durationSeconds: number;
+  endReason: string | null;
+  endedAt: string | null;
+  id: string;
+  lastHeartbeatAt: string;
+  startedAt: string;
+};
+
+export type AdminDashboardCloudSyncUserRow = {
+  active: boolean;
+  conflictCount: number;
+  cooldownCount: number;
+  currentDeviceId: string | null;
+  currentPlatform: string | null;
+  displayName: string | null;
+  email: string | null;
+  lastCloudSyncStartedAt: string | null;
+  lastDesktopSeenAt: string | null;
+  latestSessionDurationSeconds: number;
+  sessionCount: number;
+  sessions: AdminDashboardCloudSyncSessionRow[];
+  totalDurationSeconds: number;
+  userId: string;
+};
+
+export type AdminDashboardCloudSyncMetrics = {
+  activeUsers: number;
+  averageSessionDurationSeconds: number;
+  enabledUsersInWindow: number;
+  entitledUsers: number;
+  sessionCount: number;
+  totalDurationSeconds: number;
+};
+
 export type AdminDashboardOverview = {
   attentionItems: AdminDashboardAttentionItem[];
+  cloudSync: {
+    metrics: AdminDashboardCloudSyncMetrics;
+    users: AdminDashboardCloudSyncUserRow[];
+    window: AdminDashboardCloudSyncWindow;
+  };
   health: {
     cloudSyncConflicts: AdminDashboardHealthItem;
     loginFailures: AdminDashboardHealthItem;
@@ -76,13 +118,32 @@ export type AdminDashboardOverview = {
 
 type DashboardRows = {
   certificates: Array<{ issued_at: string; status: string; user_id: string }>;
-  cloudSyncUsageEvents: Array<{ event_type: string; occurred_at: string }>;
-  cloudSyncUsageSessions: Array<{ started_at: string }>;
+  cloudSyncLeases: Array<{
+    desktop_session_id: string;
+    device_id: string;
+    expires_at: string;
+    id: string;
+    lease_started_at: string;
+    released_at: string | null;
+    revoked_at: string | null;
+    user_id: string;
+  }>;
+  cloudSyncUsageEvents: Array<{ event_type: string; occurred_at: string; user_id: string }>;
+  cloudSyncUsageSessions: Array<{
+    device_id: string;
+    ended_at: string | null;
+    end_reason: string | null;
+    id: string;
+    last_heartbeat_at: string;
+    started_at: string;
+    user_id: string;
+  }>;
+  desktopSessions: Array<{ id: string; last_seen_at: string; platform: string | null; user_id: string }>;
   donations: Array<{ amount: number; created_at: string; paid_at: string | null; status: string }>;
-  licenseEntitlements: Array<{ status: string; valid_until: string }>;
+  licenseEntitlements: Array<{ feature_code?: string; status: string; user_id?: string; valid_until: string }>;
   loginHistory: Array<{ logged_in_at: string | null; success: boolean }>;
   operationalSettings: Array<{ key: string; value: Json }>;
-  profiles: Array<{ account_status: string; admin_role: string | null; created_at: string; email: string | null; id: string; is_admin: boolean | null }>;
+  profiles: Array<{ account_status: string; admin_role: string | null; created_at: string; display_name?: string | null; email: string | null; id: string; is_admin: boolean | null }>;
   releases: Array<{
     is_published: boolean;
     macos_arm64_primary_url: string | null;
@@ -104,6 +165,12 @@ export function getAdminDashboardPeriod(value: string | string[] | null | undefi
   const parsed = Number(normalized);
 
   return allowedPeriods.includes(parsed as AdminDashboardPeriod) ? (parsed as AdminDashboardPeriod) : 30;
+}
+
+export function getAdminDashboardCloudSyncWindow(value: string | string[] | null | undefined): AdminDashboardCloudSyncWindow {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (raw === "all") return "all";
+  return getAdminDashboardPeriod(raw);
 }
 
 function startOfUtcDay(value: Date) {
@@ -136,6 +203,33 @@ function inRange(value: string | null, start: Date, end: Date) {
 
 function sum(values: number[]) {
   return values.reduce((total, value) => total + value, 0);
+}
+
+function timestamp(value: string | null | undefined) {
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function maxDate(values: Array<string | null | undefined>) {
+  return values.reduce<string | null>((latest, value) => {
+    if (!value) return latest;
+    return timestamp(value) > timestamp(latest) ? value : latest;
+  }, null);
+}
+
+function usageDurationSeconds(
+  session: Pick<DashboardRows["cloudSyncUsageSessions"][number], "ended_at" | "last_heartbeat_at" | "started_at">,
+  now: Date,
+) {
+  const end = timestamp(session.ended_at ?? session.last_heartbeat_at) || now.getTime();
+  const start = timestamp(session.started_at);
+  if (!start || end <= start) return 0;
+  return Math.round((end - start) / 1000);
+}
+
+function getCloudSyncWindowStart(now: Date, window: AdminDashboardCloudSyncWindow) {
+  return window === "all" ? null : periodStart(now, window);
 }
 
 export function fillDashboardTrend({
@@ -344,11 +438,161 @@ function isRealUserProfile(profile: DashboardRows["profiles"][number]) {
   return profile.account_status === "active" && !profile.is_admin && (profile.admin_role ?? "user") === "user" && !isTestUserEmail(profile.email);
 }
 
+function buildCloudSyncMonitoring({
+  now,
+  realProfiles,
+  rows,
+  window,
+}: {
+  now: Date;
+  realProfiles: DashboardRows["profiles"];
+  rows: DashboardRows;
+  window: AdminDashboardCloudSyncWindow;
+}) {
+  const realUsersById = new Map(realProfiles.map((profile) => [profile.id, profile]));
+  const realUserIds = new Set(realUsersById.keys());
+  const windowStart = getCloudSyncWindowStart(now, window);
+  const windowEnd = now;
+
+  const activeLeases = rows.cloudSyncLeases.filter((lease) =>
+    realUserIds.has(lease.user_id) &&
+    !lease.revoked_at &&
+    !lease.released_at &&
+    timestamp(lease.expires_at) > now.getTime()
+  );
+  const activeLeaseByUser = new Map<string, DashboardRows["cloudSyncLeases"][number]>();
+  for (const lease of activeLeases) {
+    const previous = activeLeaseByUser.get(lease.user_id);
+    if (!previous || timestamp(lease.lease_started_at) > timestamp(previous.lease_started_at)) {
+      activeLeaseByUser.set(lease.user_id, lease);
+    }
+  }
+
+  const activeCloudSyncEntitlements = rows.licenseEntitlements.filter((entitlement) =>
+    realUserIds.has(entitlement.user_id ?? "") &&
+    (entitlement.feature_code ?? "cloud_sync") === "cloud_sync" &&
+    entitlement.status === "active" &&
+    timestamp(entitlement.valid_until) >= now.getTime()
+  );
+  const entitledUserIds = new Set(activeCloudSyncEntitlements.map((entitlement) => entitlement.user_id).filter(Boolean));
+
+  const sessionsInWindow = rows.cloudSyncUsageSessions.filter((session) =>
+    realUserIds.has(session.user_id) &&
+    (!windowStart || inRange(session.started_at, windowStart, windowEnd))
+  );
+  const eventsInWindow = rows.cloudSyncUsageEvents.filter((event) =>
+    realUserIds.has(event.user_id) &&
+    (!windowStart || inRange(event.occurred_at, windowStart, windowEnd))
+  );
+
+  const desktopSessionsByUser = new Map<string, DashboardRows["desktopSessions"]>();
+  for (const session of rows.desktopSessions.filter((session) => realUserIds.has(session.user_id))) {
+    const entries = desktopSessionsByUser.get(session.user_id) ?? [];
+    entries.push(session);
+    desktopSessionsByUser.set(session.user_id, entries);
+  }
+
+  const sessionsByUser = new Map<string, DashboardRows["cloudSyncUsageSessions"]>();
+  for (const session of sessionsInWindow) {
+    const entries = sessionsByUser.get(session.user_id) ?? [];
+    entries.push(session);
+    sessionsByUser.set(session.user_id, entries);
+  }
+
+  const eventsByUser = new Map<string, DashboardRows["cloudSyncUsageEvents"]>();
+  for (const event of eventsInWindow) {
+    const entries = eventsByUser.get(event.user_id) ?? [];
+    entries.push(event);
+    eventsByUser.set(event.user_id, entries);
+  }
+
+  const relevantUserIds = new Set<string>([
+    ...activeLeaseByUser.keys(),
+    ...(Array.from(entitledUserIds).filter((id): id is string => typeof id === "string")),
+    ...sessionsByUser.keys(),
+    ...eventsByUser.keys(),
+  ]);
+
+  const users: AdminDashboardCloudSyncUserRow[] = Array.from(relevantUserIds)
+    .reduce<AdminDashboardCloudSyncUserRow[]>((items, userId) => {
+      const profile = realUsersById.get(userId);
+      if (!profile) return items;
+
+      const userSessions = (sessionsByUser.get(userId) ?? []).sort((left, right) => timestamp(right.started_at) - timestamp(left.started_at));
+      const userEvents = eventsByUser.get(userId) ?? [];
+      const userDesktopSessions = desktopSessionsByUser.get(userId) ?? [];
+      const latestDesktopSession = userDesktopSessions.reduce<DashboardRows["desktopSessions"][number] | null>((latest, session) => {
+        if (!latest || timestamp(session.last_seen_at) > timestamp(latest.last_seen_at)) return session;
+        return latest;
+      }, null);
+      const activeLease = activeLeaseByUser.get(userId);
+      const currentDesktopSession = activeLease
+        ? userDesktopSessions.find((session) => session.id === activeLease.desktop_session_id) ?? null
+        : null;
+      const sessionRows = userSessions.slice(0, 3).map<AdminDashboardCloudSyncSessionRow>((session) => ({
+        deviceId: session.device_id,
+        durationSeconds: usageDurationSeconds(session, now),
+        endReason: session.end_reason,
+        endedAt: session.ended_at,
+        id: session.id,
+        lastHeartbeatAt: session.last_heartbeat_at,
+        startedAt: session.started_at,
+      }));
+      const durations = userSessions.map((session) => usageDurationSeconds(session, now));
+      const latestSession = userSessions[0];
+      const lastCloudSyncStartedAt = maxDate([
+        ...userSessions.map((session) => session.started_at),
+        ...rows.cloudSyncLeases.filter((lease) => lease.user_id === userId).map((lease) => lease.lease_started_at),
+      ]);
+
+      items.push({
+        active: Boolean(activeLease),
+        conflictCount: userEvents.filter((event) => event.event_type === "activate_conflict").length,
+        cooldownCount: userEvents.filter((event) => event.event_type === "cooldown_waiting").length,
+        currentDeviceId: activeLease?.device_id ?? latestSession?.device_id ?? null,
+        currentPlatform: currentDesktopSession?.platform ?? latestDesktopSession?.platform ?? null,
+        displayName: profile.display_name ?? null,
+        email: profile.email,
+        lastCloudSyncStartedAt,
+        lastDesktopSeenAt: latestDesktopSession?.last_seen_at ?? null,
+        latestSessionDurationSeconds: latestSession ? usageDurationSeconds(latestSession, now) : 0,
+        sessionCount: userSessions.length,
+        sessions: sessionRows,
+        totalDurationSeconds: sum(durations),
+        userId,
+      });
+      return items;
+    }, [])
+    .sort((left, right) => {
+      if (left.active !== right.active) return left.active ? -1 : 1;
+      return timestamp(right.lastCloudSyncStartedAt) - timestamp(left.lastCloudSyncStartedAt);
+    })
+    .slice(0, 25);
+
+  const totalDurationSeconds = sum(sessionsInWindow.map((session) => usageDurationSeconds(session, now)));
+  const enabledUsersInWindow = new Set(sessionsInWindow.map((session) => session.user_id)).size;
+
+  return {
+    metrics: {
+      activeUsers: activeLeaseByUser.size,
+      averageSessionDurationSeconds: sessionsInWindow.length > 0 ? Math.round(totalDurationSeconds / sessionsInWindow.length) : 0,
+      enabledUsersInWindow,
+      entitledUsers: entitledUserIds.size,
+      sessionCount: sessionsInWindow.length,
+      totalDurationSeconds,
+    },
+    users,
+    window,
+  };
+}
+
 export function buildAdminDashboardOverview({
+  cloudSyncWindow = 30,
   now,
   periodDays,
   rows,
 }: {
+  cloudSyncWindow?: AdminDashboardCloudSyncWindow;
   now: Date;
   periodDays: AdminDashboardPeriod;
   rows: DashboardRows;
@@ -367,10 +611,8 @@ export function buildAdminDashboardOverview({
   const realProfiles = rows.profiles.filter(isRealUserProfile);
   const realUserIds = new Set(realProfiles.map((profile) => profile.id));
   const currentProfiles: Array<Record<string, string | number | null>> = [];
-  const previousProfiles: Array<Record<string, string | number | null>> = [];
   const realCertificates = rows.certificates.filter((certificate) => realUserIds.has(certificate.user_id));
   const currentCertificates = realCertificates;
-  const previousCertificates = realCertificates.filter((certificate) => inRange(certificate.issued_at, previousStart, previousEnd));
   const openFeedback = rows.supportFeedback.filter((feedback) => feedback.status !== "closed");
   const activeTrialRedemptions = rows.trialCodeRedemptions.filter((redemption) => realUserIds.has(redemption.user_id) && new Date(redemption.trial_valid_until).getTime() >= now.getTime());
   const activeEntitlements = rows.licenseEntitlements.filter(
@@ -384,6 +626,7 @@ export function buildAdminDashboardOverview({
   const failedReleases = rows.releases.filter((release) => release.release_status === "failed");
   const missingReleaseAssets = rows.releases.filter((release) => release.is_published && hasMissingReleaseAsset(release));
   const paymentPaused = isPaymentPaused(rows.operationalSettings);
+  const cloudSync = buildCloudSyncMonitoring({ now, realProfiles, rows, window: cloudSyncWindow });
 
   const attentionItems: AdminDashboardAttentionItem[] = [
     ...(openFeedback.length > 0
@@ -430,6 +673,7 @@ export function buildAdminDashboardOverview({
 
   return {
     attentionItems,
+    cloudSync,
     health: {
       cloudSyncConflicts: {
         count: cloudSyncConflicts.length,
@@ -516,14 +760,27 @@ async function readRows<T>(promise: PromiseLike<{ data: T[] | null; error: unkno
 }
 
 export async function getAdminDashboardOverview({
+  cloudSyncWindow = 30,
   now = new Date(),
   periodDays,
 }: {
+  cloudSyncWindow?: AdminDashboardCloudSyncWindow;
   now?: Date;
   periodDays: AdminDashboardPeriod;
 }) {
   const supabase = createSupabaseAdminClient();
   const since = previousPeriodStart(now, periodDays).toISOString();
+  const cloudSyncStart = getCloudSyncWindowStart(now, cloudSyncWindow);
+  const cloudSyncSince = cloudSyncStart ? cloudSyncStart.toISOString() : null;
+  const cloudSyncQuerySince = cloudSyncSince && timestamp(cloudSyncSince) > timestamp(since) ? since : cloudSyncSince;
+
+  const cloudSyncUsageEventsQuery = supabase
+    .from("cloud_sync_usage_events")
+    .select("user_id,event_type,occurred_at");
+  const cloudSyncUsageSessionsQuery = supabase
+    .from("cloud_sync_usage_sessions")
+    .select("id,user_id,device_id,started_at,last_heartbeat_at,ended_at,end_reason")
+    .order("started_at", { ascending: false });
 
   const [
     profiles,
@@ -532,6 +789,8 @@ export async function getAdminDashboardOverview({
     supportFeedback,
     trialCodeRedemptions,
     licenseEntitlements,
+    desktopSessions,
+    cloudSyncLeases,
     releases,
     webhookLogs,
     userLoginHistory,
@@ -539,27 +798,32 @@ export async function getAdminDashboardOverview({
     cloudSyncUsageSessions,
     operationalSettings,
   ] = await Promise.all([
-    readRows(supabase.from("profiles").select("id,email,created_at,account_status,admin_role,is_admin")),
+    readRows(supabase.from("profiles").select("id,email,display_name,created_at,account_status,admin_role,is_admin")),
     readRows(supabase.from("donations").select("amount,status,paid_at,created_at").gte("created_at", since)),
     readRows(supabase.from("certificates").select("user_id,issued_at,status").gte("issued_at", since)),
     readRows(supabase.from("support_feedback").select("status,created_at,updated_at")),
     readRows(supabase.from("trial_code_redemptions").select("user_id,redeemed_at,trial_valid_until").gte("redeemed_at", since)),
-    readRows(supabase.from("license_entitlements").select("status,valid_until")),
+    readRows(supabase.from("license_entitlements").select("user_id,feature_code,status,valid_until")),
+    readRows(supabase.from("desktop_sessions").select("id,user_id,last_seen_at,platform").order("last_seen_at", { ascending: false }).limit(500)),
+    readRows(supabase.from("cloud_sync_leases").select("id,user_id,desktop_session_id,device_id,lease_started_at,expires_at,revoked_at,released_at").order("lease_started_at", { ascending: false }).limit(500)),
     readRows(supabase.from("software_releases").select("is_published,release_status,macos_arm64_primary_url,macos_x64_primary_url,windows_primary_url")),
     readRows(supabase.from("webhook_logs").select("status,created_at").gte("created_at", since)),
     readRows(supabase.from("user_login_history").select("success,logged_in_at").gte("logged_in_at", since)),
-    readRows(supabase.from("cloud_sync_usage_events").select("event_type,occurred_at").gte("occurred_at", since)),
-    readRows(supabase.from("cloud_sync_usage_sessions").select("started_at").gte("started_at", since)),
+    readRows(cloudSyncQuerySince ? cloudSyncUsageEventsQuery.gte("occurred_at", cloudSyncQuerySince) : cloudSyncUsageEventsQuery),
+    readRows(cloudSyncSince ? cloudSyncUsageSessionsQuery.gte("started_at", cloudSyncSince).limit(500) : cloudSyncUsageSessionsQuery.limit(500)),
     readRows(supabase.from("operational_settings").select("key,value")),
   ]);
 
   return buildAdminDashboardOverview({
+    cloudSyncWindow,
     now,
     periodDays,
     rows: {
       certificates,
+      cloudSyncLeases,
       cloudSyncUsageEvents,
       cloudSyncUsageSessions,
+      desktopSessions,
       donations,
       licenseEntitlements,
       loginHistory: userLoginHistory,

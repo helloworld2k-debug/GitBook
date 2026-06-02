@@ -145,6 +145,8 @@ function createAdminListQuery(data: unknown, error: Error | null = null) {
 function createDashboardQuery(data: unknown, error: Error | null = null) {
   const query = {
     gte: vi.fn(() => query),
+    limit: vi.fn(() => Promise.resolve({ data, error })),
+    order: vi.fn(() => query),
     select: vi.fn(() => query),
     then: (resolve: (value: { data: unknown; error: Error | null }) => unknown, reject: (reason: unknown) => unknown) =>
       Promise.resolve({ data, error }).then(resolve, reject),
@@ -155,18 +157,44 @@ function createDashboardQuery(data: unknown, error: Error | null = null) {
 
 function createDashboardAdminClient() {
   const rows: Record<string, unknown[]> = {
-    certificates: [{ issued_at: "2026-05-25T08:00:00.000Z", status: "active" }],
-    cloud_sync_usage_events: [{ event_type: "activate_conflict", occurred_at: "2026-05-25T08:00:00.000Z" }],
-    cloud_sync_usage_sessions: [{ started_at: "2026-05-25T08:00:00.000Z" }],
+    certificates: [{ issued_at: "2026-05-25T08:00:00.000Z", status: "active", user_id: "user-1" }],
+    cloud_sync_leases: [
+      {
+        desktop_session_id: "desktop-1",
+        device_id: "windows-pc",
+        expires_at: "2026-07-01T00:00:00.000Z",
+        id: "lease-1",
+        lease_started_at: "2026-05-25T08:00:00.000Z",
+        released_at: null,
+        revoked_at: null,
+        user_id: "user-1",
+      },
+    ],
+    cloud_sync_usage_events: [
+      { event_type: "activate_conflict", occurred_at: "2026-05-25T08:00:00.000Z", user_id: "user-1" },
+      { event_type: "cooldown_waiting", occurred_at: "2026-05-25T09:00:00.000Z", user_id: "user-1" },
+    ],
+    cloud_sync_usage_sessions: [
+      {
+        device_id: "windows-pc",
+        ended_at: "2026-05-25T09:00:00.000Z",
+        end_reason: "released",
+        id: "usage-1",
+        last_heartbeat_at: "2026-05-25T08:50:00.000Z",
+        started_at: "2026-05-25T08:00:00.000Z",
+        user_id: "user-1",
+      },
+    ],
+    desktop_sessions: [{ id: "desktop-1", last_seen_at: "2026-05-25T09:10:00.000Z", platform: "windows", user_id: "user-1" }],
     donations: [
       { amount: 12000, created_at: "2026-05-25T08:00:00.000Z", paid_at: "2026-05-25T08:30:00.000Z", status: "paid" },
       { amount: 24000, created_at: "2026-04-25T08:00:00.000Z", paid_at: "2026-04-25T08:30:00.000Z", status: "paid" },
     ],
-    license_entitlements: [{ status: "active", valid_until: "2026-07-01T00:00:00.000Z" }],
+    license_entitlements: [{ feature_code: "cloud_sync", status: "active", user_id: "user-1", valid_until: "2026-07-01T00:00:00.000Z" }],
     operational_settings: [{ key: "payment_checkout", value: { is_paused: true } }],
     profiles: [
-      { account_status: "active", created_at: "2026-05-25T08:00:00.000Z" },
-      { account_status: "active", created_at: "2026-04-01T08:00:00.000Z" },
+      { account_status: "active", admin_role: "user", created_at: "2026-05-25T08:00:00.000Z", display_name: "Ada Sync", email: "ada@example.com", id: "user-1", is_admin: false },
+      { account_status: "active", admin_role: "user", created_at: "2026-04-01T08:00:00.000Z", display_name: null, email: "grace@example.com", id: "user-2", is_admin: false },
     ],
     software_releases: [
       {
@@ -260,6 +288,42 @@ const testMessages = {
         comparisonFlat: "no change",
         comparisonUp: "+{value} vs previous period",
         comparisonDown: "{value} vs previous period",
+        cloudSyncMonitoringTitle: "Cloud sync operations monitor",
+        cloudSyncMonitoringDescription: "Track who is actively using cloud sync, when the desktop app was last online, and how long each user keeps sync enabled.",
+        cloudSyncWindowLabel: "Cloud sync usage window",
+        cloudSyncWindow7: "7 days",
+        cloudSyncWindow30: "30 days",
+        cloudSyncWindow90: "90 days",
+        cloudSyncWindowAll: "All time",
+        cloudSyncActiveUsers: "Active now",
+        cloudSyncEntitledUsers: "Entitled users",
+        cloudSyncEnabledUsers: "Enabled users",
+        cloudSyncSessionCount: "Sessions",
+        cloudSyncTotalDuration: "Total duration",
+        cloudSyncAverageDuration: "Average session",
+        cloudSyncUser: "User",
+        cloudSyncStatus: "Status",
+        cloudSyncActive: "Active",
+        cloudSyncInactive: "Inactive",
+        cloudSyncLastDesktopSeen: "Desktop last online",
+        cloudSyncLastStarted: "Last cloud sync start",
+        cloudSyncCurrentDevice: "Current device",
+        cloudSyncLatestDuration: "Latest duration",
+        cloudSyncUsageSummary: "Usage summary",
+        cloudSyncConflicts: "Conflicts",
+        cloudSyncCooldowns: "Cooldowns",
+        cloudSyncRecentSessions: "Recent sessions",
+        cloudSyncSessionsEmpty: "No sessions in this window.",
+        cloudSyncSessionStarted: "Started",
+        cloudSyncSessionEnded: "Ended / heartbeat",
+        cloudSyncSessionDuration: "Duration",
+        cloudSyncSessionEndReason: "End reason",
+        cloudSyncStillActive: "still active",
+        cloudSyncEmpty: "No cloud sync usage in this window.",
+        cloudSyncDurationNone: "0 min",
+        cloudSyncDurationMinutes: "{minutes} min",
+        cloudSyncDurationHours: "{hours} h",
+        cloudSyncDurationHoursMinutes: "{hours} h {minutes} min",
         health: {
           paymentCheckout: "Checkout",
           releaseHealth: "Release health",
@@ -921,6 +985,42 @@ const testMessages = {
         comparisonFlat: "無變化",
         comparisonUp: "較上一週期 +{value}",
         comparisonDown: "較上一週期 {value}",
+        cloudSyncMonitoringTitle: "雲端同步營運監控",
+        cloudSyncMonitoringDescription: "追蹤哪些使用者正在啟用雲端同步、桌面端最後在線時間，以及每次和累計使用時長。",
+        cloudSyncWindowLabel: "雲端同步統計範圍",
+        cloudSyncWindow7: "7 天",
+        cloudSyncWindow30: "30 天",
+        cloudSyncWindow90: "90 天",
+        cloudSyncWindowAll: "全部",
+        cloudSyncActiveUsers: "啟用中",
+        cloudSyncEntitledUsers: "有效權益使用者",
+        cloudSyncEnabledUsers: "範圍內啟用者",
+        cloudSyncSessionCount: "使用次數",
+        cloudSyncTotalDuration: "累計時長",
+        cloudSyncAverageDuration: "平均單次",
+        cloudSyncUser: "使用者",
+        cloudSyncStatus: "狀態",
+        cloudSyncActive: "啟用中",
+        cloudSyncInactive: "未啟用",
+        cloudSyncLastDesktopSeen: "桌面最後在線",
+        cloudSyncLastStarted: "最後啟用雲端同步",
+        cloudSyncCurrentDevice: "目前裝置",
+        cloudSyncLatestDuration: "最近單次時長",
+        cloudSyncUsageSummary: "使用摘要",
+        cloudSyncConflicts: "衝突",
+        cloudSyncCooldowns: "冷卻攔截",
+        cloudSyncRecentSessions: "最近使用記錄",
+        cloudSyncSessionsEmpty: "此範圍內沒有使用記錄。",
+        cloudSyncSessionStarted: "開始",
+        cloudSyncSessionEnded: "結束 / 最後心跳",
+        cloudSyncSessionDuration: "持續時間",
+        cloudSyncSessionEndReason: "結束原因",
+        cloudSyncStillActive: "仍在使用",
+        cloudSyncEmpty: "此範圍內尚無雲端同步使用資料。",
+        cloudSyncDurationNone: "0 分鐘",
+        cloudSyncDurationMinutes: "{minutes} 分鐘",
+        cloudSyncDurationHours: "{hours} 小時",
+        cloudSyncDurationHoursMinutes: "{hours} 小時 {minutes} 分鐘",
         health: {
           paymentCheckout: "付款結帳",
           releaseHealth: "版本健康",
@@ -1464,9 +1564,9 @@ describe("admin pages", () => {
 
     expect(requireAdminMock).toHaveBeenCalledWith("en", "/en/admin");
     expect(screen.getByRole("heading", { name: "Operations dashboard" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "7 days" })).toHaveAttribute("href", "/admin?period=7d");
-    expect(screen.getByRole("link", { name: "30 days" })).toHaveAttribute("href", "/admin?period=30d");
-    expect(screen.getByRole("link", { name: "90 days" })).toHaveAttribute("href", "/admin?period=90d");
+    expect(container.querySelector('a[href="/admin?period=7d"]')).toBeInTheDocument();
+    expect(container.querySelector('a[href="/admin?period=30d"]')).toBeInTheDocument();
+    expect(container.querySelector('a[href="/admin?period=90d"]')).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /donations/i }).some((link) => link.getAttribute("href") === "/admin/donations")).toBe(true);
     expect(container.querySelector('a[href="/admin/certificates"]')).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /releases/i }).some((link) => link.getAttribute("href") === "/admin/releases")).toBe(true);
@@ -1481,6 +1581,14 @@ describe("admin pages", () => {
     expect(screen.getByText("Support revenue")).toBeInTheDocument();
     expect(screen.getByText("$0.00")).toBeInTheDocument();
     expect(screen.getAllByText("Open feedback").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Cloud sync operations monitor" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "All time" })).toHaveAttribute("href", "/admin?period=7d&cloudSyncWindow=all");
+    expect(screen.getByText("Active now")).toBeInTheDocument();
+    expect(screen.getByText("Ada Sync")).toBeInTheDocument();
+    expect(screen.getByText("ada@example.com")).toBeInTheDocument();
+    expect(screen.getAllByText("windows-pc").length).toBeGreaterThan(0);
+    expect(screen.getByText("Recent sessions")).toBeInTheDocument();
+    expect(container.querySelector('a[href="/admin/cloud-sync"]')).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Trends" })).toBeInTheDocument();
     expect(screen.getByText("Support revenue trend")).toBeInTheDocument();
     expect(screen.getByText("User growth trend")).toBeInTheDocument();

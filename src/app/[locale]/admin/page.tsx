@@ -21,7 +21,11 @@ import { Link } from "@/i18n/routing";
 import {
   formatDashboardMetricValue,
   getAdminDashboardOverview,
+  getAdminDashboardCloudSyncWindow,
   getAdminDashboardPeriod,
+  type AdminDashboardCloudSyncSessionRow,
+  type AdminDashboardCloudSyncUserRow,
+  type AdminDashboardCloudSyncWindow,
   type AdminDashboardAttentionItem,
   type AdminDashboardHealthItem,
   type AdminDashboardInsight,
@@ -32,12 +36,14 @@ import {
 } from "@/lib/admin/dashboard";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
+import { formatAdminDateTime } from "@/lib/format/datetime";
 
 type AdminPageProps = {
   params: Promise<{
     locale: string;
   }>;
   searchParams?: Promise<{
+    cloudSyncWindow?: string | string[];
     period?: string | string[];
   }>;
 };
@@ -193,6 +199,65 @@ function periodHref(period: AdminDashboardPeriod) {
   return `/admin?period=${period}d`;
 }
 
+function cloudSyncWindowHref(periodDays: AdminDashboardPeriod, window: AdminDashboardCloudSyncWindow) {
+  const value = window === "all" ? "all" : `${window}d`;
+  return `/admin?period=${periodDays}d&cloudSyncWindow=${value}`;
+}
+
+function formatDuration(seconds: number, t: Awaited<ReturnType<typeof getTranslations>>) {
+  if (seconds <= 0) return t("overview.cloudSyncDurationNone");
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0 && minutes > 0) return t("overview.cloudSyncDurationHoursMinutes", { hours: String(hours), minutes: String(minutes) });
+  if (hours > 0) return t("overview.cloudSyncDurationHours", { hours: String(hours) });
+  return t("overview.cloudSyncDurationMinutes", { minutes: String(Math.max(1, minutes)) });
+}
+
+function CloudSyncSessionList({
+  locale,
+  sessions,
+  t,
+}: {
+  locale: string;
+  sessions: AdminDashboardCloudSyncSessionRow[];
+  t: Awaited<ReturnType<typeof getTranslations>>;
+}) {
+  if (sessions.length === 0) {
+    return <p className="mt-2 text-xs text-slate-500">{t("overview.cloudSyncSessionsEmpty")}</p>;
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      {sessions.map((session) => (
+        <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600" key={session.id}>
+          <p className="font-semibold text-slate-800">{session.deviceId}</p>
+          <p className="mt-1">{t("overview.cloudSyncSessionStarted")}: {formatAdminDateTime(session.startedAt, locale)}</p>
+          <p className="mt-1">{t("overview.cloudSyncSessionEnded")}: {formatAdminDateTime(session.endedAt ?? session.lastHeartbeatAt, locale)}</p>
+          <p className="mt-1">{t("overview.cloudSyncSessionDuration")}: {formatDuration(session.durationSeconds, t)}</p>
+          <p className="mt-1">{t("overview.cloudSyncSessionEndReason")}: {session.endReason ?? t("overview.cloudSyncStillActive")}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CloudSyncUserDetails({
+  locale,
+  t,
+  user,
+}: {
+  locale: string;
+  t: Awaited<ReturnType<typeof getTranslations>>;
+  user: AdminDashboardCloudSyncUserRow;
+}) {
+  return (
+    <details className="rounded-md border border-slate-200 bg-white p-3">
+      <summary className="cursor-pointer text-sm font-semibold text-slate-950">{t("overview.cloudSyncRecentSessions")}</summary>
+      <CloudSyncSessionList locale={locale} sessions={user.sessions} t={t} />
+    </details>
+  );
+}
+
 export default async function AdminPage({ params, searchParams }: AdminPageProps) {
   const { locale: localeParam } = await params;
   const search = await searchParams;
@@ -200,7 +265,8 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
   const t = await getTranslations("admin");
   const shellProps = await getAdminShellProps(locale, "/admin");
   const periodDays = getAdminDashboardPeriod(search?.period);
-  const overview = await getAdminDashboardOverview({ periodDays });
+  const cloudSyncWindow = getAdminDashboardCloudSyncWindow(search?.cloudSyncWindow);
+  const overview = await getAdminDashboardOverview({ cloudSyncWindow, periodDays });
 
   const metricCards = [
     { icon: Users, label: t("overview.totalUsersMetric"), metric: overview.metrics.totalUsers },
@@ -248,6 +314,101 @@ export default async function AdminPage({ params, searchParams }: AdminPageProps
             {metricCards.map(({ icon, label, metric }) => (
               <MetricCard icon={icon} key={metric.id} label={label} locale={locale} metric={metric} t={t} />
             ))}
+          </div>
+        </AdminCard>
+
+        <AdminCard className="mt-6 p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Activity aria-hidden="true" className="size-5 text-slate-500" />
+                <h2 className="text-base font-semibold text-slate-950">{t("overview.cloudSyncMonitoringTitle")}</h2>
+              </div>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{t("overview.cloudSyncMonitoringDescription")}</p>
+            </div>
+            <nav aria-label={t("overview.cloudSyncWindowLabel")} className="flex flex-wrap gap-2">
+              {([7, 30, 90, "all"] as const).map((window) => (
+                <Link
+                  aria-current={window === overview.cloudSync.window ? "page" : undefined}
+                  className={`inline-flex min-h-9 items-center rounded-md border px-3 text-xs font-semibold ${
+                    window === overview.cloudSync.window ? "border-slate-950 bg-slate-950 text-white" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                  href={cloudSyncWindowHref(periodDays, window)}
+                  key={window}
+                >
+                  {window === "all" ? t("overview.cloudSyncWindowAll") : t(`overview.cloudSyncWindow${window}`)}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {[
+              { label: t("overview.cloudSyncActiveUsers"), value: overview.cloudSync.metrics.activeUsers },
+              { label: t("overview.cloudSyncEntitledUsers"), value: overview.cloudSync.metrics.entitledUsers },
+              { label: t("overview.cloudSyncEnabledUsers"), value: overview.cloudSync.metrics.enabledUsersInWindow },
+              { label: t("overview.cloudSyncSessionCount"), value: overview.cloudSync.metrics.sessionCount },
+              { label: t("overview.cloudSyncTotalDuration"), value: formatDuration(overview.cloudSync.metrics.totalDurationSeconds, t) },
+            ].map((item) => (
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3" key={item.label}>
+                <p className="text-xs font-semibold uppercase text-slate-500">{item.label}</p>
+                <p className="mt-2 text-xl font-semibold text-slate-950">{item.value}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-slate-500">
+            {t("overview.cloudSyncAverageDuration")}: {formatDuration(overview.cloudSync.metrics.averageSessionDurationSeconds, t)}
+          </p>
+
+          <div className="mt-5 overflow-x-auto rounded-md border border-slate-200">
+            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+              <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">{t("overview.cloudSyncUser")}</th>
+                  <th className="px-4 py-3">{t("overview.cloudSyncStatus")}</th>
+                  <th className="px-4 py-3">{t("overview.cloudSyncLastDesktopSeen")}</th>
+                  <th className="px-4 py-3">{t("overview.cloudSyncLastStarted")}</th>
+                  <th className="px-4 py-3">{t("overview.cloudSyncCurrentDevice")}</th>
+                  <th className="px-4 py-3">{t("overview.cloudSyncLatestDuration")}</th>
+                  <th className="px-4 py-3">{t("overview.cloudSyncUsageSummary")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white">
+                {overview.cloudSync.users.length > 0 ? overview.cloudSync.users.map((user) => (
+                  <tr key={user.userId}>
+                    <td className="px-4 py-4 align-top">
+                      <Link className="font-semibold text-slate-950 underline-offset-2 hover:underline" href={`/admin/users/${user.userId}`}>
+                        {user.displayName ?? user.email ?? user.userId}
+                      </Link>
+                      {user.email && user.displayName ? <p className="mt-1 text-xs text-slate-500">{user.email}</p> : null}
+                    </td>
+                    <td className="px-4 py-4 align-top">
+                      <AdminStatusBadge tone={user.active ? "success" : "neutral"}>
+                        {user.active ? t("overview.cloudSyncActive") : t("overview.cloudSyncInactive")}
+                      </AdminStatusBadge>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-4 align-top text-slate-700">{formatAdminDateTime(user.lastDesktopSeenAt, locale)}</td>
+                    <td className="whitespace-nowrap px-4 py-4 align-top text-slate-700">{formatAdminDateTime(user.lastCloudSyncStartedAt, locale)}</td>
+                    <td className="px-4 py-4 align-top text-slate-700">
+                      <p>{user.currentDeviceId ?? "-"}</p>
+                      {user.currentPlatform ? <p className="mt-1 text-xs text-slate-500">{user.currentPlatform}</p> : null}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-4 align-top text-slate-700">{formatDuration(user.latestSessionDurationSeconds, t)}</td>
+                    <td className="min-w-64 px-4 py-4 align-top text-slate-700">
+                      <p>{t("overview.cloudSyncTotalDuration")}: {formatDuration(user.totalDurationSeconds, t)}</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {t("overview.cloudSyncSessionCount")}: {user.sessionCount} · {t("overview.cloudSyncConflicts")}: {user.conflictCount} · {t("overview.cloudSyncCooldowns")}: {user.cooldownCount}
+                      </p>
+                      <CloudSyncUserDetails locale={locale} t={t} user={user} />
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td className="px-4 py-6 text-center text-sm text-slate-500" colSpan={7}>{t("overview.cloudSyncEmpty")}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </AdminCard>
 
