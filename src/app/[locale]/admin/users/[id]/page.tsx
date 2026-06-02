@@ -9,6 +9,7 @@ import { getAdminShellProps } from "@/lib/admin/shell";
 import { isOwnerProfile, type AccountStatus, type AdminRole } from "@/lib/auth/guards";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import type { Database } from "@/lib/database.types";
+import { formatAdminDateTime } from "@/lib/format/datetime";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   addManualDonation,
@@ -122,21 +123,6 @@ const profileDetailSelect =
   "id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,account_type,is_admin,avatar_url,created_at";
 const profileDetailSelectWithoutAccountType =
   "id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,avatar_url,created_at";
-
-function formatDateTime(value: string | null, locale: string) {
-  if (!value) {
-    return "-";
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).format(new Date(value));
-}
 
 function getAccountTypeLabel(accountType: string | null | undefined, t: Awaited<ReturnType<typeof getTranslations>>) {
   return accountType === "ai_test" ? t("aiTestType") : t("standardType");
@@ -348,10 +334,12 @@ async function getAuthStatus(
 
 function AuthStatusBadges({
   authStatus,
+  latestLoginAt,
   locale,
   t,
 }: {
   authStatus: AdminAuthStatus | null;
+  latestLoginAt: string | null | undefined;
   locale: string;
   t: Awaited<ReturnType<typeof getTranslations>>;
 }) {
@@ -381,9 +369,9 @@ function AuthStatusBadges({
         <AdminStatusBadge tone="danger">{t("authNoPassword")}</AdminStatusBadge>
       )}
       {authStatus.recovery_sent_at ? <AdminStatusBadge tone="warning">{t("authRecoverySent")}</AdminStatusBadge> : null}
-      {authStatus.last_sign_in_at ? (
+      {latestLoginAt || authStatus.last_sign_in_at ? (
         <span className="inline-flex min-h-7 items-center rounded-md border border-slate-200 bg-slate-50 px-2 text-xs font-medium text-slate-600">
-          {t("authLastSignIn")}: {formatDateTime(authStatus.last_sign_in_at, locale)}
+          {t("authLastSignIn")}: {formatAdminDateTime(latestLoginAt ?? authStatus.last_sign_in_at, locale)}
         </span>
       ) : null}
     </div>
@@ -535,6 +523,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   const cooldownOverrides = cooldownOverridesResult.data ?? [];
   const supportFeedback = supportFeedbackResult.data ?? [];
   const loginHistory = (loginHistoryResult.data ?? []) as LoginHistoryRow[];
+  const latestSuccessfulLoginAt = loginHistory.find((entry) => entry.success)?.logged_in_at ?? null;
   const canManageRoles = isOwnerProfile({
     ...adminProfileResult.data,
     admin_role: adminProfileResult.data?.admin_role as AdminRole | null,
@@ -559,7 +548,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
     })),
     ...leases.map((item) => ({
       date: item.updated_at,
-      detail: formatDateTime(item.expires_at, locale),
+      detail: formatAdminDateTime(item.expires_at, locale),
       label: t("timelineLease"),
       title: item.device_id,
     })),
@@ -571,13 +560,13 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
     })),
     ...entitlements.map((item) => ({
       date: item.updated_at,
-      detail: formatDateTime(item.valid_until, locale),
+      detail: formatAdminDateTime(item.valid_until, locale),
       label: t("timelineEntitlement"),
       title: item.feature_code,
     })),
     ...trials.map((item) => ({
       date: item.redeemed_at,
-      detail: formatDateTime(item.trial_valid_until, locale),
+      detail: formatAdminDateTime(item.trial_valid_until, locale),
       label: t("timelineTrial"),
       title: item.device_id ?? shortHash(item.machine_code_hash),
     })),
@@ -640,7 +629,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
               <DetailRow label={t("userId")} value={<span className="font-mono text-xs">{profile.id}</span>} />
               <DetailRow label={t("role")} value={t(`roles.${profile.admin_role ?? (profile.is_admin ? "owner" : "user")}`)} />
               <DetailRow label={t("accountType")} value={getAccountTypeLabel(profile.account_type, t)} />
-              <DetailRow label={t("createdAt")} value={formatDateTime(profile.created_at, locale)} />
+              <DetailRow label={t("createdAt")} value={formatAdminDateTime(profile.created_at, locale)} />
             </dl>
 
             <form action={updateAdminUserProfile} className="mt-5 grid gap-4">
@@ -684,7 +673,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
 
           <AdminCard className="p-5">
             <h2 className="text-base font-semibold text-slate-950">{t("passwordRecoveryTitle")}</h2>
-            <AuthStatusBadges authStatus={authStatus} locale={locale} t={t} />
+            <AuthStatusBadges authStatus={authStatus} latestLoginAt={latestSuccessfulLoginAt} locale={locale} t={t} />
             {authStatus?.has_password === false ? (
               <>
                 <p className="mt-3 text-sm leading-6 text-slate-600">
@@ -734,7 +723,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                   <tbody className="divide-y divide-slate-200">
                     {loginHistory.map((entry) => (
                       <tr key={entry.id}>
-                        <td className="px-4 py-3 text-slate-700">{formatDateTime(entry.logged_in_at, locale)}</td>
+                        <td className="px-4 py-3 text-slate-700">{formatAdminDateTime(entry.logged_in_at, locale)}</td>
                         <td className="px-4 py-3">
                           {entry.success ? (
                             <AdminStatusBadge tone="success">{t("loginHistorySuccess")}</AdminStatusBadge>
@@ -848,10 +837,10 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                       ) : null}
                     </div>
                     <p className="mt-2 text-xs text-slate-600">
-                      {t("redeemed")}: {formatDateTime(trial.redeemed_at, locale)}
+                      {t("redeemed")}: {formatAdminDateTime(trial.redeemed_at, locale)}
                     </p>
                     <p className="mt-1 text-xs text-slate-600">
-                      {t("validUntil")}: {formatDateTime(trial.trial_valid_until, locale)}
+                      {t("validUntil")}: {formatAdminDateTime(trial.trial_valid_until, locale)}
                     </p>
                     <p className="mt-1 font-mono text-xs text-slate-600">
                       {t("machine")}: {shortHash(trial.machine_code_hash)}
@@ -919,7 +908,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                           <AdminStatusBadge tone="warning">{t("supportCertificateMissing")}</AdminStatusBadge>
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{formatDateTime(row.time, locale)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{formatAdminDateTime(row.time, locale)}</td>
                       <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                         {row.certificate?.status === "active" ? (
                           <form action={revokeCertificate} className="flex min-w-56 gap-2">
@@ -964,10 +953,10 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                   <div key={session.id} className="rounded-md border border-slate-200 p-3">
                     <p className="font-medium text-slate-950">{session.device_id}</p>
                     <p className="mt-1 text-xs text-slate-600">{session.platform} {session.app_version ?? ""}</p>
-                    <p className="mt-1 text-xs text-slate-600">{t("lastSeen")}: {formatDateTime(session.last_seen_at, locale)}</p>
+                    <p className="mt-1 text-xs text-slate-600">{t("lastSeen")}: {formatAdminDateTime(session.last_seen_at, locale)}</p>
                     <p className="mt-1 font-mono text-xs text-slate-600">{t("machine")}: {shortHash(session.machine_code_hash)}</p>
                     {session.revoked_at ? (
-                      <p className="mt-2 text-xs font-medium text-slate-500">{formatDateTime(session.revoked_at, locale)}</p>
+                      <p className="mt-2 text-xs font-medium text-slate-500">{formatAdminDateTime(session.revoked_at, locale)}</p>
                     ) : (
                       <form action={revokeDesktopSession} className="mt-2">
                         <input name="locale" type="hidden" value={locale} />
@@ -994,7 +983,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                   <div key={entitlement.id} className="rounded-md border border-slate-200 p-3">
                     <p className="font-medium text-slate-950">{entitlement.feature_code}</p>
                     <p className="mt-1 text-xs text-slate-600">{entitlement.status}</p>
-                    <p className="mt-1 text-xs text-slate-600">{t("validUntil")}: {formatDateTime(entitlement.valid_until, locale)}</p>
+                    <p className="mt-1 text-xs text-slate-600">{t("validUntil")}: {formatAdminDateTime(entitlement.valid_until, locale)}</p>
                     <p className="mt-1 font-mono text-xs text-slate-600">{shortId(entitlement.source_donation_id)}</p>
                   </div>
                 ))}
@@ -1086,8 +1075,8 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 {cooldownOverrides.map((override) => (
                   <div key={override.id} className="rounded-md border border-slate-200 p-3 text-xs text-slate-600">
                     <p className="font-medium text-slate-950">{override.consumed_at ? t("overrideConsumed") : t("overrideActive")}</p>
-                    <p className="mt-1">{t("validUntil")}: {formatDateTime(override.expires_at, locale)}</p>
-                    {override.consumed_at ? <p className="mt-1">{t("overrideConsumedAt")}: {formatDateTime(override.consumed_at, locale)}</p> : null}
+                    <p className="mt-1">{t("validUntil")}: {formatAdminDateTime(override.expires_at, locale)}</p>
+                    {override.consumed_at ? <p className="mt-1">{t("overrideConsumedAt")}: {formatAdminDateTime(override.consumed_at, locale)}</p> : null}
                     <p className="mt-1 break-words">{override.reason}</p>
                   </div>
                 ))}
@@ -1098,13 +1087,13 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 {leases.map((lease) => (
                   <div key={lease.id} className="rounded-md border border-slate-200 p-3">
                     <p className="font-medium text-slate-950">{lease.device_id}</p>
-                    <p className="mt-1 text-xs text-slate-600">{adminT("licenses.lastHeartbeat")}: {formatDateTime(lease.last_heartbeat_at, locale)}</p>
-                    <p className="mt-1 text-xs text-slate-600">{adminT("licenses.expiresAt")}: {formatDateTime(lease.expires_at, locale)}</p>
-                    <p className="mt-1 text-xs text-slate-600">{t("releasedAt")}: {formatDateTime(lease.released_at, locale)}</p>
-                    <p className="mt-1 text-xs text-slate-600">{t("cooldownUntil")}: {formatDateTime(lease.cooldown_until, locale)}</p>
+                    <p className="mt-1 text-xs text-slate-600">{adminT("licenses.lastHeartbeat")}: {formatAdminDateTime(lease.last_heartbeat_at, locale)}</p>
+                    <p className="mt-1 text-xs text-slate-600">{adminT("licenses.expiresAt")}: {formatAdminDateTime(lease.expires_at, locale)}</p>
+                    <p className="mt-1 text-xs text-slate-600">{t("releasedAt")}: {formatAdminDateTime(lease.released_at, locale)}</p>
+                    <p className="mt-1 text-xs text-slate-600">{t("cooldownUntil")}: {formatAdminDateTime(lease.cooldown_until, locale)}</p>
                     <p className="mt-1 font-mono text-xs text-slate-600">{shortId(lease.desktop_session_id)}</p>
                     {lease.revoked_at ? (
-                      <p className="mt-2 text-xs font-medium text-slate-500">{formatDateTime(lease.revoked_at, locale)}</p>
+                      <p className="mt-2 text-xs font-medium text-slate-500">{formatAdminDateTime(lease.revoked_at, locale)}</p>
                     ) : (
                       <form action={revokeCloudSyncLease} className="mt-2">
                         <input name="locale" type="hidden" value={locale} />
@@ -1140,7 +1129,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
             <DetailRow label={t("cloudSyncUsageMachines")} value={uniqueUsageMachines} />
             <DetailRow label={t("cloudSyncUsageConflicts")} value={`${conflictAttempts} ${t("cloudSyncUsageConflictAttempts")}`} />
             <DetailRow label={t("cloudSyncUsageCooldowns")} value={`${cooldownBlocks} ${t("cloudSyncUsageCooldownBlocks")}`} />
-            <DetailRow label={t("cloudSyncUsageLatest")} value={latestUsageSession ? formatDateTime(latestUsageSession.started_at, locale) : "-"} />
+            <DetailRow label={t("cloudSyncUsageLatest")} value={latestUsageSession ? formatAdminDateTime(latestUsageSession.started_at, locale) : "-"} />
           </dl>
 
           {usageSessions.length > 0 ? (
@@ -1154,9 +1143,9 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                     </div>
                     <p className="text-sm font-semibold text-slate-950">{formatUsageDuration(usageSeconds(session))}</p>
                   </div>
-                  <p className="mt-2 text-xs text-slate-600">{t("cloudSyncUsageStarted")}: {formatDateTime(session.started_at, locale)}</p>
-                  <p className="mt-1 text-xs text-slate-600">{t("cloudSyncUsageLastHeartbeat")}: {formatDateTime(session.last_heartbeat_at, locale)}</p>
-                  <p className="mt-1 text-xs text-slate-600">{t("cloudSyncUsageEnded")}: {formatDateTime(session.ended_at, locale)}</p>
+                  <p className="mt-2 text-xs text-slate-600">{t("cloudSyncUsageStarted")}: {formatAdminDateTime(session.started_at, locale)}</p>
+                  <p className="mt-1 text-xs text-slate-600">{t("cloudSyncUsageLastHeartbeat")}: {formatAdminDateTime(session.last_heartbeat_at, locale)}</p>
+                  <p className="mt-1 text-xs text-slate-600">{t("cloudSyncUsageEnded")}: {formatAdminDateTime(session.ended_at, locale)}</p>
                   <p className="mt-1 text-xs text-slate-600">{t("cloudSyncUsageEndReason")}: {session.end_reason ?? t("cloudSyncUsageStillActive")}</p>
                 </div>
               ))}
@@ -1172,7 +1161,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                 {usageEvents.slice(0, 6).map((event) => (
                   <div key={event.id} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
                     <p className="font-semibold text-slate-950">{event.event_type}</p>
-                    <p className="mt-1">{formatDateTime(event.occurred_at, locale)}</p>
+                    <p className="mt-1">{formatAdminDateTime(event.occurred_at, locale)}</p>
                     <p className="mt-1 break-words">{event.device_id ?? "-"} / {shortHash(event.machine_code_hash)}</p>
                     {event.reason ? <p className="mt-1">{event.reason}</p> : null}
                   </div>
@@ -1201,7 +1190,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
                       <p className="mt-1 break-words text-xs text-slate-600">{item.detail}</p>
                     </div>
                     <time className="text-right text-xs text-slate-500" dateTime={item.date ?? undefined}>
-                      {formatDateTime(item.date, locale)}
+                      {formatAdminDateTime(item.date, locale)}
                     </time>
                   </div>
                 </li>

@@ -6,6 +6,7 @@ import { AdminPagination } from "@/components/admin/admin-pagination";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
+import { formatAdminDate } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revokeCertificate } from "../actions";
 
@@ -27,18 +28,6 @@ type AdminCertificatesPageProps = {
 
 type CertificateType = "donation" | "honor";
 type CertificateStatus = "active" | "revoked" | "generation_failed";
-
-function formatIssuedAt(value: string | null, locale: string, fallback: string) {
-  if (!value) {
-    return fallback;
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(value));
-}
 
 function getCertificateStatusTone(status: CertificateStatus) {
   if (status === "active") return "success";
@@ -188,7 +177,7 @@ export default async function AdminCertificatesPage({ params, searchParams }: Ad
                           </AdminStatusBadge>
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
-                          {formatIssuedAt(certificate.issued_at, locale, t("certificates.notIssued"))}
+                          {formatAdminDate(certificate.issued_at, locale, t("certificates.notIssued"))}
                         </td>
                         <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                           {certificate.status === "active" ? (

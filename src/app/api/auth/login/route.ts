@@ -1,20 +1,11 @@
 import { jsonError, jsonOk } from "@/lib/api/responses";
 import { validateRequestOrigin } from "@/lib/auth/csrf";
+import { getRequestIpAddress, getRequestUserAgent, recordUserLoginSafely } from "@/lib/auth/login-history";
 import { checkLoginRisk, recordLoginAttempt, type LoginRiskClient } from "@/lib/auth/login-risk";
 import { verifyTurnstileToken } from "@/lib/auth/turnstile";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
-
-function getIpAddress(request: Request) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-
-  return forwardedFor?.split(",")[0]?.trim() ?? null;
-}
-
-function getUserAgent(request: Request) {
-  return request.headers.get("user-agent")?.trim() ?? null;
-}
 
 function isTurnstileConfigured() {
   return Boolean(process.env.TURNSTILE_SECRET_KEY);
@@ -50,7 +41,8 @@ export async function POST(request: Request) {
   const { email, password, turnstileToken } = parsed.data;
   const turnstileTokenTrimmed = turnstileToken?.trim() ?? "";
 
-  const ip = getIpAddress(request);
+  const ip = getRequestIpAddress(request);
+  const userAgent = getRequestUserAgent(request);
   const adminClient = createSupabaseAdminClient() as unknown as LoginRiskClient;
   let risk: { captchaRequired: boolean };
   const turnstileConfigured = isTurnstileConfigured();
@@ -75,7 +67,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -85,16 +77,25 @@ export async function POST(request: Request) {
       email,
       ip,
       result: "failure",
-      userAgent: getUserAgent(request),
+      userAgent,
     });
     return jsonError("invalid_credentials", 401);
+  }
+
+  if (data?.user) {
+    await recordUserLoginSafely({
+      ip,
+      loginMethod: "email",
+      userAgent,
+      userId: data.user.id,
+    });
   }
 
   await recordLoginAttemptSafely(adminClient, {
     email,
     ip,
     result: "success",
-    userAgent: getUserAgent(request),
+    userAgent,
   });
 
   return jsonOk({ ok: true });

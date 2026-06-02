@@ -4,6 +4,7 @@ import { AdminAuditLogFilters } from "@/components/admin/admin-audit-log-filters
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
+import { formatAdminDateTime } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type AdminAuditLogsPageProps = {
@@ -30,16 +31,6 @@ type AuditLogRow = {
   created_at: string;
   profiles: { email: string | null } | null;
 };
-
-function formatCreatedAt(value: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
 
 export default async function AdminAuditLogsPage({ params, searchParams }: AdminAuditLogsPageProps) {
   const { locale: localeParam } = await params;
@@ -159,7 +150,7 @@ export default async function AdminAuditLogsPage({ params, searchParams }: Admin
                         </td>
                         <td className="max-w-sm px-5 py-4 text-slate-700">{log.reason}</td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
-                          {formatCreatedAt(log.created_at, locale)}
+                          {formatAdminDateTime(log.created_at, locale)}
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                           <span className="block font-mono text-xs">{log.admin_user_id}</span>

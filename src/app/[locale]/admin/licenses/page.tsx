@@ -12,6 +12,7 @@ import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { buildAdminLicenseUrl, getAdminLicenseCodesPage, getCloudSyncUsageEventLabel, parseAdminLicenseSearchParams } from "@/lib/admin/license-management";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
+import { formatAdminDateTime } from "@/lib/format/datetime";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   bulkUpdateLicenseCodes,
@@ -105,19 +106,8 @@ type CloudSyncUsageEventRow = {
   occurred_at: string;
 };
 
-function formatDateTime(value: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-  }).format(new Date(value));
-}
-
 function formatOptionalDateTime(value: string | null, locale: string, fallback: string) {
-  return value ? formatDateTime(value, locale) : fallback;
+  return formatAdminDateTime(value, locale, fallback);
 }
 
 function shortId(value: string | null | undefined) {
@@ -461,7 +451,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
               {usageEvents.slice(0, 4).map((event) => (
                 <div key={event.id} className="rounded-md border border-slate-200 p-3 text-xs text-slate-600">
                   <p className="font-semibold text-slate-950">{getCloudSyncUsageEventLabel(event.event_type)}</p>
-                  <p className="mt-1">{formatDateTime(event.occurred_at, locale)} / {shortId(event.user_id)}</p>
+                  <p className="mt-1">{formatAdminDateTime(event.occurred_at, locale)} / {shortId(event.user_id)}</p>
                   <p className="mt-1 text-slate-500">{t("licenses.rawEvent")}: {event.event_type}</p>
                   <p className="mt-1 break-words">{event.device_id ?? "-"} / {shortHash(event.machine_code_hash)}</p>
                 </div>
@@ -711,7 +701,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                 <tbody className="divide-y divide-slate-200">
                   {redeemAttempts.slice(0, 8).map((attempt) => (
                     <tr key={attempt.id}>
-                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">{formatDateTime(attempt.created_at, locale)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700">{formatAdminDateTime(attempt.created_at, locale)}</td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-700">{shortId(attempt.user_id)}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-700">{attempt.result}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-700">{attempt.reason}</td>
@@ -753,7 +743,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     </summary>
                     <div className="px-5 pb-5">
                       <p className="mb-3 text-xs text-slate-500">
-                        {t("licenses.generatedAt")}: {formatDateTime(batch.created_at, locale)} · {t("licenses.generatedBy")}: {shortId(batch.created_by)}
+                        {t("licenses.generatedAt")}: {formatAdminDateTime(batch.created_at, locale)} · {t("licenses.generatedBy")}: {shortId(batch.created_by)}
                       </p>
                       <div className="overflow-x-auto rounded-md border border-slate-200">
                         <table className="min-w-[980px] table-fixed text-left text-sm">
@@ -865,7 +855,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                         </AdminStatusBadge>
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{code.redemption_count} / {code.max_redemptions ?? t("licenses.unlimited")}</td>
-                      <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{formatDateTime(code.created_at, locale)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 align-top text-slate-700">{formatAdminDateTime(code.created_at, locale)}</td>
                       <td className="sticky right-0 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                         <AdminLicenseActionsMenu
                           channels={{
@@ -969,11 +959,11 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                   {trialRedemptions.map((redemption) => (
                     <tr key={redemption.id}>
                       <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-950">{shortId(redemption.user_id)}</td>
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(redemption.redeemed_at, locale)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatAdminDateTime(redemption.redeemed_at, locale)}</td>
                       <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                         <AdminStatusBadge tone={redemption.bound_at ? "success" : "warning"}>{redemption.bound_at ? t("licenses.bound") : t("licenses.unbound")}</AdminStatusBadge>
                       </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(redemption.trial_valid_until, locale)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatAdminDateTime(redemption.trial_valid_until, locale)}</td>
                       <td className="px-5 py-4 text-slate-700"><span className="block break-all">{redemption.device_id ?? "-"}</span></td>
                       <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">{shortHash(redemption.machine_code_hash)}</td>
                     </tr>
@@ -1008,7 +998,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                     <tr key={entitlement.id}>
                       <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-950">{shortId(entitlement.user_id)}</td>
                       <td className="whitespace-nowrap px-5 py-4 text-slate-700">{entitlement.feature_code}</td>
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(entitlement.valid_until, locale)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatAdminDateTime(entitlement.valid_until, locale)}</td>
                       <td className="whitespace-nowrap px-5 py-4 text-slate-700">{entitlement.status}</td>
                       <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">{entitlement.source_donation_id ? shortId(entitlement.source_donation_id) : t("licenses.none")}</td>
                     </tr>
@@ -1047,8 +1037,8 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                       <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">{shortId(session.user_id)}</td>
                       <td className="whitespace-nowrap px-5 py-4 text-slate-700">{session.platform}</td>
                       <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">{shortHash(session.machine_code_hash)}</td>
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(session.last_seen_at, locale)}</td>
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(session.expires_at, locale)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatAdminDateTime(session.last_seen_at, locale)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatAdminDateTime(session.expires_at, locale)}</td>
                       <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatOptionalDateTime(session.revoked_at, locale, t("licenses.notRevoked"))}</td>
                       <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                         {session.revoked_at ? null : (
@@ -1094,8 +1084,8 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                       <td className="px-5 py-4 font-medium text-slate-950"><span className="block break-all">{lease.device_id}</span></td>
                       <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">{shortId(lease.user_id)}</td>
                       <td className="whitespace-nowrap px-5 py-4 font-mono text-xs text-slate-700">{shortId(lease.desktop_session_id)}</td>
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(lease.last_heartbeat_at, locale)}</td>
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDateTime(lease.expires_at, locale)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatAdminDateTime(lease.last_heartbeat_at, locale)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatAdminDateTime(lease.expires_at, locale)}</td>
                       <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatOptionalDateTime(lease.revoked_at, locale, t("licenses.notRevoked"))}</td>
                       <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                         {lease.revoked_at ? null : (

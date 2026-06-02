@@ -5,6 +5,7 @@ import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { isOwnerProfile } from "@/lib/auth/guards";
 import { setupAdminPage } from "@/lib/auth/page-guards";
+import { formatAdminDateTime } from "@/lib/format/datetime";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/database.types";
 import {
@@ -26,20 +27,6 @@ type AdminArchivedUsersPageProps = {
   params: Promise<{ locale: string }>;
   searchParams?: Promise<AdminArchivedUsersSearchParams>;
 };
-
-function formatDate(value: string | null, locale: string) {
-  if (!value) {
-    return "-";
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
 
 function matchesSearch(archive: { display_name: string | null; email: string | null }, query?: string) {
   const normalized = String(query ?? "").trim().toLowerCase();
@@ -149,7 +136,7 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
                               <p className="break-all text-sm font-semibold text-slate-950">{archive.email}</p>
                               <p className="mt-1 text-sm text-slate-600">{archive.display_name ?? "-"}</p>
                               <p className="mt-1 text-xs text-slate-500">
-                                {t("deletedAt")}: {formatDate(archive.deleted_at, locale)}
+                                {t("deletedAt")}: {formatAdminDateTime(archive.deleted_at, locale)}
                               </p>
                             </div>
                           </div>
@@ -244,7 +231,7 @@ export default async function AdminArchivedUsersPage({ params, searchParams }: A
                         <td className="px-5 py-4 align-top">
                           <AdminStatusBadge tone="neutral">{archive.account_status ?? "active"}</AdminStatusBadge>
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 align-top text-sm text-slate-700">{formatDate(archive.deleted_at, locale)}</td>
+                        <td className="whitespace-nowrap px-5 py-4 align-top text-sm text-slate-700">{formatAdminDateTime(archive.deleted_at, locale)}</td>
                         <td className="px-5 py-4 align-top text-sm text-slate-700">{archive.deleted_reason ?? "-"}</td>
                         <td className="px-5 py-4 align-top text-sm text-slate-700">{archive.deleted_by ?? "-"}</td>
                         <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">

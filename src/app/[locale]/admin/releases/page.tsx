@@ -6,6 +6,7 @@ import { AdminCard, AdminFeedbackBanner, AdminPageHeader, AdminShell, AdminStatu
 import { ConfirmActionButton } from "@/components/confirm-action-button";
 import { getAdminShellProps } from "@/lib/admin/shell";
 import { setupAdminPage } from "@/lib/auth/page-guards";
+import { formatAdminDate } from "@/lib/format/datetime";
 import { RELEASE_PLATFORMS, SOFTWARE_RELEASES_BUCKET, getPlatformDelivery, type ReleaseClient, type ReleaseDeliveryMode, type ReleasePlatform, type ReleaseStatus, type SoftwareRelease } from "@/lib/releases/software-releases";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { bulkUpdateSoftwareReleases, createSoftwareRelease, deleteSoftwareRelease, setSoftwareReleasePublished } from "../actions";
@@ -26,14 +27,6 @@ function getStatusTone(status: SoftwareRelease["releaseStatus"]) {
   if (status === "failed") return "danger";
   if (status === "uploading") return "warning";
   return "neutral";
-}
-
-function formatReleaseDate(value: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(`${value}T00:00:00Z`));
 }
 
 function getPlatformShortLabel(platform: ReleasePlatform) {
@@ -277,7 +270,7 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <h3 className="text-base font-semibold text-slate-950">{release.version}</h3>
-                            <p className="mt-1 text-sm text-slate-600">{formatReleaseDate(release.releasedAt, locale)}</p>
+                            <p className="mt-1 text-sm text-slate-600">{formatAdminDate(`${release.releasedAt}T00:00:00Z`, locale)}</p>
                           </div>
                           <AdminStatusBadge tone={release.isPublished ? "success" : "neutral"}>
                             {release.isPublished ? t("releases.published") : t("releases.unpublish")}
@@ -328,7 +321,7 @@ export default async function AdminReleasesPage({ params, searchParams }: AdminR
                           <p className="font-semibold text-slate-950">{release.version}</p>
                           {release.notes ? <p className="mt-1 max-w-72 line-clamp-2 text-slate-600">{release.notes}</p> : null}
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatReleaseDate(release.releasedAt, locale)}</td>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatAdminDate(`${release.releasedAt}T00:00:00Z`, locale)}</td>
                         <td className="px-5 py-4">
                           <div className="flex flex-wrap gap-2">
                             <AdminStatusBadge tone={release.isPublished ? "success" : "neutral"}>

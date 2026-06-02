@@ -13,6 +13,7 @@ import { getAdminShellProps } from "@/lib/admin/shell";
 import { isOwnerProfile, type AccountStatus, type AdminRole } from "@/lib/auth/guards";
 import { setupAdminPage } from "@/lib/auth/page-guards";
 import type { Database } from "@/lib/database.types";
+import { formatAdminDateTime } from "@/lib/format/datetime";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { bulkProcessUsers, createUserWithTemporaryPassword, inviteUserAccount, softDeleteUser, unbindTrialMachine, updateUserAccountStatus } from "../actions";
 
@@ -54,23 +55,13 @@ type AdminPaginatedUsersResult = Omit<
   users: AdminPaginatedUser[];
 };
 type AdminUsersPaginatedArgs = Database["public"]["Functions"]["get_admin_users_paginated"]["Args"];
+type LatestLoginHistoryRow = {
+  user_id: string;
+  logged_in_at: string | null;
+};
 
 function shortHash(value: string | null) {
   return value ? `${value.slice(0, 10)}...${value.slice(-6)}` : "-";
-}
-
-function formatDate(value: string | null, locale: string) {
-  if (!value) {
-    return "-";
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
 }
 
 function getAuthProviderLabel(provider: string, t: Awaited<ReturnType<typeof getTranslations>>) {
@@ -103,10 +94,12 @@ async function getAuthStatusesByUser(
 }
 
 function AdminAuthStatusBadges({
+  latestLoginAt,
   locale,
   status,
   t,
 }: {
+  latestLoginAt: string | null | undefined;
   locale: string;
   status: AdminAuthStatus | undefined;
   t: Awaited<ReturnType<typeof getTranslations>>;
@@ -137,13 +130,27 @@ function AdminAuthStatusBadges({
         <AdminStatusBadge tone="danger">{t("authNoPassword")}</AdminStatusBadge>
       )}
       {status.recovery_sent_at ? <AdminStatusBadge tone="warning">{t("authRecoverySent")}</AdminStatusBadge> : null}
-      {status.last_sign_in_at ? (
+      {latestLoginAt || status.last_sign_in_at ? (
         <span className="inline-flex min-h-7 items-center rounded-md border border-slate-200 bg-slate-50 px-2 text-xs font-medium text-slate-600">
-          {t("authLastSignIn")}: {formatDate(status.last_sign_in_at, locale)}
+          {t("authLastSignIn")}: {formatAdminDateTime(latestLoginAt ?? status.last_sign_in_at, locale)}
         </span>
       ) : null}
     </div>
   );
+}
+
+function getLatestLoginByUser(rows: LatestLoginHistoryRow[]) {
+  const latestLoginByUser = new Map<string, string>();
+
+  for (const row of rows) {
+    if (!row.logged_in_at) continue;
+    const previous = latestLoginByUser.get(row.user_id);
+    if (!previous || new Date(row.logged_in_at).getTime() > new Date(previous).getTime()) {
+      latestLoginByUser.set(row.user_id, row.logged_in_at);
+    }
+  }
+
+  return latestLoginByUser;
 }
 
 function nextAccountStatusActions(accountStatus: string, t: Awaited<ReturnType<typeof getTranslations>>) {
@@ -227,7 +234,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
 
   // Get trials and sessions for current page only
   const userIds = users.map((u) => u.id);
-  const [trialsResult, sessionsResult] = await Promise.all([
+  const [trialsResult, sessionsResult, loginHistoryResult] = await Promise.all([
     supabase
       .from("trial_code_redemptions")
       .select("id,user_id,machine_code_hash,device_id,redeemed_at,trial_valid_until,bound_at")
@@ -236,10 +243,18 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
       .from("desktop_sessions")
       .select("id,user_id,device_id,machine_code_hash,platform,app_version,last_seen_at,revoked_at")
       .in("user_id", userIds),
+    supabase
+      .from("user_login_history")
+      .select("user_id,logged_in_at")
+      .eq("success", true)
+      .in("user_id", userIds)
+      .order("logged_in_at", { ascending: false })
+      .limit(Math.max(userIds.length * 3, 1)),
   ]);
 
   if (trialsResult.error) throw trialsResult.error;
   if (sessionsResult.error) throw sessionsResult.error;
+  if (loginHistoryResult.error) throw loginHistoryResult.error;
 
   const trialsByUser = new Map<string, NonNullable<typeof trialsResult.data>>();
   for (const trial of trialsResult.data ?? []) {
@@ -254,6 +269,8 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
     current.push(session);
     sessionsByUser.set(session.user_id, current);
   }
+
+  const latestLoginByUser = getLatestLoginByUser((loginHistoryResult.data ?? []) as LatestLoginHistoryRow[]);
 
   // Summary counts from RPC
   const summary = {
@@ -459,7 +476,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                               </Link>
                               <p className="mt-1 text-sm text-slate-600">{profile.display_name ?? "-"}</p>
                               <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
-                              <AdminAuthStatusBadges locale={locale} status={authStatus} t={t} />
+                              <AdminAuthStatusBadges latestLoginAt={latestLoginByUser.get(profile.id)} locale={locale} status={authStatus} t={t} />
                             </div>
                           </div>
                           <AdminStatusBadge tone={accountStatus === "deleted" ? "warning" : accountStatus === "active" ? "success" : "danger"}>
@@ -485,7 +502,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           </div>
                           <div className="flex items-center justify-between gap-3">
                             <dt className="text-slate-500">{t("createdAt")}</dt>
-                            <dd className="text-right text-slate-900">{formatDate(profile.created_at, locale)}</dd>
+                            <dd className="text-right text-slate-900">{formatAdminDateTime(profile.created_at, locale)}</dd>
                           </div>
                         </dl>
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -585,7 +602,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                             </Link>
                             <p className="mt-1 text-slate-600">{profile.display_name ?? "-"}</p>
                             <p className="mt-1 break-all font-mono text-xs text-slate-500">{profile.id}</p>
-                            <AdminAuthStatusBadges locale={locale} status={authStatus} t={t} />
+                            <AdminAuthStatusBadges latestLoginAt={latestLoginByUser.get(profile.id)} locale={locale} status={authStatus} t={t} />
                           </td>
                         <td className="px-5 py-4 align-top">
                           <AdminStatusBadge tone={resolvedRole === "owner" ? "success" : resolvedRole === "operator" ? "warning" : "neutral"}>
@@ -607,7 +624,7 @@ export default async function AdminUsersPage({ params, searchParams }: AdminUser
                           <p className="mt-1 text-sm text-slate-700">{trials.length} {t("trials")}</p>
                           {trials[0]?.machine_code_hash ? <p className="mt-1 font-mono text-xs text-slate-500">{shortHash(trials[0].machine_code_hash)}</p> : null}
                         </td>
-                        <td className="whitespace-nowrap px-5 py-4 align-top text-sm text-slate-700">{formatDate(profile.created_at, locale)}</td>
+                        <td className="whitespace-nowrap px-5 py-4 align-top text-sm text-slate-700">{formatAdminDateTime(profile.created_at, locale)}</td>
                           <td className="sticky right-0 z-10 border-l border-slate-200 bg-white px-5 py-4 align-top shadow-[-8px_0_16px_rgba(15,23,42,0.04)]">
                             <div className="flex min-w-[260px] flex-wrap justify-end gap-2">
                               <AdminUserRowActionsMenu label={t("moreActions")}>

@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getLocaleDashboardPath, getLocaleFromPath, sanitizeNextPath } from "@/lib/auth/guards";
+import { getRequestIpAddress, getRequestUserAgent, recordUserLoginSafely, type LoginHistoryMethod } from "@/lib/auth/login-history";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSupabaseBrowserConfig } from "@/lib/supabase/env";
 
@@ -11,6 +12,13 @@ function buildLoginRedirect(requestUrl: URL, error: string, nextPath: string) {
   loginUrl.searchParams.set("next", nextPath);
 
   return NextResponse.redirect(loginUrl);
+}
+
+function getCallbackLoginMethod(type: string | null, provider?: string | null): LoginHistoryMethod {
+  if (type === "signup") return "signup";
+  if (type === "invite") return "invite";
+  if (provider && provider !== "email") return "oauth";
+  return "magic_link";
 }
 
 export async function GET(request: NextRequest) {
@@ -64,6 +72,12 @@ export async function GET(request: NextRequest) {
     if (data.user) {
       const adminClient = createSupabaseAdminClient();
       await adminClient.from("profiles").update({ email_verified: true }).eq("id", data.user.id);
+      await recordUserLoginSafely({
+        ip: getRequestIpAddress(request),
+        loginMethod: getCallbackLoginMethod(type),
+        userAgent: getRequestUserAgent(request),
+        userId: data.user.id,
+      });
     }
 
     return response;
@@ -99,6 +113,12 @@ export async function GET(request: NextRequest) {
   if (data.user) {
     const adminClient = createSupabaseAdminClient();
     await adminClient.from("profiles").update({ email_verified: true }).eq("id", data.user.id).eq("email_verified", false);
+    await recordUserLoginSafely({
+      ip: getRequestIpAddress(request),
+      loginMethod: getCallbackLoginMethod(type, data.user.app_metadata?.provider),
+      userAgent: getRequestUserAgent(request),
+      userId: data.user.id,
+    });
   }
 
   if (nextPath.endsWith("/reset-password")) {

@@ -2110,6 +2110,12 @@ describe("admin pages", () => {
       return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fnName}` } });
     });
     const emptyQuery = createAdminListQuery([]);
+    const loginHistoryQuery = createAdminListQuery([
+      {
+        user_id: "user-1",
+        logged_in_at: "2026-05-01T02:00:00.000Z",
+      },
+    ]);
     const ownerQuery = createAdminListQuery({
       admin_role: "owner",
       is_admin: true,
@@ -2119,6 +2125,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? ownerQuery : ownerQuery;
       }
 
+      if (table === "user_login_history") return loginHistoryQuery;
       if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
 
       throw new Error(`Unexpected table: ${table}`);
@@ -2186,7 +2193,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? operatorQuery : operatorQuery;
       }
 
-      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+      if (table === "trial_code_redemptions" || table === "desktop_sessions" || table === "user_login_history") return emptyQuery;
 
       throw new Error(`Unexpected table: ${table}`);
     });
@@ -2260,7 +2267,7 @@ describe("admin pages", () => {
         return operatorQuery;
       }
 
-      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+      if (table === "trial_code_redemptions" || table === "desktop_sessions" || table === "user_login_history") return emptyQuery;
 
       throw new Error(`Unexpected table: ${table}`);
     });
@@ -2336,7 +2343,7 @@ describe("admin pages", () => {
     });
     const from = vi.fn((table: string) => {
       if (table === "profiles") return operatorQuery;
-      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+      if (table === "trial_code_redemptions" || table === "desktop_sessions" || table === "user_login_history") return emptyQuery;
       throw new Error(`Unexpected table: ${table}`);
     });
     createSupabaseAdminClientMock.mockReturnValue({ from, rpc });
@@ -2835,6 +2842,12 @@ describe("admin pages", () => {
       return Promise.resolve({ data: null, error: { message: `Unknown RPC: ${fnName}` } });
     });
     const emptyQuery = createAdminListQuery([]);
+    const latestLoginQuery = createAdminListQuery([
+      {
+        user_id: "user-1",
+        logged_in_at: "2026-05-01T02:00:00.000Z",
+      },
+    ]);
     const ownerQuery = createAdminListQuery({
       admin_role: "owner",
       is_admin: true,
@@ -2845,6 +2858,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? ownerQuery : ownerQuery;
       }
 
+      if (table === "user_login_history") return latestLoginQuery;
       if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
 
       throw new Error(`Unexpected table: ${table}`);
@@ -2859,6 +2873,8 @@ describe("admin pages", () => {
 
     expect(screen.getByText("Total users")).toBeInTheDocument();
     expect(screen.getByText("Deleted")).toBeInTheDocument();
+    expect(document.body.textContent).toContain("Last sign-in");
+    expect(document.body.textContent).toContain("10:00");
     expect(screen.getAllByText("AI test").length).toBeGreaterThan(0);
     expect(screen.getByDisplayValue("alice")).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Select alice@example.com"));
@@ -2911,7 +2927,7 @@ describe("admin pages", () => {
         return ownerQuery;
       }
 
-      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+      if (table === "trial_code_redemptions" || table === "desktop_sessions" || table === "user_login_history") return emptyQuery;
 
       throw new Error(`Unexpected table: ${table}`);
     });
@@ -2957,7 +2973,7 @@ describe("admin pages", () => {
         return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? ownerQuery : ownerQuery;
       }
 
-      if (table === "trial_code_redemptions" || table === "desktop_sessions") return emptyQuery;
+      if (table === "trial_code_redemptions" || table === "desktop_sessions" || table === "user_login_history") return emptyQuery;
 
       throw new Error(`Unexpected table: ${table}`);
     });

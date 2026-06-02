@@ -32,11 +32,13 @@ vi.mock("@/lib/supabase/server", () => ({
 
 describe("login route", () => {
   const signInWithPassword = vi.fn();
+  const adminRpc = vi.fn();
 
   beforeEach(() => {
     process.env.TURNSTILE_SECRET_KEY = "turnstile_secret";
     mocks.checkLoginRisk.mockReset().mockResolvedValue({ captchaRequired: false });
-    mocks.createSupabaseAdminClient.mockReset().mockReturnValue({ admin: true });
+    adminRpc.mockReset().mockResolvedValue({ data: "history-id", error: null });
+    mocks.createSupabaseAdminClient.mockReset().mockReturnValue({ admin: true, rpc: adminRpc });
     mocks.createSupabaseRouteClient.mockReset().mockResolvedValue({
       auth: {
         signInWithPassword,
@@ -44,7 +46,7 @@ describe("login route", () => {
     });
     mocks.recordLoginAttempt.mockReset().mockResolvedValue(undefined);
     mocks.verifyTurnstileToken.mockReset().mockResolvedValue({ ok: true });
-    signInWithPassword.mockReset().mockResolvedValue({ error: null });
+    signInWithPassword.mockReset().mockResolvedValue({ data: { user: { id: "user-1" } }, error: null });
   });
 
   it("signs in without captcha when the attempt is below risk thresholds", async () => {
@@ -59,7 +61,7 @@ describe("login route", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ ok: true });
-    expect(mocks.checkLoginRisk).toHaveBeenCalledWith({ admin: true }, expect.objectContaining({
+    expect(mocks.checkLoginRisk).toHaveBeenCalledWith(expect.objectContaining({ admin: true }), expect.objectContaining({
       email: "friend@example.com",
       ip: "203.0.113.10",
     }));
@@ -68,9 +70,15 @@ describe("login route", () => {
       email: "friend@example.com",
       password: "correct-password",
     });
-    expect(mocks.recordLoginAttempt).toHaveBeenCalledWith({ admin: true }, expect.objectContaining({
+    expect(mocks.recordLoginAttempt).toHaveBeenCalledWith(expect.objectContaining({ admin: true }), expect.objectContaining({
       email: "friend@example.com",
       result: "success",
+    }));
+    expect(adminRpc).toHaveBeenCalledWith("record_user_login", expect.objectContaining({
+      p_ip_address: "203.0.113.10",
+      p_login_method: "email",
+      p_success: true,
+      p_user_id: "user-1",
     }));
   });
 
@@ -183,7 +191,7 @@ describe("login route", () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ error: "invalid_credentials" });
-    expect(mocks.recordLoginAttempt).toHaveBeenCalledWith({ admin: true }, expect.objectContaining({
+    expect(mocks.recordLoginAttempt).toHaveBeenCalledWith(expect.objectContaining({ admin: true }), expect.objectContaining({
       email: "friend@example.com",
       result: "failure",
     }));

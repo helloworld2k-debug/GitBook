@@ -55,6 +55,8 @@ describe("auth redirect safety", () => {
 });
 
 describe("auth callback route", () => {
+  const adminRpc = vi.fn();
+
   beforeEach(() => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://supabase.example";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
@@ -62,8 +64,10 @@ describe("auth callback route", () => {
       eq: vi.fn(() => updateQuery),
       update: vi.fn(() => updateQuery),
     };
+    adminRpc.mockReset().mockResolvedValue({ data: "history-id", error: null });
     createSupabaseAdminClientMock.mockReset().mockReturnValue({
       from: vi.fn(() => updateQuery),
+      rpc: adminRpc,
     });
     createSupabaseServerClientMock.mockReset();
     exchangeCodeForSessionMock.mockReset();
@@ -74,8 +78,20 @@ describe("auth callback route", () => {
         verifyOtp: verifyOtpMock,
       },
     });
-    exchangeCodeForSessionMock.mockResolvedValue({ data: { session: { access_token: "token" } }, error: null });
-    verifyOtpMock.mockResolvedValue({ data: { session: { access_token: "token" } }, error: null });
+    exchangeCodeForSessionMock.mockResolvedValue({
+      data: {
+        session: { access_token: "token" },
+        user: { app_metadata: { provider: "github" }, id: "user-oauth" },
+      },
+      error: null,
+    });
+    verifyOtpMock.mockResolvedValue({
+      data: {
+        session: { access_token: "token" },
+        user: { id: "user-token" },
+      },
+      error: null,
+    });
   });
 
   it("exchanges the code and redirects to a safe next path", async () => {
@@ -84,6 +100,11 @@ describe("auth callback route", () => {
     );
 
     expect(exchangeCodeForSessionMock).toHaveBeenCalledWith("abc123");
+    expect(adminRpc).toHaveBeenCalledWith("record_user_login", expect.objectContaining({
+      p_login_method: "oauth",
+      p_success: true,
+      p_user_id: "user-oauth",
+    }));
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe("https://gitbookai.example/ja/contributions?tier=yearly");
   });
@@ -119,6 +140,11 @@ describe("auth callback route", () => {
     );
 
     expect(verifyOtpMock).toHaveBeenCalledWith({ token_hash: "hash123", type: "signup" });
+    expect(adminRpc).toHaveBeenCalledWith("record_user_login", expect.objectContaining({
+      p_login_method: "signup",
+      p_success: true,
+      p_user_id: "user-token",
+    }));
     expect(response.headers.get("location")).toBe("https://gitbookai.example/en/dashboard?welcome=verified");
   });
 
