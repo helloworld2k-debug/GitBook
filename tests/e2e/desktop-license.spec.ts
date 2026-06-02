@@ -27,6 +27,7 @@ test("public download page still loads after license integration", async ({ page
   await page.goto("/en");
 
   await expect(page.getByRole("heading", { name: "GitBook AI" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Download for Windows/ })).toBeVisible();
   await expect(page.getByRole("link", { name: "Download for macOS M chip" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Download for macOS Intel" })).toBeVisible();
 });

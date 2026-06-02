@@ -57,7 +57,15 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
         date: formatReleaseDate(latestRelease.releasedAt, locale),
       })
     : t("latestVersionPending");
-  const downloads = [
+  const windowsDownload = {
+    label: t("downloadWindows"),
+    href: windowsDelivery?.primaryUrl ?? getFallbackDownload("windows"),
+    backupHref: windowsDelivery?.backupUrl ?? null,
+    backupLabel: "Windows Backup",
+    pendingLabel: t("downloadPending"),
+    unavailable: latestRelease ? !windowsDelivery?.primaryUrl : false,
+  };
+  const macDownloads = [
     {
       label: t("downloadMacAppleSilicon"),
       href: macArmDelivery?.primaryUrl ?? getFallbackDownload("macos_arm64"),
@@ -65,7 +73,6 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
       backupLabel: "macOS M chip Backup",
       pendingLabel: t("downloadPending"),
       unavailable: latestRelease ? !macArmDelivery?.primaryUrl : false,
-      className: `${downloadLinkClass} neon-button text-white`,
     },
     {
       label: t("downloadMacIntel"),
@@ -74,16 +81,6 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
       backupLabel: "macOS Intel Backup",
       pendingLabel: t("downloadPending"),
       unavailable: latestRelease ? !macIntelDelivery?.primaryUrl : false,
-      className: `${downloadLinkClass} neon-button text-white`,
-    },
-    {
-      label: t("downloadWindows"),
-      href: windowsDelivery?.primaryUrl ?? getFallbackDownload("windows"),
-      backupHref: windowsDelivery?.backupUrl ?? null,
-      backupLabel: "Windows Backup",
-      pendingLabel: t("downloadPending"),
-      unavailable: latestRelease ? !windowsDelivery?.primaryUrl : false,
-      className: `${downloadLinkClass} border border-cyan-300/20 bg-white/[0.08] text-cyan-100 hover:border-cyan-300/50 hover:bg-white/[0.12]`,
     },
   ];
 
@@ -116,31 +113,68 @@ export default async function LocalizedHome({ params }: LocalizedPageProps) {
               {t("title")}
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">{t("subtitle")}</p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              {downloads.map((download) =>
-                download.unavailable ? (
-                  <div className="flex flex-col gap-2" key={download.label}>
+            <div className="mt-9 grid max-w-2xl gap-3">
+              <div className="download-primary-card">
+                {windowsDownload.unavailable ? (
+                  <>
                     <span
                       aria-disabled="true"
-                      className={`${download.className} cursor-not-allowed opacity-50`}
+                      className={`${downloadLinkClass} download-primary-link cursor-not-allowed opacity-55`}
                     >
-                      {download.label}
+                      <span className="download-primary-copy">
+                        <span className="download-badge">{t("downloadWindowsBadge")}</span>
+                        <span>{windowsDownload.label}</span>
+                      </span>
+                      <span aria-hidden="true" className="download-arrow">→</span>
                     </span>
-                    <span className="text-center text-xs font-semibold uppercase text-slate-400">{download.pendingLabel}</span>
-                  </div>
+                    <span className="text-center text-xs font-semibold uppercase text-slate-400">{windowsDownload.pendingLabel}</span>
+                  </>
                 ) : (
-                  <div className="flex flex-col gap-2" key={download.label}>
-                    <a className={download.className} href={download.href}>
-                      {download.label}
+                  <>
+                    <a className={`${downloadLinkClass} download-primary-link`} href={windowsDownload.href}>
+                      <span className="download-primary-copy">
+                        <span className="download-badge">{t("downloadWindowsBadge")}</span>
+                        <span>{windowsDownload.label}</span>
+                      </span>
+                      <span aria-hidden="true" className="download-arrow">→</span>
                     </a>
-                    {download.backupHref ? (
-                      <a className={`${downloadLinkClass} border border-slate-700 bg-slate-900/40 text-slate-200 hover:border-slate-500`} href={download.backupHref}>
-                        {download.backupLabel}
+                    {windowsDownload.backupHref ? (
+                      <a className={`${downloadLinkClass} download-backup-link`} href={windowsDownload.backupHref}>
+                        {windowsDownload.backupLabel}
                       </a>
                     ) : null}
-                  </div>
-                ),
-              )}
+                  </>
+                )}
+              </div>
+
+              <div className="download-mac-group">
+                {macDownloads.map((download) =>
+                  download.unavailable ? (
+                    <div className="flex flex-col gap-2" key={download.label}>
+                      <span
+                        aria-disabled="true"
+                        className={`${downloadLinkClass} download-secondary-link cursor-not-allowed opacity-55`}
+                      >
+                        <span>{download.label}</span>
+                        <span aria-hidden="true" className="download-dot" />
+                      </span>
+                      <span className="text-center text-xs font-semibold uppercase text-slate-400">{download.pendingLabel}</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2" key={download.label}>
+                      <a className={`${downloadLinkClass} download-secondary-link`} href={download.href}>
+                        <span>{download.label}</span>
+                        <span aria-hidden="true" className="download-dot" />
+                      </a>
+                      {download.backupHref ? (
+                        <a className={`${downloadLinkClass} download-backup-link`} href={download.backupHref}>
+                          {download.backupLabel}
+                        </a>
+                      ) : null}
+                    </div>
+                  ),
+                )}
+              </div>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-400">
               <span>{latestVersionLabel}</span>

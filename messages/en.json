@@ -77,6 +77,7 @@
     "downloadMacAppleSilicon": "Download for macOS M chip",
     "downloadMacIntel": "Download for macOS Intel",
     "downloadWindows": "Download for Windows",
+    "downloadWindowsBadge": "Most downloaded",
     "downloadPending": "Coming soon",
     "latestVersion": "Latest version {version} · {date}",
     "latestVersionPending": "Latest version is being prepared",

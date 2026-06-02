@@ -77,6 +77,7 @@
     "downloadMacAppleSilicon": "macOS M チップ版をダウンロード",
     "downloadMacIntel": "macOS Intel 版をダウンロード",
     "downloadWindows": "Windows 版をダウンロード",
+    "downloadWindowsBadge": "最多ダウンロード",
     "downloadPending": "近日公開",
     "supportPrompt": "ダウンロードは無料のままです。応援は AI ナレッジエンジンの改善を支えます。",
     "featureOneTitle": "AI 対応の読書フロー",

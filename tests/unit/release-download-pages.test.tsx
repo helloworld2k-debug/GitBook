@@ -42,6 +42,7 @@ vi.mock("next-intl/server", () => ({
         downloadMacAppleSilicon: "Download for macOS M chip",
         downloadMacIntel: "Download for macOS Intel",
         downloadWindows: "Download for Windows",
+        downloadWindowsBadge: "Most downloaded",
         downloadPending: "Coming soon",
         latestVersion: "Latest version {version} · {date}",
         latestVersionPending: "Latest version is being prepared",
@@ -122,9 +123,16 @@ describe("release download pages", () => {
 
     render(await HomePage({ params: Promise.resolve({ locale: "en" }) }));
 
-    expect(screen.getByRole("link", { name: "Download for macOS M chip" })).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
-    expect(screen.getByRole("link", { name: "Download for macOS Intel" })).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
-    expect(screen.getByRole("link", { name: "Download for Windows" })).toHaveAttribute("href", "https://downloads.example/win-primary.exe");
+    const windowsLink = screen.getByRole("link", { name: /Download for Windows/ });
+    const macArmLink = screen.getByRole("link", { name: "Download for macOS M chip" });
+    const macIntelLink = screen.getByRole("link", { name: "Download for macOS Intel" });
+
+    expect(windowsLink).toHaveAttribute("href", "https://downloads.example/win-primary.exe");
+    expect(macArmLink).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
+    expect(macIntelLink).toHaveAttribute("href", "https://downloads.example/mac-primary.dmg");
+    expect(windowsLink.compareDocumentPosition(macArmLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(windowsLink.compareDocumentPosition(macIntelLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText("Most downloaded")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "macOS M chip Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
     expect(screen.getByRole("link", { name: "macOS Intel Backup" })).toHaveAttribute("href", "https://mirror.example/mac-backup.dmg");
     expect(screen.getByRole("link", { name: "Windows Backup" })).toHaveAttribute("href", "https://mirror.example/win-backup.exe");
@@ -170,9 +178,9 @@ describe("release download pages", () => {
     render(await HomePage({ params: Promise.resolve({ locale: "en" }) }));
 
     expect(screen.getByRole("link", { name: "Download for macOS M chip" })).toHaveAttribute("href", "https://cdn.example/GitBook-arm64.dmg");
-    expect(screen.getByRole("link", { name: "Download for Windows" })).toHaveAttribute("href", "https://cdn.example/GitBook.exe");
+    expect(screen.getByRole("link", { name: /Download for Windows/ })).toHaveAttribute("href", "https://cdn.example/GitBook.exe");
     expect(screen.queryByRole("link", { name: "Download for macOS Intel" })).not.toBeInTheDocument();
-    expect(screen.getByText("Download for macOS Intel")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("Download for macOS Intel").closest("[aria-disabled]")).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("Coming soon")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Older versions" })).not.toBeInTheDocument();
   });
