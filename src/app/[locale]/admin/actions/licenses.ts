@@ -298,6 +298,58 @@ export async function revealLicenseCode(formData: FormData) {
   return { code };
 }
 
+export async function revealLicenseCodeBatch(formData: FormData) {
+  const locale = getSafeLocale(formData.get("locale"));
+  const admin = await requireAdmin(locale);
+  const batchId = getRequiredString(formData, "batch_id", "License code batch is required");
+  const supabase = createSupabaseAdminClient();
+  const { data: rows, error } = await supabase
+    .from("trial_codes")
+    .select("id,code_mask,encrypted_code_algorithm,encrypted_code_ciphertext,encrypted_code_iv,encrypted_code_tag,is_active,deleted_at,redemption_count")
+    .eq("batch_id", batchId)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
+
+  if (error || !rows || rows.length === 0) {
+    throw new Error("License code batch cannot be revealed");
+  }
+
+  const encryptionKey = getLicenseCodeEncryptionKey();
+  const codes = rows.map((row) => {
+    if (!row.encrypted_code_ciphertext || !row.encrypted_code_iv || !row.encrypted_code_tag) {
+      throw new Error("License code batch cannot be revealed");
+    }
+
+    return {
+      code: decryptLicenseCode({
+        algorithm: row.encrypted_code_algorithm as EncryptedLicenseCode["algorithm"],
+        ciphertext: row.encrypted_code_ciphertext,
+        iv: row.encrypted_code_iv,
+        tag: row.encrypted_code_tag,
+      }, encryptionKey),
+      codeMask: row.code_mask,
+      deletedAt: row.deleted_at,
+      id: row.id,
+      isActive: row.is_active,
+      redemptionCount: row.redemption_count,
+    };
+  });
+
+  await insertAdminAuditLog({
+    action: "reveal_license_code_batch",
+    adminUserId: admin.id,
+    after: {
+      code_count: codes.length,
+      code_masks: codes.map((code) => code.codeMask),
+    },
+    reason: "Revealed encrypted license code batch",
+    targetId: batchId,
+    targetType: "license_code_batch",
+  });
+
+  return { codes };
+}
+
 export async function bulkDeleteLicenseCodes(formData: FormData) {
   const locale = getSafeLocale(formData.get("locale"));
   await requireAdmin(locale);

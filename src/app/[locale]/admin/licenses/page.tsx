@@ -6,6 +6,7 @@ import { AdminCard, AdminDataWorkbench, AdminFeedbackBanner, AdminPageHeader, Ad
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { AdminWorkbenchHeader } from "@/components/admin/admin-workbench-header";
+import { LicenseCodeBatchRevealPanel } from "@/components/admin/license-code-batch-reveal-panel";
 import { LicenseDurationFields } from "@/components/admin/license-duration-fields";
 import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
 import { ConfirmActionButton } from "@/components/confirm-action-button";
@@ -245,7 +246,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   const bulkFormId = "license-codes-bulk-action-form";
   const parsedSearch = parseAdminLicenseSearchParams(feedback);
 
-  const [cooldownSettingResult, batchesResult, codesPageResult, trialRedemptionsResult, redeemAttemptsResult, entitlementsResult, sessionsResult, leasesResult, usageSessionsResult, usageEventsResult] = await Promise.all([
+  const [cooldownSettingResult, batchesResult, codesPageResult, batchCodesResult, trialRedemptionsResult, redeemAttemptsResult, entitlementsResult, sessionsResult, leasesResult, usageSessionsResult, usageEventsResult] = await Promise.all([
     supabase.from("cloud_sync_settings").select("key,value").eq("key", "cloud_sync_device_switch_cooldown_minutes").single(),
     supabase
       .from("license_code_batches")
@@ -260,6 +261,12 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
       sort: parsedSearch.sort,
       supabase,
     }).then((page) => ({ data: page.rows, error: null, page }), (error) => ({ data: null, error, page: null })),
+    supabase
+      .from("trial_codes")
+      .select("id,batch_id,label,trial_days,duration_kind,channel_type,channel_note,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by,created_by")
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .limit(1000),
     supabase
       .from("trial_code_redemptions")
       .select("id,user_id,machine_code_hash,device_id,redeemed_at,trial_valid_until,bound_at,trial_code_id")
@@ -280,6 +287,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   if (cooldownSettingResult.error) throw cooldownSettingResult.error;
   if (batchesResult.error && !isLicenseCodeBatchSchemaError(batchesResult.error)) throw batchesResult.error;
   if (codesPageResult.error && !isLicenseCodeMetadataSchemaError(codesPageResult.error)) throw codesPageResult.error;
+  if (batchCodesResult.error && !isLicenseCodeMetadataSchemaError(batchCodesResult.error)) throw batchCodesResult.error;
   if (trialRedemptionsResult.error) throw trialRedemptionsResult.error;
   if (redeemAttemptsResult.error && !isLicenseSecuritySchemaError(redeemAttemptsResult.error)) throw redeemAttemptsResult.error;
   if (entitlementsResult.error) throw entitlementsResult.error;
@@ -319,6 +327,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
     }
     : codesPageResult.page!;
   const codes = codesPage.rows;
+  const batchCodes = batchCodesResult.error ? codes : ((batchCodesResult.data ?? []) as LicenseCodeRow[]);
   const filteredCodes = codesPage.rows;
   const paginatedCodes = codesPage.rows;
   const currentPage = codesPage.currentPage;
@@ -343,7 +352,7 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
   const cooldownUsageEvents = usageEvents.filter((event) => event.event_type === "cooldown_waiting");
   const totalUsageSeconds = usageSessions.reduce((total, session) => total + usageSeconds(session), 0);
 
-  for (const code of codes) {
+  for (const code of batchCodes) {
     if (!code.batch_id) continue;
     const existing = codesByBatch.get(code.batch_id) ?? [];
     existing.push(code);
@@ -745,6 +754,23 @@ export default async function AdminLicensesPage({ params, searchParams }: AdminL
                       <p className="mb-3 text-xs text-slate-500">
                         {t("licenses.generatedAt")}: {formatAdminDateTime(batch.created_at, locale)} · {t("licenses.generatedBy")}: {shortId(batch.created_by)}
                       </p>
+                      <div className="mb-3 grid gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:grid-cols-3">
+                        <span className="font-semibold text-slate-950">{batch.code_count} {t("licenses.generatedCodes")}</span>
+                        <span className="font-semibold text-slate-950">{activeCount} {t("licenses.active")}</span>
+                        <span className="font-semibold text-slate-950">{redeemedCount} {t("licenses.redeemed")}</span>
+                      </div>
+                      <LicenseCodeBatchRevealPanel
+                        batchId={batch.id}
+                        labels={{
+                          batchPlaintextLabel: t("licenses.batchPlaintextLabel"),
+                          copied: t("licenses.copied"),
+                          copyAll: t("licenses.copyAll"),
+                          hideBatch: t("licenses.hideBatch"),
+                          revealBatch: t("licenses.revealBatch"),
+                          revealBatchError: t("licenses.revealBatchError"),
+                        }}
+                        locale={locale}
+                      />
                       <div className="overflow-x-auto rounded-md border border-slate-200">
                         <table className="min-w-[980px] table-fixed text-left text-sm">
                           <colgroup>

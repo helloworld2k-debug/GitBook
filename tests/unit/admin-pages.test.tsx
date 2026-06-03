@@ -629,6 +629,12 @@ const testMessages = {
         hide: "Hide",
         copy: "Copy code",
         copied: "Copied",
+        revealBatch: "Reveal batch",
+        hideBatch: "Hide batch",
+        copyAll: "Copy all",
+        batchPlaintextLabel: "Plaintext license codes",
+        revealBatchError: "Unable to reveal this batch.",
+        generatedCodes: "generated codes",
         revealHelp: "Reveal only when sending this code to a user. The view is audited.",
         revealError: "Unable to reveal this code.",
         deletedTrialCodesTitle: "Deleted trial codes",
@@ -1971,7 +1977,7 @@ describe("admin pages", () => {
         channel_note: null,
         duration_kind: "month_1",
         trial_days: 30,
-        code_count: 1,
+        code_count: 2,
         created_by: "admin-1",
         created_at: "2026-05-01T10:00:00.000Z",
         deleted_at: null,
@@ -1995,6 +2001,42 @@ describe("admin pages", () => {
         created_by: "admin-1",
         created_at: "2026-04-01T10:00:00.000Z",
         deleted_at: null,
+      },
+    ]);
+    const batchCodesQuery = createAdminListQuery([
+      {
+        id: "license-code-1",
+        label: "Taobao May monthly",
+        trial_days: 30,
+        duration_kind: "month_1",
+        channel_type: "taobao",
+        channel_note: null,
+        code_mask: "1MAB-****-****-MNOP",
+        batch_id: "batch-1",
+        max_redemptions: 1,
+        redemption_count: 0,
+        is_active: true,
+        updated_by: null,
+        created_by: "admin-1",
+        created_at: "2026-04-01T10:00:00.000Z",
+        deleted_at: null,
+      },
+      {
+        id: "license-code-2",
+        label: "Taobao May monthly",
+        trial_days: 30,
+        duration_kind: "month_1",
+        channel_type: "taobao",
+        channel_note: null,
+        code_mask: "1MCD-****-****-QRST",
+        batch_id: "batch-1",
+        max_redemptions: 1,
+        redemption_count: 1,
+        is_active: false,
+        updated_by: null,
+        created_by: "admin-1",
+        created_at: "2026-04-01T10:01:00.000Z",
+        deleted_at: "2026-04-02T10:00:00.000Z",
       },
     ]);
     const emptyQuery = createAdminListQuery([]);
@@ -2037,13 +2079,17 @@ describe("admin pages", () => {
         occurred_at: "2026-05-01T00:10:00.000Z",
       },
     ]);
+    let trialCodesQueryCount = 0;
     const from = vi.fn((table: string) => {
       if (table === "cloud_sync_settings") return cooldownSettingQuery;
       if (table === "license_code_batches") return batchesQuery;
       if (table === "license_code_redeem_attempts") return redeemAttemptsQuery;
       if (table === "cloud_sync_usage_sessions") return usageSessionsQuery;
       if (table === "cloud_sync_usage_events") return usageEventsQuery;
-      if (table === "trial_codes") return codesQuery;
+      if (table === "trial_codes") {
+        trialCodesQueryCount += 1;
+        return trialCodesQueryCount === 1 ? codesQuery : batchCodesQuery;
+      }
       return emptyQuery;
     });
     createSupabaseAdminClientMock.mockReturnValue({ from });
@@ -2057,6 +2103,9 @@ describe("admin pages", () => {
     expect(from).toHaveBeenCalledWith("license_code_redeem_attempts");
     expect(codesQuery.select).toHaveBeenCalledWith("id,batch_id,label,trial_days,duration_kind,channel_type,channel_note,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by,created_by", { count: "exact" });
     expect(codesQuery.range).toHaveBeenCalledWith(0, 49);
+    expect(batchCodesQuery.select).toHaveBeenCalledWith("id,batch_id,label,trial_days,duration_kind,channel_type,channel_note,code_mask,max_redemptions,redemption_count,is_active,created_at,deleted_at,updated_by,created_by");
+    expect(batchCodesQuery.order).toHaveBeenCalledWith("created_at", { ascending: true });
+    expect(batchCodesQuery.order).toHaveBeenCalledWith("id", { ascending: true });
     expect(screen.getByRole("heading", { name: "License management" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Batch generate license codes" })).toBeInTheDocument();
     expect(screen.getAllByLabelText("Batch name").length).toBeGreaterThan(0);
@@ -2071,6 +2120,9 @@ describe("admin pages", () => {
     expect(screen.getAllByText("203.0.113.10").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Taobao May monthly").length).toBeGreaterThan(0);
     expect(screen.getAllByText("1MAB-****-****-MNOP").length).toBeGreaterThan(0);
+    expect(screen.getByText("1MCD-****-****-QRST")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reveal batch" })).toBeInTheDocument();
+    expect(screen.getByText("2 generated codes")).toBeInTheDocument();
     expect(screen.getAllByText("1 of 1 codes shown").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Action" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Select all license codes" })).toBeInTheDocument();
