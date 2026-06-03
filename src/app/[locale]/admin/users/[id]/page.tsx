@@ -77,6 +77,20 @@ type LoginHistoryRow = {
   logged_in_at: string;
 };
 
+type CloudSyncLeaseRow = {
+  id: string;
+  desktop_session_id: string;
+  device_id: string;
+  machine_code_hash: string | null;
+  lease_started_at: string;
+  last_heartbeat_at: string;
+  expires_at: string;
+  revoked_at: string | null;
+  released_at: string | null;
+  cooldown_until: string | null;
+  updated_at: string;
+};
+
 type DonationRow = {
   id: string;
   provider: string;
@@ -123,6 +137,9 @@ const profileDetailSelect =
   "id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,account_type,is_admin,avatar_url,created_at";
 const profileDetailSelectWithoutAccountType =
   "id,email,display_name,public_display_name,public_supporter_enabled,admin_role,account_status,is_admin,avatar_url,created_at";
+const userDetailRecentWindowDays = 30;
+const cloudSyncUsageSessionDetailLimit = 1000;
+const loginHistoryDetailLimit = 200;
 
 function getAccountTypeLabel(accountType: string | null | undefined, t: Awaited<ReturnType<typeof getTranslations>>) {
   return accountType === "ai_test" ? t("aiTestType") : t("standardType");
@@ -181,6 +198,30 @@ function usageSeconds(session: CloudSyncUsageSessionRow, now = new Date()) {
   }
 
   return Math.round((endedAt - startedAt) / 1000);
+}
+
+function isActiveCloudSyncLease(lease: Pick<CloudSyncLeaseRow, "expires_at" | "released_at" | "revoked_at">, now = new Date()) {
+  if (lease.revoked_at || lease.released_at) {
+    return false;
+  }
+
+  const expiresAt = new Date(lease.expires_at).getTime();
+
+  return !Number.isNaN(expiresAt) && expiresAt > now.getTime();
+}
+
+function isWithinRecentWindow(value: string | null | undefined, now = new Date(), days = userDetailRecentWindowDays) {
+  if (!value) {
+    return false;
+  }
+
+  const timestamp = new Date(value).getTime();
+
+  if (Number.isNaN(timestamp)) {
+    return false;
+  }
+
+  return timestamp >= now.getTime() - days * 24 * 60 * 60 * 1000;
 }
 
 function isOwnerUserProfile(profile: { admin_role?: string | null; is_admin?: boolean | null }) {
@@ -440,7 +481,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .limit(50),
     supabase
       .from("cloud_sync_leases")
-      .select("id,desktop_session_id,device_id,last_heartbeat_at,expires_at,revoked_at,released_at,cooldown_until,updated_at")
+      .select("id,desktop_session_id,device_id,machine_code_hash,lease_started_at,last_heartbeat_at,expires_at,revoked_at,released_at,cooldown_until,updated_at")
       .eq("user_id", id)
       .order("updated_at", { ascending: false })
       .limit(50),
@@ -449,7 +490,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .select("id,lease_id,desktop_session_id,device_id,machine_code_hash,started_at,last_heartbeat_at,ended_at,end_reason,heartbeat_count")
       .eq("user_id", id)
       .order("started_at", { ascending: false })
-      .limit(50),
+      .limit(cloudSyncUsageSessionDetailLimit),
     supabase
       .from("cloud_sync_usage_events")
       .select("id,event_type,reason,device_id,machine_code_hash,occurred_at")
@@ -473,7 +514,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
       .select("id,ip_address,user_agent,success,failure_reason,login_method,logged_in_at")
       .eq("user_id", id)
       .order("logged_in_at", { ascending: false })
-      .limit(20),
+      .limit(loginHistoryDetailLimit),
     supabase
       .from("profiles")
       .select("is_admin,admin_role,account_status")
@@ -517,26 +558,41 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
   const trials = trialsResult.data ?? [];
   const sessions = sessionsResult.data ?? [];
   const entitlements = entitlementsResult.data ?? [];
-  const leases = leasesResult.data ?? [];
+  const leases = (leasesResult.data ?? []) as CloudSyncLeaseRow[];
   const usageSessions = (usageSessionsResult.data ?? []) as CloudSyncUsageSessionRow[];
   const usageEvents = (usageEventsResult.data ?? []) as CloudSyncUsageEventRow[];
   const cooldownOverrides = cooldownOverridesResult.data ?? [];
   const supportFeedback = supportFeedbackResult.data ?? [];
   const loginHistory = (loginHistoryResult.data ?? []) as LoginHistoryRow[];
-  const latestSuccessfulLoginAt = loginHistory.find((entry) => entry.success)?.logged_in_at ?? null;
+  const now = new Date();
+  const latestSuccessfulLogin = loginHistory.find((entry) => entry.success);
+  const latestFailedLogin = loginHistory.find((entry) => !entry.success);
+  const latestSuccessfulLoginAt = latestSuccessfulLogin?.logged_in_at ?? null;
   const canManageRoles = isOwnerProfile({
     ...adminProfileResult.data,
     admin_role: adminProfileResult.data?.admin_role as AdminRole | null,
     account_status: adminProfileResult.data?.account_status as AccountStatus | null,
   });
   const canPermanentlyDeleteUser = canManageRoles || !isOwnerUserProfile(profile);
-  const activeLease = leases.find((lease) => !lease.revoked_at);
-  const totalUsageSeconds = usageSessions.reduce((total, session) => total + usageSeconds(session), 0);
+  const activeLease = leases.find((lease) => isActiveCloudSyncLease(lease, now));
+  const totalUsageSeconds = usageSessions.reduce((total, session) => total + usageSeconds(session, now), 0);
+  const recentUsageSeconds = usageSessions
+    .filter((session) => isWithinRecentWindow(session.started_at, now))
+    .reduce((total, session) => total + usageSeconds(session, now), 0);
   const uniqueUsageMachines = new Set(usageSessions.map((session) => session.machine_code_hash).filter(Boolean)).size;
   const conflictAttempts = usageEvents.filter((event) => event.event_type === "activate_conflict").length;
   const cooldownBlocks = usageEvents.filter((event) => event.event_type === "cooldown_waiting").length;
   const recentForceSwitchCandidate = usageEvents.find((event) => event.event_type === "activate_conflict" && event.machine_code_hash);
   const latestUsageSession = usageSessions[0];
+  const latestLeaseStartedAt = leases
+    .map((lease) => lease.lease_started_at)
+    .filter(Boolean)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
+  const lastCloudSyncStartAt = latestUsageSession?.started_at ?? latestLeaseStartedAt;
+  const latestDesktopSeenAt = sessions[0]?.last_seen_at ?? null;
+  const recentLoginSuccesses = loginHistory.filter((entry) => entry.success && isWithinRecentWindow(entry.logged_in_at, now)).length;
+  const recentLoginFailures = loginHistory.filter((entry) => !entry.success && isWithinRecentWindow(entry.logged_in_at, now)).length;
+  const usageSessionsMayBeCapped = usageSessions.length >= cloudSyncUsageSessionDetailLimit;
   const supportCertificateRows = getSupportCertificateRows({ certificates, donations, locale, t });
   const timelineItems: TimelineItem[] = [
     ...supportFeedback.map((item) => ({
@@ -710,33 +766,46 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
             {loginHistory.length === 0 ? (
               <p className="mt-4 text-sm text-slate-500">{t("loginHistoryEmpty")}</p>
             ) : (
-              <div className="mt-4 overflow-x-auto">
-                <table className="min-w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
-                    <tr>
-                      <th className="px-4 py-2">{t("loginHistoryTime")}</th>
-                      <th className="px-4 py-2">{t("loginHistoryStatus")}</th>
-                      <th className="px-4 py-2">{t("loginHistoryIP")}</th>
-                      <th className="px-4 py-2">{t("loginHistoryMethod")}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {loginHistory.map((entry) => (
-                      <tr key={entry.id}>
-                        <td className="px-4 py-3 text-slate-700">{formatAdminDateTime(entry.logged_in_at, locale)}</td>
-                        <td className="px-4 py-3">
-                          {entry.success ? (
-                            <AdminStatusBadge tone="success">{t("loginHistorySuccess")}</AdminStatusBadge>
-                          ) : (
-                            <AdminStatusBadge tone="danger">{entry.failure_reason ?? t("loginHistoryFailed")}</AdminStatusBadge>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700">{entry.ip_address ?? "-"}</td>
-                        <td className="px-4 py-3 text-slate-700">{entry.login_method ?? "-"}</td>
+              <div className="mt-4 space-y-4">
+                <dl className="grid gap-3 sm:grid-cols-3">
+                  <DetailRow label={t("operationsSummaryLatestLogin")} value={latestSuccessfulLogin ? formatAdminDateTime(latestSuccessfulLogin.logged_in_at, locale) : "-"} />
+                  <DetailRow
+                    label={t("operationsSummaryLatestFailure")}
+                    value={latestFailedLogin ? `${formatAdminDateTime(latestFailedLogin.logged_in_at, locale)} / ${latestFailedLogin.failure_reason ?? t("loginHistoryFailed")}` : "-"}
+                  />
+                  <DetailRow
+                    label={t("operationsSummaryRecentLogins")}
+                    value={t("operationsSummaryRecentLoginCounts", { failed: String(recentLoginFailures), success: String(recentLoginSuccesses) })}
+                  />
+                </dl>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm text-left">
+                    <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                      <tr>
+                        <th className="px-4 py-2">{t("loginHistoryTime")}</th>
+                        <th className="px-4 py-2">{t("loginHistoryStatus")}</th>
+                        <th className="px-4 py-2">{t("loginHistoryIP")}</th>
+                        <th className="px-4 py-2">{t("loginHistoryMethod")}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {loginHistory.slice(0, 20).map((entry) => (
+                        <tr key={entry.id}>
+                          <td className="px-4 py-3 text-slate-700">{formatAdminDateTime(entry.logged_in_at, locale)}</td>
+                          <td className="px-4 py-3">
+                            {entry.success ? (
+                              <AdminStatusBadge tone="success">{t("loginHistorySuccess")}</AdminStatusBadge>
+                            ) : (
+                              <AdminStatusBadge tone="danger">{entry.failure_reason ?? t("loginHistoryFailed")}</AdminStatusBadge>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-slate-700">{entry.ip_address ?? "-"}</td>
+                          <td className="px-4 py-3 text-slate-700">{entry.login_method ?? "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </AdminCard>
@@ -765,6 +834,37 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
             </form>
           </AdminCard>
         </div>
+
+        <AdminCard className="mt-6 p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950">{t("operationsSummaryTitle")}</h2>
+              <p className="mt-1 text-sm text-slate-600">{t("operationsSummaryDescription")}</p>
+            </div>
+            <AdminStatusBadge tone={activeLease ? "success" : "neutral"}>
+              {activeLease ? t("cloudSyncUsageActive") : t("cloudSyncUsageInactive")}
+            </AdminStatusBadge>
+          </div>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <DetailRow label={t("operationsSummaryCloudSyncLifetime")} value={formatUsageDuration(totalUsageSeconds)} />
+            <DetailRow label={t("operationsSummaryCloudSyncRecent")} value={formatUsageDuration(recentUsageSeconds)} />
+            <DetailRow label={t("operationsSummaryLastCloudSyncStart")} value={lastCloudSyncStartAt ? formatAdminDateTime(lastCloudSyncStartAt, locale) : "-"} />
+            <DetailRow label={t("operationsSummaryDesktopLastOnline")} value={latestDesktopSeenAt ? formatAdminDateTime(latestDesktopSeenAt, locale) : "-"} />
+            <DetailRow label={t("operationsSummaryLatestLogin")} value={latestSuccessfulLogin ? formatAdminDateTime(latestSuccessfulLogin.logged_in_at, locale) : "-"} />
+            <DetailRow
+              label={t("operationsSummaryRecentLogins")}
+              value={t("operationsSummaryRecentLoginCounts", { failed: String(recentLoginFailures), success: String(recentLoginSuccesses) })}
+            />
+            <DetailRow
+              label={t("operationsSummaryLatestFailure")}
+              value={latestFailedLogin ? `${formatAdminDateTime(latestFailedLogin.logged_in_at, locale)} / ${latestFailedLogin.failure_reason ?? t("loginHistoryFailed")}` : "-"}
+            />
+            <DetailRow label={t("operationsSummaryCurrentDevice")} value={activeLease?.device_id ?? "-"} />
+          </dl>
+          {usageSessionsMayBeCapped ? (
+            <p className="mt-3 text-xs text-amber-700">{t("operationsSummaryCappedNotice", { count: String(cloudSyncUsageSessionDetailLimit) })}</p>
+          ) : null}
+        </AdminCard>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <AdminCard className="p-5">
@@ -1126,11 +1226,15 @@ export default async function AdminUserDetailPage({ params, searchParams }: Admi
 
           <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <DetailRow label={t("cloudSyncUsageTotal")} value={formatUsageDuration(totalUsageSeconds)} />
+            <DetailRow label={t("cloudSyncUsageRecent")} value={formatUsageDuration(recentUsageSeconds)} />
             <DetailRow label={t("cloudSyncUsageMachines")} value={uniqueUsageMachines} />
             <DetailRow label={t("cloudSyncUsageConflicts")} value={`${conflictAttempts} ${t("cloudSyncUsageConflictAttempts")}`} />
             <DetailRow label={t("cloudSyncUsageCooldowns")} value={`${cooldownBlocks} ${t("cloudSyncUsageCooldownBlocks")}`} />
-            <DetailRow label={t("cloudSyncUsageLatest")} value={latestUsageSession ? formatAdminDateTime(latestUsageSession.started_at, locale) : "-"} />
+            <DetailRow label={t("cloudSyncUsageLatest")} value={lastCloudSyncStartAt ? formatAdminDateTime(lastCloudSyncStartAt, locale) : "-"} />
           </dl>
+          {usageSessionsMayBeCapped ? (
+            <p className="mt-3 text-xs text-amber-700">{t("cloudSyncUsageCapped")}</p>
+          ) : null}
 
           {usageSessions.length > 0 ? (
             <div className="mt-5 space-y-3">

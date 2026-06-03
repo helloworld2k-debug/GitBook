@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AdminPage from "@/app/[locale]/admin/page";
 import AdminAuditLogsPage from "@/app/[locale]/admin/audit-logs/page";
 import AdminCertificatesPage from "@/app/[locale]/admin/certificates/page";
@@ -830,6 +830,18 @@ const testMessages = {
         loginHistoryMethod: "Method",
         loginHistorySuccess: "Success",
         loginHistoryFailed: "Failed",
+        operationsSummaryTitle: "User operations summary",
+        operationsSummaryDescription: "Key cloud sync and login signals for this user.",
+        operationsSummaryCloudSyncLifetime: "Lifetime cloud sync time",
+        operationsSummaryCloudSyncRecent: "Last 30 days cloud sync time",
+        operationsSummaryLastCloudSyncStart: "Last cloud sync start",
+        operationsSummaryDesktopLastOnline: "Desktop last online",
+        operationsSummaryLatestLogin: "Latest successful login",
+        operationsSummaryRecentLogins: "Recent login attempts",
+        operationsSummaryRecentLoginCounts: "{success} success / {failed} failed",
+        operationsSummaryLatestFailure: "Latest failed login",
+        operationsSummaryCurrentDevice: "Current cloud sync device",
+        operationsSummaryCappedNotice: "Showing up to {count} cloud sync sessions; lifetime time may be capped.",
         timelineTitle: "Account timeline",
         timelineEmpty: "No timeline activity yet.",
         timelineDonation: "Contribution",
@@ -852,6 +864,7 @@ const testMessages = {
         cloudSyncUsageActive: "Sync active",
         cloudSyncUsageInactive: "Sync inactive",
         cloudSyncUsageTotal: "Total usage",
+        cloudSyncUsageRecent: "Last 30 days",
         cloudSyncUsageMachines: "Machines",
         cloudSyncUsageConflicts: "Conflicts",
         cloudSyncUsageCooldowns: "Cooldowns",
@@ -865,6 +878,7 @@ const testMessages = {
         cloudSyncUsageStillActive: "still active",
         cloudSyncUsageEmpty: "No cloud sync usage sessions yet.",
         cloudSyncUsageEvents: "Recent sync events",
+        cloudSyncUsageCapped: "Usage total may be capped",
         unbind: "Unbind machine",
         addDonation: "Add manual donation",
         emptyTrials: "No trials",
@@ -1550,6 +1564,10 @@ describe("admin pages", () => {
     requireAdminMock.mockReset().mockResolvedValue({ id: "admin-1" });
     createSupabaseServerClientMock.mockReset();
     createSupabaseAdminClientMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("renders the guarded admin overview with admin tool links", async () => {
@@ -2591,6 +2609,7 @@ describe("admin pages", () => {
       },
     ]);
     const emptyQuery = createAdminListQuery([]);
+    const loginHistoryQuery = createAdminListQuery([]);
     const cooldownOverridesQuery = createAdminListQuery([]);
     const recentConflictEventsQuery = createAdminListQuery([
       {
@@ -2616,7 +2635,7 @@ describe("admin pages", () => {
       }
       if (table === "cloud_sync_cooldown_overrides") return cooldownOverridesQuery;
       if (table === "support_feedback") return supportFeedbackQuery;
-      if (table === "user_login_history") return emptyQuery;
+      if (table === "user_login_history") return loginHistoryQuery;
       throw new Error(`Unexpected table: ${table}`);
     });
     createSupabaseAdminClientMock.mockReturnValue({ from });
@@ -2649,6 +2668,9 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "Entitlements" })).toBeInTheDocument();
     expect(screen.getAllByText("cloud_sync").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Leases" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "User operations summary" })).toBeInTheDocument();
+    expect(screen.getByText("Lifetime cloud sync time")).toBeInTheDocument();
+    expect(screen.getByText("Last 30 days cloud sync time")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Cloud sync usage" })).toBeInTheDocument();
     expect(screen.getAllByText("45m").length).toBeGreaterThan(0);
     expect(screen.getByText("1 conflict attempts")).toBeInTheDocument();
@@ -2659,6 +2681,173 @@ describe("admin pages", () => {
     expect(screen.getByRole("heading", { name: "Account timeline" })).toBeInTheDocument();
     expect(screen.getByText("Need help with trial")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Need help with trial" })).toHaveAttribute("href", "/en/admin/support-feedback/feedback-1");
+    expect(usageSessionsQuery.limit).toHaveBeenCalledWith(1000);
+    expect(loginHistoryQuery.limit).toHaveBeenCalledWith(200);
+  });
+
+  it("renders the user-detail operations summary with accurate cloud sync and login metrics", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-03T08:00:00.000Z"));
+
+    const profileQuery = createAdminListQuery({
+      id: "user-1",
+      email: "ada@example.com",
+      display_name: "Ada Lovelace",
+      public_display_name: "Ada",
+      public_supporter_enabled: true,
+      admin_role: "user",
+      account_status: "active",
+      account_type: "standard",
+      is_admin: false,
+      avatar_url: null,
+      created_at: "2026-04-29T00:00:00.000Z",
+    });
+    const sessionsQuery = createAdminListQuery([
+      {
+        id: "session-1",
+        device_id: "MacBook",
+        machine_code_hash: "machinehash123456",
+        platform: "macos",
+        app_version: "1.0.0",
+        last_seen_at: "2026-06-03T07:45:00.000Z",
+        revoked_at: null,
+      },
+    ]);
+    const leasesQuery = createAdminListQuery([
+      {
+        id: "lease-active",
+        desktop_session_id: "session-1",
+        device_id: "MacBook",
+        machine_code_hash: "machinehash123456",
+        lease_started_at: "2026-05-28T08:00:00.000Z",
+        last_heartbeat_at: "2026-06-03T07:55:00.000Z",
+        expires_at: "2026-06-03T08:10:00.000Z",
+        revoked_at: null,
+        released_at: null,
+        cooldown_until: null,
+        updated_at: "2026-06-03T07:55:00.000Z",
+      },
+      {
+        id: "lease-expired",
+        desktop_session_id: "session-2",
+        device_id: "Old PC",
+        machine_code_hash: "oldmachine123456",
+        lease_started_at: "2026-04-01T08:00:00.000Z",
+        last_heartbeat_at: "2026-04-01T08:30:00.000Z",
+        expires_at: "2026-04-01T09:00:00.000Z",
+        revoked_at: null,
+        released_at: null,
+        cooldown_until: null,
+        updated_at: "2026-04-01T08:30:00.000Z",
+      },
+    ]);
+    const usageSessionsQuery = createAdminListQuery([
+      {
+        id: "usage-recent-open",
+        lease_id: "lease-active",
+        desktop_session_id: "session-1",
+        device_id: "MacBook",
+        machine_code_hash: "machinehash123456",
+        started_at: "2026-06-03T07:00:00.000Z",
+        last_heartbeat_at: "2026-06-03T07:30:00.000Z",
+        ended_at: null,
+        end_reason: null,
+        heartbeat_count: 5,
+      },
+      {
+        id: "usage-recent-closed",
+        lease_id: "lease-active",
+        desktop_session_id: "session-1",
+        device_id: "MacBook",
+        machine_code_hash: "machinehash123456",
+        started_at: "2026-05-25T06:00:00.000Z",
+        last_heartbeat_at: "2026-05-25T06:50:00.000Z",
+        ended_at: "2026-05-25T07:00:00.000Z",
+        end_reason: "released",
+        heartbeat_count: 4,
+      },
+      {
+        id: "usage-old",
+        lease_id: "lease-expired",
+        desktop_session_id: "session-2",
+        device_id: "Old PC",
+        machine_code_hash: "oldmachine123456",
+        started_at: "2026-04-01T08:00:00.000Z",
+        last_heartbeat_at: "2026-04-01T09:00:00.000Z",
+        ended_at: "2026-04-01T10:00:00.000Z",
+        end_reason: "released",
+        heartbeat_count: 6,
+      },
+    ]);
+    const loginHistoryQuery = createAdminListQuery([
+      {
+        id: "login-success",
+        ip_address: "203.0.113.10",
+        user_agent: "Desktop",
+        success: true,
+        failure_reason: null,
+        login_method: "password",
+        logged_in_at: "2026-06-02T12:00:00.000Z",
+      },
+      {
+        id: "login-failed",
+        ip_address: "203.0.113.11",
+        user_agent: "Desktop",
+        success: false,
+        failure_reason: "invalid_credentials",
+        login_method: "password",
+        logged_in_at: "2026-06-01T12:00:00.000Z",
+      },
+      {
+        id: "login-old",
+        ip_address: "203.0.113.12",
+        user_agent: "Desktop",
+        success: false,
+        failure_reason: "expired_code",
+        login_method: "password",
+        logged_in_at: "2026-04-01T12:00:00.000Z",
+      },
+    ]);
+    const emptyQuery = createAdminListQuery([]);
+    const adminProfileQuery = createAdminListQuery({
+      admin_role: "owner",
+      is_admin: true,
+      account_status: "active",
+    });
+    const from = vi.fn((table: string) => {
+      if (table === "profiles") {
+        return from.mock.calls.filter(([name]) => name === "profiles").length === 1 ? profileQuery : adminProfileQuery;
+      }
+      if (table === "desktop_sessions") return sessionsQuery;
+      if (table === "cloud_sync_leases") return leasesQuery;
+      if (table === "cloud_sync_usage_sessions") return usageSessionsQuery;
+      if (table === "user_login_history") return loginHistoryQuery;
+      if (["donations", "certificates", "trial_code_redemptions", "license_entitlements", "cloud_sync_usage_events", "cloud_sync_cooldown_overrides", "support_feedback"].includes(table)) {
+        return emptyQuery;
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    createSupabaseAdminClientMock.mockReturnValue({ from });
+    requireAdminMock.mockResolvedValue({ id: "admin-owner" });
+
+    render(await AdminUserDetailPage({
+      params: Promise.resolve({ id: "user-1", locale: "en" }),
+      searchParams: Promise.resolve({}),
+    }));
+
+    expect(screen.getByRole("heading", { name: "User operations summary" })).toBeInTheDocument();
+    expect(screen.getAllByText("Sync active").length).toBeGreaterThan(0);
+    expect(screen.getByText("Lifetime cloud sync time")).toBeInTheDocument();
+    expect(screen.getAllByText("3h 30m").length).toBeGreaterThan(0);
+    expect(screen.getByText("Last 30 days cloud sync time")).toBeInTheDocument();
+    expect(screen.getAllByText("1h 30m").length).toBeGreaterThan(0);
+    expect(screen.getByText("Desktop last online")).toBeInTheDocument();
+    expect(screen.getAllByText("Recent login attempts").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1 success / 1 failed").length).toBeGreaterThan(0);
+    expect(leasesQuery.select).toHaveBeenCalledWith(expect.stringContaining("lease_started_at"));
+    expect(usageSessionsQuery.limit).toHaveBeenCalledWith(1000);
+    expect(loginHistoryQuery.limit).toHaveBeenCalledWith(200);
   });
 
   it("surfaces user detail profile query errors instead of masking them as a missing user", async () => {
