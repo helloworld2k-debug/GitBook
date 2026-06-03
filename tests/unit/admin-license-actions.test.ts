@@ -5,6 +5,7 @@ import {
   deleteTrialCode,
   generateLicenseCodeBatch,
   grantCloudSyncCooldownOverride,
+  revealLicenseCodeBatch,
   revealLicenseCode,
   revokeCloudSyncLease,
   revokeDesktopSession,
@@ -511,6 +512,125 @@ describe("admin license actions", () => {
       target_type: "trial_code",
     }));
     decryptSpy.mockRestore();
+  });
+
+  it("reveals every encrypted license code in a batch and audits masks without plaintext", async () => {
+    const rows = [
+      {
+        code_mask: "1MAB-****-****-MNOP",
+        deleted_at: null,
+        encrypted_code_algorithm: "aes-256-gcm",
+        encrypted_code_ciphertext: "ciphertext-1",
+        encrypted_code_iv: "iv-1",
+        encrypted_code_tag: "tag-1",
+        id: "code-1",
+        is_active: true,
+        redemption_count: 0,
+      },
+      {
+        code_mask: "1MCD-****-****-QRST",
+        deleted_at: "2026-05-02T00:00:00.000Z",
+        encrypted_code_algorithm: "aes-256-gcm",
+        encrypted_code_ciphertext: "ciphertext-2",
+        encrypted_code_iv: "iv-2",
+        encrypted_code_tag: "tag-2",
+        id: "code-2",
+        is_active: false,
+        redemption_count: 1,
+      },
+    ];
+    const orderById = vi.fn(async () => ({ data: rows, error: null }));
+    const orderByCreatedAt = vi.fn(() => ({ order: orderById }));
+    const eq = vi.fn(() => ({ order: orderByCreatedAt }));
+    const select = vi.fn(() => ({ eq }));
+    const auditInsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") return { select };
+      if (table === "admin_audit_logs") return { insert: auditInsert };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+    const decryptSpy = vi
+      .spyOn(await import("@/lib/license/license-codes"), "decryptLicenseCode")
+      .mockReturnValueOnce("1MAB-AAAA-BBBB-MNOP")
+      .mockReturnValueOnce("1MCD-CCCC-DDDD-QRST");
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("batch_id", "batch-1");
+
+    await expect(revealLicenseCodeBatch(formData)).resolves.toEqual({
+      codes: [
+        {
+          code: "1MAB-AAAA-BBBB-MNOP",
+          codeMask: "1MAB-****-****-MNOP",
+          deletedAt: null,
+          id: "code-1",
+          isActive: true,
+          redemptionCount: 0,
+        },
+        {
+          code: "1MCD-CCCC-DDDD-QRST",
+          codeMask: "1MCD-****-****-QRST",
+          deletedAt: "2026-05-02T00:00:00.000Z",
+          id: "code-2",
+          isActive: false,
+          redemptionCount: 1,
+        },
+      ],
+    });
+
+    expect(mocks.requireAdmin).toHaveBeenCalledWith("en");
+    expect(select).toHaveBeenCalledWith("id,code_mask,encrypted_code_algorithm,encrypted_code_ciphertext,encrypted_code_iv,encrypted_code_tag,is_active,deleted_at,redemption_count");
+    expect(eq).toHaveBeenCalledWith("batch_id", "batch-1");
+    expect(orderByCreatedAt).toHaveBeenCalledWith("created_at", { ascending: true });
+    expect(orderById).toHaveBeenCalledWith("id", { ascending: true });
+    expect(decryptSpy).toHaveBeenCalledTimes(2);
+    expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
+      action: "reveal_license_code_batch",
+      after: {
+        code_count: 2,
+        code_masks: ["1MAB-****-****-MNOP", "1MCD-****-****-QRST"],
+      },
+      target_id: "batch-1",
+      target_type: "license_code_batch",
+    }));
+    expect(JSON.stringify(auditInsert.mock.calls)).not.toContain("1MAB-AAAA-BBBB-MNOP");
+    expect(JSON.stringify(auditInsert.mock.calls)).not.toContain("1MCD-CCCC-DDDD-QRST");
+    decryptSpy.mockRestore();
+  });
+
+  it("rejects revealing a license code batch when any encrypted payload is missing", async () => {
+    const orderById = vi.fn(async () => ({
+      data: [
+        {
+          code_mask: "1MAB-****-****-MNOP",
+          deleted_at: null,
+          encrypted_code_algorithm: "aes-256-gcm",
+          encrypted_code_ciphertext: null,
+          encrypted_code_iv: "iv-1",
+          encrypted_code_tag: "tag-1",
+          id: "code-1",
+          is_active: true,
+          redemption_count: 0,
+        },
+      ],
+      error: null,
+    }));
+    const orderByCreatedAt = vi.fn(() => ({ order: orderById }));
+    const eq = vi.fn(() => ({ order: orderByCreatedAt }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn((table: string) => {
+      if (table === "trial_codes") return { select };
+      throw new Error(`Unexpected table: ${table}`);
+    });
+    mocks.createSupabaseAdminClient.mockReturnValue({ from });
+
+    const formData = new FormData();
+    formData.set("locale", "en");
+    formData.set("batch_id", "batch-1");
+
+    await expect(revealLicenseCodeBatch(formData)).rejects.toThrow("License code batch cannot be revealed");
   });
 
   it("soft deletes trial codes and records who deleted them", async () => {

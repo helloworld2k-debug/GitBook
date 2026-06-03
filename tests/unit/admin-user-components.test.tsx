@@ -3,11 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 import { AdminUserBulkToolbar, AdminUserRowActionsMenu, AdminUserSelectAllCheckbox } from "@/components/admin/admin-user-bulk-toolbar";
 import { AdminUserDeleteDangerZone } from "@/components/admin/admin-user-delete-danger-zone";
 import { AdminUserFilters } from "@/components/admin/admin-user-filters";
+import { LicenseCodeBatchRevealPanel } from "@/components/admin/license-code-batch-reveal-panel";
 import { TrialCodeRevealButton } from "@/components/admin/trial-code-reveal-button";
 
+const revealLicenseCodeBatchMock = vi.hoisted(() => vi.fn());
 const revealLicenseCodeMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/app/[locale]/admin/actions", () => ({
+  revealLicenseCodeBatch: revealLicenseCodeBatchMock,
   revealLicenseCode: revealLicenseCodeMock,
 }));
 
@@ -75,6 +78,50 @@ describe("TrialCodeRevealButton", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy code" }));
 
     expect(writeText).toHaveBeenCalledWith("T3AB-CDEF-GHJK-LMNP");
+    expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
+  });
+});
+
+describe("LicenseCodeBatchRevealPanel", () => {
+  it("reveals a batch and copies every code as one code per line", async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    revealLicenseCodeBatchMock.mockResolvedValueOnce({
+      codes: [
+        { code: "1MAB-AAAA-BBBB-MNOP", codeMask: "1MAB-****-****-MNOP", deletedAt: null, id: "code-1", isActive: true, redemptionCount: 0 },
+        { code: "1MCD-CCCC-DDDD-QRST", codeMask: "1MCD-****-****-QRST", deletedAt: "2026-05-02T00:00:00.000Z", id: "code-2", isActive: false, redemptionCount: 1 },
+      ],
+    });
+
+    render(
+      <LicenseCodeBatchRevealPanel
+        batchId="batch-1"
+        labels={{
+          batchPlaintextLabel: "Plaintext license codes",
+          copied: "Copied",
+          copyAll: "Copy all",
+          hideBatch: "Hide batch",
+          revealBatch: "Reveal batch",
+          revealBatchError: "Unable to reveal this batch.",
+        }}
+        locale="en"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reveal batch" }));
+
+    expect(await screen.findByLabelText("Plaintext license codes")).toHaveValue("1MAB-AAAA-BBBB-MNOP\n1MCD-CCCC-DDDD-QRST");
+    expect(revealLicenseCodeBatchMock).toHaveBeenCalledTimes(1);
+    const formData = revealLicenseCodeBatchMock.mock.calls[0][0] as FormData;
+    expect(formData.get("locale")).toBe("en");
+    expect(formData.get("batch_id")).toBe("batch-1");
+
+    fireEvent.click(screen.getByRole("button", { name: "Copy all" }));
+
+    expect(writeText).toHaveBeenCalledWith("1MAB-AAAA-BBBB-MNOP\n1MCD-CCCC-DDDD-QRST");
     expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
   });
 });
