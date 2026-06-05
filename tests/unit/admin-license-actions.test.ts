@@ -863,10 +863,17 @@ describe("admin license actions", () => {
     const select = vi.fn(() => ({ eq: selectEq }));
     const eq = vi.fn<(column: string, value: string) => MutationResult>(async () => ({ error: null }));
     const update = vi.fn<(payload: unknown) => { eq: typeof eq }>(() => ({ eq }));
+    const revokeIs = vi.fn(async () => ({ error: null }));
+    const revokeEq = vi.fn(() => ({ is: revokeIs }));
+    const revokeUpdate = vi.fn(() => ({ eq: revokeEq }));
     const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
         return { select, update };
+      }
+
+      if (table === "desktop_sessions") {
+        return { update: revokeUpdate };
       }
 
       if (table === "admin_audit_logs") {
@@ -889,6 +896,9 @@ describe("admin license actions", () => {
     expect(from).toHaveBeenCalledWith("profiles");
     expect(update).toHaveBeenCalledWith({ account_status: "disabled", updated_at: expect.any(String) });
     expect(eq).toHaveBeenCalledWith("id", "user-1");
+    expect(revokeUpdate).toHaveBeenCalledWith({ revoked_at: expect.any(String) });
+    expect(revokeEq).toHaveBeenCalledWith("user_id", "user-1");
+    expect(revokeIs).toHaveBeenCalledWith("revoked_at", null);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/en/admin/users");
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({ action: "update_user_account_status" }));
   });

@@ -96,6 +96,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ loca
 
   try {
     const adminClient = createSupabaseAdminClient();
+    const { data: profile, error: profileError } = await adminClient
+      .from("profiles")
+      .select("account_status")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || profile?.account_status !== "active") {
+      throw new Error("Desktop authorization requires an active account");
+    }
+
     const { code } = await createDesktopAuthCode(adminClient, {
       userId: user.id,
       deviceSessionId,

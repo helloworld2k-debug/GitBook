@@ -144,10 +144,14 @@ describe("desktop authorize route", () => {
   const adminClient = { auth: { getUser: mocks.getUser }, from: vi.fn() };
 
   beforeEach(() => {
+    const profileSingle = vi.fn(async () => ({ data: { account_status: "active" }, error: null }));
+    const profileEq = vi.fn(() => ({ single: profileSingle }));
+    const profileSelect = vi.fn(() => ({ eq: profileEq }));
+
     mocks.getUser.mockReset().mockResolvedValue({ data: { user: { id: "user-1" } } });
     mocks.serverGetUser.mockReset().mockResolvedValue({ data: { user: null } });
     mocks.createSupabaseServerClient.mockReset().mockResolvedValue({ auth: { getUser: mocks.serverGetUser } });
-    adminClient.from.mockReset();
+    adminClient.from.mockReset().mockReturnValue({ select: profileSelect });
     mocks.createSupabaseAdminClient.mockReset().mockReturnValue(adminClient);
     mocks.createDesktopAuthCode.mockReset().mockResolvedValue({
       code: "raw-code",
@@ -269,6 +273,30 @@ describe("desktop authorize route", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
     await expect(response.text()).resolves.toContain("gitbookai://auth/callback?code=raw-code&state=state-123");
+  });
+
+  it("does not create an auth code for signed-in users whose profile is not active", async () => {
+    mocks.serverGetUser.mockResolvedValueOnce({ data: { user: { id: "user-1" } } });
+    const profileSingle = vi.fn(async () => ({ data: { account_status: "archived_deleted" }, error: null }));
+    const profileEq = vi.fn(() => ({ single: profileSingle }));
+    const profileSelect = vi.fn(() => ({ eq: profileEq }));
+    adminClient.from.mockReturnValueOnce({ select: profileSelect });
+
+    const response = await GET(
+      new Request("https://gitbookai.example/en/desktop/authorize?device_session_id=session-1&return_url=gitbookai%3A%2F%2Fauth%2Fcallback&state=state-123"),
+      {
+        params: Promise.resolve({ locale: "en" }),
+      },
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://gitbookai.example/en/desktop/login?next=%2Fen%2Fdesktop%2Fauthorize%3Fdevice_session_id%3Dsession-1%26return_url%3Dgitbookai%253A%252F%252Fauth%252Fcallback%26state%3Dstate-123&error=desktop_authorize_failed",
+    );
+    expect(adminClient.from).toHaveBeenCalledWith("profiles");
+    expect(profileSelect).toHaveBeenCalledWith("account_status");
+    expect(profileEq).toHaveBeenCalledWith("id", "user-1");
+    expect(mocks.createDesktopAuthCode).not.toHaveBeenCalled();
   });
 
   it("redirects signed-in users back to desktop login when auth code creation fails", async () => {

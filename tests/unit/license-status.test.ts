@@ -347,6 +347,10 @@ describe("desktop session helpers", () => {
         expires_at: "2026-05-02T00:00:00.000Z",
         revoked_at: null,
       },
+      profiles: {
+        id: "user-1",
+        account_status: "active",
+      },
     });
 
     await expect(validateDesktopSession(client, "desktop-token", now)).resolves.toEqual({
@@ -367,6 +371,32 @@ describe("desktop session helpers", () => {
     });
   });
 
+  it("rejects a desktop session when the owning profile is not active", async () => {
+    const now = new Date("2026-05-01T00:00:00.000Z");
+    const client = createMaybeSingleClient({
+      desktop_sessions: {
+        id: "session-1",
+        user_id: "user-1",
+        device_id: "device-a",
+        machine_code_hash: "machine-hash-1",
+        platform: "macos",
+        app_version: "1.0.0",
+        last_seen_at: "2026-04-30T23:40:00.000Z",
+        expires_at: "2026-05-02T00:00:00.000Z",
+        revoked_at: null,
+      },
+      profiles: {
+        id: "user-1",
+        account_status: "archived_deleted",
+      },
+    });
+
+    await expect(validateDesktopSession(client, "desktop-token", now)).resolves.toBeNull();
+
+    expect(client.states.get("profiles")?.filters).toEqual([["id", "user-1"]]);
+    expect(client.states.get("desktop_sessions")?.updatePayload).toBeNull();
+  });
+
   it("does not update last_seen_at for recently touched desktop sessions", async () => {
     const now = new Date("2026-05-01T00:00:00.000Z");
     const client = createMaybeSingleClient({
@@ -380,6 +410,10 @@ describe("desktop session helpers", () => {
         last_seen_at: "2026-04-30T23:57:00.000Z",
         expires_at: "2026-05-02T00:00:00.000Z",
         revoked_at: null,
+      },
+      profiles: {
+        id: "user-1",
+        account_status: "active",
       },
     });
 
@@ -408,6 +442,10 @@ describe("desktop session helpers", () => {
           last_seen_at: "2026-04-30T23:40:00.000Z",
           expires_at: "2026-05-02T00:00:00.000Z",
           revoked_at: null,
+        },
+        profiles: {
+          id: "user-1",
+          account_status: "active",
         },
       },
       {},
@@ -443,6 +481,10 @@ describe("license status route", () => {
           app_version: "1.0.0",
           expires_at: "2026-05-31T00:00:00.000Z",
           revoked_at: null,
+        },
+        profiles: {
+          id: "user-1",
+          account_status: "active",
         },
         license_entitlements: {
           status: "active",
@@ -529,6 +571,10 @@ describe("license status route", () => {
             app_version: "1.0.0",
             expires_at: "2026-05-31T00:00:00.000Z",
             revoked_at: null,
+          },
+          profiles: {
+            id: "user-1",
+            account_status: "active",
           },
         },
         { license_entitlements: new Error("database unavailable") },

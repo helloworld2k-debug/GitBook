@@ -28,6 +28,14 @@ type DesktopSessionFrom = (table: "desktop_sessions") => {
   };
 };
 
+type ProfileFrom = (table: "profiles") => {
+  select: (columns: "account_status") => {
+    eq: (column: "id", value: string) => {
+      maybeSingle: () => PromiseLike<{ data: { account_status: string | null } | null; error: unknown }>;
+    };
+  };
+};
+
 type DesktopSessionRow = {
   id: string;
   user_id: string;
@@ -113,6 +121,15 @@ export async function validateDesktopSession(
   const row = data as DesktopSessionRow;
 
   if (row.revoked_at || new Date(row.expires_at) <= now) {
+    return null;
+  }
+
+  const { data: profile, error: profileError } = await ((client.from as ProfileFrom).call(client, "profiles"))
+    .select("account_status")
+    .eq("id", row.user_id)
+    .maybeSingle();
+
+  if (profileError || profile?.account_status !== "active") {
     return null;
   }
 

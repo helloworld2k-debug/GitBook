@@ -56,6 +56,22 @@ async function requireAdminForRole(locale: string, role: AdminRole) {
   return role === "user" ? requireAdmin(locale) : requireOwner(locale);
 }
 
+async function revokeUserDesktopSessions(supabase: ReturnType<typeof createSupabaseAdminClient>, userId: string, now: string) {
+  return supabase
+    .from("desktop_sessions")
+    .update({ revoked_at: now })
+    .eq("user_id", userId)
+    .is("revoked_at", null);
+}
+
+async function revokeUsersDesktopSessions(supabase: ReturnType<typeof createSupabaseAdminClient>, userIds: string[], now: string) {
+  return supabase
+    .from("desktop_sessions")
+    .update({ revoked_at: now })
+    .in("user_id", userIds)
+    .is("revoked_at", null);
+}
+
 async function updateCreatedUserProfile(input: {
   accountType: AccountType;
   displayName: string | null;
@@ -547,6 +563,7 @@ export async function updateUserAccountStatus(formData: FormData) {
   }
 
   const supabase = createSupabaseAdminClient();
+  const now = new Date().toISOString();
   const { data: before } = await supabase
     .from("profiles")
     .select("account_status")
@@ -554,7 +571,7 @@ export async function updateUserAccountStatus(formData: FormData) {
     .single();
   const { error } = await supabase
     .from("profiles")
-    .update({ account_status: accountStatus, updated_at: new Date().toISOString() })
+    .update({ account_status: accountStatus, updated_at: now })
     .eq("id", userId);
 
   if (error) {
@@ -565,6 +582,20 @@ export async function updateUserAccountStatus(formData: FormData) {
       locale,
       tone: "error",
     });
+  }
+
+  if (accountStatus !== "active") {
+    const { error: revokeError } = await revokeUserDesktopSessions(supabase, userId, now);
+
+    if (revokeError) {
+      redirectWithAdminFeedback({
+        fallbackPath: "/admin/users",
+        formData,
+        key: "status-update-failed",
+        locale,
+        tone: "error",
+      });
+    }
   }
 
   await insertAdminAuditLog({
@@ -642,13 +673,26 @@ export async function softDeleteUser(formData: FormData) {
   const admin = await requireAdmin(locale);
   const userId = getRequiredString(formData, "user_id", "User is required");
   const supabase = createSupabaseAdminClient();
+  const now = new Date().toISOString();
   const { data: before } = await supabase.from("profiles").select("account_status,email").eq("id", userId).single();
   const { error } = await supabase
     .from("profiles")
-    .update({ account_status: "deleted", updated_at: new Date().toISOString() })
+    .update({ account_status: "deleted", updated_at: now })
     .eq("id", userId);
 
   if (error) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "user-soft-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const { error: revokeError } = await revokeUserDesktopSessions(supabase, userId, now);
+
+  if (revokeError) {
     redirectWithAdminFeedback({
       fallbackPath: "/admin/users",
       formData,
@@ -689,6 +733,7 @@ export async function bulkProcessUsers(formData: FormData) {
     const admin = await requireAdmin(locale);
     const accountStatus = intent === "enable" ? "active" : intent === "disable" ? "disabled" : intent === "soft-delete" ? "deleted" : ("archived_deleted" as const);
     const supabase = createSupabaseAdminClient();
+    const now = new Date().toISOString();
 
     // For archive-delete, we need to copy data to archive table first
     if (intent === "archive-delete") {
@@ -763,10 +808,22 @@ export async function bulkProcessUsers(formData: FormData) {
       // Update profiles to archived_deleted status
       const { error } = await supabase
         .from("profiles")
-        .update({ account_status: accountStatus, updated_at: new Date().toISOString() })
+        .update({ account_status: accountStatus, updated_at: now })
         .in("id", userIds);
 
       if (error) {
+        redirectWithAdminFeedback({
+          fallbackPath: "/admin/users",
+          formData,
+          key: "archive-delete-failed",
+          locale,
+          tone: "error",
+        });
+      }
+
+      const { error: revokeError } = await revokeUsersDesktopSessions(supabase, userIds, now);
+
+      if (revokeError) {
         redirectWithAdminFeedback({
           fallbackPath: "/admin/users",
           formData,
@@ -800,7 +857,7 @@ export async function bulkProcessUsers(formData: FormData) {
     // For enable, disable, soft-delete
     const { error } = await supabase
       .from("profiles")
-      .update({ account_status: accountStatus, updated_at: new Date().toISOString() })
+      .update({ account_status: accountStatus, updated_at: now })
       .in("id", userIds);
 
     if (error) {
@@ -811,6 +868,20 @@ export async function bulkProcessUsers(formData: FormData) {
         locale,
         tone: "error",
       });
+    }
+
+    if (accountStatus !== "active") {
+      const { error: revokeError } = await revokeUsersDesktopSessions(supabase, userIds, now);
+
+      if (revokeError) {
+        redirectWithAdminFeedback({
+          fallbackPath: "/admin/users",
+          formData,
+          key: "bulk-user-status-update-failed",
+          locale,
+          tone: "error",
+        });
+      }
     }
 
     await insertAdminAuditLog({
@@ -1143,6 +1214,7 @@ export async function archiveDeleteUsers(formData: FormData) {
   const userIds = getUserIds(formData);
   const reason = String(formData.get("reason") ?? "").trim() || null;
   const supabase = createSupabaseAdminClient();
+  const now = new Date().toISOString();
 
   // Get profiles to archive
   const { data: profiles, error: fetchError } = await supabase
@@ -1214,11 +1286,23 @@ export async function archiveDeleteUsers(formData: FormData) {
     .from("profiles")
     .update({
       account_status: "archived_deleted",
-      updated_at: new Date().toISOString(),
+      updated_at: now,
     })
     .in("id", userIds);
 
   if (updateError) {
+    redirectWithAdminFeedback({
+      fallbackPath: "/admin/users",
+      formData,
+      key: "archive-delete-failed",
+      locale,
+      tone: "error",
+    });
+  }
+
+  const { error: revokeError } = await revokeUsersDesktopSessions(supabase, userIds, now);
+
+  if (revokeError) {
     redirectWithAdminFeedback({
       fallbackPath: "/admin/users",
       formData,

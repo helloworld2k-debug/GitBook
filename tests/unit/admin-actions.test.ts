@@ -513,10 +513,17 @@ describe("admin actions", () => {
     const profileSelect = vi.fn(() => ({ eq: profileEq }));
     const updateEq = vi.fn(async () => ({ error: null }));
     const update = vi.fn(() => ({ eq: updateEq }));
+    const revokeIs = vi.fn(async () => ({ error: null }));
+    const revokeEq = vi.fn(() => ({ is: revokeIs }));
+    const revokeUpdate = vi.fn(() => ({ eq: revokeEq }));
     const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
         return { select: profileSelect, update };
+      }
+
+      if (table === "desktop_sessions") {
+        return { update: revokeUpdate };
       }
 
       if (table === "admin_audit_logs") {
@@ -541,6 +548,9 @@ describe("admin actions", () => {
       target_id: "user-1",
       target_type: "profile",
     }));
+    expect(revokeUpdate).toHaveBeenCalledWith({ revoked_at: expect.any(String) });
+    expect(revokeEq).toHaveBeenCalledWith("user_id", "user-1");
+    expect(revokeIs).toHaveBeenCalledWith("revoked_at", null);
   });
 
   it("allows operators to update a user's account type and audits it", async () => {
@@ -594,10 +604,17 @@ describe("admin actions", () => {
     const profileSelect = vi.fn(() => ({ eq: profileEq }));
     const updateEq = vi.fn(async () => ({ error: null }));
     const update = vi.fn(() => ({ eq: updateEq }));
+    const revokeIs = vi.fn(async () => ({ error: null }));
+    const revokeEq = vi.fn(() => ({ is: revokeIs }));
+    const revokeUpdate = vi.fn(() => ({ eq: revokeEq }));
     const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
         return { select: profileSelect, update };
+      }
+
+      if (table === "desktop_sessions") {
+        return { update: revokeUpdate };
       }
 
       if (table === "admin_audit_logs") {
@@ -619,6 +636,9 @@ describe("admin actions", () => {
       account_status: "deleted",
       updated_at: expect.any(String),
     });
+    expect(revokeUpdate).toHaveBeenCalledWith({ revoked_at: expect.any(String) });
+    expect(revokeEq).toHaveBeenCalledWith("user_id", "user-1");
+    expect(revokeIs).toHaveBeenCalledWith("revoked_at", null);
     expect(auditInsert).toHaveBeenCalledWith(expect.objectContaining({
       action: "soft_delete_user",
       admin_user_id: "admin-1",
@@ -634,10 +654,17 @@ describe("admin actions", () => {
   ])("bulk updates account status to %s for multiple users", async (intent, accountStatus) => {
     const updateIn = vi.fn(async () => ({ error: null }));
     const update = vi.fn(() => ({ in: updateIn }));
+    const revokeIs = vi.fn(async () => ({ error: null }));
+    const revokeIn = vi.fn(() => ({ is: revokeIs }));
+    const revokeUpdate = vi.fn(() => ({ in: revokeIn }));
     const auditInsert = vi.fn(async () => ({ error: null }));
     const from = vi.fn((table: string) => {
       if (table === "profiles") {
         return { update };
+      }
+
+      if (table === "desktop_sessions") {
+        return { update: revokeUpdate };
       }
 
       if (table === "admin_audit_logs") {
@@ -661,6 +688,13 @@ describe("admin actions", () => {
       updated_at: expect.any(String),
     });
     expect(updateIn).toHaveBeenCalledWith("id", ["user-1", "user-2"]);
+    if (accountStatus === "active") {
+      expect(revokeUpdate).not.toHaveBeenCalled();
+    } else {
+      expect(revokeUpdate).toHaveBeenCalledWith({ revoked_at: expect.any(String) });
+      expect(revokeIn).toHaveBeenCalledWith("user_id", ["user-1", "user-2"]);
+      expect(revokeIs).toHaveBeenCalledWith("revoked_at", null);
+    }
   });
 
   it("bulk updates user admin roles through owner access", async () => {
